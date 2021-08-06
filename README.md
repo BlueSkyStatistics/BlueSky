@@ -13,3 +13,15 @@ To install the BlueSky package, use the following steps:
 install.packages("devtools")
 devtools::install_github("BlueSkyStatistics/BlueSkyRpkg")
 ```
+
+# Usage
+
+`BlueSkyRpkg` is used like any other R package. After installing it, load the package before executing any R Markdown code exported from BlueSky Statistics:
+
+```{r}
+library("BlueSkyRpkg")
+```
+
+# Getting Help
+
+For details, see the chapter, "Working with R," in the *BlueSky 10 User Guide*.
