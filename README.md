@@ -16,7 +16,7 @@ devtools::install_github("BlueSkyStatistics/BlueSkyRpkg/BlueSky")
 
 # Usage
 
-`BlueSkyRpkg` is used like any other R package. After installing it, load the package before executing any R Markdown code exported from BlueSky Statistics:
+`BlueSky` is used like any other R package. After installing it, load the package before executing any R Markdown code exported from BlueSky Statistics:
 
 ```{r}
 library("BlueSky")
