@@ -3,7 +3,7 @@ BlueSky R package
 
 # Overview
 
-The BlueSky package contains all of the functions that are unique to BlueSky Statistics 10 and later. It is installed automatically along with BlueSky Statistics. BlueSky output files use extension ".Bmd". If you export those to R Markdown files (".Rmd"), users of RStudio, or similar software that runs R Markdown, can execute that code if they install BlueSkyRpkg. 
+The BlueSky package contains all of the functions that are unique to BlueSky Statistics 10 and later. It is installed automatically along with BlueSky Statistics. BlueSky output files use extension ".Bmd". If you export those to R Markdown files (".Rmd"), users of RStudio, or similar software that runs R Markdown, can execute that code if they install the BlueSky Package.
 
 # Installation
 
@@ -19,7 +19,7 @@ devtools::install_github("BlueSkyStatistics/BlueSkyRpkg")
 `BlueSkyRpkg` is used like any other R package. After installing it, load the package before executing any R Markdown code exported from BlueSky Statistics:
 
 ```{r}
-library("BlueSkyRpkg")
+library("BlueSky")
 ```
 
 # Getting Help
