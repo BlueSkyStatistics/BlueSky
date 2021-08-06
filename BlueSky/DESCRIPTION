@@ -1,0 +1,11 @@
+Package: BlueSky
+Type: Package
+Title: BlueSky package that works with BlueSky Statistics application
+Version: 7.40
+Date: 2021-08-05
+Depends: R (>= 3.2.1)
+Author: BlueSky Statistics.
+Maintainer: contact us <support@blueskystatistics.com>
+Description: This package is supposed to be used with a GUI application BlueSky Statistics.
+License: GPL (version 2 or later)
+LazyLoad: yes
