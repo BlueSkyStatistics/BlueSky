@@ -11,7 +11,7 @@ To install the BlueSky package, use the following steps:
 
 ```{r}
 install.packages("devtools")
-devtools::install_github("BlueSkyStatistics/BlueSkyRpkg")
+devtools::install_github("BlueSkyStatistics/BlueSkyRpkg/BlueSky")
 ```
 
 # Usage
