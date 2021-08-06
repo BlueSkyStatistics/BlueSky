@@ -3923,6 +3923,12 @@ uaIsDatasetSplit <- function(datasetname)
         return(FALSE)
     }
 }
+## Added by Aaron and Sanjay
+## Added to support Artems request
+BSkyIsDatasetSplit <- function(datasetname)
+{
+     return(invisible(uaIsDatasetSplit (datasetname)))
+}
 
 uaRetInitialize <- function()
 {   

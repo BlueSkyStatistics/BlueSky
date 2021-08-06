@@ -2,7 +2,7 @@
 
 BSkyIndSmTTest <-function (varNamesOrVarGlobalIndices, group, conf.level = 0.95, alternative="two.sided",
     datasetNameOrDatasetGlobalIndex, missing = 0, bSkyHandleSplit = TRUE, 
-    excludeEnvPrefix = FALSE) 
+    excludeEnvPrefix = FALSE,cohens_d=FALSE, cohensd_correction=FALSE,hedges_g =FALSE, hedgesg_correction=FALSE,glass_d=FALSE, glassd_correction=FALSE) 
 {
     BSkyFunctionInit()
     pos = regexpr("varNamesOrVarGlobalIndices", uadatasets.sk$rproc)
@@ -49,7 +49,7 @@ BSkyIndSmTTest <-function (varNamesOrVarGlobalIndices, group, conf.level = 0.95,
                   groupindex = BSkygetIndexesOfCols(group, bSkyGlobalDataSliceIndexToWorkOn)
                   uatemp = uaindsm(bSkyVarnamesIndex, groupindex, 
                     conf.level,alternative, index = bSkyGlobalDataSliceIndexToWorkOn, 
-                    missing)
+                    missing,cohens_d=cohens_d, cohensd_correction=cohensd_correction,hedges_g =hedges_g, hedgesg_correction=hedgesg_correction,glass_d=glass_d, glassd_correction=glassd_correction)
                   BSkyBuildReturnTableStructure(bSkyVarnames, 
                     bSkyDatasetname, OutputDataTableListIfPassed = NA)
                 }
@@ -61,7 +61,7 @@ BSkyIndSmTTest <-function (varNamesOrVarGlobalIndices, group, conf.level = 0.95,
                 groupindex = BSkygetIndexesOfCols(group, bSkyGlobalDataSliceIndexToWorkOn)
                 uatemp = uaindsm(bSkyVariableColumnIndicesOnDataSlice, 
                   groupindex, conf.level,alternative, index = bSkyGlobalDataSliceIndexToWorkOn, 
-                  missing)
+                  missing,cohens_d=cohens_d, cohensd_correction=cohensd_correction,hedges_g =hedges_g, hedgesg_correction=hedgesg_correction,glass_d=glass_d, glassd_correction=glassd_correction)
                 BSkyBuildReturnTableStructure(bSkyVarnames, bSkyDatasetname, 
                   OutputDataTableListIfPassed = NA)
             }
@@ -80,14 +80,14 @@ BSkyIndSmTTest <-function (varNamesOrVarGlobalIndices, group, conf.level = 0.95,
 	bskystderr <- function(x) sqrt(var(x,na.rm=TRUE)/length(na.omit(x)))
 	
 	
-uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, missing) 
+uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, missing,cohens_d=FALSE, cohensd_correction=FALSE,hedges_g =FALSE, hedgesg_correction=FALSE,glass_d=FALSE, glassd_correction=FALSE) 
 {
     BSkyFunctionInit()
     BSkyErrMsg = "Error in Independent Sample T.test"
     BSkyWarnMsg = "Warning in Independent Sample T.test"
     BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
     bskyNoofTables = length(uadatasets$retstructure)
-    if (nrow(uadatasets$lst[[index]]) == 0) {
+    if (nrow(uadatasets$lst[[index]]) == 0) 	{
         uawritelog(type = "Error", BSkyMessage = "Independent Sample T test cannot be run as the dataset is empty")
         if (bskyNoofTables == 0) {
             uadatasets$retstructure[[1]] <- list()
@@ -133,6 +133,52 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
         n = n + 1
     }
     uamat[[2]] = uacombinemat(uamat[[2]], ualevene[[2]])
+	
+	
+	indexInReturnStructure=3		  
+	if (cohens_d )
+	{
+	
+	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
+    uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
+    uadatasets$retstructure[[indexInReturnStructure]]$metadata = "yes"
+    uadatasets$retstructure[[indexInReturnStructure]]$nometadatatables = 1
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
+	
+	cohensdIndSmTTest (cindex,uavarindex, groupindex, noofvars,correction=cohensd_correction, uacipass=.95, index, indexInReturnStructure)
+	
+
+	
+	indexInReturnStructure =indexInReturnStructure+1
+	
+	}
+	if (hedges_g)
+	{
+	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
+    uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
+    uadatasets$retstructure[[indexInReturnStructure]]$metadata = "yes"
+    uadatasets$retstructure[[indexInReturnStructure]]$nometadatatables = 1
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
+	hedgesgIndSmTTest (cindex,uavarindex, noofvars,correction=hedgesg_correction, uacipass=.95, index,mu,indexInReturnStructure)
+	indexInReturnStructure =indexInReturnStructure+1
+	}
+	if (glass_d)
+	{
+	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
+    uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
+    uadatasets$retstructure[[indexInReturnStructure]]$metadata = "yes"
+    uadatasets$retstructure[[indexInReturnStructure]]$nometadatatables = 1
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
+    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
+	glassdIndSmTTest (cindex,uavarindex, noofvars,correction=glassd_correction, uacipass=.95, index,mu,indexInReturnStructure)
+	}
+	
+	
     BSkyFunctionWrapUp()
     return(list(uadesc[[1]], uamat[[1]], uamat[[2]]))
 }
@@ -265,14 +311,17 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
         2), ncol = 9)
     uadatasets$retstructure[[2]]$metadatatable[[1]] = matrix(nrow = 0, 
         ncol = 5)
-    while (i <= noofvars) {
+    while (i <= noofvars) 
+	{
         uavar = names(uadatasets$lst[[index]][uavarindex[i]])
         uadatasets$uawarnmsgdis = sprintf("Independent Sample T test on variable '%s' generated a warning", 
             uavar)
         uadatasets$uaerrmsgdis = sprintf("Independent Sample T test on variable '%s' generated an error", 
             uavar)
-        if (!is.na(uavarindex[i])) {
-            while (q <= 2) {
+        if (!is.na(uavarindex[i])) 
+		{
+            while (q <= 2) 
+			{
                 if (q == 1) {
                   uavarequal = TRUE
                   k = i * 2 - 1
@@ -297,7 +346,13 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
                           names(uadatasets$lst[[index]][uavarindex[i]]))
                         uadatasets$warnindex = uadatasets$warnindex + 
                           1
-                        uadatasets$retstructure[[1]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[1]]$metadatatable[[1]], 
+						  #Changed by Aaron, commented below
+                        #uadatasets$retstructure[[1]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[1]]$metadatatable[[1]], 
+                        #  data.frame(varIndex = i, type = -1, 
+                         #   varName = names(uadatasets$lst[[index]][uavarindex[i]]), 
+                          #  dataTableRow = k, startCol = 2, endCol = 2, 
+                          #  BSkyMsg = BSkywarnmsgdis, RMsg = ""))
+							uadatasets$retstructure[[2]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[2]]$metadatatable[[1]], 
                           data.frame(varIndex = i, type = -1, 
                             varName = names(uadatasets$lst[[index]][uavarindex[i]]), 
                             dataTableRow = k, startCol = 2, endCol = 2, 
