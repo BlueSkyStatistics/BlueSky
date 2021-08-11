@@ -607,7 +607,7 @@ BSkyOneSmTTest <-function (varNamesOrVarGlobalIndices, mu = 0, conf.level = 0.95
     if (BSkyGlobalWarningFound() == TRUE) {
     }
     BSkyFunctionWrapUp()
-    invisible(BSkyReturnStructure(bskyAdditionalTableList = NA))
+    return(invisible(BSkyReturnStructure2()))
 }
 
 	

@@ -183,5 +183,8 @@ export(BSkySetRCommandDisplaySetting, BSkyGetRCommandDisplaySetting, BSkyGetGrap
 
 export(BSkySetSplitCountDisplaySetting, BSkyGetSplitCountDisplaySetting)
 
+export(cohensdIndSmTTest, hedgesgIndSmTTest,cohensd ,hedgesg,glassdIndSmTTest,glassd)
+
+
 
 

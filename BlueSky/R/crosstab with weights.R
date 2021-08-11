@@ -286,7 +286,7 @@ BSkyCrossTable<- function(x,y,weight=NA, layers=NA,digits=3,max.width = 5, expec
 	# Function BSKYReturnStructure creates the final retun structure i.e. splits or not, error or not, the number of errors
 	# the number of warnings, the log, the summary of the function, the number of tables to display
 	# Basically the first 7 elements of the list
-	invisible( BSkyReturnStructure())
+	invisible( BSkyReturnStructure2())
 }
 
 
