@@ -4288,28 +4288,29 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 
 BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), graphicsDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
-	# cat("Call stack index:")
-	# print(uadatasets.sk$callStackIndex)
-	# cat("Call stack: ")
-	# print(uadatasets.sk$callStack)
+	# just in case as a safety net any uncleaned callstack leftover from the previous BSkyEvalRcommand run 
 	uadatasets.sk$callStack <- NULL
 	uadatasets.sk$callStackIndex = 0
-	
+			
 	if(ignoreSplitOn == FALSE)
 	{
 		BSkyFunctionInit()
 	}
-
-	
-		if(is.null(currentColumnNames))
-		{
-			currentColumnNames = c()
-		}
 	
 		bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
 		
+		if(is.null(currentColumnNames) || trimws(currentColumnNames) == "")
+		{
+			currentColumnNames = c() 
+		}
+		
+		if(is.null(replaceOldColumnNames) || trimws(replaceOldColumnNames) == "")
+		{
+			replaceOldColumnNames = c() 
+		}
+		
 		# the following needed for C# and new Electron app and not for Rstudio markdown 
-		if(length(graphicsDir) > 0 && dir.exists(graphicsDir) && bsky_Rmarkdown_settings$doRmarkdownFormatting == FALSE)
+		if(!is.null(graphicsDir) && length(graphicsDir) > 0 && trimws(graphicsDir) != "" && dir.exists(graphicsDir) && bsky_Rmarkdown_settings$doRmarkdownFormatting == FALSE)
 		{
 			full_file_names = list.files(path = graphicsDir, pattern="png|svg", full.names = TRUE)
 			
@@ -4344,12 +4345,12 @@ BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrent
 		}
 		
 		
-		if(!is.null(currentDatasetName) && length(currentDatasetName) > 0 && currentDatasetName !="")
+		if(!is.null(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName) != "")
 		{
 			BSkySetCurrentDatasetName(currentDatasetName, setDatasetIndex = "y")
 			working_datasetName = currentDatasetName
 			
-			if(length(replaceOldDatasetName) > 0)
+			if(!is.null(replaceOldDatasetName) && length(replaceOldDatasetName) > 0 && trimws(replaceOldDatasetName) != "")
 			{														
 				RcommandString_modified = BSkyDatasetNameSubstitute(datasetName = replaceOldDatasetName, toDatasetName = currentDatasetName, replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = RcommandString)
 			}
@@ -4409,7 +4410,7 @@ BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrent
 			
 			splitDatasetName = "uadatasets$lst[[bSkyGlobalDataSliceIndexToWorkOn]]"
 			
-			if(length(replaceOldDatasetName) > 0)
+			if(!is.null(replaceOldDatasetName) && length(replaceOldDatasetName) > 0 && trimws(replaceOldDatasetName) != "")
 			{																	   
 				RcommandString_modified_split_dataset = BSkyDatasetNameSubstitute(datasetName = replaceOldDatasetName, toDatasetName = splitDatasetName, replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = RcommandString, splitOn = TRUE, preSplitDatasetName = working_datasetName)
 			}
@@ -4518,11 +4519,16 @@ BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrent
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), graphicsDebug = FALSE)
 {
 	
+	if(is.null(origRcommands) || trimws(origRcommands) == "")
+	{
+		origRcommands = c()
+	}
+	
 	bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
 	
 	graphicsDir_exists = FALSE
 	
-	if(length(graphicsDir) > 0 && dir.exists(graphicsDir) && bsky_Rmarkdown_settings$doRmarkdownFormatting == FALSE)
+	if(!is.null(graphicsDir) && length(graphicsDir) > 0 && trimws(graphicsDir) != "" && dir.exists(graphicsDir) && bsky_Rmarkdown_settings$doRmarkdownFormatting == FALSE)
 	{
 		graphicsDir_exists = TRUE
 		#BSkyFormat("BSky graphics output directory found")
@@ -4589,67 +4595,66 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 
 	for (i in seq_along(parsed_Rcommands)) 
 	{
-		   eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
-		   
-			# tryCatch(        
-				# withAutoprint({{eval(ll[[i]])}}, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE),         
-				# error = function(e) message("Error: ", as.character(e))    
-				# )
-			
-			#if(splitOn == FALSE) #Let split iteration also spit our inline RcommandString
-			#{
-				if(echo == TRUE && echoInline == TRUE)
-				{
-					cat("\n")
-					
-					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
-					{
-						cat("<pre class=\"r\"><code>")
-					}
-					
-					if(length(origRcommands) > 0)
-					{
-						#print(parsed_orig_Rcommands[[i]])
-						cat(parsed_orig_Rcommands[[i]])
-						#cat("\n")
-						
-					}
-					else
-					{
-						#print(parsed_Rcommands[[i]])
-						cat(parsed_Rcommands[[i]])
-						#cat("\n")
-					}
-					
-					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
-					{
-						cat("</code></pre>")
-					}
-								
-					cat("\n")
-				}
-			#}
-			
-			# https://stat.ethz.ch/R-manual/R-devel/library/base/html/source.html
-			# https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparse.html
-			# https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparseOpts.html
-			
-			isCommentOrBlankLine = FALSE
-			CommentOrBlankLineStr = trimws(parsed_Rcommands[[i]])
-			if(substr(CommentOrBlankLineStr,1,1) == "#" || substr(CommentOrBlankLineStr,1,1) == "")
+	   eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+	   
+		# tryCatch(        
+			# withAutoprint({{eval(ll[[i]])}}, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE),         
+			# error = function(e) message("Error: ", as.character(e))    
+			# )
+		
+		#if(splitOn == FALSE) #Let split iteration also spit our inline RcommandString
+		#{
+			if(echo == TRUE && echoInline == TRUE)
 			{
-				isCommentOrBlankLine = TRUE
-			}
-			
-			if(isCommentOrBlankLine == FALSE)
-			{
-				tryCatch({
-						withCallingHandlers({
-								withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
-						}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
-						}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
-			}
+				cat("\n")
 				
+				if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+				{
+					cat("<pre class=\"r\"><code>")
+				}
+				
+				if(length(origRcommands) > 0)
+				{
+					#print(parsed_orig_Rcommands[[i]])
+					cat(parsed_orig_Rcommands[[i]])
+					#cat("\n")
+					
+				}
+				else
+				{
+					#print(parsed_Rcommands[[i]])
+					cat(parsed_Rcommands[[i]])
+					#cat("\n")
+				}
+				
+				if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+				{
+					cat("</code></pre>")
+				}
+							
+				cat("\n")
+			}
+		#}
+		
+		# https://stat.ethz.ch/R-manual/R-devel/library/base/html/source.html
+		# https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparse.html
+		# https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparseOpts.html
+		
+		isCommentOrBlankLine = FALSE
+		CommentOrBlankLineStr = trimws(parsed_Rcommands[[i]])
+		if(substr(CommentOrBlankLineStr,1,1) == "#" || substr(CommentOrBlankLineStr,1,1) == "")
+		{
+			isCommentOrBlankLine = TRUE
+		}
+		
+		if(isCommentOrBlankLine == FALSE)
+		{
+			tryCatch({
+					withCallingHandlers({
+							withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
+					}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
+					}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+			
 			if(bsky_rcommand_execution_an_exception_occured == TRUE)
 			{
 				#if(splitOn == TRUE || echoInline == FALSE)
@@ -4687,15 +4692,11 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 			if(graphicsDir_exists == TRUE)
 			{
 				num_graphics_files = length(list.files(graphicsDir, pattern="png|svg"))
-				 
-				#current_initial_graphics_file_mtime = file.mtime(uadatasets.sk$initial_graphics_file_name)
 				
-				#if(current_initial_graphics_file_mtime > uadatasets.sk$initial_graphics_file_mtime && num_graphics_files == uadatasets.sk$strating_count_of_bsky_graphics_files)
-				# {
-					# BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= 1, isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
-					# uadatasets.sk$initial_graphics_file_mtime = current_initial_graphics_file_mtime
-				# }
-				# else
+				# cat("\n<br>********* SK debug Printing call details within BSkyEvalRcommandBasic - num_graphics_files and uadatasets.sk$last_count_of_bsky_graphics_files ******<br>\n")
+				# print(num_graphics_files)
+				# print(uadatasets.sk$last_count_of_bsky_graphics_files)
+				# print(num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
 			
 				if(num_graphics_files > uadatasets.sk$last_count_of_bsky_graphics_files)
 				{
@@ -4709,20 +4710,26 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 						{
 							file.remove(uadatasets.sk$initial_graphics_file_name)
 						}
-					}
-					
-					BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
-					
-					if(graphicsDebug == TRUE)
-					{
-						uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
+						
+						if(graphicsDebug == TRUE)
+						{
+							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files - 1), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
+						}
+						else
+						{
+							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files - 1
+						}
 					}
 					else
 					{
-						uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files - 1
+						BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+						uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
 					}
 				}
 			}
+		}
 	}
 	
 	eval(parse(text="rm(bsky_rcommand_execution_an_exception_occured)"), envir=globalenv())
