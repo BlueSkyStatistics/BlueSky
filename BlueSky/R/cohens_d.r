@@ -16,7 +16,7 @@ while (i <=len)
   { 
 	if(uaperformance==2)
 	{
-	uastartlog("t.test","uaonesmt.test")	
+	uastartlog("t.test","cohensd")	
 	#ostarttime =date()
 	#starttime=proc.time()
 	#initialmem=gc()
@@ -92,7 +92,7 @@ return(TRUE)
 
 
 
-	
+
 
 cohensdIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correction,
     uacipass, index, indexInReturnStructure) 
@@ -101,15 +101,8 @@ cohensdIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
     i = 1
     j = 1
     p = 1
-    uadatasets$retstructure[[indexInReturnStructure]] <- list()
-    uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
-    uadatasets$retstructure[[indexInReturnStructure]]$metadata = "yes"
-    uadatasets$retstructure[[indexInReturnStructure]]$nometadatatables = 1
-    uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
-    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$datatable = matrix(nrow = noofvars, ncol = 4)
-    uadatasets$retstructure[[2]]$metadatatable[[1]] = matrix(nrow = 0, 
-        ncol = 5)
+   
     while (i <= noofvars) 
 	{
 		uavar = names(uadatasets$lst[[index]][uavarindex[i]])
@@ -162,11 +155,10 @@ cohensdIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
                 if (uadatasets$errorfn == -1) 
 				{
                   uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]], 
-                    rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]], 
-                      data.frame(varIndex = i, type = -1, varName = uavar, 
+                        data.frame(varIndex = i, type = -1, varName = uavar, 
                         dataTableRow = (i ), startCol = 2, 
                         endCol = 2, BSkyMsg = uadatasets$uaerrmsgdis, 
-                        RMsg = uadatasets$uarerrmsg)))
+                        RMsg = uadatasets$uarerrmsg))
                   j = j + 1
                 }
                 if (uadatasets$uawarnfn == -1) 
@@ -204,8 +196,8 @@ cohensdIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
             
     }
     
-     
+      BSkyFunctionWrapUp()
     return(list(uadatasets$retstructure[[2]]$datatable, uadatasets$retstructure[[2]]$metadatatable[[1]]))
-    BSkyFunctionWrapUp()
+   
 }
 

@@ -25,7 +25,7 @@ BSkyIndSmTTest <-function (varNamesOrVarGlobalIndices, group, conf.level = 0.95,
             collapse = ","))
     BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
     tryCatch({
-        withCallingHandlers({
+       withCallingHandlers({
             if (bSkyHandleSplit == TRUE) {
                 bSkySplitIterationCount = BSkyComputeSplitdataset(bSkyVarnamesSplit, 
                   bSkyDatasetname)
@@ -74,7 +74,8 @@ BSkyIndSmTTest <-function (varNamesOrVarGlobalIndices, group, conf.level = 0.95,
     if (BSkyGlobalWarningFound() == TRUE) {
     }
     BSkyFunctionWrapUp()
-    invisible(BSkyReturnStructure(bskyAdditionalTableList = NA))
+    invisible(BSkyReturnStructure2())
+	
 }
 
 	bskystderr <- function(x) sqrt(var(x,na.rm=TRUE)/length(na.omit(x)))
@@ -163,7 +164,7 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
-	hedgesgIndSmTTest (cindex,uavarindex, noofvars,correction=hedgesg_correction, uacipass=.95, index,mu,indexInReturnStructure)
+	hedgesgIndSmTTest (cindex,uavarindex,groupindex, noofvars,correction=hedgesg_correction, uacipass=.95, index,indexInReturnStructure)
 	indexInReturnStructure =indexInReturnStructure+1
 	}
 	if (glass_d)
@@ -175,7 +176,7 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
-	glassdIndSmTTest (cindex,uavarindex, noofvars,correction=glassd_correction, uacipass=.95, index,mu,indexInReturnStructure)
+	glassdIndSmTTest (cindex,uavarindex, groupindex,noofvars,correction=glassd_correction, uacipass=.95, index,indexInReturnStructure)
 	}
 	
 	
@@ -309,8 +310,7 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
     uadatasets$retstructure[[2]]$metadatatable = list()
     uadatasets$retstructure[[2]]$datatable = matrix(nrow = (noofvars * 
         2), ncol = 9)
-    uadatasets$retstructure[[2]]$metadatatable[[1]] = matrix(nrow = 0, 
-        ncol = 5)
+    uadatasets$retstructure[[2]]$metadatatable[[1]] = data.frame()
     while (i <= noofvars) 
 	{
         uavar = names(uadatasets$lst[[index]][uavarindex[i]])
@@ -387,11 +387,10 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
                 }
                 if (uadatasets$errorfn == -1) {
                   uadatasets$retstructure[[2]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[2]]$metadatatable[[1]], 
-                    rbind(uadatasets$retstructure[[2]]$metadatatable[[1]], 
-                      data.frame(varIndex = i, type = -1, varName = uavar, 
+                       data.frame(varIndex = i, type = -1, varName = uavar, 
                         dataTableRow = (i + q - 1), startCol = 3, 
                         endCol = 9, BSkyMsg = uadatasets$uaerrmsgdis, 
-                        RMsg = uadatasets$uarerrmsg)))
+                        RMsg = uadatasets$uarerrmsg))
                   j = j + 1
                 }
                 if (uadatasets$uawarnfn == -1) {
