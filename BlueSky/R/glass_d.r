@@ -160,21 +160,24 @@ glassdIndSmTTest <-function (cindex, uavarindex, groupindex,  noofvars,  correct
                         RMsg = uadatasets$uarerrmsg))
                   j = j + 1
                 }
-                if (uadatasets$uawarnfn == -1) 
+              if(uadatasets$uawarnfn ==-1)
+			{
+				len1 =length(uadatasets$uarwarnmsg)
+				# k is used for indexing the warning variables
+				k=1
+				for (k in 1:len1)
 				{
-                  len1 = length(uadatasets$uawarnvar)
-                  k = 1
-                  for (k in 1:len1) {
-                    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]], 
-                      data.frame(varIndex = i, type = 1, varName = uavar, 
-                        dataTableRow = (i ), startCol = 2, 
-                        endCol = 4, BSkyMsg = uadatasets$uawarnmsgdis, 
-                        RMsg = uadatasets$uarwarnmsg[k]))
-                  }
-                  uadatasets$uawarnvar = NULL
-                  uadatasets$uawarnmsgdis = NULL
-                  uadatasets$uarwarnmsg = NULL
-                }
+					#1st position is the index of the variable in uavarindex
+					#2nd position is whether everything is OK (1), its an error(-1) or warning(-2)
+					#3rd position is the variable name
+					#4th position is the warning message that should be displayed
+					#5th position is the R warning message
+					uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] , data.frame(varIndex=i,type=1,varName=uavar,dataTableRow=i,startCol=1,endCol=4,BSkyMsg=uadatasets$uawarnmsgdis,RMsg=uadatasets$uarwarnmsg[k]))
+				}	
+				uadatasets$uawarnvar=NULL
+				uadatasets$uawarnmsgdis=NULL
+				uadatasets$uarwarnmsg=NULL
+			}
                 if (uadatasets$errorfn != -1) 
 				{
                     uadatasets$errorfn = 0

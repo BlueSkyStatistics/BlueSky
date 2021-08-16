@@ -393,8 +393,10 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
                         RMsg = uadatasets$uarerrmsg))
                   j = j + 1
                 }
+				
+				
                 if (uadatasets$uawarnfn == -1) {
-                  len1 = length(uadatasets$uawarnvar)
+                  len1 = length(uadatasets$uarwarnmsg)
                   k = 1
                   for (k in 1:len1) {
                     uadatasets$retstructure[[2]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[2]]$metadatatable[[1]], 
@@ -407,6 +409,9 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
                   uadatasets$uawarnmsgdis = NULL
                   uadatasets$uarwarnmsg = NULL
                 }
+				
+				
+				
                 if (uadatasets$errorfn != -1) {
                   if (q == 1) {
                     uadatasets$errorfn = 0
@@ -540,7 +545,7 @@ ualevene.test <-function(cindex,uavarindex,groupindex,noofvars, index)
 			}	
 			if(uadatasets$uawarnfn ==-1)
 			{
-				len1 =length(uadatasets$uawarnvar)
+				len1 =length(uadatasets$uarwarnmsg)
 				# k is used for indexing the warning variables
 				k=1
 				for (k in 1:len1)

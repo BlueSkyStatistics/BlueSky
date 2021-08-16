@@ -115,9 +115,9 @@ hedgesgIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
 			{
                  uastartlog("t.test", "hedgesgIndSmTTest")
             }
-			#	tryCatch(
-			#	{
-             #     withCallingHandlers({
+			tryCatch(
+			{
+                withCallingHandlers({
 				  
 					temp1 = !is.na(eval(uadatasets$temppairs[p]))
                     temp2 = eval(uadatasets$temppairs[p + 1])
@@ -145,14 +145,21 @@ hedgesgIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
                         #  eval(uadatasets$temppairs[p + 1]), 
                          #   adjust =correction, ci = uacipass)
 						 
+						 # This works
 						 uatemp <- hedges_g(eval(uadatasets$temppairs[p]) ~ 
                           eval(uadatasets$temppairs[p + 1]), 
-                           correction =correction, ci = uacipass)
+                           adjust =correction, ci = uacipass)
+						   # This does not work 
+						# uatemp <- hedges_g(eval(uadatasets$temppairs[p]) ~ 
+                         # eval(uadatasets$temppairs[p + 1]), 
+                          # correction =correction, ci = uacipass)
+						   
+						 
                       }
                     
-            #      }
-			#	  , warning = UAwarnHandlerFn)
-             #   }, error = UAerrHandlerFn, silent = TRUE)
+                 }
+				  , warning = UAwarnHandlerFn)
+               }, error = UAerrHandlerFn, silent = TRUE)
                 if (uaperformance == 2) 
 				{
                   ualogcommand()
@@ -166,21 +173,50 @@ hedgesgIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
                         RMsg = uadatasets$uarerrmsg))
                   j = j + 1
                 }
-                if (uadatasets$uawarnfn == -1) 
+                
+				#Original
+				
+				# if (uadatasets$uawarnfn == -1) 
+				# {
+                  # len1 = length(uadatasets$uawarnvar)
+                  # k = 1
+                  # for (k in 1:len1) {
+                    # uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]], 
+                      # data.frame(varIndex = i, type = 1, varName = uavar, 
+                        # dataTableRow = (i ), startCol = 2, 
+                        # endCol = 4, BSkyMsg = uadatasets$uawarnmsgdis, 
+                        # RMsg = uadatasets$uarwarnmsg[k]))
+                  # }
+                  # uadatasets$uawarnvar = NULL
+                  # uadatasets$uawarnmsgdis = NULL
+                  # uadatasets$uarwarnmsg = NULL
+                # }
+				
+				#From one sample
+				
+				if(uadatasets$uawarnfn ==-1)
+			{
+				len1 =length(uadatasets$uarwarnmsg)
+				# k is used for indexing the warning variables
+				k=1
+				for (k in 1:len1)
 				{
-                  len1 = length(uadatasets$uawarnvar)
-                  k = 1
-                  for (k in 1:len1) {
-                    uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]], 
-                      data.frame(varIndex = i, type = 1, varName = uavar, 
-                        dataTableRow = (i ), startCol = 2, 
-                        endCol = 4, BSkyMsg = uadatasets$uawarnmsgdis, 
-                        RMsg = uadatasets$uarwarnmsg[k]))
-                  }
-                  uadatasets$uawarnvar = NULL
-                  uadatasets$uawarnmsgdis = NULL
-                  uadatasets$uarwarnmsg = NULL
-                }
+					#1st position is the index of the variable in uavarindex
+					#2nd position is whether everything is OK (1), its an error(-1) or warning(-2)
+					#3rd position is the variable name
+					#4th position is the warning message that should be displayed
+					#5th position is the R warning message
+					uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] , data.frame(varIndex=i,type=1,varName=uavar,dataTableRow=i,startCol=1,endCol=4,BSkyMsg=uadatasets$uawarnmsgdis,RMsg=uadatasets$uarwarnmsg[k]))
+				}	
+				uadatasets$uawarnvar=NULL
+				uadatasets$uawarnmsgdis=NULL
+				uadatasets$uarwarnmsg=NULL
+			}
+				
+				
+				
+				
+				
                 if (uadatasets$errorfn != -1) 
 				{
                     uadatasets$errorfn = 0

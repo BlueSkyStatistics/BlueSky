@@ -2504,6 +2504,7 @@ BSkyFormatLmerMod <- function(obj, decimalDigits = BSkyGetDecimalDigitSetting())
 
 #11May2021 formatting of BSkyOneSmTTest() and BSkyIndSmTTest() to eliminate the two xml templates for formatting
 #16May2021, 21May2021, 26May2021, 08Jun2021, 30Jul2021
+
 BSkyFormatBSkyOneSampleTtest <- function(obj)
 {
 	# "BSkyOneSmTTest( alternative=c('two.sided' ), bSkyHandleSplit=c(TRUE ), conf.level=c(0.95 ), 
@@ -2568,11 +2569,22 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 							
 							if(obj$BSkySplit == 1)
 							{
-								table_list_names = c(table_list_names, "One Sample Statistics")
 								#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 								
 								#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
 								attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = paste("Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								
+								split_iteration_headline_str = paste("Begins Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								
+								split_iteration_headline = matrix(split_iteration_headline_str, ncol=1)
+								dimnames(split_iteration_headline)[[1]] = NULL
+								dimnames(split_iteration_headline)[[2]] = NULL
+								
+								table_list_names = c(table_list_names, "Split Headline")
+								table_list = c(table_list, list(split_iteration_headline))
+								names(table_list) = table_list_names
+								
+								table_list_names = c(table_list_names, "One Sample Statistics")
 							}
 							else
 							{
@@ -2617,7 +2629,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 						
 						n = n+1
 						
-						if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
+						if(n <= num_tables && !is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 						{
 							X_has_been_printed = FALSE
 							
@@ -2723,7 +2735,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 						
 						n = n+1
 						
-						if(cohens_d == TRUE)
+						if(n <= num_tables && cohens_d == TRUE)
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -2801,7 +2813,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 							n = n+1
 						}
 						
-						if(hedges_g == TRUE)
+						if(n <= num_tables && hedges_g == TRUE)
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -2879,7 +2891,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 							n = n+1
 						}
 						
-						if(glass_d == TRUE)
+						if(n <= num_tables && glass_d == TRUE)
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -2976,10 +2988,6 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 	return(invisible(obj))
 }
 
-
-
-#11May2021
-#16May2021, 21May2021, 26May2021, 08Jun2021, 30Jul2021
 BSkyFormatBSkyIndSampleTtest <- function(obj)
 {
 	# BSkyIndSmTTest( alternative=c('less' ), bSkyHandleSplit=c(TRUE ), conf.level=c(0.9 ), 
@@ -3000,6 +3008,10 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 				alternative = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "alternative")
 				group_factor_var = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "group")
 				database_name = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "datasetNameOrDatasetGlobalIndex")
+				
+				cohens_d = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "cohens_d")
+				hedges_g = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "hedges_g")
+				glass_d = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "glass_d")
 				
 				group_factor_var_values = levels(eval(parse(text= paste(database_name, "$", group_factor_var, sep = "")), envir=globalenv()))
 				
@@ -3069,11 +3081,23 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 							
 							if(obj$BSkySplit == 1)
 							{
-								table_list_names = c(table_list_names, "Group Statistics")
+								
 								#table_list_names = c(table_list_names, paste("Group Statistics -", obj$tables[[n]]$cartlevel))
 								
 								#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
 								attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = paste("Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")	
+								
+								split_iteration_headline_str = paste("Begins Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								
+								split_iteration_headline = matrix(split_iteration_headline_str, ncol=1)
+								dimnames(split_iteration_headline)[[1]] = NULL
+								dimnames(split_iteration_headline)[[2]] = NULL
+								
+								table_list_names = c(table_list_names, "Split Headline")
+								table_list = c(table_list, list(split_iteration_headline))
+								names(table_list) = table_list_names
+								
+								table_list_names = c(table_list_names, "Group Statistics")
 							}
 							else
 							{
@@ -3118,7 +3142,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 						
 						n = n+1
 						
-						if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
+						if(n <= num_tables && !is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 						{
 							X_has_been_printed = FALSE
 							
@@ -3245,6 +3269,240 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 						}
 						
 						n = n + 1
+						
+						if(n <= num_tables && cohens_d == TRUE)
+						{
+							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
+							{  
+								X_has_been_printed = FALSE
+								
+								if(dim(obj$tables[[n]]$datatable)[2] < 4)
+								{
+									X_has_been_printed = TRUE
+									
+									filler_column = rep("X",dim(obj$tables[[n]]$datatable)[1])
+											
+									for(add_col in 1: (4 - dim(obj$tables[[n]]$datatable)[2]))
+									{
+										obj$tables[[n]]$datatable = cbind(obj$tables[[n]]$datatable, filler_column)
+									}
+								}
+								
+								obj$tables[[n]]$datatable = matrix(obj$tables[[n]]$datatable[,c(1:4)], ncol = 4)
+								dimnames(obj$tables[[n]]$datatable)[[2]] = c("Cohens_d", "CI", "CI_low", "CI_high")
+								
+								if(length(var_names) == dim(obj$tables[[n]]$datatable)[1])
+								{
+									row.names(obj$tables[[n]]$datatable) = var_names
+								}
+								
+								if(obj$BSkySplit == 1)
+								{
+									table_list_names = c(table_list_names, "Cohen's D")
+									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
+									
+									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
+									attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = paste("Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								}
+								else
+								{
+									table_list_names = c(table_list_names, "Cohen's D")
+								}
+								
+								if(X_has_been_printed == TRUE)
+								{
+									attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to errors")
+								}
+								
+								num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
+									
+								if(num_additional_info > 0)
+								{
+									index = 0 
+									
+									for(addl_msg in 1:num_additional_info)
+									{
+										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
+										{
+											index = index + 1
+											
+											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											{
+												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
+												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
+											}
+											
+											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											{
+												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
+												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
+											}
+										}
+									}
+								}
+							
+								table_list = c(table_list, list(obj$tables[[n]]$datatable))
+								names(table_list) = table_list_names
+							}
+						
+							n = n+1
+						}
+						
+						if(n <= num_tables && hedges_g == TRUE)
+						{
+							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
+							{  
+								X_has_been_printed = FALSE
+								
+								if(dim(obj$tables[[n]]$datatable)[2] < 4)
+								{
+									X_has_been_printed = TRUE
+									
+									filler_column = rep("X",dim(obj$tables[[n]]$datatable)[1])
+											
+									for(add_col in 1: (4 - dim(obj$tables[[n]]$datatable)[2]))
+									{
+										obj$tables[[n]]$datatable = cbind(obj$tables[[n]]$datatable, filler_column)
+									}
+								}
+								
+								obj$tables[[n]]$datatable = matrix(obj$tables[[n]]$datatable[,c(1:4)], ncol = 4)
+								dimnames(obj$tables[[n]]$datatable)[[2]] = c("Hedges_g", "CI", "CI_low", "CI_high")
+								
+								if(length(var_names) == dim(obj$tables[[n]]$datatable)[1])
+								{
+									row.names(obj$tables[[n]]$datatable) = var_names
+								}
+								
+								if(obj$BSkySplit == 1)
+								{
+									table_list_names = c(table_list_names, "Hedges' G")
+									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
+									
+									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
+									attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = paste("Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								}
+								else
+								{
+									table_list_names = c(table_list_names, "Hedges' G")
+								}
+								
+								if(X_has_been_printed == TRUE)
+								{
+									attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to errors")
+								}
+								
+								num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
+									
+								if(num_additional_info > 0)
+								{
+									index = 0 
+									
+									for(addl_msg in 1:num_additional_info)
+									{
+										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
+										{
+											index = index + 1
+											
+											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											{
+												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
+												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
+											}
+											
+											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											{
+												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
+												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
+											}
+										}
+									}
+								}
+							
+								table_list = c(table_list, list(obj$tables[[n]]$datatable))
+								names(table_list) = table_list_names
+							}
+						
+							n = n+1
+						}
+						
+						if(n <= num_tables && glass_d == TRUE)
+						{
+							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
+							{  
+								X_has_been_printed = FALSE
+								
+								if(dim(obj$tables[[n]]$datatable)[2] < 4)
+								{
+									X_has_been_printed = TRUE
+									
+									filler_column = rep("X",dim(obj$tables[[n]]$datatable)[1])
+											
+									for(add_col in 1: (4 - dim(obj$tables[[n]]$datatable)[2]))
+									{
+										obj$tables[[n]]$datatable = cbind(obj$tables[[n]]$datatable, filler_column)
+									}
+								}
+								
+								obj$tables[[n]]$datatable = matrix(obj$tables[[n]]$datatable[,c(1:4)], ncol = 4)
+								dimnames(obj$tables[[n]]$datatable)[[2]] = c("Glass_delta", "CI", "CI_low", "CI_high")
+								
+								if(length(var_names) == dim(obj$tables[[n]]$datatable)[1])
+								{
+									row.names(obj$tables[[n]]$datatable) = var_names
+								}
+								
+								if(obj$BSkySplit == 1)
+								{
+									table_list_names = c(table_list_names, "Glass' Delta")
+									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
+									
+									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
+									attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = paste("Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								}
+								else
+								{
+									table_list_names = c(table_list_names, "Glass' Delta")
+								}
+								
+								if(X_has_been_printed == TRUE)
+								{
+									attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to errors")
+								}
+								
+								num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
+									
+								if(num_additional_info > 0)
+								{
+									index = 0 
+									
+									for(addl_msg in 1:num_additional_info)
+									{
+										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
+										{
+											index = index + 1
+											
+											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											{
+												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
+												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
+											}
+											
+											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											{
+												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
+												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
+											}
+										}
+									}
+								}
+							
+								table_list = c(table_list, list(obj$tables[[n]]$datatable))
+								names(table_list) = table_list_names
+							}
+						
+							n = n+1
+						}
 					}
 					else
 					{
@@ -3265,7 +3523,6 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 	return(invisible(obj))
 }
 
-#17May2021, 21May2021, 25May2021, 08Jun2021, 30Jul2021
 BSkyFormatBSkyCrossTable <- function(obj)
 {
 	#BSkyCrossTable( asresid=c(TRUE ), bSkyHandleSplit=c(TRUE ), chisq=c(FALSE ), datasetname=c('mtcars' ), 
@@ -3829,11 +4086,22 @@ BSkyFormatBSkyCrossTable <- function(obj)
 								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Multiway Cross Table")
 									#table_list_names = c(table_list_names, paste("Multiway Cross Table -", obj$tables[[n]]$cartlevel))
 									
 									#attr(cross_table_skeleton3, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
 									attr(cross_table_skeleton3, "BSkyFootnote_BSkySplit") = paste("Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								
+									split_iteration_headline_str = paste("Begins Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+								
+									split_iteration_headline = matrix(split_iteration_headline_str, ncol=1)
+									dimnames(split_iteration_headline)[[1]] = NULL
+									dimnames(split_iteration_headline)[[2]] = NULL
+									
+									table_list_names = c(table_list_names, "Split Headline")
+									table_list = c(table_list, list(split_iteration_headline))
+									names(table_list) = table_list_names
+									
+									table_list_names = c(table_list_names, "Multiway Cross Table")
 								}
 								else
 								{
@@ -3909,7 +4177,7 @@ BSkyFormatBSkyCrossTable <- function(obj)
 						####################################################################
 						#"Pearson Chi Square" "Mcnemar's test" "Fisher's test"
 						####################################################################
-						if(additional_tests_count > 0 && obj$tables[[n]]$nometadatatables == 2 && !is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0)
+						if(n <= num_tables && additional_tests_count > 0 && obj$tables[[n]]$nometadatatables == 2 && !is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0)
 						{	
 							X_has_been_printed = FALSE
 							
@@ -4265,6 +4533,12 @@ BSkyFormatBSkyCrossTable <- function(obj)
 	
 	return(invisible(obj))
 }
+
+
+
+
+
+
 
 
 #17May2021
