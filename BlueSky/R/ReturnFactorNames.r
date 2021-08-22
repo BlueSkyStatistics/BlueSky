@@ -1,7 +1,14 @@
-returnFactorNamesOfFactorVars <- function (datasetname)
+returnFactorNamesOfFactorVars <- function (datasetname, cross=FALSE)
 {
 
-    eval(parse(text = paste("names(", datasetname,   ")[sapply(", datasetname, ",is.factor)]")))
+    if (!cross)
+	{
+	eval(parse(text = paste("names(", datasetname,   ")[sapply(", datasetname, ",is.factor)]")))
+	}
+	else
+	{
+	c( "",eval(parse(text = paste("names(", datasetname,   ")[sapply(", datasetname, ",is.factor)]"))))
+	}
 
 
 }
