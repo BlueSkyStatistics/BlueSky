@@ -14,6 +14,7 @@
 # UAgetDataByIndex (not complete)
 # UAgetMissing
 # UAsetMissing
+# BSkyGetDatasetSplitInfo
 # UAgetDataframeSplit
 # BSkySetDataFrameSplit
 # UAsetDataframeSplit
@@ -1147,6 +1148,22 @@ UAsetMissing<-function( colNameOrIndex, missvals=NULL, dataSetNameOrIndex)
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level set missing function\n")
 		return(invisible(BSkyReturnStructure()))
+}
+
+
+
+##22Aug2021 simplified BSky func to get the split column list. It will return empty character array if there is no split.
+BSkyGetDatasetSplitInfo <- function(datasetNameStr)
+{
+	splitVarList = c()
+	splitInfo = UAgetDataframeSplit(datasetNameStr)
+
+	if(!is.null(splitInfo) && length(splitInfo) > 0 && splitInfo$DFsplit == TRUE)
+	{
+		splitVarList = splitInfo$DFsplitcolnames
+	}
+
+	return(invisible(splitVarList))
 }
 
 #################################  NOT IN USE ###### (better check)  ############################################################################

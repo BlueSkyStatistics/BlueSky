@@ -185,6 +185,8 @@ export(BSkySetSplitCountDisplaySetting, BSkyGetSplitCountDisplaySetting)
 
 export(cohensdIndSmTTest, hedgesgIndSmTTest,cohensd ,hedgesg,glassdIndSmTTest,glassd)
 
+export(BSkyGetDatasetSplitInfo)
+
 
 
 
