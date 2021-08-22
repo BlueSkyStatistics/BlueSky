@@ -91,7 +91,7 @@
  }
 
 
-##27May2021
+##22Aug2021
 BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", tableStylingOptions = "table_border = F, column_align = r, header_background = \"#F0F8FF\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#F0F8FF\"))")
 {
 
@@ -215,9 +215,9 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 	obj = BSkyFormatBSkyIndSampleTtest(obj)
 	obj = BSkyFormatBSkyCrossTable(obj)
 	
-	#print("Before BSkyFormat2")
-	BSkyFormat_output = BSkyFormat2(obj, silentFormatting = silentFormatting, bSkyFormatAppRequest=FALSE, bSkyReturnObj = bSkyReturnObj, ftable_change_variable_order =ftable_change_variable_order, sublist_length =sublist_length, remove_rows_with_zero_count= remove_rows_with_zero_count , no_row_column_headers=no_row_column_headers, decimalDigitsRounding=decimalDigitsRounding, engNotationSetting = engNotationSetting, singleTableOutputHeader = singleTableOutputHeader, isRound = isRound, coefConfInt = coefConfInt, isRmarkdownOutputOn = doRmarkdownFormatting )
-	#print("After BSkyFormat2")
+	# changing bSkyFormatAppRequest=bSkyFormatAppRequest to bSkyFormatAppRequest= FALSE which is the default value(this is to preseve the table footers attributes within BSkyFormat2) 
+	BSkyFormat_output = BSkyFormat2(obj, silentFormatting = silentFormatting, bSkyFormatAppRequest= FALSE, bSkyReturnObj = bSkyReturnObj, ftable_change_variable_order =ftable_change_variable_order, sublist_length =sublist_length, remove_rows_with_zero_count= remove_rows_with_zero_count , no_row_column_headers=no_row_column_headers, decimalDigitsRounding=decimalDigitsRounding, engNotationSetting = engNotationSetting, singleTableOutputHeader = singleTableOutputHeader, isRound = isRound, coefConfInt = coefConfInt, isRmarkdownOutputOn = doRmarkdownFormatting )
+	
 	
 	# cat("\n<br> SK -1 after BSkyFormat2() <br>\n")
 	# print(BSkyFormat_output$tables[[1]])
@@ -465,7 +465,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 				#######################################################################################################
 				#Remove empty rows i.e. rows with all c("") values
 				#BSkyFormat_output$tables[[i]] = as.data.frame(BSkyFormat_output$tables[[i]][!apply(BSkyFormat_output$tables[[i]] == "", 1, all),])
-				#Need the temp table to perform the following opeartions - otherwise R meeses up with the dimnames of the tables!!
+				#Need the temp table to perform the following opeartions - otherwise R messes up with the dimnames of the tables!!
 				########################################################################################################
 				
 				temp_tbl = BSkyFormat_output$tables[[i]]
@@ -1140,7 +1140,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 							
 							p = unfiltered_table[1,1]
 							
-							if(doLatexFormatting == FALSE)
+							if(doRmarkdownFormatting == TRUE && doLatexFormatting == FALSE)
 							{
 								writeLines(p) 
 							}
@@ -1171,12 +1171,19 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 										#p1 = gsub("\\}_\\{","}\\\\_{", p)
 										p = HTMLencode(p, encode.only = c("_")) 
 										
-										print(unname(as.data.frame(p)),quote = FALSE, row.names = FALSE)
+										if(doRmarkdownFormatting == TRUE)
+										{
+											print(unname(as.data.frame(p)),quote = FALSE, row.names = FALSE)
+										}
 									}
 									else
 									{
 										p = unfiltered_table[1,1]
-										cat(p)
+										
+										if(doRmarkdownFormatting == TRUE)
+										{
+											cat(p)
+										}
 									}
 								}
 								else # when itelics is chosen i.e. equatiomatic::extract_eq(....., ital_vars = TRUE)
@@ -1186,17 +1193,25 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 									if(grepl("\\[",p) == FALSE)
 									{
 										p = paste("\\[", as.character(unfiltered_table[1,1]), "\\]")
-										print(unname(as.data.frame(p)),quote = FALSE, row.names = FALSE)
+										
+										if(doRmarkdownFormatting == TRUE)
+										{
+											print(unname(as.data.frame(p)),quote = FALSE, row.names = FALSE)
+										}
 									}
 									else
 									{
-										cat(p)
+										if(doRmarkdownFormatting == TRUE)
+										{
+											cat(p)
+										}
 									}
 								}
 							}
 							else
 							{
 								p = unfiltered_table[1,1]
+								
 								print(original_input_equation_obj)
 							}
 						}	
@@ -1208,24 +1223,30 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 							if(doKableFormatting == TRUE && doLatexFormatting == FALSE)
 							{
 								## <br> for newline break <p> for paragraph
+								# if(doRmarkdownFormatting == TRUE)
+								# {
+									unfiltered_table[1,1] = gsub("\\n", "<br>", unfiltered_table[1,1])
+									p = paste("<p>", unfiltered_table[1,1], "</p>")
+								# }
+								
+								# For BSky electron app just write to sink file - no need to convert explicitely \n to <br> or put <p> tag around 
+								# 08/20/21 SK changed the logic for electron app to not print to sink file - rather keep it in the BSky return structure queue
 								if(doRmarkdownFormatting == TRUE)
 								{
-									unfiltered_table[1,1] = gsub("\\n", "<br>", unfiltered_table[1,1])
-									#p = paste("<p>", unfiltered_table[1,1], "</p>")
+									writeLines(as.character(unfiltered_table[1,1]))
 								}
-								
-								# For BSky electron app just write to sync file - no need to convert explicitely \n to <br> or put <p> tag around 
-								writeLines(as.character(unfiltered_table[1,1]))
 								
 								if(doRmarkdownFormatting == TRUE)
 								{
 									cat("<br>")
 								}
 								
-								# p = unfiltered_table[1,1] #moved out (see below) of the if clause 
+								#p = unfiltered_table[1,1] #moved out (see below) of the if clause 
 							}
-							
-							p = unfiltered_table[1,1]
+							else
+							{
+								p = unfiltered_table[1,1]
+							}
 							
 							# else
 							# {
