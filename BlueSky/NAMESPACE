@@ -184,6 +184,8 @@ export(BSkySetRCommandDisplaySetting, BSkyGetRCommandDisplaySetting, BSkyGetGrap
 export(BSkySetSplitCountDisplaySetting, BSkyGetSplitCountDisplaySetting)
 
 export(cohensdIndSmTTest, hedgesgIndSmTTest,cohensd ,hedgesg,glassdIndSmTTest,glassd)
+#08/22/2021
+export( BSkyGetDatasetName,BSkyGetDatasetNamesfunction, BSkyGetPackageName )
 
 
 
