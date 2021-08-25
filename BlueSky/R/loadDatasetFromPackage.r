@@ -1,4 +1,4 @@
-BSkyGetDatasetNamesfunction <-function(package ="")
+BSkyGetDatasetNameTitle <-function(package ="")
 {
     if (package=="")
     {
@@ -10,17 +10,17 @@ BSkyGetDatasetNamesfunction <-function(package ="")
     }
     uadatasets.sk$BSkyDataFramePackageDetails <-uadatasets.sk$BSkyDataFramePackageDetails %>%
          mutate( Keys =paste(Item , "-[", Title, "]","-",Package, sep="" ))
-    return(BSkyDataFramePackageDetails[,c("Keys")])
+    return(uadatasets.sk$BSkyDataFramePackageDetails[,c("Keys")])
 
 }
 
 
-BSkyGetDatasetName <-function(datasetAndPackagedetails)
+BSkyGetDatasetNameFromPackageDatasetList <-function(datasetAndPackagedetails)
 {
-return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),2])
+return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),3])
 }
 
-BSkyGetPackageName <-function(datasetAndPackagedetails)
+BSkyGetPackageNameFromPackageDatasetList <-function(datasetAndPackagedetails)
 {
 return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),1])
 }

@@ -7,7 +7,7 @@ BSkyLoadRpkgDataset <- function(datasetname, datasetobj, RPkgName)
 	eval(parse(text = paste( "TmP=data('" , datasetname , "', package='" , RPkgName , "')" , sep = ''))) 
 
 	dsclass = eval(parse(text=paste('class(',datasetobj,')',sep='')))
-	if(dsclass!='data.frame')
+	if(!('data.frame' %in% dsclass))
 	{
 		eval(parse(text = paste(datasetobj , "<<- as.data.frame( ",datasetobj,")", sep = '')))
 	}

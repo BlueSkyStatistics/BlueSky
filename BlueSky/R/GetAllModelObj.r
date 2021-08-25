@@ -8,6 +8,11 @@
 ###########################################################
 BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE)
 {
+	
+	if (objclasslist =="All_Models" )
+	{
+	objclasslist = c("NaiveBayes","randomForest","lm", "glm", "rpart", "multinom", "nnet", "polr","ksvm","blasso","knn3","real_adaboost","adaboost", "lmerModLmerTest","xgb.Booster","C5.0","BinaryTree","lognet","glmnet","function","earth","mlp","rsnns","RandomForest","rlm","rq","ranger","gbm","train","nn")
+	}
 	ClassFilterAdvanced <- function(x) 
 	{ 
 		eval(parse(text=paste('inherits(get(x), "',objclasslist,'" )', collapse='||', sep='')))
