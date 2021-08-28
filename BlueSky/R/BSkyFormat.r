@@ -4581,11 +4581,16 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 }
 
 
-BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), graphicsDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
+BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), graphicsDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting(), numExprParse = -1)
 {
 	# just in case as a safety net any uncleaned callstack leftover from the previous BSkyEvalRcommand run 
 	uadatasets.sk$callStack <- NULL
 	uadatasets.sk$callStackIndex = 0
+	
+	if(numExprParse == 0)
+	{
+		return(invisible(BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)))
+	}
 			
 	if(ignoreSplitOn == FALSE)
 	{
@@ -4773,7 +4778,7 @@ BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrent
 						BSkyFormat(paste("\n", "Begins ", BSkySplit_footer_str,"\n"))
 					}
 					#cat("\n")
-					BSkyEvalRcommandBasic(RcommandString = RcommandString_modified_split_footer, origRcommands = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, splitOn = TRUE, graphicsDir = graphicsDir, graphicsDebug = graphicsDebug)
+					ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified_split_footer, origRcommands = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, splitOn = TRUE, graphicsDir = graphicsDir, graphicsDebug = graphicsDebug, numExprParse = numExprParse)
 				}
 				else
 				{
@@ -4799,7 +4804,7 @@ BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrent
 		}
 		else
 		{
-			BSkyEvalRcommandBasic(RcommandString = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, graphicsDir = graphicsDir, graphicsDebug = graphicsDebug)
+			ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, graphicsDir = graphicsDir, graphicsDebug = graphicsDebug, numExprParse = numExprParse)
 		}
 		
 	if(ignoreSplitOn == FALSE)
@@ -4807,11 +4812,12 @@ BSkyEvalRcommand <- function(RcommandString, currentDatasetName = BSkyGetCurrent
 		BSkyFunctionWrapUp()
 	}
 	
-	return(invisible(RcommandString_modified))
+	# return(invisible(RcommandString_modified))
+	return(invisible(ret_char_count_array))
 }
 
 
-BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), graphicsDebug = FALSE)
+BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), graphicsDebug = FALSE, numExprParse = -1)
 {
 	
 	if(is.null(origRcommands) || trimws(origRcommands) == "")
@@ -4841,6 +4847,24 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		echoInline = echoInline$echoInline
 	}
 	
+	RcommandString_initial_parse = BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)
+	
+	if(numExprParse == 0)
+	{
+		return(invisible(RcommandString_initial_parse))
+	}
+			
+	#parsed_Rcommands = parse(text={RcommandString})
+	parsed_Rcommands = (tidy_source(text = RcommandString_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+	
+	if(length(origRcommands) > 0)
+	{
+		origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
+		
+		#parsed_orig_Rcommands = parse(text={origRcommands})
+		parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+	}
+	
 	if(echo == TRUE && echoInline == FALSE && splitOn == FALSE)  
 	{
 		cat("\n")
@@ -4852,13 +4876,13 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 			if(length(origRcommands) > 0)
 			{
 				 RcommandString_modified_print = gsub("\\n", "<br>", origRcommands)
-				 cat(RcommandString_modified_print)
+				 cat(substr(RcommandString_modified_print, 1, origRcommands_initial_parse$totalCharCount))
 				 cat("<br>")
 			}
 			else
 			{
 				RcommandString_modified_print = gsub("\\n", "<br>", RcommandString)
-				cat(RcommandString_modified_print)
+				cat(substr(RcommandString_modified_print, 1, RcommandString_initial_parse$totalCharCount))
 				cat("<br>")
 			}
 			
@@ -4868,25 +4892,19 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		{
 			if(length(origRcommands) > 0)
 			{
-				 cat(origRcommands)
+				 #cat(origRcommands)
+				 cat(substr(origRcommands, 1, origRcommands_initial_parse$totalCharCount))
 			}
 			else
 			{
-				cat(RcommandString)
+				#cat(RcommandString)
+				cat(substr(RcommandString, 1, RcommandString_initial_parse$totalCharCount))
 			}
 		}
 		
 		cat("\n")
 	}
-			
-	#parsed_Rcommands = parse(text={RcommandString})
-	parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
 	
-	if(length(origRcommands) > 0)
-	{
-		#parsed_orig_Rcommands = parse(text={origRcommands})
-		parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
-	}
 
 	for (i in seq_along(parsed_Rcommands)) 
 	{
@@ -5029,7 +5047,62 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 	
 	eval(parse(text="rm(bsky_rcommand_execution_an_exception_occured)"), envir=globalenv())
 	
-	return(invisible(RcommandString))
+	#return(invisible(RcommandString)) 
+	
+	if(length(origRcommands) > 0)
+	{
+		return(invisible(origRcommands_initial_parse))
+	}
+	else
+	{
+		return(invisible(RcommandString_initial_parse))
+	}
+}
+
+#28Aug2021: line by line execution
+BSkyRCommandParsedCharCount <- function(RcommandString, numExprParse = -1)
+{
+	char_count = 0
+	first_expr_start_char_count = 0
+	last_expr_end_char_count = 0
+	found_first_expr = FALSE
+	leading_comments_newlines_and_parsed_expr = list()
+	
+	parsed_Rcommands = parse(text = RcommandString, n = numExprParse, keep.source= TRUE)
+	
+	if(length(parsed_Rcommands) > 0)
+	{
+		leading_comments_newlines_and_parsed_expr = as.character(attr(parsed_Rcommands, "wholeSrcref"))
+		#return(leading_comments_newlines_and_parsed_expr)
+		
+		parsed_source_array_length = length(leading_comments_newlines_and_parsed_expr)
+		
+		for(i in 1:parsed_source_array_length)
+		{
+			if(i > 1)
+			{
+				char_count = char_count + 1 # accounting for \n character 
+			}
+			
+			if(found_first_expr == FALSE && (substr(trimws(leading_comments_newlines_and_parsed_expr[i]),1,1) != "#" && substr(trimws(leading_comments_newlines_and_parsed_expr[i]),1,1) != ""))
+			{
+				found_first_expr = TRUE
+				first_expr_start_char_count = char_count + 1
+			}
+			
+			char_count = char_count + nchar(leading_comments_newlines_and_parsed_expr[i])
+		}
+		
+		#parsed_token_df = getParseData(parsed_Rcommands)
+		#line_num_first_expr = unique(parsed_token_df[parsed_token_df$token == "SYMBOL",min(parsed_token_df$line1)])
+		
+		if(found_first_expr == TRUE)
+		{
+			last_expr_end_char_count = char_count
+		}
+	}
+
+	return(invisible(list(totalCharCount = char_count, firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList = leading_comments_newlines_and_parsed_expr)))
 }
 
 
@@ -5128,8 +5201,6 @@ BSkyGetRCommandDisplaySetting <- function()
 	
 	return(invisible(list(echo = echoRcommand, echoInline = echoInlineRcommand)))
 }
-
-
 
 
 BSkySetSplitCountDisplaySetting <- function(splitIterationCountDisplay = FALSE)
