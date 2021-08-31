@@ -189,6 +189,7 @@ export( BSkyGetDatasetNameTitle,BSkyGetDatasetNameFromPackageDatasetList, BSkyGe
 
 export(BSkyGetDatasetSplitInfo, BSkyRCommandParsedCharCount)
 
+export(BSkyRCommandParsedExprBoundary, BSkyRcommandParsingErrWarnHandler, BSkyDoNothingErrWarnHandler)
 
 
 
