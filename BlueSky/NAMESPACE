@@ -187,8 +187,9 @@ export(cohensdIndSmTTest, hedgesgIndSmTTest,cohensd ,hedgesg,glassdIndSmTTest,gl
 #08/22/2021
 export( BSkyGetDatasetNameTitle,BSkyGetDatasetNameFromPackageDatasetList, BSkyGetPackageNameFromPackageDatasetList )
 
-export(BSkyGetDatasetSplitInfo)
+export(BSkyGetDatasetSplitInfo, BSkyRCommandParsedCharCount)
 
+export(BSkyRCommandParsedExprBoundary, BSkyRcommandParsingErrWarnHandler, BSkyDoNothingErrWarnHandler)
 
 
 
