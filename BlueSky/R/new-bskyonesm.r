@@ -544,6 +544,7 @@ BSkyOneSmTTest <-function (varNamesOrVarGlobalIndices, mu = 0, conf.level = 0.95
     datasetNameOrDatasetGlobalIndex, alternative = 'two.sided', cohens_d=FALSE, cohensd_correction=FALSE,hedges_g =FALSE, hedgesg_correction=FALSE,glass_d=FALSE, glassd_correction=FALSE,missing = 0, bSkyHandleSplit = TRUE) 
 {
     BSkyFunctionInit()
+	#print(match.call())
     pos = regexpr("varNamesOrVarGlobalIndices", uadatasets.sk$rproc)
     newstr = substr(uadatasets.sk$rproc, 1, pos[1] + 26)
     y = paste("c('", paste(varNamesOrVarGlobalIndices, sep = ",", 
@@ -607,6 +608,7 @@ BSkyOneSmTTest <-function (varNamesOrVarGlobalIndices, mu = 0, conf.level = 0.95
     if (BSkyGlobalWarningFound() == TRUE) {
     }
     BSkyFunctionWrapUp()
+	#print("Returning from one sample")
     return(invisible(BSkyReturnStructure2()))
 }
 
