@@ -4583,6 +4583,12 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 
 BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos = 0, selctionEndpos = 0, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
+	if(bskyEvalDebug)
+	{
+		print(match.call())
+		print(uadatasets.sk$callStack)
+		print(uadatasets.sk$callStackIndex)
+	}
 	# just in case as a safety net any uncleaned callstack leftover from the previous BSkyEvalRcommand run 
 	uadatasets.sk$callStack <- NULL
 	uadatasets.sk$callStackIndex = 0
@@ -5322,7 +5328,7 @@ BSkyRCommandParsedCharCount <- function(RcommandString, numExprParse = -1)
 		return(invisible(list(parsingStatus = -1, totalCharCount = max(getParseData(partial_parsed_txt)$line1), firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList = leading_comments_newlines_and_parsed_expr)))
 	}
 			
-	if(length(parsed_Rcommands) > 0)
+	##if(length(parsed_Rcommands) > 0) ##03Sep2021 commented this line as a fix for infinite loop issue
 	{
 		# print(parsed_Rcommands)
 		# print(str(parsed_Rcommands))
