@@ -358,10 +358,16 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = FALSE)## change this to a string parameter from a dataset object 
 {
-	if(bskyDatasetName==NULL || class(bskyDatasetName)!="character")
+	isdataframe=FALSE
+	if(is.character(bskyDatasetName))
+	{
+		isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+	}
+	#isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+	if(!isdataframe) #bskyDatasetName==NULL || !is.character(bskyDatasetName) ||
 	{
 		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-		print("Syntax error!")
+		print("Syntax error. Not a data.frame name")
 		print("Correct syntax : BSkyLoadRefresh('dataframe-name')")
 		return
 	}
