@@ -11,7 +11,10 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 	
 	if (objclasslist =="All_Models" )
 	{
-	objclasslist = c("NaiveBayes","randomForest","lm", "glm", "rpart", "multinom", "nnet", "polr","ksvm","blasso","knn3","real_adaboost","adaboost", "lmerModLmerTest","xgb.Booster","C5.0","BinaryTree","lognet","glmnet","function","earth","mlp","rsnns","RandomForest","rlm","rq","ranger","gbm","train","nn")
+	#09/04/2021
+	#Removed function from the list below. This is probably one model function that returns a model of class function, I don't know what that model is
+	# when function is in the list, all functions created in the global space are getting returned, which is not needed
+		objclasslist = c("NaiveBayes","randomForest","lm", "glm", "rpart", "multinom", "nnet", "polr","ksvm","blasso","knn3","real_adaboost","adaboost", "lmerModLmerTest","xgb.Booster","C5.0","BinaryTree","lognet","glmnet","earth","mlp","rsnns","RandomForest","rlm","rq","ranger","gbm","train","nn")
 	}
 	ClassFilterAdvanced <- function(x) 
 	{ 
