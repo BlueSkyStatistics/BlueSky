@@ -1922,10 +1922,18 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
 				{
-						bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
+					bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
+					
+					isfactor = eval(parse(text=paste('is.factor(',datasetname,'$',colNameOrIndex,')', sep='')))
+					if(isfactor)
+					{
+						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(as.character(',datasetname,'$',colNameOrIndex,'))', sep='')))
+					}
+					else {
 						# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
 						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
-						BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
+					}
+					BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
 				}
 				else
 				{

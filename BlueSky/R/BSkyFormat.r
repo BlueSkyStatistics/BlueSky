@@ -4583,14 +4583,20 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 
 BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos = 0, selctionEndpos = 0, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
+	if(bskyEvalDebug)
+	{
+		print(match.call())
+		print(uadatasets.sk$callStack)
+		print(uadatasets.sk$callStackIndex)
+	}
 	# just in case as a safety net any uncleaned callstack leftover from the previous BSkyEvalRcommand run 
 	uadatasets.sk$callStack <- NULL
 	uadatasets.sk$callStackIndex = 0
 	
-	if(numExprParse == 0)
-	{
-		return(invisible(BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)))
-	}
+	# if(numExprParse == 0)
+	# {
+		# return(invisible(BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)))
+	# }
 			
 	if(ignoreSplitOn == FALSE)
 	{
@@ -4598,6 +4604,25 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos
 	}
 	
 		bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
+		
+		if(length(RcommandString) > 0)
+		{
+			Rcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
+			
+			if(Rcommands_initial_parse$firstExprStartPos > 0 && Rcommands_initial_parse$lastExprEndPos > 0)
+			{
+				RcommandString = substr(RcommandString, Rcommands_initial_parse$firstExprStartPos, Rcommands_initial_parse$lastExprEndPos)
+			}
+			else
+			{
+				if(ignoreSplitOn == FALSE)
+				{
+					BSkyFunctionInit()
+				}
+				
+				return(invisible(Rcommands_initial_parse))
+			}
+		}
 		
 		if(is.null(currentColumnNames) || trimws(currentColumnNames) == "")
 		{
@@ -4813,7 +4838,8 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos
 	}
 	
 	# return(invisible(RcommandString_modified))
-	return(invisible(ret_char_count_array))
+	#return(invisible(ret_char_count_array))
+	return(invisible(Rcommands_initial_parse))
 }
 
 
@@ -4848,30 +4874,30 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 	}
 	
 	
-	if(length(origRcommands) > 0)
-	{
-		origRcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = origRcommands, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
+	# if(length(origRcommands) > 0)
+	# {
+		# origRcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = origRcommands, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
 		
-		if(origRcommands_initial_parse$firstExprStartPos > 0 && origRcommands_initial_parse$lastExprEndPos > 0)
-		{
-			#origRcommands = substr(origRcommands, origRcommands_initial_parse$firstExprStartPos, origRcommands_initial_parse$lastExprEndPos)
-		}
-		else
-		{
-			return(invisible(origRcommands_initial_parse))
-		}
-	}
+		# if(origRcommands_initial_parse$firstExprStartPos > 0 && origRcommands_initial_parse$lastExprEndPos > 0)
+		# {
+			# #origRcommands = substr(origRcommands, origRcommands_initial_parse$firstExprStartPos, origRcommands_initial_parse$lastExprEndPos)
+		# }
+		# else
+		# {
+			# return(invisible(origRcommands_initial_parse))
+		# }
+	# }
 	
-	RcommandString_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
+	# RcommandString_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
 		
-	if(RcommandString_initial_parse$firstExprStartPos > 0 && RcommandString_initial_parse$lastExprEndPos > 0)
-	{
-		#RcommandString = substr(RcommandString, RcommandString_initial_parse$firstExprStartPos, RcommandString_initial_parse$lastExprEndPos)
-	}
-	else
-	{
-		return(invisible(RcommandString_initial_parse))
-	}
+	# if(RcommandString_initial_parse$firstExprStartPos > 0 && RcommandString_initial_parse$lastExprEndPos > 0)
+	# {
+		# #RcommandString = substr(RcommandString, RcommandString_initial_parse$firstExprStartPos, RcommandString_initial_parse$lastExprEndPos)
+	# }
+	# else
+	# {
+		# return(invisible(RcommandString_initial_parse))
+	# }
 	
 	
 	#RcommandString_initial_parse = BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)
@@ -4886,14 +4912,17 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 	# if necessary in future, do this pre processing gsub(";\\s*#"," #",z2) to remove the ; before # 
 	
 	#parsed_Rcommands = parse(text={RcommandString})
-	parsed_Rcommands = (tidy_source(text = RcommandString_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+	
+	#parsed_Rcommands = (tidy_source(text = RcommandString_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+	parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
 	
 	if(length(origRcommands) > 0)
 	{
 		#origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
 		
 		#parsed_orig_Rcommands = parse(text={origRcommands})
-		parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+		#parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+		parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
 	}
 	
 	if(echo == TRUE && echoInline == FALSE && splitOn == FALSE)  
@@ -5046,21 +5075,21 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 				{
 					if(uadatasets.sk$last_count_of_bsky_graphics_files == uadatasets.sk$strating_count_of_bsky_graphics_files)
 					{
-						if(bskyEvalDebug == TRUE)
-						{
-							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= 1, isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
-						}
-						else
+						# if(bskyEvalDebug == TRUE)
+						# {
+							# BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= 1, isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+						# }
+						# else
 						{
 							file.remove(uadatasets.sk$initial_graphics_file_name)
 						}
 						
-						if(bskyEvalDebug == TRUE)
-						{
-							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files - 1), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
-							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
-						}
-						else
+						# if(bskyEvalDebug == TRUE)
+						# {
+							# BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files - 1), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							# uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
+						# }
+						# else
 						{
 							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
 							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files - 1
@@ -5082,15 +5111,15 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 	
 	if(length(origRcommands) > 0)
 	{
-		return(invisible(origRcommands_initial_parse))
+		#return(invisible(origRcommands_initial_parse))
+		return(invisible(origRcommands))
 	}
 	else
 	{
-		return(invisible(RcommandString_initial_parse))
+		#return(invisible(RcommandString_initial_parse))
+		return(invisible(RcommandString))
 	}
 }
-
-
 
 
 BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, selctionStartpos = 0, selctionEndpos = 0, bskyEvalDebug = FALSE)
@@ -5145,13 +5174,21 @@ BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, se
 		}
 		
 		parsed_Rcommands = BSkyRCommandParsedCharCount(RcommandString = substr(RcommandString, char_count+1, nchar(RcommandString)), numExprParse = 1)
-	
+		
+		if(bskyEvalDebug == TRUE)
+		{
+			cat("\n****** parsed_Rcommands from BSkyRCommandParsedCharCount *******\n")
+			print(parsed_Rcommands)
+			cat("\n+++++++\n")
+		}
+		
 		if(parsed_Rcommands$parsingStatus == -1)
 		{
 			total_error_log_index = total_error_log_index + 1
 			uadatasets.sk$BSkyParsingErrors[total_error_log_index] = paste("Line number:", (cur_end_line_num_parsed + parsed_Rcommands$totalCharCount - 1), uadatasets.sk$BSkyParsingErrors[total_error_log_index])
 			
-			if(selctionStartLineNumber > (parsed_Rcommands$totalCharCount + min((line_breakdown_RcommandString[line_breakdown_RcommandString$lineTxtCumCharCount >= char_count,])$lineNum)))
+			# if there is parsing error parsed_Rcommands$totalCharCount returns the offending line number not the total char count
+			if(selctionStartLineNumber > (cur_end_line_num_parsed + parsed_Rcommands$totalCharCount - 1)) #min((line_breakdown_RcommandString[line_breakdown_RcommandString$lineTxtCumCharCount >= char_count,])$lineNum)))
 			{
 				if(bskyEvalDebug == TRUE)
 				{
@@ -5244,9 +5281,21 @@ BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, se
 		last_expr_end_char_count = char_count
 	}
 	
+	if(bskyEvalDebug == TRUE && total_error_log_index > 0)
+	{
+		for(i in 1:total_error_log_index)
+		{
+			cat("\n")
+			cat(uadatasets.sk$BSkyParsingErrors[i])
+		}
+		cat("\n")
+	}
+	
 	parsed_expr_list = BSkyRCommandParsedCharCount(RcommandString = substr(RcommandString, first_expr_start_char_count, last_expr_end_char_count)) 
 	return(invisible(list(parsingStatus = 0, parsingErrorLineNum = 0, totalCharCount = char_count, firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList= parsed_expr_list$parsedCommandList)))
 }
+	
+
 	
 #31Aug2021: line by line execution
 BSkyRCommandParsedCharCount <- function(RcommandString, numExprParse = -1)
@@ -5279,7 +5328,7 @@ BSkyRCommandParsedCharCount <- function(RcommandString, numExprParse = -1)
 		return(invisible(list(parsingStatus = -1, totalCharCount = max(getParseData(partial_parsed_txt)$line1), firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList = leading_comments_newlines_and_parsed_expr)))
 	}
 			
-	if(length(parsed_Rcommands) > 0)
+	##if(length(parsed_Rcommands) > 0) ##03Sep2021 commented this line as a fix for infinite loop issue
 	{
 		# print(parsed_Rcommands)
 		# print(str(parsed_Rcommands))
