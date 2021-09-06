@@ -1688,6 +1688,10 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						}
 					}
 
+					if(doRmarkdownFormatting == FALSE && doLatexFormatting == FALSE && length(kableStyleTheme) > 0 && kableStyleTheme == "kable_classic")
+					{
+						p = paste("<div class=\"bskyAPADiv\">\n", p, "\n</div>\n")
+					}
 					BSkyFormat_output$tables[[i]] = c(p)
 				}
 				else
