@@ -60,6 +60,81 @@ predictPrerequisite <-function (modelname, curdatasetname)
     return(msg)
 }
 
+#Diagnostic Messages displayed in the cross platform 
+#when you are scoring a dataset are different from c#
+#predictPrerequisiteCP <-function (modelname, curdatasetname) 
+#This function is called by cross platform not C#
+{
+    if (modelname =="")
+	{
+	return("Test Results: As soon as a model is selected, we will \nrun tests to see whether dependent variables specified in the model are \navailable in the dataset to be scored. \nThe results will be displayed here")
+	}
+	
+	msg = character(0)
+    modclass = character(0)
+    modclass = getModelClass(modelname)
+    if (is.null(modclass)) {
+        msg = paste0("ERROR: Could not find model class. Further processing cannot be done. Aborting..", 
+            collapse = "", sep = "")
+        return(msg)
+    }
+    successMsg1 = "SUCCESS: The predictor variables that the model requires for scoring are available in the dataset."
+    successMsg2 = ""
+    failureMsg1 = "ERROR: The predictor variables that the model requires for scoring are not available in the dataset. [ "
+    failureMsg2 = " variables are not found ]."
+    modelselmsg = paste0("\n -Currently selected model:  ", modelname, 
+        sep = "")
+    modelclasmsg = paste0("\n -Model Class:  ", modclass, sep = "")
+    datasetmsg = paste0("\n -Currently selected dataset:  ", 
+        curdatasetname, sep = "")
+    finalmsg = paste ("\nNOTE: The variable names in the dataset you are trying to score must match the variable names of the dataset you used to build the model.\n")
+    dependentvar = character(0)
+    dependentvar <- getModelDependentVariable(modelname)
+    modelvars <- list()
+    modelvars <- getModelIndependentVariables(modelname)
+    vardiff <- list()
+    j = 1
+    vrlst <- paste(modelvars, collapse = ", ", sep = ",")
+    dependentvarmsg = paste("\n -Dependent variable of the selected model:  ", 
+        dependentvar, sep = "")
+    independentvarmsg = paste("\n -Independent variables of the selected model:  ", 
+        vrlst, sep = "")
+    commonMsg = paste(modelselmsg, modelclasmsg, datasetmsg, 
+        dependentvarmsg, independentvarmsg, sep = "")
+    modvarcount <- length(modelvars)
+    datasetvars <- eval(parse(text = paste("names(", curdatasetname, 
+        ")", sep = "")))
+    dsvarcount <- length(datasetvars)
+    if (modvarcount > 0) {
+        for (i in 1:modvarcount) {
+            if (!(modelvars[i] %in% datasetvars)) {
+                vardiff <- append(vardiff, modelvars[i])
+            }
+        }
+        if (length(vardiff) > 0) {
+            #help <- "\nNOTE: USE THE RED X ON THE TOP RIGHT HAND CORNER OF THE DIALOG TO CLOSE"
+            vrlst <- paste(vardiff, collapse = ", ", sep = ",")
+           # msg = paste0(failureMsg1, vrlst, failureMsg2, commonMsg, 
+             #   finalmsg,help, collapse = "", sep = "")
+			msg = paste0(failureMsg1, vrlst, failureMsg2, commonMsg, 
+                finalmsg, collapse = "", sep = "")
+        }
+        else {
+            msg = paste0(successMsg1, commonMsg, collapse = "", 
+                sep = "")
+        }
+    }
+    else {
+        msg = paste0("ERROR: Could not find independent variables or select the right model and dataset.", 
+            collapse = "", sep = "")
+    }
+    print(msg)
+    return(msg)
+}
+
+
+
+
 
 
 #return model class. 
