@@ -1688,6 +1688,10 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						}
 					}
 
+					if(doRmarkdownFormatting == FALSE && doLatexFormatting == FALSE && length(kableStyleTheme) > 0 && kableStyleTheme == "kable_classic")
+					{
+						p = paste("<div class=\"bskyAPADiv\">\n", p, "\n</div>\n")
+					}
 					BSkyFormat_output$tables[[i]] = c(p)
 				}
 				else
@@ -4581,14 +4585,18 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 }
 
 
-BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos = 0, selctionEndpos = 0, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
+#05Sep2021
+BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
-	if(bskyEvalDebug)
+	if(bskyEvalDebug == TRUE)
 	{
+		cat("\nparameters passed to BSkyEvalRcommand()\n")
 		print(match.call())
-		print(uadatasets.sk$callStack)
+		cat("callStackIndex and callStack\n")
 		print(uadatasets.sk$callStackIndex)
+		print(uadatasets.sk$callStack)
 	}
+	
 	# just in case as a safety net any uncleaned callstack leftover from the previous BSkyEvalRcommand run 
 	uadatasets.sk$callStack <- NULL
 	uadatasets.sk$callStackIndex = 0
@@ -4607,7 +4615,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos
 		
 		if(length(RcommandString) > 0)
 		{
-			Rcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
+			Rcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos, bskyEvalDebug = bskyEvalDebug)
 			
 			if(Rcommands_initial_parse$firstExprStartPos > 0 && Rcommands_initial_parse$lastExprEndPos > 0)
 			{
@@ -4803,7 +4811,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos
 						BSkyFormat(paste("\n", "Begins ", BSkySplit_footer_str,"\n"))
 					}
 					#cat("\n")
-					ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified_split_footer, origRcommands = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, splitOn = TRUE, graphicsDir = graphicsDir, bskyEvalDebug = bskyEvalDebug, numExprParse = numExprParse, selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos)
+					ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified_split_footer, origRcommands = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, splitOn = TRUE, graphicsDir = graphicsDir, bskyEvalDebug = bskyEvalDebug, numExprParse = numExprParse, selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos)
 				}
 				else
 				{
@@ -4829,7 +4837,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos
 		}
 		else
 		{
-			ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, graphicsDir = graphicsDir, bskyEvalDebug = bskyEvalDebug, numExprParse = numExprParse, selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos)
+			ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, graphicsDir = graphicsDir, bskyEvalDebug = bskyEvalDebug, numExprParse = numExprParse, selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos)
 		}
 		
 	if(ignoreSplitOn == FALSE)
@@ -4843,8 +4851,11 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selctionStartpos
 }
 
 
-BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprParse = -1, selctionStartpos = 0, selctionEndpos = 0, echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
+#05Sep2021
+BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
+	parsed_Rcommands = c()
+	parsed_orig_Rcommands = c()
 	
 	if(is.null(origRcommands) || trimws(origRcommands) == "")
 	{
@@ -4874,55 +4885,49 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 	}
 	
 	
-	# if(length(origRcommands) > 0)
-	# {
-		# origRcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = origRcommands, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
-		
-		# if(origRcommands_initial_parse$firstExprStartPos > 0 && origRcommands_initial_parse$lastExprEndPos > 0)
-		# {
-			# #origRcommands = substr(origRcommands, origRcommands_initial_parse$firstExprStartPos, origRcommands_initial_parse$lastExprEndPos)
-		# }
-		# else
-		# {
-			# return(invisible(origRcommands_initial_parse))
-		# }
-	# }
-	
-	# RcommandString_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selctionStartpos = selctionStartpos, selctionEndpos = selctionEndpos, bskyEvalDebug = bskyEvalDebug)
-		
-	# if(RcommandString_initial_parse$firstExprStartPos > 0 && RcommandString_initial_parse$lastExprEndPos > 0)
-	# {
-		# #RcommandString = substr(RcommandString, RcommandString_initial_parse$firstExprStartPos, RcommandString_initial_parse$lastExprEndPos)
-	# }
-	# else
-	# {
-		# return(invisible(RcommandString_initial_parse))
-	# }
-	
-	
-	#RcommandString_initial_parse = BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)
-	
-	# if(numExprParse == 0)
-	# {
-		# return(invisible(RcommandString_initial_parse))
-	# }
-	
-	# Tidy_source does not like y=20;#comments but it is ok with y=20 #comments or y=20;\n#comments
-	# z2 = "x =10\ny=20\nif(x<y){print(x);print(y);print (x+y)};y=20; \n#comments 2\n"
-	# if necessary in future, do this pre processing gsub(";\\s*#"," #",z2) to remove the ; before # 
-	
-	#parsed_Rcommands = parse(text={RcommandString})
-	
-	#parsed_Rcommands = (tidy_source(text = RcommandString_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+	parsed_Rcommands = parse(text={RcommandString})
 	parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
+	
+	#Rcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)
+	#parsed_Rcommands = (tidy_source(text = Rcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
 	
 	if(length(origRcommands) > 0)
 	{
-		#origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
-		
-		#parsed_orig_Rcommands = parse(text={origRcommands})
-		#parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE))$text.tidy
+		parsed_orig_Rcommands = parse(text={origRcommands})
 		parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
+		
+		#origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
+		#parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
+	}
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+		{
+			cat("<pre class=\"r\"><code>")
+		}
+		
+		if(length(origRcommands) > 0)
+		{
+			print(origRcommands)
+			#cat("\nExpressions parsed (orig)\n")
+			#print(origRcommands_initial_parse$parsedCommandList)
+			cat("\nExpressions to be executed (orig)\n")
+			print(parsed_orig_Rcommands)
+		}
+		else
+		{
+			print(RcommandString)
+			#cat("\nExpressions parsed\n")
+			#print(Rcommands_initial_parse$parsedCommandList)
+			cat("\nExpressions to be executed\n")
+			print(parsed_Rcommands)
+		}
+		
+		if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+		{
+			cat("</code></pre>")
+		}
 	}
 	
 	if(echo == TRUE && echoInline == FALSE && splitOn == FALSE)  
@@ -4936,13 +4941,13 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 			if(length(origRcommands) > 0)
 			{
 				 RcommandString_modified_print = gsub("\\n", "<br>", origRcommands)
-				 cat(substr(RcommandString_modified_print, 1, origRcommands_initial_parse$totalCharCount))
+				 cat(RcommandString_modified_print)
 				 cat("<br>")
 			}
 			else
 			{
 				RcommandString_modified_print = gsub("\\n", "<br>", RcommandString)
-				cat(substr(RcommandString_modified_print, 1, RcommandString_initial_parse$totalCharCount))
+				cat(RcommandString_modified_print)
 				cat("<br>")
 			}
 			
@@ -4952,13 +4957,11 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 		{
 			if(length(origRcommands) > 0)
 			{
-				 #cat(origRcommands)
-				 cat(substr(origRcommands, 1, origRcommands_initial_parse$totalCharCount))
+				 cat(origRcommands)
 			}
 			else
 			{
-				#cat(RcommandString)
-				cat(substr(RcommandString, 1, RcommandString_initial_parse$totalCharCount))
+				cat(RcommandString)
 			}
 		}
 		
@@ -5004,7 +5007,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 				{
 					cat("</code></pre>")
 				}
-							
+				
 				cat("\n")
 			}
 		#}
@@ -5015,6 +5018,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 		
 		isCommentOrBlankLine = FALSE
 		CommentOrBlankLineStr = trimws(parsed_Rcommands[[i]])
+		
 		if(substr(CommentOrBlankLineStr,1,1) == "#" || substr(CommentOrBlankLineStr,1,1) == "")
 		{
 			isCommentOrBlankLine = TRUE
@@ -5027,6 +5031,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 							withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
 					}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
 					}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+			
 			
 			if(bsky_rcommand_execution_an_exception_occured == TRUE)
 			{
@@ -5103,6 +5108,13 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 				}
 			}
 		}
+		# else
+		# {
+			# if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+			# {
+				# cat("<br>")
+			# }
+		# }
 	}
 	
 	eval(parse(text="rm(bsky_rcommand_execution_an_exception_occured)"), envir=globalenv())
@@ -5121,8 +5133,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 	}
 }
 
-
-BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, selctionStartpos = 0, selctionEndpos = 0, bskyEvalDebug = FALSE)
+#05Sep2021
+BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, bskyEvalDebug = FALSE)
 {
 	uadatasets.sk$BSkyParsingErrors = c()
 	total_error_log_index = 0
@@ -5137,18 +5149,29 @@ BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, se
 	totalExprDetermind = 0
 	n = 0
 	
-	if(selctionStartpos > nchar(RcommandString))
+	bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+		{
+			cat("<pre class=\"r\"><code>")
+		}
+	}
+	
+	if(nchar(trimws(RcommandString)) == 0 || selectionStartpos > nchar(RcommandString))
 	{
 		return(invisible(list(parsingStatus = 0, parsingErrorLineNum =0, totalCharCount = nchar(RcommandString), firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList=c())))
 	}
-	else if(numExprParse == 0 || selctionStartpos < 0)
+	
+	if(numExprParse == 0)
 	{
 		return(invisible(list(parsingStatus = 0, parsingErrorLineNum =0, totalCharCount = char_count, firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList = c())))
 	}
 	
-	if(numExprParse != 0 && selctionStartpos <= 0)
+	if(numExprParse != 0 && selectionStartpos <= 0)
 	{
-		selctionStartpos = 1
+		selectionStartpos = 1
 	}
 	
 	line_breakdown_RcommandString = data.frame(strsplit(RcommandString, "\n"))
@@ -5158,9 +5181,9 @@ BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, se
 	line_breakdown_RcommandString = cbind(seq(1:nrow(line_breakdown_RcommandString)), line_breakdown_RcommandString)
 	names(line_breakdown_RcommandString) = c("lineNum", "lineTxt", "lineTxtCharCount", "lineTxtCumCharCount")
 	
-	if(selctionStartpos > 0)
+	if(selectionStartpos > 0)
 	{
-		selctionStartLineNumber = min((line_breakdown_RcommandString[line_breakdown_RcommandString$lineTxtCumCharCount >= selctionStartpos,])$lineNum)
+		selctionStartLineNumber = min((line_breakdown_RcommandString[line_breakdown_RcommandString$lineTxtCumCharCount >= selectionStartpos,])$lineNum)
 	}
 	
 	while(lastExpressionDetermind == FALSE && char_count < nchar(RcommandString))
@@ -5240,36 +5263,42 @@ BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, se
 		{
 			char_count = char_count + parsed_Rcommands$totalCharCount
 			
-			if(selctionStartpos <= char_count && firstExpressionDetermind == FALSE)
+			if(selectionStartpos <= char_count && firstExpressionDetermind == FALSE)
 			{
-				if(selctionStartpos > (char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$firstExprStartPos))
+				if(selectionStartpos > (char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$firstExprStartPos))
 				{
 					first_expr_start_char_count = char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$firstExprStartPos
 				}
 				else
 				{
-					first_expr_start_char_count = char_count - parsed_Rcommands$totalCharCount + 1 #parsed_Rcommands$firstExprStartPos #selctionStartpos
+					first_expr_start_char_count = char_count - parsed_Rcommands$totalCharCount + 1 #parsed_Rcommands$firstExprStartPos #selectionStartpos
 				}
 				
 				firstExpressionDetermind = TRUE 
 			}
 			
-			if(selctionEndpos > 0 && selctionEndpos > selctionStartpos && selctionEndpos <= char_count && lastExpressionDetermind == FALSE)
+			if(selectionEndpos > 0 && selectionEndpos > selectionStartpos && selectionEndpos <= char_count && lastExpressionDetermind == FALSE)
 			{
-				if(selctionEndpos <= (char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$lastExprEndPos))
+				if(selectionEndpos <= (char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$lastExprEndPos))
 				{
 					#last_expr_end_char_count = char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$lastExprEndPos
 					lastExpressionDetermind = TRUE
 				} 
+				
+				if(selectionEndpos <= (char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$firstExprStartPos -1))
+				{
+					lastExpressionDetermind = TRUE
+					char_count = char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$firstExprStartPos - 1
+				}
 			}
 			
 			if(firstExpressionDetermind == TRUE)
 			{
-				last_expr_end_char_count = char_count - parsed_Rcommands$totalCharCount + parsed_Rcommands$lastExprEndPos
+				last_expr_end_char_count = char_count #- parsed_Rcommands$totalCharCount + parsed_Rcommands$lastExprEndPos
 				totalExprDetermind = totalExprDetermind + 1
 			}
 			
-			if(numExprParse > 0 && totalExprDetermind == numExprParse)
+			if((numExprParse > 0 && totalExprDetermind == numExprParse) || (selectionEndpos > 0 && selectionEndpos <= char_count))
 			{
 				lastExpressionDetermind = TRUE
 			}
@@ -5291,13 +5320,24 @@ BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, se
 		cat("\n")
 	}
 	
+	if(bskyEvalDebug == TRUE)
+	{
+		cat("\nfirst_expr_start_char_count: ", first_expr_start_char_count, "last_expr_end_char_count: ", last_expr_end_char_count, "\n")
+	}
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+		{
+			cat("</pre></code>")
+		}
+	}
+	
 	parsed_expr_list = BSkyRCommandParsedCharCount(RcommandString = substr(RcommandString, first_expr_start_char_count, last_expr_end_char_count)) 
 	return(invisible(list(parsingStatus = 0, parsingErrorLineNum = 0, totalCharCount = char_count, firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList= parsed_expr_list$parsedCommandList)))
 }
 	
-
-	
-#31Aug2021: line by line execution
+#05Sep2021
 BSkyRCommandParsedCharCount <- function(RcommandString, numExprParse = -1)
 {
 	char_count = 0
@@ -5327,8 +5367,9 @@ BSkyRCommandParsedCharCount <- function(RcommandString, numExprParse = -1)
 		eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
 		return(invisible(list(parsingStatus = -1, totalCharCount = max(getParseData(partial_parsed_txt)$line1), firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList = leading_comments_newlines_and_parsed_expr)))
 	}
+	
 			
-	##if(length(parsed_Rcommands) > 0) ##03Sep2021 commented this line as a fix for infinite loop issue
+	#if(length(parsed_Rcommands) > 0)
 	{
 		# print(parsed_Rcommands)
 		# print(str(parsed_Rcommands))
