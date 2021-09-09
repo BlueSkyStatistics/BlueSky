@@ -358,6 +358,99 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = FALSE)## change this to a string parameter from a dataset object 
 {
+	isdataframe=false
+	isPkgLoaded = FALSE
+	isexists = FALSE
+	pkgname = c()
+	dsname = c()
+	pkgEnv = c()
+	ischar = is.character(bskyDatasetName) 
+	if(ischar)## is argument a character. If not we print error in the sink and exit
+	{
+		hasPkgname = grepl("::", bskyDatasetName)
+		if(hasPkgname)#package name is passed
+		{
+			arr = strsplit(bskyDatasetName, "::")
+			pkgname = arr[[1]][1]
+			dsname = arr[[1]][2]
+			isPkgLoaded = pkgname %in% (.packages())
+			if(!isPkgLoaded)# if packge is not loaded
+			{
+				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+				print(pkgname)
+				print("Package not loaded(attached)")
+				invisible()				
+			}
+			pkgEnv = eval(parse(text=paste('as.environment("package:',pkgname,'")', sep='')))
+			isexists = eval(parse(text=paste('exists("',dsname,'", where=pkgEnv, inherits=FALSE)', sep='', )))# DS exists in the pkg.
+			if(isexists)
+			{
+				#check if data.frame
+				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
+				if(isdataframe)
+				{
+					eval( parse(text=paste('.GlobalEnv$',dsname,' <- ',pkgname,'::',dsname,sep='')))##make a copy in globalEnv
+					
+					#dsname = 'mtcars'
+					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
+				}
+				else
+				{
+					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+					print(dsname)
+					print("Not a data frame")
+					invisible()				
+				}
+				
+			}
+			else
+			{
+				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+				print("Dataset :")
+				print(dsname)
+				print("not found in the package:")
+				print(pkgname)				
+				invisible()
+			}
+			
+		}
+		else#package name is not passed so, whatever is passed should be considered as a datasetname
+		{
+			inGlobalEnv = eval( parse(text=paste('exists("',bskyDatasetName,'", where=globalenv(), inherits=FALSE)',sep='')))
+			# if dataset is not found in the Global environment then we should not go searching it 
+			# because same named datasets can be found in multiple packages. So we simply error out.
+			if(inGlobalEnv)
+			{
+				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+				if(!isdataframe)
+				{
+					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+					print(bskyDatasetName)
+					print("Not a data frame")
+					invisible()				
+				}				
+				
+			}
+			else
+			{
+				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+				print("Dataset not found in global environment")
+				print("Correct syntax :")
+				print("load from global environment: BSkyLoadRefresh('dataframe-name')")
+				print("load from package: BSkyLoadRefresh('packageName::dataframe-name')")
+				invisible()
+			}
+		}
+	}
+	else
+	{
+		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+		print("Syntax error. Not a data.frame name")
+		print("Correct syntax : BSkyLoadRefresh('dataframe-name')")
+		invisible()
+	}
+
+
 	#check if bskyDatasetName is character and is in the GlobalEnv, if not 
 	#run few checks and make a copy of the dataset(probably dataset is in the package environment)
 	if(is.character(bskyDatasetName) && (!eval( parse(text=paste('exists("',bskyDatasetName,'", where=globalenv(), inherits=FALSE)',sep='')))))
@@ -405,13 +498,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		}
 	}
 
-	isdataframe=FALSE
-	if(is.character(bskyDatasetName))
-	{
-		isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
-	}
-	#isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
-	if(!isdataframe) #bskyDatasetName==NULL || !is.character(bskyDatasetName) ||
+	if(!isdataframe) #not a data.frame
 	{
 		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
 		print("Syntax error. Not a data.frame name")
