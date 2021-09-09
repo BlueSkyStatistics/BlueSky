@@ -358,6 +358,53 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = FALSE)## change this to a string parameter from a dataset object 
 {
+	#check if bskyDatasetName is character and is in the GlobalEnv, if not 
+	#run few checks and make a copy of the dataset(probably dataset is in the package environment)
+	if(is.character(bskyDatasetName) && (!eval( parse(text=paste('exists("',bskyDatasetName,'", where=globalenv(), inherits=FALSE)',sep='')))))
+	{	
+		require(pryr)## for where()
+		## get environment of the object
+		objenv = eval( parse(text=paste('where("',bskyDatasetName,'")', sep='' )))
+		
+		##following gets the environment of the dataset and from that environment gets the "name" attribute (that contains pkgname)
+		pkgfulname = eval( parse(text=paste('attr(where("',bskyDatasetName,'"), "name")', sep='' )))##e.g. "package:emmeans"
+
+		if(!is.null(pkgfulname) && pkgfulname!='') 
+		{
+			pkgname = sapply(strsplit(pkgfulname, ":"), "[", 2) ## extract package name e.g. "emmeans"
+
+			if(!is.na(pkgname) && pkgname!='')
+			{
+				isitdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',bskyDatasetName,'))',sep='')))
+
+				if(isitdataframe)
+				{
+					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- ',pkgname,'::',bskyDatasetName,sep='')))##make a copy in globalEnv
+				}
+				else
+				{
+					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+					print("Not a data.frame name")
+					invisible()
+				}
+			}
+			else
+			{
+				cat("\n") 
+				print("Error loading dataset from:")
+				print(objenv)
+				invisible()
+			}
+		}
+		else
+		{
+			cat("\n")
+			print("Error loading dataset from:")
+			print(objenv)
+			invisible()
+		}
+	}
+
 	isdataframe=FALSE
 	if(is.character(bskyDatasetName))
 	{
@@ -369,7 +416,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
 		print("Syntax error. Not a data.frame name")
 		print("Correct syntax : BSkyLoadRefresh('dataframe-name')")
-		return
+		invisible()
 	}
 	if(load.dataframe)
 	{
@@ -388,8 +435,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		##we can put dframeobj object=c(dframeobj)in the Sanjay's code below or we can just put the name object=c(bskyDatasetName)
 		##if we put object then python gets the object directly. 
 		##if we put name then python code must know that its a name and get object of that name from R memory and then process it.
-		
-		
+
 		if((exists("uadatasets.sk") && exists("BSkyKableFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyKableFormatting == FALSE))
 		{
 			doKableFormatting = FALSE
