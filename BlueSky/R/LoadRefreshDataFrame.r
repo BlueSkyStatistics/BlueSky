@@ -359,17 +359,81 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = FALSE)## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
-	if(is.character(bskyDatasetName))
+	isPkgLoaded = FALSE
+	isexists = FALSE
+	pkgname = c()
+	dsname = c()
+	pkgEnv = c()
+	ischar = is.character(bskyDatasetName) 
+	if(ischar)## is argument a character. If not we print error in the sink and exit
 	{
-		isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+		hasPkgname = grepl("::", bskyDatasetName)
+		
+		if(hasPkgname)#package name is passed
+		{
+			arr = strsplit(bskyDatasetName, "::")
+			pkgname = arr[[1]][1]
+			dsname = arr[[1]][2]
+			
+			isPkgLoaded = pkgname %in% (.packages())
+			
+			if(!isPkgLoaded)# if packge is not loaded
+			{
+				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+				cat("Package ")
+				cat(pkgname)
+				cat(" not loaded. Use library(packageName) to load the package.")
+				invisible()				
+			}
+			
+			pkgEnv = eval(parse(text=paste('as.environment("package:',pkgname,'")', sep='')))
+			
+			isexists = eval(parse(text=paste('exists("',dsname,'", where=pkgEnv, inherits=FALSE)', sep='' )))# DS exists in the pkg.
+			
+			if(isexists)
+			{
+				#check if data.frame
+				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
+				
+				if(isdataframe)
+				{
+					eval( parse(text=paste('.GlobalEnv$',dsname,' <- ',pkgname,'::',dsname,sep='')))##make a copy in globalEnv
+					#dsname = 'mtcars'
+					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
+				}
+			}
+			else
+			{
+				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+				cat("Dataset ")
+				cat(dsname)
+				cat(" is not found in the package ")
+				cat(pkgname)				
+				invisible()
+			}
+			
+		}
+		else#package name is not passed so, whatever is passed should be considered as a datasetname in global env.
+		{
+			inGlobalEnv = eval( parse(text=paste('exists("',bskyDatasetName,'", where=globalenv(), inherits=FALSE)',sep='')))
+			# if dataset is not found in the Global environment then we should not go searching it 
+			# because same named datasets can be found in multiple packages. And user may get confused if we load
+			# the first one we found. So we simply error out. User is supposed to pass package name to avoid ambiguity
+			if(inGlobalEnv)
+			{
+				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+			}
+		}
 	}
-	#isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
-	if(!isdataframe) #bskyDatasetName==NULL || !is.character(bskyDatasetName) ||
+
+	if(!isdataframe) #not a data.frame
 	{
 		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-		print("Syntax error. Not a data.frame name")
-		print("Correct syntax : BSkyLoadRefresh('dataframe-name')")
-		return
+		cat("Syntax error or not a data.frame name")
+		cat("\nCorrect syntax is:")
+		cat("\n\tBSkyLoadRefresh('dataframe-name') #load from global environment")
+		cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load from a package")
+		invisible()
 	}
 	if(load.dataframe)
 	{
@@ -388,8 +452,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		##we can put dframeobj object=c(dframeobj)in the Sanjay's code below or we can just put the name object=c(bskyDatasetName)
 		##if we put object then python gets the object directly. 
 		##if we put name then python code must know that its a name and get object of that name from R memory and then process it.
-		
-		
+
 		if((exists("uadatasets.sk") && exists("BSkyKableFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyKableFormatting == FALSE))
 		{
 			doKableFormatting = FALSE
