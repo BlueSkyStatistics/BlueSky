@@ -64,10 +64,11 @@ predictPrerequisite <-function (modelname, curdatasetname)
 #when you are scoring a dataset are different from c#
 #predictPrerequisiteCP <-function (modelname, curdatasetname) 
 #This function is called by cross platform not C#
+predictPrerequisiteCP <-function (modelname, curdatasetname) 
 {
     if (modelname =="")
 	{
-	return("Test Results: As soon as a model is selected, we will \nrun tests to see whether dependent variables specified in the model are \navailable in the dataset to be scored. \nThe results will be displayed here")
+	return("Test Results: As soon as a model is selected, we will run tests to see whether dependent variables specified in the model are available in \nthe dataset to be scored. The results will be displayed here")
 	}
 	
 	msg = character(0)

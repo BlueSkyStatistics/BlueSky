@@ -191,5 +191,9 @@ export(BSkyGetDatasetSplitInfo, BSkyRCommandParsedCharCount)
 
 export(BSkyRCommandParsedExprBoundary, BSkyRcommandParsingErrWarnHandler, BSkyDoNothingErrWarnHandler)
 
+export(predictPrerequisiteCP)
+
+export(BSkyGetAvailableModelsCP)
+
 
 
