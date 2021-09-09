@@ -358,7 +358,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = FALSE)## change this to a string parameter from a dataset object 
 {
-	isdataframe=false
+	isdataframe=FALSE
 	isPkgLoaded = FALSE
 	isexists = FALSE
 	pkgname = c()
@@ -368,141 +368,72 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 	if(ischar)## is argument a character. If not we print error in the sink and exit
 	{
 		hasPkgname = grepl("::", bskyDatasetName)
+		
 		if(hasPkgname)#package name is passed
 		{
 			arr = strsplit(bskyDatasetName, "::")
 			pkgname = arr[[1]][1]
 			dsname = arr[[1]][2]
+			
 			isPkgLoaded = pkgname %in% (.packages())
+			
 			if(!isPkgLoaded)# if packge is not loaded
 			{
 				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-				print(pkgname)
-				print("Package not loaded(attached)")
+				cat("Package ")
+				cat(pkgname)
+				cat(" not loaded. Use library(packageName) to load the package.")
 				invisible()				
 			}
+			
 			pkgEnv = eval(parse(text=paste('as.environment("package:',pkgname,'")', sep='')))
-			isexists = eval(parse(text=paste('exists("',dsname,'", where=pkgEnv, inherits=FALSE)', sep='', )))# DS exists in the pkg.
+			
+			isexists = eval(parse(text=paste('exists("',dsname,'", where=pkgEnv, inherits=FALSE)', sep='' )))# DS exists in the pkg.
+			
 			if(isexists)
 			{
 				#check if data.frame
 				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
+				
 				if(isdataframe)
 				{
 					eval( parse(text=paste('.GlobalEnv$',dsname,' <- ',pkgname,'::',dsname,sep='')))##make a copy in globalEnv
-					
+					cat("\nKKK\n")
 					#dsname = 'mtcars'
 					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
 				}
-				else
-				{
-					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-					print(dsname)
-					print("Not a data frame")
-					invisible()				
-				}
-				
 			}
 			else
 			{
 				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-				print("Dataset :")
-				print(dsname)
-				print("not found in the package:")
-				print(pkgname)				
+				cat("Dataset ")
+				cat(dsname)
+				cat(" is not found in the package ")
+				cat(pkgname)				
 				invisible()
 			}
 			
 		}
-		else#package name is not passed so, whatever is passed should be considered as a datasetname
+		else#package name is not passed so, whatever is passed should be considered as a datasetname in global env.
 		{
 			inGlobalEnv = eval( parse(text=paste('exists("',bskyDatasetName,'", where=globalenv(), inherits=FALSE)',sep='')))
 			# if dataset is not found in the Global environment then we should not go searching it 
-			# because same named datasets can be found in multiple packages. So we simply error out.
+			# because same named datasets can be found in multiple packages. And user may get confused if we load
+			# the first one we found. So we simply error out. User is supposed to pass package name to avoid ambiguity
 			if(inGlobalEnv)
 			{
 				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
-				if(!isdataframe)
-				{
-					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-					print(bskyDatasetName)
-					print("Not a data frame")
-					invisible()				
-				}				
-				
 			}
-			else
-			{
-				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-				print("Dataset not found in global environment")
-				print("Correct syntax :")
-				print("load from global environment: BSkyLoadRefresh('dataframe-name')")
-				print("load from package: BSkyLoadRefresh('packageName::dataframe-name')")
-				invisible()
-			}
-		}
-	}
-	else
-	{
-		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-		print("Syntax error. Not a data.frame name")
-		print("Correct syntax : BSkyLoadRefresh('dataframe-name')")
-		invisible()
-	}
-
-
-	#check if bskyDatasetName is character and is in the GlobalEnv, if not 
-	#run few checks and make a copy of the dataset(probably dataset is in the package environment)
-	if(is.character(bskyDatasetName) && (!eval( parse(text=paste('exists("',bskyDatasetName,'", where=globalenv(), inherits=FALSE)',sep='')))))
-	{	
-		require(pryr)## for where()
-		## get environment of the object
-		objenv = eval( parse(text=paste('where("',bskyDatasetName,'")', sep='' )))
-		
-		##following gets the environment of the dataset and from that environment gets the "name" attribute (that contains pkgname)
-		pkgfulname = eval( parse(text=paste('attr(where("',bskyDatasetName,'"), "name")', sep='' )))##e.g. "package:emmeans"
-
-		if(!is.null(pkgfulname) && pkgfulname!='') 
-		{
-			pkgname = sapply(strsplit(pkgfulname, ":"), "[", 2) ## extract package name e.g. "emmeans"
-
-			if(!is.na(pkgname) && pkgname!='')
-			{
-				isitdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',bskyDatasetName,'))',sep='')))
-
-				if(isitdataframe)
-				{
-					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- ',pkgname,'::',bskyDatasetName,sep='')))##make a copy in globalEnv
-				}
-				else
-				{
-					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-					print("Not a data.frame name")
-					invisible()
-				}
-			}
-			else
-			{
-				cat("\n") 
-				print("Error loading dataset from:")
-				print(objenv)
-				invisible()
-			}
-		}
-		else
-		{
-			cat("\n")
-			print("Error loading dataset from:")
-			print(objenv)
-			invisible()
 		}
 	}
 
 	if(!isdataframe) #not a data.frame
 	{
 		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-		print("Syntax error. Not a data.frame name")
-		print("Correct syntax : BSkyLoadRefresh('dataframe-name')")
+		cat("Syntax error or not a data.frame name")
+		cat("\nCorrect syntax is:")
+		cat("\n\tBSkyLoadRefresh('dataframe-name') #load from global environment")
+		cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load from a package")
 		invisible()
 	}
 	if(load.dataframe)
