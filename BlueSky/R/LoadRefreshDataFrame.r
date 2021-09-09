@@ -398,7 +398,6 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 				if(isdataframe)
 				{
 					eval( parse(text=paste('.GlobalEnv$',dsname,' <- ',pkgname,'::',dsname,sep='')))##make a copy in globalEnv
-					cat("\nKKK\n")
 					#dsname = 'mtcars'
 					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
 				}
