@@ -91,7 +91,7 @@
  }
 
 
-##22Aug2021
+##13Sep2021
 BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", tableStylingOptions = "table_border = F, column_align = r, header_background = \"#F0F8FF\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#F0F8FF\"))")
 {
 
@@ -1120,6 +1120,12 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						# print(length(trimws(names(BSkyFormat_output$tables[i]))))
 					}
 					
+					if(doLatexFormatting == TRUE)
+					{
+						tableCaption = paste(tableCaption, "\n")
+						tableCaption = linebreak(tableCaption)
+					}
+					
 					#############################################################
 					# Handle BSkyFormat("plain text", "html text", or LateX model equation printing code)  
 					# i.e. table with one row and one column with no cloumn name otherwise for normal table go to the else part 
@@ -1163,8 +1169,8 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 								
 								if(grepl("\\operatorname",unfiltered_table[1,1]) == TRUE)
 								{
-									if(grepl("\\widehat",unfiltered_table[1,1]) == TRUE)
-									{
+									# if(grepl("\\widehat",unfiltered_table[1,1]) == TRUE)
+									# {
 										p = paste("\\[", as.character(unfiltered_table[1,1]), "\\]")
 										
 										#To protect the '_' character from getting messed up by HTML output
@@ -1175,16 +1181,16 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 										{
 											print(unname(as.data.frame(p)),quote = FALSE, row.names = FALSE)
 										}
-									}
-									else
-									{
-										p = unfiltered_table[1,1]
+									# }
+									# else
+									# {
+										# p = unfiltered_table[1,1]
 										
-										if(doRmarkdownFormatting == TRUE)
-										{
-											cat(p)
-										}
-									}
+										# if(doRmarkdownFormatting == TRUE)
+										# {
+											# cat(p)
+										# }
+									# }
 								}
 								else # when itelics is chosen i.e. equatiomatic::extract_eq(....., ital_vars = TRUE)
 								{
@@ -1515,8 +1521,17 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 									else
 									{
 										#p = kableExtra::kbl(new_table_removed_empty_rows, booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2]))) %>% 
-										p = kableExtra::kbl(new_table_removed_empty_rows, booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 
-											add_header_above(eval(parse(text= merged_col_top_header)), align= merged_col_header_alignment)
+										
+										if(length(kableStyleTheme) > 0 && kableStyleTheme == "kable_classic")
+										{
+											p = kableExtra::kbl(new_table_removed_empty_rows, booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 
+												add_header_above(eval(parse(text= merged_col_top_header)), align= merged_col_header_alignment, extra_css =" border-bottom:1.5px solid black; ")
+										}
+										else
+										{
+											p = kableExtra::kbl(new_table_removed_empty_rows, booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 
+												add_header_above(eval(parse(text= merged_col_top_header)), align= merged_col_header_alignment)
+										}
 									}
 								}
 								
@@ -1618,7 +1633,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						
 						if(length(footnote_string) > 0)
 						{
-							p = p %>% footnote(general = footnote_string) #, general_title = footnote_string_names)
+							p = p %>% footnote(general = footnote_string, threeparttable = FALSE) #, general_title = footnote_string_names)
 						}
 						
 						
@@ -1687,11 +1702,12 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 							cat("\n\n")
 						}
 					}
+					
+					# if(doRmarkdownFormatting == FALSE && doLatexFormatting == FALSE && length(kableStyleTheme) > 0 && kableStyleTheme == "kable_classic")
+					# {
+						# p = paste("<div class=\"bskyAPADiv\">\n", p, "\n</div>\n")
+					# }
 
-					if(doRmarkdownFormatting == FALSE && doLatexFormatting == FALSE && length(kableStyleTheme) > 0 && kableStyleTheme == "kable_classic")
-					{
-						p = paste("<div class=\"bskyAPADiv\">\n", p, "\n</div>\n")
-					}
 					BSkyFormat_output$tables[[i]] = c(p)
 				}
 				else
@@ -4851,7 +4867,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 }
 
 
-#05Sep2021
+#13Sep2021
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	parsed_Rcommands = c()
@@ -4864,6 +4880,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 	
 	bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
 	
+	first_Graphics_Command_Executed = FALSE
 	graphicsDir_exists = FALSE
 	
 	if(!is.null(graphicsDir) && length(graphicsDir) > 0 && trimws(graphicsDir) != "" && dir.exists(graphicsDir) && bsky_Rmarkdown_settings$doRmarkdownFormatting == FALSE)
@@ -5071,14 +5088,17 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 			{
 				num_graphics_files = length(list.files(graphicsDir, pattern="png|svg"))
 				
-				# cat("\n<br>********* SK debug Printing call details within BSkyEvalRcommandBasic - num_graphics_files and uadatasets.sk$last_count_of_bsky_graphics_files ******<br>\n")
-				# print(num_graphics_files)
-				# print(uadatasets.sk$last_count_of_bsky_graphics_files)
-				# print(num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
+				if(bskyEvalDebug == TRUE)
+				{
+					cat("\n<br>********* SK debug Printing call details within BSkyEvalRcommandBasic - num_graphics_files and uadatasets.sk$last_count_of_bsky_graphics_files ******<br>\n")
+					print(num_graphics_files)
+					print(uadatasets.sk$last_count_of_bsky_graphics_files)
+					print(num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
+				}
 			
 				if(num_graphics_files > uadatasets.sk$last_count_of_bsky_graphics_files)
 				{
-					if(uadatasets.sk$last_count_of_bsky_graphics_files == uadatasets.sk$strating_count_of_bsky_graphics_files)
+					if(uadatasets.sk$last_count_of_bsky_graphics_files == uadatasets.sk$strating_count_of_bsky_graphics_files && first_Graphics_Command_Executed == FALSE)
 					{
 						# if(bskyEvalDebug == TRUE)
 						# {
@@ -5087,6 +5107,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 						# else
 						{
 							file.remove(uadatasets.sk$initial_graphics_file_name)
+							first_Graphics_Command_Executed = TRUE
 						}
 						
 						# if(bskyEvalDebug == TRUE)
@@ -5132,6 +5153,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), numExprPa
 		return(invisible(RcommandString))
 	}
 }
+
+
 
 #05Sep2021
 BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, bskyEvalDebug = FALSE)
