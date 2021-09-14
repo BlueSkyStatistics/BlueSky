@@ -4601,8 +4601,8 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 }
 
 
-#05Sep2021
-BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
+#14Sep2021
+BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, executeSelectOnly = FALSE, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
 	if(bskyEvalDebug == TRUE)
 	{
@@ -4629,8 +4629,28 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 	
 		bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
 		
-		if(length(RcommandString) > 0)
+		if(length(RcommandString) > 0) # && (numExprParse > -1 || selectionStartpos > 0 || selectionEndpos > 0))
 		{
+			if(executeSelectOnly == TRUE && selectionStartpos > 0 && selectionEndpos > 0)
+			{
+				RcommandString = substr(RcommandString, selectionStartpos, selectionEndpos)
+				selectionStartpos = 0
+				selectionEndpos = 0
+			}
+			
+			if(executeSelectOnly == FALSE && selectionStartpos > 0 && selectionEndpos > 0)
+			{
+				RcommandStringSelect = substr(RcommandString, selectionStartpos, selectionEndpos)
+				RcommandStringSelect_parse_test = BSkyRCommandParsingTest(RcommandString = RcommandStringSelect, numExprParse = numExprParse, bskyEvalDebug = bskyEvalDebug)
+				
+				if(RcommandStringSelect_parse_test == 0)
+				{
+					RcommandString = substr(RcommandString, selectionStartpos, selectionEndpos)
+					selectionStartpos = 0
+					selectionEndpos = 0
+				}
+			}
+			
 			Rcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos, bskyEvalDebug = bskyEvalDebug)
 			
 			if(Rcommands_initial_parse$firstExprStartPos > 0 && Rcommands_initial_parse$lastExprEndPos > 0)
@@ -4646,6 +4666,15 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 				
 				return(invisible(Rcommands_initial_parse))
 			}
+		}
+		else
+		{
+			if(ignoreSplitOn == FALSE)
+			{
+				BSkyFunctionInit()
+			}
+				
+			return(invisible(list(parsingStatus = 0, parsingErrorLineNum =0, totalCharCount = 0, firstExprStartPos = 0, lastExprEndPos = 0, parsedCommandList=c())))
 		}
 		
 		if(is.null(currentColumnNames) || trimws(currentColumnNames) == "")
@@ -4865,6 +4894,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 	#return(invisible(ret_char_count_array))
 	return(invisible(Rcommands_initial_parse))
 }
+
 
 
 #13Sep2021
@@ -5430,6 +5460,39 @@ BSkyRCommandParsedCharCount <- function(RcommandString, numExprParse = -1)
 	return(invisible(list(parsingStatus = 0, totalCharCount = char_count, firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList = leading_comments_newlines_and_parsed_expr)))
 }
 
+#14Sep2021
+BSkyRCommandParsingTest <- function(RcommandString, numExprParse = -1, bskyEvalDebug = FALSE)
+{
+	eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
+	
+	tryCatch({
+			withCallingHandlers({
+					parsed_Rcommands = parse(text = RcommandString, n = numExprParse, keep.source= TRUE)
+			}, warning = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+			}, error = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+	
+	
+	if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+	{		
+		if(bskyEvalDebug == TRUE)
+		{
+			cat("\nParsing Error in Selected Text Area\n")
+			cat(RcommandString)
+			cat("\n")
+		}
+		eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
+		return(invisible(c(-1)))
+	}
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		cat("\nNo Parsing Error in Selected Text Area\n")
+		cat(RcommandString)
+		cat("\n")
+	}
+	
+	return(invisible(c(0)))
+}
 
 
 #14Jun2021
