@@ -2718,7 +2718,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "One Sample Test")
+									table_list_names = c(table_list_names, "One Sample t-test")
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -2788,7 +2788,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Cohen's D")
+									table_list_names = c(table_list_names, "Cohen's d")
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -2796,7 +2796,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Cohen's D")
+									table_list_names = c(table_list_names, "Cohen's d")
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -2944,7 +2944,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Glass' Delta")
+									table_list_names = c(table_list_names, "Glass' delta")
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -2952,7 +2952,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Glass' Delta")
+									table_list_names = c(table_list_names, "Glass' delta")
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3253,7 +3253,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Independent Samples Test")
+									table_list_names = c(table_list_names, "Independent Samples t-test")
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3323,7 +3323,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Cohen's D")
+									table_list_names = c(table_list_names, "Cohen's d")
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -3331,7 +3331,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Cohen's D")
+									table_list_names = c(table_list_names, "Cohen's d")
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3401,7 +3401,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Hedges' G")
+									table_list_names = c(table_list_names, "Hedges' g")
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -3409,7 +3409,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Hedges' G")
+									table_list_names = c(table_list_names, "Hedges' g")
 								}
 								
 								if(X_has_been_printed == TRUE)

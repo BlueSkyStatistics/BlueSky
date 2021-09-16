@@ -22,8 +22,8 @@ while (i <=len)
 	#initialmem=gc()
 	}
 	uavar =names(uadatasets$lst[[index]][uavarindex[i]])
-	uadatasets$uawarnmsgdis =sprintf("Hedges g on variable %s generated a warning",uavar)
-	uadatasets$uaerrmsgdis =sprintf("Hedges g on variable %s generated an error",uavar)		
+	uadatasets$uawarnmsgdis =sprintf("Hedges' g on variable %s generated a warning",uavar)
+	uadatasets$uaerrmsgdis =sprintf("Hedges' g on variable %s generated an error",uavar)		
 	tryCatch(
 	{
 		#NOTE: THE CODE HANDLES THE FACT THAT THERE CAN BE AN ERROR AND ONE OR MORE WARNINGS
@@ -107,8 +107,8 @@ hedgesgIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
     while (i <= noofvars) 
 	{
 		uavar = names(uadatasets$lst[[index]][uavarindex[i]])
-        uadatasets$uawarnmsgdis = sprintf("Hedges's g on variable '%s' generated a warning", uavar)
-        uadatasets$uaerrmsgdis = sprintf("Hedges's g on variable '%s' generated an error", uavar)
+        uadatasets$uawarnmsgdis = sprintf("Hedges' g on variable '%s' generated a warning", uavar)
+        uadatasets$uaerrmsgdis = sprintf("Hedges' g on variable '%s' generated an error", uavar)
         if (!is.na(uavarindex[i])) 
 		{
             if (uaperformance == 2) 
