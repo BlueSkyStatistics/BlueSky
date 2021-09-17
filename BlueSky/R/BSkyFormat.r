@@ -4601,7 +4601,7 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 }
 
 
-#15Sep2021
+#17Sep2021
 BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, executeSelectOnly = FALSE, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
 	if(bskyEvalDebug == TRUE)
@@ -4630,14 +4630,56 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 	
 		bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
 		
+		RcommandString_before_any_modification = RcommandString
+		
 		if(length(RcommandString) > 0) # && (numExprParse > -1 || selectionStartpos > 0 || selectionEndpos > 0))
 		{
+			if(selectionStartpos> 0)
+			{
+				if(selectionEndpos > nchar(RcommandString) || selectionEndpos == 0 || selectionEndpos < selectionStartpos )
+				{
+					selectionEndpos = nchar(RcommandString)
+				}
+				
+				non_blank_or_non_newline_found = FALSE
+			
+				for(i in selectionStartpos:selectionEndpos)
+				{
+					if(substr(RcommandString, i, i) != '\n' && substr(RcommandString, i, i) != '\r' &&  trimws(substr(RcommandString, i, i)) != "")
+					{
+						non_blank_or_non_newline_found = TRUE
+						break 
+					}
+				}
+				
+				newline_count = 0
+				
+				if(non_blank_or_non_newline_found == FALSE)
+				{
+					for(j in (selectionEndpos+1):nchar(RcommandString))
+					{
+						if(substr(RcommandString, j, j) == '\n' || substr(RcommandString, j, j) == '\r' || trimws(substr(RcommandString, j, j)) == "" )
+						{
+							newline_count = newline_count + 1
+						}
+						else
+						{
+							break 
+						}
+					}
+					
+					return(invisible(list(executionStatus = 0, parsingStatus = 0, parsingErrorLineNum = 0, totalCharCount = selectionEndpos + newline_count, firstExprStartPos = selectionStartpos, lastExprEndPos = selectionEndpos + newline_count, parsedCommandList= c())))
+				}
+			}
+			
 			if(executeSelectOnly == TRUE && selectionStartpos > 0 && selectionEndpos > 0)
 			{
 				RcommandString = substr(RcommandString, selectionStartpos, selectionEndpos)
 				selectionStartpos = 0
 				selectionEndpos = 0
 			}
+			
+			charPosOffsetAdjutment = 0
 			
 			if(executeSelectOnly == FALSE && selectionStartpos > 0 && selectionEndpos > 0)
 			{
@@ -4647,8 +4689,10 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 				if(RcommandStringSelect_parse_test == 0)
 				{
 					RcommandString = substr(RcommandString, selectionStartpos, selectionEndpos)
+					charPosOffsetAdjutment = selectionStartpos
 					selectionStartpos = 0
 					selectionEndpos = 0
+					 
 				}
 			}
 			
@@ -4677,6 +4721,35 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 			}
 				
 			return(invisible(list(executionStatus = -1, parsingStatus = 0, parsingErrorLineNum =0, totalCharCount = 0, firstExprStartPos = 0, lastExprEndPos = 0, parsedCommandList=c())))
+		}
+		
+		if(charPosOffsetAdjutment > 1)
+		{
+			Rcommands_initial_parse$totalCharCount = Rcommands_initial_parse$totalCharCount + charPosOffsetAdjutment -1
+			Rcommands_initial_parse$firstExprStartPos = Rcommands_initial_parse$firstExprStartPos + charPosOffsetAdjutment -1
+			Rcommands_initial_parse$lastExprEndPos = Rcommands_initial_parse$lastExprEndPos + charPosOffsetAdjutment -1
+		}
+		
+		RcommandString_before_any_modification_length = nchar(RcommandString_before_any_modification)
+		
+		if(Rcommands_initial_parse$lastExprEndPos > 0 && Rcommands_initial_parse$lastExprEndPos < RcommandString_before_any_modification_length )
+		{
+			newline_count = 0
+			
+			for(i in (Rcommands_initial_parse$lastExprEndPos + 1):RcommandString_before_any_modification_length)
+			{
+				if(substr(RcommandString_before_any_modification, i, i) == '\n' || substr(RcommandString_before_any_modification, i, i) == '\r' || trimws(substr(RcommandString_before_any_modification, i, i)) == "")
+				{
+					newline_count = newline_count + 1
+				}
+				else
+				{
+					break 
+				}
+			}
+			
+			Rcommands_initial_parse$totalCharCount = Rcommands_initial_parse$totalCharCount + newline_count
+			Rcommands_initial_parse$lastExprEndPos = Rcommands_initial_parse$lastExprEndPos + newline_count
 		}
 		
 		if(is.null(currentColumnNames) || trimws(currentColumnNames) == "")
