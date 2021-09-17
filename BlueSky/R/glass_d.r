@@ -99,7 +99,7 @@ glassdIndSmTTest <-function (cindex, uavarindex, groupindex,  noofvars,  correct
     i = 1
     j = 1
     p = 1
-  
+  uatemp=NULL
     uadatasets$retstructure[[indexInReturnStructure]]$datatable = matrix(nrow = noofvars, ncol = 4)
   
     while (i <= noofvars) 
@@ -128,7 +128,7 @@ glassdIndSmTTest <-function (cindex, uavarindex, groupindex,  noofvars,  correct
 						uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]], 
 							  data.frame(varIndex = i, type = -1, 
 								varName = names(uadatasets$lst[[index]][uavarindex[i]]), 
-								dataTableRow = k, startCol = 2, endCol = 2	, 
+								dataTableRow = i, startCol = 2, endCol = 2	, 
 								BSkyMsg = BSkywarnmsgdis, RMsg = ""))
 							uawritelog(type = "Warning", functionName = "glassdIndSmTTest", 
 							  BSkyMessage = BSkywarnmsgdis)

@@ -22,8 +22,8 @@ while (i <=len)
 	#initialmem=gc()
 	}
 	uavar =names(uadatasets$lst[[index]][uavarindex[i]])
-	uadatasets$uawarnmsgdis =sprintf("Hedges g on variable %s generated a warning",uavar)
-	uadatasets$uaerrmsgdis =sprintf("Hedges g on variable %s generated an error",uavar)		
+	uadatasets$uawarnmsgdis =sprintf("Hedges' g on variable %s generated a warning",uavar)
+	uadatasets$uaerrmsgdis =sprintf("Hedges' g on variable %s generated an error",uavar)		
 	tryCatch(
 	{
 		#NOTE: THE CODE HANDLES THE FACT THAT THERE CAN BE AN ERROR AND ONE OR MORE WARNINGS
@@ -101,14 +101,14 @@ hedgesgIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
     i = 1
     j = 1
     p = 1
-  
+  uatemp=NULL
     uadatasets$retstructure[[indexInReturnStructure]]$datatable = matrix(nrow = noofvars, ncol = 4)
   
     while (i <= noofvars) 
 	{
 		uavar = names(uadatasets$lst[[index]][uavarindex[i]])
-        uadatasets$uawarnmsgdis = sprintf("Hedges's g on variable '%s' generated a warning", uavar)
-        uadatasets$uaerrmsgdis = sprintf("Hedges's g on variable '%s' generated an error", uavar)
+        uadatasets$uawarnmsgdis = sprintf("Hedges' g on variable '%s' generated a warning", uavar)
+        uadatasets$uaerrmsgdis = sprintf("Hedges' g on variable '%s' generated an error", uavar)
         if (!is.na(uavarindex[i])) 
 		{
             if (uaperformance == 2) 
@@ -130,7 +130,7 @@ hedgesgIndSmTTest <-function (cindex, uavarindex, groupindex, noofvars,  correct
 						uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]], 
 							  data.frame(varIndex = i, type = -1, 
 								varName = names(uadatasets$lst[[index]][uavarindex[i]]), 
-								dataTableRow = k, startCol = 2, endCol = 2	, 
+								dataTableRow = i, startCol = 2, endCol = 2	, 
 								BSkyMsg = BSkywarnmsgdis, RMsg = ""))
 							uawritelog(type = "Warning", functionName = "hedgesgIndSmTTest", 
 							  BSkyMessage = BSkywarnmsgdis)
