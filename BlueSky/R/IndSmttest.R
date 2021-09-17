@@ -302,6 +302,7 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
     j = 1
     p = 1
     q = 1
+	uatemp=NULL
     uadatasets$retstructure[[2]] <- list()
     uadatasets$retstructure[[2]]$type = "table"
     uadatasets$retstructure[[2]]$metadata = "yes"
