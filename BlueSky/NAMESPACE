@@ -195,5 +195,7 @@ export(predictPrerequisiteCP)
 
 export(BSkyGetAvailableModelsCP)
 
+export(BSkyRCommandParsingTest)
+
 
 
