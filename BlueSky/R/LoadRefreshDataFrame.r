@@ -361,6 +361,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 	isdataframe=FALSE
 	isPkgLoaded = FALSE
 	isexists = FALSE
+	error = FALSE
 	pkgname = c()
 	dsname = c()
 	pkgEnv = c()
@@ -383,6 +384,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 				cat("Package ")
 				cat(pkgname)
 				cat(" not loaded. Use library(packageName) to load the package.")
+				error=TRUE
 				invisible()				
 			}
 			
@@ -408,7 +410,8 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 				cat("Dataset ")
 				cat(dsname)
 				cat(" is not found in the package ")
-				cat(pkgname)				
+				cat(pkgname)	
+				error= TRUE
 				invisible()
 			}
 			
@@ -422,20 +425,58 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			if(inGlobalEnv)
 			{
 				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+				
+				if ( !isdataframe ) #not a data.frame and the object exists
+				{
+					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+					cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame object as a character string) or the object referenced is not an object of class data.frame")
+					cat("\nCorrect syntax is:")
+					cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame")
+					cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame from a specific R package")
+					error= TRUE
+					invisible()
+				}
+				
 			}
+			else
+			{
+				isexists = eval(parse(text=paste('exists("'  ,bskyDatasetName,'")', sep='' )))# DS exists in the pkg.
+				if (isexists)
+				{
+					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- ',bskyDatasetName,sep='')))##make a copy in globalEnv
+					#dsname = 'mtcars'
+					isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+					
+					if ( !isdataframe ) #not a data.frame and the object exists
+					{
+						cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+						cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame object as a character string) or the object referenced is not an object of class data.frame")
+						cat("\nCorrect syntax is:")
+						cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame")
+						cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame from a specific R package")
+						error= TRUE
+						invisible()
+					}
+					
+				}
+				else
+				{
+					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+					cat("Dataset ")
+					cat(bskyDatasetName)
+					cat(" cannot be found. Please check the spelling of the dataset name or load the package containing the dataset")
+					error= TRUE
+					invisible()
+				
+				}
+				
+			}
+			
 		}
 	}
-
-	if(!isdataframe) #not a data.frame
-	{
-		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-		cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame object as a character string) or the object referenced is not an object of class data.frame")
-		cat("\nCorrect syntax is:")
-		cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame from the global environment")
-		cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame from a R package")
-		invisible()
-	}
-	if(load.dataframe)
+	
+	
+	if(load.dataframe && !error)
 	{
 		# first check the whether the dataset exsits in the uadatasets list - if so no processing of the dataset is needed - Anil needs to verify this 
 		# if the dataset name does not exist in the uadatasets, then do all prep (attrbutes, variables, etc) the dataset and add to the uadatasets
