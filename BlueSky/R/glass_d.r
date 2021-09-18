@@ -132,7 +132,7 @@ glassdIndSmTTest <-function (cindex, uavarindex, groupindex,  noofvars,  correct
 								BSkyMsg = BSkywarnmsgdis, RMsg = ""))
 							uawritelog(type = "Warning", functionName = "glassdIndSmTTest", 
 							  BSkyMessage = BSkywarnmsgdis)
-							uatemp$Cohens_d =NA
+							uatemp$Glass_delta =NA
 							uatemp$CI = NA
 							uatemp$CI_low = NA
 							uatemp$CI_high =NA
@@ -182,7 +182,10 @@ glassdIndSmTTest <-function (cindex, uavarindex, groupindex,  noofvars,  correct
 				{
                     uadatasets$errorfn = 0
                     uadatasets$warning = 0
-					uadatasets$retstructure[[indexInReturnStructure]]$datatable[j,1] <-uatemp$Glass_delta
+					#cat("This is insane")
+					#cat (uatemp$Glass_delta)
+					#cat("End: This is insane")
+					uadatasets$retstructure[[indexInReturnStructure]]$datatable[j,1] <- uatemp$Glass_delta
 					uadatasets$retstructure[[indexInReturnStructure]]$datatable[j,2] <-uatemp$CI
 					uadatasets$retstructure[[indexInReturnStructure]]$datatable[j,3] <-uatemp$CI_low
 					uadatasets$retstructure[[indexInReturnStructure]]$datatable[j,4]<-uatemp$CI_high                

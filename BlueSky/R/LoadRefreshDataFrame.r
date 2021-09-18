@@ -429,10 +429,10 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 	if(!isdataframe) #not a data.frame
 	{
 		cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-		cat("Syntax error or not a data.frame name")
+		cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame object as a character string) or the object referenced is not an object of class data.frame")
 		cat("\nCorrect syntax is:")
-		cat("\n\tBSkyLoadRefresh('dataframe-name') #load from global environment")
-		cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load from a package")
+		cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame from the global environment")
+		cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame from a R package")
 		invisible()
 	}
 	if(load.dataframe)
