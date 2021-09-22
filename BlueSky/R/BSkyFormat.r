@@ -5614,6 +5614,26 @@ BSkyRCommandParsedExprBoundary <- function(RcommandString, numExprParse = -1, se
 	return(invisible(list(parsingStatus = 0, parsingErrorLineNum = 0, totalCharCount = char_count, firstExprStartPos = first_expr_start_char_count, lastExprEndPos = last_expr_end_char_count, parsedCommandList= parsed_expr_list$parsedCommandList)))
 }
 
+#22Sep2021
+BSkyRCommandLineNumberFromCharCount <- function(RcommandString, charCount)
+{
+	RCommandLineNumber = 1
+	
+	if(charCount > 0)
+	{
+		line_breakdown_RcommandString = data.frame(strsplit(RcommandString, "\n"))
+		line_breakdown_RcommandString = cbind(line_breakdown_RcommandString, lapply(line_breakdown_RcommandString, nchar))
+		line_breakdown_RcommandString[,2] = line_breakdown_RcommandString[,2] + 1
+		line_breakdown_RcommandString = cbind(line_breakdown_RcommandString, cumsum(line_breakdown_RcommandString[,2]))
+		line_breakdown_RcommandString = cbind(seq(1:nrow(line_breakdown_RcommandString)), line_breakdown_RcommandString)
+		names(line_breakdown_RcommandString) = c("lineNum", "lineTxt", "lineTxtCharCount", "lineTxtCumCharCount")
+		
+		RCommandLineNumber = min((line_breakdown_RcommandString[line_breakdown_RcommandString$lineTxtCumCharCount >= charCount,])$lineNum)
+	}
+	
+	return(invisible(RCommandLineNumber))
+}
+
 
 
 #05Sep2021

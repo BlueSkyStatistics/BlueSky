@@ -197,5 +197,7 @@ export(BSkyGetAvailableModelsCP)
 
 export(BSkyRCommandParsingTest)
 
+export(BSkyRCommandLineNumberFromCharCount)
+
 
 
