@@ -4601,7 +4601,7 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 }
 
 
-#22Sep2021
+#25Sep2021
 BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, executeSelectOnly = FALSE, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
 	if(bskyEvalDebug == TRUE)
@@ -4614,7 +4614,9 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 		print(match.call())
 		cat("\n")
 		
-		line_breakdown_RcommandString = data.frame(strsplit(RcommandString_before_any_modification, "\n"))
+		cat("\nR command(s) passed\n")
+		
+		line_breakdown_RcommandString = data.frame(strsplit(RcommandString, "\n"))
 		line_breakdown_RcommandString = cbind(line_breakdown_RcommandString, lapply(line_breakdown_RcommandString, nchar))
 		line_breakdown_RcommandString[,2] = line_breakdown_RcommandString[,2] + 1
 		line_breakdown_RcommandString = cbind(line_breakdown_RcommandString, cumsum(line_breakdown_RcommandString[,2]))
@@ -4651,10 +4653,11 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 		if(length(RcommandString) > 0) # && (numExprParse > -1 || selectionStartpos > 0 || selectionEndpos > 0))
 		{	
 			charPosOffsetAdjutment = 0
+			linePosOffsetAdjutment = 1
 			
 			if(selectionStartpos> 0)
 			{
-				linePosOffsetAdjutment = BSkyRCommandLineNumberFromCharCount(RcommandString, selectionStartpos)
+				linePosOffsetAdjutment = BSkyRCommandLineNumberFromCharCount(RcommandString_before_any_modification, selectionStartpos)
 				
 				selection_only_first_expr_found = FALSE
 				RcommandStringSelect_parse_test = -1
@@ -4670,7 +4673,8 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 					{
 						find_first_expression = BSkyRCommandParsedExprBoundary(RcommandString = RcommandStringSelect, numExprParse = numExprParse , selectionStartpos = 0, selectionEndpos = 0, linePosOffsetAdjutment = linePosOffsetAdjutment, bskyEvalDebug = bskyEvalDebug)
 					
-						if(find_first_expression$parsingStatus == 0 && find_first_expression$firstExprStartPos > 0 && find_first_expression$lastExprEndPos > 0)
+						#if(find_first_expression$parsingStatus == 0 && find_first_expression$firstExprStartPos > 0 && find_first_expression$lastExprEndPos > 0)
+						if(find_first_expression$firstExprStartPos > 0 && find_first_expression$lastExprEndPos > 0)
 						{
 							RcommandString = substr(RcommandString, selectionStartpos, selectionEndpos)
 							charPosOffsetAdjutment = selectionStartpos
@@ -4751,6 +4755,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 							if(selectionStartpos > find_first_expression$firstExprStartPos)
 							{
 								selectionStartpos = find_first_expression$firstExprStartPos
+								linePosOffsetAdjutment = BSkyRCommandLineNumberFromCharCount(RcommandString_before_any_modification, selectionStartpos)
 							}
 							
 							RcommandString = substr(RcommandString, selectionStartpos, nchar(RcommandString))
@@ -4783,6 +4788,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 				print(Rcommands_initial_parse)
 			}
 			
+			#if(Rcommands_initial_parse$parsingStatus == 0 && Rcommands_initial_parse$firstExprStartPos > 0 && Rcommands_initial_parse$lastExprEndPos > 0)
 			if(Rcommands_initial_parse$firstExprStartPos > 0 && Rcommands_initial_parse$lastExprEndPos > 0)
 			{
 				RcommandString = substr(RcommandString, Rcommands_initial_parse$firstExprStartPos, Rcommands_initial_parse$lastExprEndPos)
@@ -4858,6 +4864,8 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 				return(invisible(list(executionStatus = Rcommands_initial_parse$parsingStatus, parsingStatus = Rcommands_initial_parse$parsingStatus, parsingErrorLineNum = Rcommands_initial_parse$parsingErrorLineNum, totalCharCount = Rcommands_initial_parse$totalCharCount, firstExprStartPos = Rcommands_initial_parse$firstExprStartPos, lastExprEndPos = Rcommands_initial_parse$lastExprEndPos, parsedCommandList= Rcommands_initial_parse$parsedCommandList)))
 			}
 		}
+		
+		
 		
 		if(is.null(currentColumnNames) || trimws(currentColumnNames) == "")
 		{
