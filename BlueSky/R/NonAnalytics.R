@@ -323,12 +323,12 @@ BSkyRecode <-function (colNames, newColNames = "", OldNewVals, NewCol = FALSE, p
 					{
 					eval(parse(text = paste(datasetname, "$", 
                       newColNames[i], "<- car::recode(", datasetname, 
-                      "$", colNames[i], ", '", OldNewVals, "',as.numeric=TRUE ), sep="")))
+                      "$", colNames[i], ", '", OldNewVals, "',as.numeric=TRUE )", sep="")))
 					}
 					else if (dontMakeFactor) {
 					eval(parse(text = paste(datasetname, "$", 
                       newColNames[i], "<- car::recode(", datasetname, 
-                      "$", colNames[i], ", '", OldNewVals, "',as.factor=FALSE ), sep="")))
+                      "$", colNames[i], ", '", OldNewVals, "',as.factor=FALSE )", sep="")))
 					
 					
 					}
@@ -410,7 +410,7 @@ BSkyRecode <-function (colNames, newColNames = "", OldNewVals, NewCol = FALSE, p
 					
                     eval(parse(text = paste(datasetname, "$", prefixOrSuffixString, 
                       colNames[i], "<- car::recode(", datasetname, 
-                      "$", colNames[i], ", '", OldNewVals, "', )" ,sep=""     )))
+                      "$", colNames[i], ", '", OldNewVals, "' )" ,sep=""     )))
 					  }
                   }
 
