@@ -199,5 +199,5 @@ export(BSkyRCommandParsingTest)
 
 export(BSkyRCommandLineNumberFromCharCount)
 
-
+export(BSkysaveAsDataset) #for copy to non-ascii path
 
