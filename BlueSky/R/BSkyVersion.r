@@ -4,9 +4,9 @@
 ############################################################
 BSkyVersion<-function()
 {
-bskyver= "Version: 7.64"
-bskydate="Date: 2021-09-27"
-bskytime="11:55PM"
+bskyver= "Version: 7.65"
+bskydate="Date: 2021-09-28"
+bskytime="11:10AM"
 rver = R.Version()
 print("------ BlueSky R package version ------")
 print(bskyver) 
@@ -16,6 +16,10 @@ cat("\n\n------ R library paths ------\n")
 print(.libPaths()) 
 cat("\n\n------ R version ------\n")
 print(rver)
+Sys.getlocale("LC_ALL")
+getOption("encoding")
+l10n_info()
+Sys.info()[c(1:3,5)]
 }
 
 # "bskyfrmtobj <- BSkyFormat(bskytempvarname, bSkyFormatAppRequest = TRUE, singleTableOutputHeader = \"c(\"a\")\" )"
