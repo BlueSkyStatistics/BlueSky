@@ -2876,7 +2876,7 @@ BSkyBuildReturnTableStructure <- function(vars=c(), datasetname="", OutputDataTa
 ###25Apr2021 Error warning printing to the sink file
 BSkyReturnStructure <-function(bskyAdditionalTableList = NA) ### passs as list(value)
 {
-
+	return(invisible(BSkyReturnStructure2(bskyAdditionalTableList=bskyAdditionalTableList)))
 	#print(" SK 2 - I am in BSkyReturnStructure")
 	
 ### Common Errors & Warning ) #### Same as Aaron's ####

@@ -288,7 +288,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level Reode function\n")
-		invisible(BSkyReturnStructure())
+		invisible(BSkyReturnStructure2())
 }
 
 
@@ -430,7 +430,7 @@ BSkyRecode <-function (colNames, newColNames = "", OldNewVals, NewCol = FALSE, p
         BSkyLocalWarningFlagsReset()
     }
     BSkyFunctionWrapUp()
-    invisible(BSkyReturnStructure())
+    invisible(BSkyReturnStructure2())
 }
 
 
