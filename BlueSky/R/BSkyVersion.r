@@ -5,19 +5,23 @@
 BSkyVersion<-function()
 {
 bskyver= "Version: 7.65"
-bskydate="Date: 2021-09-28"
-bskytime="11:35AM"
+bskydate="Date: 2021-09-29"
+bskytime="11:50AM"
 rver = R.Version()
 print("------ BlueSky R package version ------")
 print(bskyver) 
 print(bskydate)
 print(bskytime) 
+cat("\n\n------ R Home ------\n")
+print(R.home())
 cat("\n\n------ R library paths ------\n")
 print(.libPaths()) 
 cat("\n\n------ R version ------\n")
 print(rver)
-cat("\n\n------ LC ALL ------\n")
-print(Sys.getlocale("LC_ALL"))
+cat("\n\n------ R SessionInfo ------\n")
+print(sessionInfo())
+#cat("\n\n------ LC ALL ------\n")
+#print(Sys.getlocale("LC_ALL"))
 cat("\n\n------ Encoding ------\n")
 print(getOption("encoding"))
 cat("\n\n------ Internationalization ------\n")

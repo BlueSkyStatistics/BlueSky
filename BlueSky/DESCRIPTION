@@ -2,7 +2,7 @@ Package: BlueSky
 Type: Package
 Title: BlueSky package that works with BlueSky Statistics application
 Version: 7.65
-Date: 2021-09-28
+Date: 2021-09-29
 Depends: R (>= 4.0.0)
 Author: BlueSky Statistics.
 Maintainer: contact us <support@blueskystatistics.com>
