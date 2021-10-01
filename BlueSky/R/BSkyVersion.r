@@ -4,30 +4,51 @@
 ############################################################
 BSkyVersion<-function()
 {
-bskyver= "Version: 7.65"
-bskydate="Date: 2021-09-29"
-bskytime="11:50AM"
+bskyver= "Version: 7.66"
+bskydate="Date: 2021-10-01"
+bskytime="10:22AM"
 rver = R.Version()
 print("------ BlueSky R package version ------")
 print(bskyver) 
 print(bskydate)
 print(bskytime) 
+
 cat("\n\n------ R Home ------\n")
 print(R.home())
+
 cat("\n\n------ R library paths ------\n")
 print(.libPaths()) 
+
 cat("\n\n------ R version ------\n")
 print(rver)
+
 cat("\n\n------ R SessionInfo ------\n")
 print(sessionInfo())
-#cat("\n\n------ LC ALL ------\n")
-#print(Sys.getlocale("LC_ALL"))
+
 cat("\n\n------ Encoding ------\n")
 print(getOption("encoding"))
+
 cat("\n\n------ Internationalization ------\n")
 print(l10n_info())
+
 cat("\n\n------ System Info ------\n")
 print(Sys.info()[c(1:3,5)])
+
+# location of R's own temp directory
+cat("\n\n------ R's temp directory ------\n")
+print(tempdir())
+
+# R's working directory
+cat("\n\n------ R's working directory ------\n")
+print(getwd())
+
+# finding .Rprofile file path 
+candidates <- c( Sys.getenv("R_PROFILE"),
+                 file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site"),
+                  Sys.getenv("R_PROFILE_USER"),
+                  file.path(getwd(), ".Rprofile") )
+cat("\n\n------ Rprofile details ------\n")
+Filter(file.exists, candidates)
 }
 
 # "bskyfrmtobj <- BSkyFormat(bskytempvarname, bSkyFormatAppRequest = TRUE, singleTableOutputHeader = \"c(\"a\")\" )"
