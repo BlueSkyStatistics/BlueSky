@@ -29,7 +29,20 @@
 #																											
 #Example: UAloadSPSSinDataFrame("C:\\satisf.sav", "mydataset",TRUE)																								
 #############################################################################################################
-UAloadSPSSinDataFrame <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf)
+
+UAloadSPSSinDataFrame <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf, usehaven=TRUE)
+{
+	if(usehaven)
+	{
+		UAloadSPSSinDataFrame.haven(SPSSfileName=SPSSfileName, datasetname=datasetname, replace=replace, loadMissingValue=loadMissingValue, trimSPSStrailing=trimSPSStrailing, max.factor=max.factor)
+	}
+	else 
+	{
+		UAloadSPSSinDataFrame.foreign(SPSSfileName=SPSSfileName, datasetname=datasetname, replace=replace, loadMissingValue=loadMissingValue, trimSPSStrailing=trimSPSStrailing, max.factor=max.factor)
+	}
+}
+
+UAloadSPSSinDataFrame.foreign <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf)
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -301,10 +314,110 @@ temp <- NULL
 	#return(BSkyReturnStructure())
 }
 
+##uses haven for reading SPSS files
+UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf)
+{
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(datasetname)
+	
+	BSkyErrMsg = paste("UAloadSPSSinDataFrame: Error loading SPSS file : ", "DataSetName :", datasetname," ", "SPSS filepath & filename  :", paste(SPSSfileName, collapse = ","),sep="")
+	BSkyWarnMsg = paste("UAloadSPSSinDataFrame: Warning loading SPSS file : ", "DataSetName :", datasetname," ", "SPSS filepath & filename   :", paste(SPSSfileName, collapse = ","),sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+
+		# New Dataset name is only added if you want to replace existing, Or you will check that it should not already be present
+		curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
+		if((replace == TRUE) || (replace == FALSE && curidx == -1))
+		{
+			# if i>0 then dataSetName already exists && you want to replace it.
+			if(replace == TRUE && curidx > 0)
+			{
+				# Delete the existing dataset from the global list first. 
+				# if dataset already exists, its index is in curidx.
+				BSkyCloseForReloading(datasetname)
+				#cat("DS Closed")
+			}
+
+			missingval <- NULL
+						
+			eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sav(file=\'',SPSSfileName,'\',))',sep='')))
+
+			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
+			for(i in 1:colcount)
+			{
+				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
+				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
+
+				if(colclass[1] == "haven_labelled")##"haven_labelled" "vctrs_vctr"     "double"
+				{
+					eval(parse(text=paste('.GlobalEnv$',datasetname,'$',coluname,'<- as_factor(',datasetname,'$',coluname,')',sep='' )))
+				}
+			}
+			uadatasets$name <- c(uadatasets$name, datasetname)
+
+			#cat("\nLoaded dataset :", datasetname)
+			DataSetIndex <- UAgetIndexOfDataSet(datasetname)
+				 if(loadMissingValue)# load missing only when flag is on. No need to create blank missing values for each col.
+				 {
+				if(is.null(missingval) || missingval=="" )##no missing values. then set all col to "none"
+				{
+					colmisattr <- list()
+					colcount = eval(parse(text=paste('ncol(',datasetname,')')))
+					for(i in 1:colcount)
+					{
+						coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
+						colmisatt <- eval(parse(text=paste('list(type="none", value="")')))
+						eval(parse(text=paste('setattr(','.GlobalEnv$',datasetname,', "misvals_',coluname,'",  colmisatt )',sep='' )))#attr for 
+					}
+				}	
+				else #if SPSS file already has missing values. Set them in new misvals_COLNAME attribute(dataset level)
+				{
+					colmisattr <- list()
+					colcount = eval(parse(text=paste('ncol(',datasetname,')')))
+					for(i in 1:colcount)
+					{
+						colIndex = i
+						coluname = eval(parse(text=paste('colnames(','.GlobalEnv$',datasetname,')[',i,']')))
+						colexists <- eval(parse(text=paste('coluname %in% names(missingval)',sep='')))
+						if (colexists)##Checking if colname exists in attribute
+						{ 
+							spsscolmisatt <- eval(parse(text=paste('missingval[',colIndex,']',sep=''))) # $type and $value
+							mistype <- eval(parse(text=paste('missingval[[',colIndex,']]$type',sep='')))
+							if(is.null(mistype) || mistype == "" || mistype == "none")
+							{
+								colmisatt <- eval(parse(text=paste('list(type="none", value="")')))
+							}
+							else
+							{
+								misvals <- eval(parse(text=paste('missingval[[',colIndex,']]$value',sep='')))
+								colmisatt <- eval(parse(text=paste('list(type=mistype, value=misvals)')))
+							}
+						}
+						else #some col those do not have missing attributes, create defaults for them
+						{
+							colmisatt <- eval(parse(text=paste('list(type="none", value="")')))
+						}
+						eval(parse(text=paste('setattr(','.GlobalEnv$',datasetname,', "misvals_',coluname,'",  colmisatt )',sep='' )))#attr for 
+					}					
+				}
+			}# load missing only when flag is ON.
+				
+			UAcreateExtraAttributes(datasetname, "SPSS")
+		}
+		else
+		{
+			warning("UAloadSPSSinDataFrame: Dataset with the same name already on the global list ")
+		}
+					# }
+		#cat("\nLoading SPSS Done!\n")		
+		BSkyFunctionWrapUp()	
+		#return(BSkyReturnStructure())
+}
+
+
 # WRITE ROLLBACK FUNCTION, IF CREATEATRRIBUTE FAILS THEN U "may" NEED TO ROLLBACK AND REMOVE THE CURRENT LATEST LOADED DATASET FOR WHICH ATTIBUTES FAILED TO CREATE
 # internal function called from UAloadSPSSinDataFrame, to create following extra attributes
 # coldesc, usermissing, missingvalues, split
-UAcreateExtraAttributes <- function(dataSetNameOrIndex, filetype) 
+UAcreateExtraAttributes <- function(dataSetNameOrIndex, filetype, usehaven=TRUE) 
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(dataSetNameOrIndex)
@@ -341,7 +454,7 @@ UAcreateExtraAttributes <- function(dataSetNameOrIndex, filetype)
 		label <- ""  #putting colname here instead of blank would be better. 
 		#filetype <- eval(parse(text=paste('attr(',datasetname,',"filetype")')))
 		#cat("\nFile Type:",filetype,"\n")
-		if(filetype == "SPSS")
+		if(filetype == "SPSS" && !usehaven)# should only be used if foreign is used for opening SPSS
 		{
 			colName = eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']',sep='')))
 			label = UAgetSPSSVariableView_Label(datasetname,colName)
