@@ -254,6 +254,9 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			}
 			if(filetype=="SAS7BDAT"){
 				BSkyLoadSASinDataFrame(fullpathfilename, datasetname, replace=replace_ds) 
+			}	
+			if(filetype=="DTA"){
+				BSkyReadStata(fullpathfilename, datasetname, replace=replace_ds) 
 			}			
 			else if(filetype == "XLS"){
 				UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=FALSE, character.to.factor=character.to.factor)
@@ -473,6 +476,9 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			if(filetype=="SAV"){
 				BSkywriteSAV(fullpathfilename, dataSetNameOrIndex)  #requires rio R package
 			}
+			if(filetype=="DTA"){
+				BSkyWriteStata(fullpathfilename, dataSetNameOrIndex)  #requires haven R package
+			}			
 			else if(filetype == "XLS"){
 				UAwriteExcel(fullpathfilename, dataSetNameOrIndex, newWorksheetName, row.names = Rownames, col.names = Colnames, xlsx=FALSE)
 			}
