@@ -356,7 +356,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 	BSkyLoadRefresh(dframe, load.dataframe);
 }
 
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = FALSE)## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
 	isPkgLoaded = FALSE
