@@ -476,6 +476,9 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			if(filetype=="SAV"){
 				BSkywriteSAV(fullpathfilename, dataSetNameOrIndex)  #requires rio R package
 			}
+			if(filetype=="SAS7BDAT"){
+				BSkyWriteSas(fullpathfilename, dataSetNameOrIndex)  #requires haven R package
+			}
 			if(filetype=="DTA"){
 				BSkyWriteStata(fullpathfilename, dataSetNameOrIndex)  #requires haven R package
 			}			
