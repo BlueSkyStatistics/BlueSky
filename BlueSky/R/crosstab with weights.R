@@ -64,22 +64,117 @@
 #and the variables for which we should display nothing as there are errors and warnings
 #Note: we will display the errors and warnings at the top of the table
 #If there is a split,???
-
-BSkyCrossTable<- function(x,y,weight=NA, layers=NA,digits=3,max.width = 5, expected=FALSE, prop.r=FALSE, prop.c=FALSE,
+#08Oct2021
+BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3, max.width = 5, expected=FALSE, prop.r=FALSE, prop.c=FALSE,
            prop.t=FALSE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
            resid=FALSE, sresid=FALSE, asresid=FALSE,
-           missing.include=TRUE,
-           dnn = NULL, datasetname, bSkyHandleSplit = TRUE)
+           missing.include=TRUE, dnn = NULL, datasetname = NULL, bSkyHandleSplit = TRUE)
+           
 {
 	
 	# Must be called within uber or any sub function as the very fist executable statement/function call
 	# This is to gather the call parameters passed. This is needed within
 	# warning and error handler to log the calling details in logfile
 	BSkyFunctionInit()
-	#This is just to set the context to the current dataset name
-	#This also copies the dataset to uadatasets$lst for backward compatibility
-	BSkySetCurrentDatasetName(datasetname, setDatasetIndex ="y")
-	bSkyDatasetname = BSkyGetDatasetName(datasetname)
+	
+	datasetname_passed = c("")
+	
+	if(is.null(datasetname))
+	{
+		if(class(data)[1] != "character")
+		{
+			datasetname_passed = deparse(substitute(data))
+			
+			if(datasetname_passed == ".")
+			{
+				datasetname = "data" 
+			}
+			
+			#print(head(data))
+		}
+	}
+	
+	if(is.na(x) && is.na(y))
+	{
+		datasetObj = eval(parse(text=datasetname))
+		col_names = dimnames(datasetObj)[[2]]
+		
+		if(length(col_names) < 2)
+		{
+			return(invisible(NULL))
+		}
+		else
+		{
+			x = col_names[1]
+			y = col_names[2]
+			
+			if(is.na(layers) && length(col_names) > 2)
+			{
+				layers = col_names[3:length(col_names)]
+			}
+		}
+	}
+	
+	
+	if(datasetname_passed == ".")
+	{
+		#temp_pipe_dataset_name = tempfile(pattern = "pipe_data_", tmpdir = "")
+		#temp_pipe_dataset_name = substr(temp_pipe_dataset_name, 2, nchar(temp_pipe_dataset_name))
+		temp_pipe_dataset_name = "bsky_piped_temp_dataset"
+		eval(parse(text= paste(temp_pipe_dataset_name, "<<- data"))) #, envir = globalenv())
+		BSkyLoadRefresh(temp_pipe_dataset_name)
+		 
+		datasetname = temp_pipe_dataset_name
+		
+		#print(head(eval(parse(text= paste(temp_pipe_dataset_name)), envir = globalenv())))
+		#print(datasetname)
+		# print(head(data))
+		
+		# return()
+
+		BSkySetCurrentDatasetName(datasetname, setDatasetIndex ="y")
+		bSkyDatasetname = BSkyGetDatasetName(datasetname)
+		datasetNameOrDatasetGlobalIndex = datasetname
+		#bSkyHandleSplit = FALSE
+		
+		if(is.null(dnn))
+		{
+			dnn = NA
+		}
+		replace_uasummary_7 = paste( "BSkyCrossTable(",
+									"asresid=c(", asresid, "),",
+									"bSkyHandleSplit=c(", bSkyHandleSplit, "),",
+									"chisq=c(",chisq, "),",
+									"datasetname=c('",datasetname, "'),",
+									"digits=c(",digits, "),",
+									"dnn=",dnn, ",",
+									"expected=c(", expected, "),",
+									"fisher=c(", fisher, "),",
+									"layers=c(",paste(layers, collapse=","), "),",
+									"max.width=c(", max.width,  "),",
+									"mcnemar=c(", mcnemar, "),",
+									"missing.include=c(", missing.include, "),", 
+									"prop.c=c(", prop.c, "),", 
+									"prop.chisq=c(", prop.chisq, "),", 
+									"prop.r=c(", prop.r, "),", 
+									"prop.t=c(", prop.t, "),", 
+									"resid=c(", resid, "),", 
+									"sresid=c(", sresid, "),", 
+									"weight=c(", weight, "),", 
+									"x=c('",x, "' ),", 
+									"y=c('", y,"' ) )", sep="")
+		#print(replace_uasummary_7)
+		#cat("\n",replace_uasummary_7, "\n")
+	}
+	else
+	{
+		#This is just to set the context to the current dataset name
+		#This also copies the dataset to uadatasets$lst for backward compatibility
+		BSkySetCurrentDatasetName(datasetname, setDatasetIndex ="y")
+		bSkyDatasetname = BSkyGetDatasetName(datasetname)
+	}
+	
+	
 	#Added by Aaron 02/19/2021
 	ua.CST <-NULL
 	#if (layers=="") varNamesOrVarGlobalIndices=c(x,y)
@@ -103,15 +198,22 @@ BSkyCrossTable<- function(x,y,weight=NA, layers=NA,digits=3,max.width = 5, expec
 		  }
 	}
 	else 
-	  {
-	    if (is.na(weight))
-	    varNamesOrVarGlobalIndices =c(x,y,layers)
-	    else varNamesOrVarGlobalIndices =c(x,y,weight,layers)
-	  }
+	{
+		if (is.na(weight))
+			varNamesOrVarGlobalIndices =c(x,y,layers)
+		else varNamesOrVarGlobalIndices =c(x,y,weight,layers)
+	}
 	
 	
-	#varNamesOrVarGlobalIndices=c(x,y,layers)
-	bSkyVarnames = BSkyGetVarNames(varNamesOrVarGlobalIndices, datasetname)
+	if(datasetname_passed == ".")
+	{
+		bSkyVarnames = varNamesOrVarGlobalIndices
+	}
+	else
+	{
+		#varNamesOrVarGlobalIndices=c(x,y,layers)
+		bSkyVarnames = BSkyGetVarNames(varNamesOrVarGlobalIndices, datasetname)
+	}
     
  	#The global used to store the results of the tables returned by thecrosstab. 
 	# Typically, there is one Retstructure for every table that needs to be displayed
@@ -169,7 +271,7 @@ BSkyCrossTable<- function(x,y,weight=NA, layers=NA,digits=3,max.width = 5, expec
 								BSkyErrMsgwithSplit = paste(BSkyErrMsg, "Current Factors, if there is Split :",paste(BSkyComputeCurrentVarNamesAndFactorValues(bSkyDatasetname), collapse = ","),sep=" * ")
 								BSkyWarnMsgWithSplit = paste(BSkyWarnMsg, "Current Factors, if there is Split :",paste(BSkyComputeCurrentVarNamesAndFactorValues(bSkyDatasetname), collapse = ","),sep=" * ")
 								BSkyStoreApplicationWarnErrMsg(BSkyWarnMsgWithSplit, BSkyErrMsgwithSplit)
-						}
+							}
 						
 							#07/13/2013 Aaron
 							#Handling multiple row and column variables
@@ -286,8 +388,18 @@ BSkyCrossTable<- function(x,y,weight=NA, layers=NA,digits=3,max.width = 5, expec
 	# Function BSKYReturnStructure creates the final retun structure i.e. splits or not, error or not, the number of errors
 	# the number of warnings, the log, the summary of the function, the number of tables to display
 	# Basically the first 7 elements of the list
-	invisible( BSkyReturnStructure2())
+	
+	bsky_return_structure = BSkyReturnStructure2()
+	
+	if(datasetname_passed == ".")
+	{
+		bsky_return_structure$uasummary[[7]] = replace_uasummary_7
+	}
+	
+	invisible(bsky_return_structure)
 }
+
+
 
 
 

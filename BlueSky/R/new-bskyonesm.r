@@ -540,21 +540,135 @@ uadatasets.sk$rproc = finalstr
 #30Jul2018	
 # Changes to BSkyOneSmTTest,  uaonesample, uaonesamttest to support alternative
 
-BSkyOneSmTTest <-function (varNamesOrVarGlobalIndices, mu = 0, conf.level = 0.95, 
-    datasetNameOrDatasetGlobalIndex, alternative = 'two.sided', cohens_d=FALSE, cohensd_correction=FALSE,hedges_g =FALSE, hedgesg_correction=FALSE,glass_d=FALSE, glassd_correction=FALSE,missing = 0, bSkyHandleSplit = TRUE) 
+#08Oct2021
+BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 0, conf.level = 0.95, alternative = 'two.sided',
+    datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, 
+	cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 
 {
     BSkyFunctionInit()
 	#print(match.call())
+	
+	datasetname_passed = c("")
+	
+	stripped_data = data
+	
+	if(!is.null(data))
+	{
+		if(class(data)[1] != "character")
+		{
+			dataset_name_str = deparse(substitute(data))
+			
+			if(dataset_name_str == ".")
+			{
+				datasetname_passed = dataset_name_str
+				dataset_name_str = "data" 
+			}
+			
+			#print(head(data))
+		}
+		else
+		{
+			dataset_name_str = data
+			data = eval(parse(text=data), envir = globalenv())
+		}
+		
+		datasetNameOrDatasetGlobalIndex = dataset_name_str
+	}
+	else if(length(datasetNameOrDatasetGlobalIndex) == 0)
+	{
+		return(invisible(NULL))
+	}
+	
+	
+	if(!is.null(data)) # No group by for one sample t-test if(length(group) == 0 && !is.null(data)) - but filer out grouping variable if passed 
+	{
+		group_by_col_names = names(as.data.frame(attr(data, "groups")))
+		
+		if(length(group_by_col_names) > 0) 
+		{
+			group_by_col_names = group_by_col_names[1:(length(group_by_col_names) - 1)] # dropping the ".rows" col names from dplyr tibble table 
+			
+			#selected_group_by_col_names_list = paste(paste(group_by_col_names, "=", dataset_name_str, 
+			#											"$", group_by_col_names, sep = ""), sep = "", collapse = ",")
+			
+			#group = eval(parse(text = paste("list(", selected_group_by_col_names_list, ")", sep = "")))
+			group = group_by_col_names
+			
+			#print(selected_group_by_col_names_list)								
+			#print(group)
+			
+			#stripped_data = data[c(length(group_by_col_names): ncol(data))] # group_by_col_names includes columns and additional .rows column
+			stripped_data = data[, !(names(data) %in% c(group_by_col_names))] # group_by_col_names includes columns and additional .rows column
+		}
+	}
+	
+	
+	if(length(varNamesOrVarGlobalIndices) == 0 && !is.null(data))
+	{
+		varNamesOrVarGlobalIndices = dimnames(stripped_data)[[2]]
+		
+		#selected_col_names_list = paste(paste(col_names, "=", dataset_name_str, 
+		#												"$", col_names, sep = ""), sep = "", collapse = ",")
+			
+		#datasetColumnObjects = eval(parse(text = paste("list(", 
+		#												selected_col_names_list, ")", sep = "")))
+	}
+	
+	
+	if(datasetname_passed == ".")
+	{
+		#temp_pipe_dataset_name = tempfile(pattern = "pipe_data_", tmpdir = "")
+		#temp_pipe_dataset_name = substr(temp_pipe_dataset_name, 2, nchar(temp_pipe_dataset_name))
+		temp_pipe_dataset_name = "bsky_piped_temp_dataset"
+		eval(parse(text= paste(temp_pipe_dataset_name, "<<- data"))) #, envir = globalenv())
+		BSkyLoadRefresh(temp_pipe_dataset_name)
+		 
+		datasetname = temp_pipe_dataset_name
+
+		BSkySetCurrentDatasetName(datasetname, setDatasetIndex ="y")
+		bSkyDatasetname = BSkyGetDatasetName(datasetname)
+		datasetNameOrDatasetGlobalIndex = datasetname
+		#bSkyHandleSplit = FALSE
+	
+			replace_uasummary_7 =	paste("BSkyOneSmTTest(",
+									"alternative=c(", alternative, "),", 
+									"bSkyHandleSplit=c(", bSkyHandleSplit, "),", 
+									"conf.level=c(", conf.level, "),", 
+									"mu=c(", mu, "),", 
+									"datasetNameOrDatasetGlobalIndex=c('", datasetNameOrDatasetGlobalIndex, "'),",
+									"cohens_d=c(",cohens_d, "),", 
+									"cohensd_correction=c(",cohensd_correction, "),", 									
+									"glass_d=c(", glass_d, "),", 
+									"glassd_correction=c(", glassd_correction, "),", 
+									"hedges_g=c(",hedges_g, "),", 
+									"hedgesg_correction=c(", hedgesg_correction, "),", 
+									"missing=c(",missing, "),", 
+									"varNamesOrVarGlobalIndices=c(",paste(varNamesOrVarGlobalIndices,collapse=","),"))", sep="")
+							
+		#print(replace_uasummary_7)
+		#cat("\n",replace_uasummary_7, "\n")
+		#return 
+	}
+	else
+	{
+		#This is just to set the context to the current dataset name
+		#This also copies the dataset to uadatasets$lst for backward compatibility
+		BSkySetCurrentDatasetName(datasetNameOrDatasetGlobalIndex, setDatasetIndex ="y")
+		bSkyDatasetname = BSkyGetDatasetName(datasetNameOrDatasetGlobalIndex)
+	}
+	
+	
     pos = regexpr("varNamesOrVarGlobalIndices", uadatasets.sk$rproc)
     newstr = substr(uadatasets.sk$rproc, 1, pos[1] + 26)
     y = paste("c('", paste(varNamesOrVarGlobalIndices, sep = ",", 
         collapse = "','"), "')", sep = "")
     finalstr = paste(newstr, y, ")", sep = "")
     uadatasets.sk$rproc = finalstr
-    BSkySetCurrentDatasetName(datasetNameOrDatasetGlobalIndex, 
-        setDatasetIndex = "y")
-    bSkyDatasetname = BSkyGetDatasetName(datasetNameOrDatasetGlobalIndex)
-    bSkyVarnames = BSkyGetVarNames(varNamesOrVarGlobalIndices, 
+    
+	#BSkySetCurrentDatasetName(datasetNameOrDatasetGlobalIndex, setDatasetIndex = "y")
+    #bSkyDatasetname = BSkyGetDatasetName(datasetNameOrDatasetGlobalIndex)
+    
+	bSkyVarnames = BSkyGetVarNames(varNamesOrVarGlobalIndices, 
         datasetNameOrDatasetGlobalIndex)
     BSkyErrMsg = paste("Error in One Sample T Test", " Dataset Name:", 
         bSkyDatasetname, "Variables:", paste(bSkyVarnames, collapse = ","))
@@ -608,8 +722,15 @@ BSkyOneSmTTest <-function (varNamesOrVarGlobalIndices, mu = 0, conf.level = 0.95
     if (BSkyGlobalWarningFound() == TRUE) {
     }
     BSkyFunctionWrapUp()
+	
+	bsky_return_structure = BSkyReturnStructure2()
+	
+	if(datasetname_passed == ".")
+	{
+		bsky_return_structure$uasummary[[7]] = replace_uasummary_7
+	}
+	
 	#print("Returning from one sample")
-    return(invisible(BSkyReturnStructure2()))
+    invisible(bsky_return_structure)
 }
 
-	

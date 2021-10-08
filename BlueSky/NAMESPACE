@@ -204,3 +204,9 @@ export(BSkysaveAsDataset) #for copy to non-ascii path
 export(BSkyReadStata, BSkyWriteStata) #stata (.dta) file support
 
 export(BSkyWriteSas) # write sas support
+
+export(BSkySetTextTableFormat, BSkyGetTextTableFormat, BSkyVariableSummaryStats)
+export(BSky.print.text, BSky.print.html, BSky.print.latex)
+
+
+
