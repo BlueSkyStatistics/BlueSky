@@ -1516,8 +1516,12 @@ BSkyFormat2 <- function(obj, silentFormatting = FALSE, decimalDigitsRounding = B
 	# before returning from BSkyFormat2() 
 	orig_list_of_tables_passed = NULL 
 	
-	BSkyErrMsg = paste("BSkyFormat2: Error in formatting BSky object : ", "Object :", paste(obj, collapse = ","),sep="")
-	BSkyWarnMsg = paste("BSkyFormat2: Warning in formatting BSky object : ", "Object :", paste(obj, collapse = ","),sep="")
+	#BSkyErrMsg = paste("BSkyFormat2: Error in formatting BSky object : ", "Object :", paste(obj, collapse = ","),sep="")
+	#BSkyWarnMsg = paste("BSkyFormat2: Warning in formatting BSky object : ", "Object :", paste(obj, collapse = ","),sep="")
+	
+	BSkyErrMsg = paste("BSkyFormat2: Error in formatting BSky object : ", "Object :", paste(deparse(substitute(obj))), sep="")
+	BSkyWarnMsg = paste("BSkyFormat2: Warning in formatting BSky object : ", "Object :", paste(deparse(substitute(obj))), sep="")
+	
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
 	# SK 01/20/21

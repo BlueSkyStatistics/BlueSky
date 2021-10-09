@@ -600,7 +600,7 @@ uaLogFunArgsDetails<-function()
     
     			#print(fnSignatureRunTime)
     		}
-    		else if(paramObjClass == "xtabs")
+    		else if (FALSE)#(paramObjClass == "xtabs") 
     		{
     			if(i>1 && i<=len)
     			{
@@ -666,7 +666,7 @@ uaLogFunArgsDetails<-function()
     
     			#print(fnSignatureRunTime)
     		}
-    		else if(paramObjClass == "list" || paramObjClass == "data.frame")
+    		else if (FALSE)#(paramObjClass == "list" || paramObjClass == "data.frame")
     		{
     			if(i>1 && i<=len)
     			{
