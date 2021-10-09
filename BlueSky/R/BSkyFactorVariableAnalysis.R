@@ -5,7 +5,8 @@
 #BSkyNullMucher = BSkyFactorVariableAnalysis( vars = c("var1 name", "var2 name",...) , data = {{%DATASET%}}, show.only.top.factors ={{ChkboxShowOnlyTopFewFactors}}, max.number.top.factors={{txtNumTopFactorsToShow}})
 
 #This function goes into BSky R package
-BSkyFactorVariableAnalysis <- function(vars, data, show.only.top.factors=TRUE, max.number.top.factors=30)
+#08Oct2021
+BSkyFactorVariableAnalysis <- function(data = NULL, vars = NULL, show.only.top.factors=TRUE, max.number.top.factors=30)
 {
 		ChkboxShowOnlyTopFewFactors = show.only.top.factors
 		txtNumTopFactorsToShow = max.number.top.factors
@@ -18,11 +19,52 @@ BSkyFactorVariableAnalysis <- function(vars, data, show.only.top.factors=TRUE, m
 		#BSky_Factor_Variable_List = list(model = Dataset2$model,type = Dataset2$type)
 		#BSky_Factor_Variable_List = list({{subsetvars}})
 		
-		dataset_name_str = deparse(substitute(data))
+		#dataset_name_str = deparse(substitute(data))
+		
+		table_list = list()
+		table_list_names = c()
+		
+		if(class(data)[1] != "character")
+		{
+			dataset_name_str = deparse(substitute(data))
+			
+			if(dataset_name_str == ".")
+			{
+				dataset_name_str = "data" 
+			}
+			
+			#print(head(data))
+		}
+		else
+		{
+			dataset_name_str = data
+			data = eval(parse(text=data), envir = globalenv())
+		}
+		
+		if(class(data)[1] != "data.frame" && class(data)[1] != "matrix")
+		{
+			return(invisible(NULL))
+		}
+		
+		if(is.null(vars) || length(trimws(vars)) == 0)
+		{
+			vars = dimnames(data)[[2]]
+		}
+		
+		#BSky_Dataset_Overview = data.frame(Dataset = c("{{%DATASET%}}"),Variables = length(names({{%DATASET%}})),Nominals = length(x = which(lapply({{%DATASET%}}, is.factor) == TRUE)), Observations = nrow({{%DATASET%}}))
+		BSky_Dataset_Overview = data.frame(Dataset = c(dataset_name_str),Variables = length(names(data)),Nominals = length(x = which(lapply(data, is.factor) == TRUE)), Observations = nrow(data))
+		
+		#BSkyFormat(BSky_Dataset_Overview, singleTableOutputHeader=c("Dataset Overview"))
+		table_list = list(BSky_Dataset_Overview)
+		table_list_names = c("Dataset Overview")
+		names(table_list) = table_list_names
+		
 		selected_var_list = paste(paste(vars,"=",dataset_name_str,"$",vars, sep=""), sep="", collapse=",")
+		#print(selected_var_list)
 		
 		#BSky_Dataset_Overview = data.frame(Dataset = c(dataset_name_str),Variables = length(names(data)),Nominals = length(x = which(lapply(data, is.factor) == TRUE)), Observations = nrow(data))
 		BSky_Factor_Variable_List = eval(parse(text= paste("list(",selected_var_list,")", sep="")))
+		#print(BSky_Factor_Variable_List)
 		
 		for (i in 1:length(BSky_Factor_Variable_List))
 		{
@@ -41,9 +83,6 @@ BSkyFactorVariableAnalysis <- function(vars, data, show.only.top.factors=TRUE, m
 		
 		if(!isAnyNonFactor)
 		{
-			#BSky_Dataset_Overview = data.frame(Dataset = c("{{%DATASET%}}"),Variables = length(names({{%DATASET%}})),Nominals = length(x = which(lapply({{%DATASET%}}, is.factor) == TRUE)), Observations = nrow({{%DATASET%}}))
-			BSky_Dataset_Overview = data.frame(Dataset = c(dataset_name_str),Variables = length(names(data)),Nominals = length(x = which(lapply(data, is.factor) == TRUE)), Observations = nrow(data))
-			
 			#BSky_Factor_Variable_List = list({{subsetvars}})
 
 			BSky_Summary_By_Variable_df = data.frame(t(rep(c(""), 4)), stringsAsFactors = FALSE)
@@ -100,19 +139,27 @@ BSkyFactorVariableAnalysis <- function(vars, data, show.only.top.factors=TRUE, m
 			BSky_Summary_By_Variable_df = BSky_Summary_By_Variable_df[-1,]
 			BSky_Factor_By_Variable_df = BSky_Factor_By_Variable_df[,-1]
 			names(BSky_Factor_By_Variable_df) = colNamesOfBSky_Factor_By_Variable_df[-1]
-
-			BSkyFormat(BSky_Dataset_Overview, singleTableOutputHeader=c("Dataset Overview"))
-			BSkyFormat(BSky_Summary_By_Variable_df, singleTableOutputHeader=c("Nominal Variable Summary"))
+	
+			#BSkyFormat(BSky_Summary_By_Variable_df, singleTableOutputHeader=c("Nominal Variable Summary"))
+			table_list = c(table_list, list(BSky_Summary_By_Variable_df))
+			table_list_names = c(table_list_names, "Nominal Variable Summary")
+			names(table_list) = table_list_names
 
 			if(ChkboxShowOnlyTopFewFactors == TRUE)
 			{
 			   msg1 = paste("Maximum of", txtNumTopFactorsToShow, "Factors")
 			   #BSkyFormat(BSky_Factor_By_Variable_df, singleTableOutputHeader=c("Maximum of {{txtNumTopFactorsToShow}} Factors"))
-			   BSkyFormat(BSky_Factor_By_Variable_df, singleTableOutputHeader=c(msg1))
+			   #BSkyFormat(BSky_Factor_By_Variable_df, singleTableOutputHeader=c(msg1))
+			   table_list = c(table_list, list(BSky_Factor_By_Variable_df))
+			   table_list_names = c(table_list_names, msg1)
+			   names(table_list) = table_list_names
 			}
 			else
 			{
-			   BSkyFormat(BSky_Factor_By_Variable_df, singleTableOutputHeader=c("All Factors"))
+			   #BSkyFormat(BSky_Factor_By_Variable_df, singleTableOutputHeader=c("All Factors"))
+			   table_list = c(table_list, list(BSky_Factor_By_Variable_df))
+			   table_list_names = c(table_list_names, "All Factors")
+			   names(table_list) = table_list_names
 			}
 
 			#remove(BSky_Factor_Variable_List)
@@ -122,4 +169,7 @@ BSkyFactorVariableAnalysis <- function(vars, data, show.only.top.factors=TRUE, m
 			#remove(BSky_Factor_By_Variable_df)
 		}
 		cat(message)
+		
+		return(invisible(table_list))
 }
+

@@ -356,7 +356,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 	BSkyLoadRefresh(dframe, load.dataframe);
 }
 
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = FALSE)## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
 	isPkgLoaded = FALSE
@@ -494,25 +494,25 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		##if we put object then python gets the object directly. 
 		##if we put name then python code must know that its a name and get object of that name from R memory and then process it.
 
-		if((exists("uadatasets.sk") && exists("BSkyKableFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyKableFormatting == FALSE))
-		{
-			doKableFormatting = FALSE
-		}
-		else
-		{
-			doKableFormatting = TRUE
+		# if((exists("uadatasets.sk") && exists("BSkyKableFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyKableFormatting == FALSE))
+		# {
+			# doKableFormatting = FALSE
+		# }
+		# else
+		# {
+			# doKableFormatting = TRUE
 			
-			if((exists("uadatasets.sk") && exists("BSkyRmarkdownFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyRmarkdownFormatting == FALSE))
-			{
-				doRmarkdownFormatting = FALSE
-			}
-			else
-			{
-				doRmarkdownFormatting = TRUE
-			}
+			# if((exists("uadatasets.sk") && exists("BSkyRmarkdownFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyRmarkdownFormatting == FALSE))
+			# {
+				# doRmarkdownFormatting = FALSE
+			# }
+			# else
+			# {
+				# doRmarkdownFormatting = TRUE
+			# }
 			
-			isRmarkdownOutputOn = doRmarkdownFormatting
-		}
+			# isRmarkdownOutputOn = doRmarkdownFormatting
+		# }
 		
 		# after the above processing do the following
 		if(isRmarkdownOutputOn == FALSE)

@@ -91,13 +91,20 @@
  }
 
 
-##13Sep2021
-BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", tableStylingOptions = "table_border = F, column_align = r, header_background = \"#F0F8FF\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#F0F8FF\"))")
+##08Oct2021
+BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, isTextOutput = FALSE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", textTableFormat = BSkyGetTextTableFormat(), tableStylingOptions = "table_border = F, column_align = r, header_background = \"#bdbdbd\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))") # bdbdbd F0F8FF
 {
-
+	# cat("\n Parameters passed to BSkyFrequency1\n")
+	# print(match.call())
+	# cat("\n")
+	
+	# print(class(obj))
+	# print(obj)
+	
 	doKableFormatting = FALSE
 	doLatexFormatting = TRUE
 	doRmarkdownFormatting = FALSE
+	doTextFormatting = FALSE
 	
 	
 	if(exists("uadatasets.sk") && exists("BSkySigfColPatterns", env=uadatasets.sk) && length(uadatasets.sk$BSkySigfColPatterns) > 0)
@@ -144,6 +151,31 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 		{
 			doLatexFormatting = FALSE
 		}
+	}
+	
+	#
+	
+	if(isTextOutput == TRUE || (exists("uadatasets.sk") && exists("BSkyTextFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyTextFormatting == TRUE))
+	{
+		doTextFormatting = TRUE
+		doKableFormatting = FALSE
+		doLatexFormatting = FALSE
+		doRmarkdownFormatting = FALSE
+	}
+	else
+	{
+		doTextFormatting = FALSE
+	}
+	
+	if(exists("uadatasets.sk") && !exists("BSkyTextFormatting", env=uadatasets.sk)) 
+	{
+		BSkySetKableAndRmarkdownFormatting(BSkyKableFormatting = FALSE, BSkyRmarkdownFormatting = FALSE, BSkyLaTeXFormatting = FALSE, BSkyTextFormatting=TRUE)
+		BSky.print.text()
+		
+		doTextFormatting = TRUE
+		doKableFormatting = FALSE
+		doLatexFormatting = FALSE
+		doRmarkdownFormatting = FALSE
 	}
 	
 	#BSkyGetTableDisplayLimits ()
@@ -215,8 +247,21 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 	obj = BSkyFormatBSkyIndSampleTtest(obj)
 	obj = BSkyFormatBSkyCrossTable(obj)
 	
+	##############################################################################################
+	# check for the "psych" class for summary analysis object from psych::describe()
+	###############################################################################################
+	if(class(obj)[1] == "psych")
+	{
+		obj = as.data.frame(obj)
+		
+		if(singleTableOutputHeader == "")
+		{
+			singleTableOutputHeader = "Numerical Summaries"
+		}
+	}
+	
 	# changing bSkyFormatAppRequest=bSkyFormatAppRequest to bSkyFormatAppRequest= FALSE which is the default value(this is to preseve the table footers attributes within BSkyFormat2) 
-	BSkyFormat_output = BSkyFormat2(obj, silentFormatting = silentFormatting, bSkyFormatAppRequest= FALSE, bSkyReturnObj = bSkyReturnObj, ftable_change_variable_order =ftable_change_variable_order, sublist_length =sublist_length, remove_rows_with_zero_count= remove_rows_with_zero_count , no_row_column_headers=no_row_column_headers, decimalDigitsRounding=decimalDigitsRounding, engNotationSetting = engNotationSetting, singleTableOutputHeader = singleTableOutputHeader, isRound = isRound, coefConfInt = coefConfInt, isRmarkdownOutputOn = doRmarkdownFormatting )
+	BSkyFormat_output = BSkyFormat2(obj, silentFormatting = silentFormatting, bSkyFormatAppRequest= FALSE, bSkyReturnObj = bSkyReturnObj, ftable_change_variable_order =ftable_change_variable_order, sublist_length =sublist_length, remove_rows_with_zero_count= remove_rows_with_zero_count , no_row_column_headers=no_row_column_headers, decimalDigitsRounding=decimalDigitsRounding, engNotationSetting = engNotationSetting, singleTableOutputHeader = singleTableOutputHeader, isRound = isRound, coefConfInt = coefConfInt, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())
 	
 	
 	# cat("\n<br> SK -1 after BSkyFormat2() <br>\n")
@@ -1034,7 +1079,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 					}
 				}
 				
-				if(doKableFormatting == TRUE)
+				if(doKableFormatting == TRUE && doTextFormatting == FALSE)
 				{
 					###################################
 					# Adjusting the Table Caption Text
@@ -1292,8 +1337,8 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						# Default Table Styling and Theme 
 						table_border = FALSE
 						column_align = "r"
-						#header_background_color = "#F0F8FF" #light blue color 
-						default_table_styling_options = c("table_border = F, column_align = r, more_options = c(bootstrap_options = c(\"striped\", \"condensed\", \"responsive\"), position = \"left\", full_width = T, html_font = \"Cambria\", fixed_thead = list(enabled = T, background = \"#F0F8FF\"))")
+						#header_background_color = "#bdbdbd" # F0F8FF #light blue color bdbdbd light gray color 
+						default_table_styling_options = c("table_border = F, column_align = r, more_options = c(bootstrap_options = c(\"striped\", \"condensed\", \"responsive\"), position = \"left\", full_width = T, html_font = \"Cambria\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))") # bdbdbd F0F8FF
 						more_styling_options = c("")
 						kable_style = "kable_styling"
 						header_background = ""
@@ -1634,6 +1679,25 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						if(length(footnote_string) > 0)
 						{
 							p = p %>% footnote(general = footnote_string, threeparttable = FALSE) #, general_title = footnote_string_names)
+							
+							# remove the colspan = 100% to colspan = num of column to avoid JS copy to clip board failing to copy footnote
+							# format from web browser page to copy/paste to Excel
+							
+							# y = gregexpr("(?s)+(<tfoot>)(.*)(</tfoot>)", myhtml, ignore.case=TRUE, perl=TRUE) #DOTALL modifier (?s) so that . could match line breaks
+							myhtml = p
+							
+							tfoot_substr_pos = gregexpr("(<tfoot>)[\\S\\s]*(</tfoot>)", myhtml, ignore.case=TRUE, perl=TRUE)
+
+							if(tfoot_substr_pos[[1]] > 0)
+							{
+								num_col = dim(new_table_removed_empty_rows)[2]
+								colspan_sub_str = paste("colspan=\"", num_col, "\"", sep="")
+								tfoot_substr = substr(myhtml, tfoot_substr_pos[[1]][1], (tfoot_substr_pos[[1]][1] + attr(tfoot_substr_pos[[1]], "match.length")-1))
+								tfoot_substr = gsub("colspan=\"100%\"", colspan_sub_str, tfoot_substr)
+								myhtml = paste(substr(myhtml, 1, tfoot_substr_pos[[1]][1] - 1), tfoot_substr, substr(myhtml, (tfoot_substr_pos[[1]][1] + attr(tfoot_substr_pos[[1]], "match.length")), nchar(myhtml)))
+							}
+							
+							p = myhtml
 						}
 						
 						
@@ -1712,7 +1776,45 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 				}
 				else
 				{
-					BSkyFormat_output$tables[[i]] = new_table_removed_empty_rows
+					if(doTextFormatting == FALSE)
+					{
+						BSkyFormat_output$tables[[i]] = new_table_removed_empty_rows
+					}
+					else
+					{
+						#print(class(new_table_removed_empty_rows))
+						cat("\n")
+						tableCaption1 = paste(trimws(names(BSkyFormat_output$tables[i])))
+						
+						if(textTableFormat == "rprint")
+						{
+							cat(tableCaption1)
+							cat("\n")
+							cat(paste(rep("-", nchar(tableCaption1)), collapse=""))
+							cat("\n")
+							
+							# # print(new_table_removed_empty_rows)
+							# # cat("\n")
+							new_table_removed_empty_rows_df = as.data.frame((new_table_removed_empty_rows))
+							names(new_table_removed_empty_rows_df) = dimnames(new_table_removed_empty_rows)[[2]]
+							# #formals(print.data.frame)$row.names <- FALSE
+							# #print.data.frame(row.names = FALSE)
+							
+							print(new_table_removed_empty_rows_df, row.names = FALSE)
+							cat("\n")
+						}
+						else
+						{
+							if(!(textTableFormat %in% c("simple", "pipe", "rst")))
+							{
+								textTableFormat = "simple" 
+							}
+							#abc = knitr::kable(new_table_removed_empty_rows, caption = tableCaption1, align = 'r', format="pipe")
+							textTableOutput = kableExtra::kbl(new_table_removed_empty_rows, caption = tableCaption1, align = 'r', format= textTableFormat)
+							print(textTableOutput)
+							cat("\n")
+						}
+					}
 				}
 				
 				# cat("\n\n SK 1-3 \n\n")
@@ -1752,6 +1854,21 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 				if(length(footnote_string) > 0)
 				{
 					attr(BSkyFormat_output$tables[[i]], "BSkyFootnote_Combined") = footnote_string
+					
+					if(doTextFormatting == TRUE)
+					{
+						cat("Note:\n")
+						#cat("-----\n")
+						
+						for(foot_note_item in 1:length(footnote_string))
+						{
+							#print(footnote_string, row.names = FALSE)
+							#print(class(footnote_string[foot_note_item]))
+							#print(footnote_string[foot_note_item], row.names = FALSE)
+							cat(footnote_string[[foot_note_item]])
+							cat("\n")
+						}
+					}
 				}
 				
 				if(repeated_column_header_found == TRUE)
@@ -1760,7 +1877,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 					
 					attr(BSkyFormat_output$tables[[i]], "colspan_column_names") = trimws(gsub("(\")+|(c\\()+|(\\))+","",merged_col_top_header))
 					
-					if(doKableFormatting == FALSE)
+					if(doKableFormatting == FALSE && doTextFormatting == FALSE)
 					{
 						dimnames(BSkyFormat_output$tables[[i]])[[2]] = pre_merge_column_names
 					}
@@ -1881,7 +1998,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 }
 
 
-
+#08Oct2021
 BSkyIsRmarkdownOutputOn <- function()
 {
 	
@@ -1913,8 +2030,63 @@ BSkyIsRmarkdownOutputOn <- function()
 		# }
 	}
 	
+	if(exists("uadatasets.sk") && !exists("BSkyTextFormatting", env=uadatasets.sk))
+	{
+		doRmarkdownFormatting = TRUE
+	}
+	else if(exists("uadatasets.sk") && exists("BSkyTextFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyTextFormatting == TRUE)
+	{
+		doRmarkdownFormatting = TRUE
+	}
+	
+	# print("in BSkyIsRmarkdownOutputOn()")
+	# print(BSkyGetKableAndRmarkdownFormatting())
+	# print(list(doRmarkdownFormatting = doRmarkdownFormatting))
+	
 	return(invisible(doRmarkdownFormatting))
 }
+
+
+##08Oct2021
+BSky.print.text <- function(textFormat = "simple")
+{
+	BSkySetKableAndRmarkdownFormatting (BSkyKableFormatting = FALSE, BSkyRmarkdownFormatting = FALSE, BSkyLaTeXFormatting = FALSE, BSkyTextFormatting = TRUE)
+	BSkySetTextTableFormat (textTableFormat = textFormat)
+}
+
+# #08Oct2021
+BSky.print.html <- function(app = "rmarkdown", html_style = "APA")
+{
+	if(app == "rmarkdown")
+	{
+		BSkySetKableAndRmarkdownFormatting (BSkyKableFormatting = TRUE, BSkyRmarkdownFormatting = TRUE, BSkyLaTeXFormatting = FALSE, BSkyTextFormatting = FALSE)
+	}
+	else
+	{
+		BSkySetKableAndRmarkdownFormatting (BSkyKableFormatting = TRUE, BSkyRmarkdownFormatting = FALSE, BSkyLaTeXFormatting = FALSE, BSkyTextFormatting = FALSE)
+	}
+	
+	BSkySetHtmlStylingSetting()
+
+	if(html_style == "APA")
+	{
+		BSkySetHtmlStylingSetting(tableTheme = "kable_classic", fontFamily = "Helvetica", tableHeaderBackgroundColor = "", columHeaderScrollFixed = FALSE, fullWidthDisplay = FALSE)
+	}
+	else
+	{
+		BSkySetHtmlStylingSetting(fontFamily = "Helvetica", fullWidthDisplay = FALSE, tableHeaderBackgroundColor = "#B2BEB5")
+	}
+}
+
+# #08Oct2021
+BSky.print.latex <- function()
+{
+	BSkySetKableAndRmarkdownFormatting (BSkyKableFormatting = TRUE, BSkyRmarkdownFormatting = TRUE, BSkyLaTeXFormatting = TRUE, BSkyTextFormatting = FALSE)
+	
+	BSkySetHtmlStylingSetting()
+	BSkySetHtmlStylingSetting(tableTheme = "kable_styling", latex_hold_position = FALSE, latex_scale_down = TRUE, fullWidthDisplay = FALSE, tableHeaderBackgroundColor = "", striped = FALSE)
+}
+
 
 ##21May2021
 BSkyGetTableDisplayLimits <- function()
@@ -1941,16 +2113,17 @@ BSkySetTableDisplayLimits <- function(maxOutputTables = 99, maxRowLimit = 2000, 
 }
 
 
-##15Apr2021
-BSkySetKableAndRmarkdownFormatting <- function(BSkyKableFormatting = TRUE, BSkyRmarkdownFormatting = TRUE, BSkyLaTeXFormatting = FALSE)
+##08Oct2021
+BSkySetKableAndRmarkdownFormatting <- function(BSkyKableFormatting = FALSE, BSkyRmarkdownFormatting = FALSE, BSkyLaTeXFormatting = FALSE, BSkyTextFormatting = TRUE)
 {
 	if(exists("uadatasets.sk"))
 	{
 		uadatasets.sk$BSkyKableFormatting = BSkyKableFormatting
 		uadatasets.sk$BSkyRmarkdownFormatting = BSkyRmarkdownFormatting
 		uadatasets.sk$BSkyLatexFormatting = BSkyLaTeXFormatting
+		uadatasets.sk$BSkyTextFormatting = BSkyTextFormatting
 		
-		return (invisible(c(uadatasets.sk$BSkyKableFormatting, uadatasets.sk$BSkyRmarkdownFormatting, uadatasets.sk$BSkyLatexFormatting)))
+		return (invisible(list(uadatasets.sk$BSkyKableFormatting, uadatasets.sk$BSkyRmarkdownFormatting, uadatasets.sk$BSkyLatexFormatting, uadatasets.sk$BSkyTextFormatting)))
 	}
 	else
 	{
@@ -1958,17 +2131,34 @@ BSkySetKableAndRmarkdownFormatting <- function(BSkyKableFormatting = TRUE, BSkyR
 	}
 }
 
+#08Oct2021
 BSkyGetKableAndRmarkdownFormatting <- function()
 {
-	if(exists("uadatasets.sk") && exists("BSkyKableFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyKableFormatting == FALSE)
+	if(exists("uadatasets.sk") && !exists("BSkyTextFormatting", env=uadatasets.sk))
 	{
 		doKableFormatting = FALSE
 		doRmarkdownFormatting = FALSE
 		doLatexFormatting = FALSE
+		doTextFormatting = TRUE
+	}
+	else if(exists("uadatasets.sk") && exists("BSkyTextFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyTextFormatting == TRUE)
+	{
+		doKableFormatting = FALSE
+		doRmarkdownFormatting = FALSE
+		doLatexFormatting = FALSE
+		doTextFormatting = TRUE
+	}
+	else if(exists("uadatasets.sk") && exists("BSkyKableFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyKableFormatting == FALSE)
+	{
+		doKableFormatting = FALSE
+		doRmarkdownFormatting = FALSE
+		doLatexFormatting = FALSE
+		doTextFormatting = FALSE
 	}
 	else
 	{
 		doKableFormatting = TRUE
+		doTextFormatting = FALSE
 		
 		if(exists("uadatasets.sk") && exists("BSkyRmarkdownFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyRmarkdownFormatting == FALSE)
 		{
@@ -1987,14 +2177,15 @@ BSkyGetKableAndRmarkdownFormatting <- function()
 		{
 			doLatexFormatting = FALSE
 		}
+		
 	}
 	
-	return(invisible(list(doKableFormatting = doKableFormatting, doRmarkdownFormatting = doRmarkdownFormatting, doLatexFormatting = doLatexFormatting)))
+	return(invisible(list(doKableFormatting = doKableFormatting, doRmarkdownFormatting = doRmarkdownFormatting, doLatexFormatting = doLatexFormatting, doTextFormatting = doTextFormatting)))
 }
 
 
-##15Apr2021
-BSkySetHtmlStylingSetting <- function(tableTheme = "kable_styling", fontFamily = "Helvetica", tableHeaderBackgroundColor = "#F0F8FF", ColumnAlign = "Right", tablePosition = "Left", fullWidthDisplay = TRUE, tableOuterBorder = FALSE, tableGridLines = FALSE, striped = TRUE, hover = TRUE, latex_scale_down = FALSE, latex_hold_position = FALSE, columHeaderScrollFixed = TRUE, fontSize = 0, overrideStylingSettings = TRUE)
+##08Oct2021
+BSkySetHtmlStylingSetting <- function(tableTheme = "kable_styling", fontFamily = "Helvetica", tableHeaderBackgroundColor = "#bdbdbd", ColumnAlign = "Right", tablePosition = "Left", fullWidthDisplay = TRUE, tableOuterBorder = FALSE, tableGridLines = FALSE, striped = TRUE, hover = TRUE, latex_scale_down = FALSE, latex_hold_position = FALSE, columHeaderScrollFixed = TRUE, fontSize = 0, overrideStylingSettings = TRUE)
 {
 	function_name = "BSkySetHtmlStylingSetting"
 	
@@ -2165,6 +2356,7 @@ BSkySetHtmlStylingSetting <- function(tableTheme = "kable_styling", fontFamily =
 		
 		uadatasets.sk$BSkyKabletableStylingOptions = paste(uadatasets.sk$BSkyKabletableStylingOptions, "," , "more_options = c(bootstrap_options = c(\"condensed\", \"responsive\" ")
 		
+		#uadatasets.sk$BSkyKabletableStylingOptions = paste(uadatasets.sk$BSkyKabletableStylingOptions, "," , "more_options = c(bootstrap_options = c(\"responsive\" ")
 		
 		if(length(striped) > 0 || length(tableGridLines) > 0 || length(hover) > 0)
 		{
@@ -2271,6 +2463,30 @@ BSkySetHtmlStylingSetting <- function(tableTheme = "kable_styling", fontFamily =
 	{
 		return(invisible(FALSE))
 	}
+}
+
+##08Oct2021
+BSkySetTextTableFormat <- function(textTableFormat = "simple")
+{
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyKabletableTextTableFormat = textTableFormat
+	}
+	
+	return(invisible(textTableFormat))
+}
+
+##08Oct2021
+BSkyGetTextTableFormat <- function()
+{
+	textTableFormat = "simple"
+	
+	if(exists("uadatasets.sk") && exists("BSkyKabletableTextTableFormat", env=uadatasets.sk))
+	{
+		textTableFormat = uadatasets.sk$BSkyKabletableTextTableFormat
+	}
+	
+	return(invisible(textTableFormat))
 }
 
 
