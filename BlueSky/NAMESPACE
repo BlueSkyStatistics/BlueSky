@@ -208,5 +208,5 @@ export(BSkyWriteSas) # write sas support
 export(BSkySetTextTableFormat, BSkyGetTextTableFormat, BSkyVariableSummaryStats)
 export(BSky.print.text, BSky.print.html, BSky.print.latex)
 
-
+export( BSky.summary.aov, BSkyFormatsummary.Anova.mlm, BSkyprint.linearHypothesis.mlm, BSky.print.anova)
 

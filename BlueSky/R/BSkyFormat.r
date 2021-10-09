@@ -92,7 +92,7 @@
 
 
 ##08Oct2021
-BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, isTextOutput = FALSE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", textTableFormat = BSkyGetTextTableFormat(), tableStylingOptions = "table_border = F, column_align = r, header_background = \"#bdbdbd\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))") # bdbdbd F0F8FF
+BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, isTextOutput = FALSE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", textTableFormat = BSkyGetTextTableFormat(), tableStylingOptions = "table_border = F, column_align = r, header_background = \"#bdbdbd\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))", RM.SSP = TRUE, RM.SSPE = RM.SSP) # bdbdbd F0F8FF
 {
 	# cat("\n Parameters passed to BSkyFrequency1\n")
 	# print(match.call())
@@ -259,6 +259,48 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 			singleTableOutputHeader = "Numerical Summaries"
 		}
 	}
+	
+	##############################################################################################
+	# check for the "summary.manova" class 
+	###############################################################################################
+	else if(class(obj)[1] == "summary.manova")
+	{
+		obj = BSky.print.summary.manova(obj)
+		
+		
+	}
+	
+	##############################################################################################
+	# check for the "summary.aov" class 
+	###############################################################################################
+	else if(class(obj)[1] == "summary.aov")
+	{
+		obj = BSky.summary.aov(obj)
+		
+		
+	}
+	
+	
+	##############################################################################################
+	# check for the "summary.Anova.mlm" class 
+	###############################################################################################
+	else if(class(obj)[1] == "summary.Anova.mlm")
+	{
+		obj = BSkyFormatsummary.Anova.mlm(obj)
+		
+		
+	}
+	
+	##############################################################################################
+	# check for the "summary.Anova.mlm" class 
+	###############################################################################################
+	else if(class(obj)[1] == "linearHypothesis.mlm")
+	{
+		obj = BSkyprint.linearHypothesis.mlm (obj,SSP =RM.SSP ,SSPE=RM.SSPE  )
+		
+		
+	}
+	
 	
 	# changing bSkyFormatAppRequest=bSkyFormatAppRequest to bSkyFormatAppRequest= FALSE which is the default value(this is to preseve the table footers attributes within BSkyFormat2) 
 	BSkyFormat_output = BSkyFormat2(obj, silentFormatting = silentFormatting, bSkyFormatAppRequest= FALSE, bSkyReturnObj = bSkyReturnObj, ftable_change_variable_order =ftable_change_variable_order, sublist_length =sublist_length, remove_rows_with_zero_count= remove_rows_with_zero_count , no_row_column_headers=no_row_column_headers, decimalDigitsRounding=decimalDigitsRounding, engNotationSetting = engNotationSetting, singleTableOutputHeader = singleTableOutputHeader, isRound = isRound, coefConfInt = coefConfInt, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())
