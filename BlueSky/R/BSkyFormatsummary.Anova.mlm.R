@@ -21,7 +21,7 @@
                            # BSkyFormat(best)
                            # test <-summary(av.ok, multivariate=FALSE)
 	
-	
+#For class = summary.Anova.mlm	
 	BSkyFormatsummary.Anova.mlm  <- function(obj)
 	{
 	table_list =NULL
@@ -51,9 +51,7 @@
 				table_list = c(table_list, list(obj$SSPE))
 				table_list_names <- c(table_list_names,header)
 				}
-				
-				
-				
+
 			}
 		    for (term in 1:length(obj$multivariate.tests)) {
 				# cat(paste("\n------------------------------------------\n",
