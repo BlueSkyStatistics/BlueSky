@@ -260,7 +260,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 		#eval(parse(text=paste('attr(',datasetname,',"splitcolumnnames") <<- c()'))) #<<-16Jan2016 This line replaced by next one
 				eval(parse(text=paste('setattr(',datasetname,', "splitcolumnnames", c() )' )))
 				#cat('\nSplitColName Attr set\n')
-				colindexes=UAgetIndexsOfColsInDataSet(datasetname,colNames)
+				#colindexes=UAgetIndexsOfColsInDataSet(datasetname,colNames)
 				#cat("Col Indexes for split:")
 				#print(colindexes)
 		#eval(parse(text=paste('attr(',datasetname,',"splitcolumnindex") <<- c()')))	#<<-16Jan2016 This line replaced with next one
