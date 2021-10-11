@@ -2158,8 +2158,11 @@ BSkyFormat2 <- function(obj, silentFormatting = FALSE, decimalDigitsRounding = B
 					# SK 06/11/21 The following suppressWarnings() added to supress the warning due to bad data from split dataset slice 
 					#################################################################################################
 					
-					##08Oct2021 commented temporarily. We need to come back and fix it. It is throwing an error when dataset is . (dot) with pipe (%>%) operator
-					#suppressWarnings((a1$coefficients <-cbind(a1$coefficients,stats::confint(eval(obj$call, envir=globalenv()),level=coefConfInt,type="LR")))) ##commented line abv. This line is the replacement by Sanjay 18Mar2021
+					##11Oct2021 suppressWarnings is now enclosed in a 'if'
+					if(as.list(obj$call)$data != ".")
+					{
+						suppressWarnings((a1$coefficients <-cbind(a1$coefficients,stats::confint(eval(obj$call, envir=globalenv()),level=coefConfInt,type="LR")))) 
+					}
 					
 					tab_list_names = names(tablelist)
 					tablelist = c(tablelist, list(a1$coefficients))
