@@ -98,20 +98,6 @@ BSkyGetAvailableModelsCP <- function(objclasslist=c("lm", "glm", "randomForest")
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ClassFilter <- function(x) 
 { 
 	inherits(get(x), 'lm' )|| inherits(get(x), 'glm' ) || inherits(get(x), 'randomForest' )

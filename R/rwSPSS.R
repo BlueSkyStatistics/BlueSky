@@ -797,75 +797,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 		 return(invisible(colType)) #return(BSkyReturnStructure(colType))
 }
 
-#not complete
-#get col description same as UAgetSPSSVariableView_Lable but uses extra col level attribute "coldesc" to get result
-#UAsetColDesc <- function(dataSetNameOrIndex, colName, colDesc)
-#{
-	#uastartlog("UAsetColDesc","UAsetColProp")
-	#tryCatch(
-		#{	
-				#### Global, error and warning vars. So that they are accessible in any function.
-				#
-			###
-			##The function below captures the complete call with actucal values of 
-			##the parameters  passed to the function
-			##It must be stored in a global so that other function can access it
-			###
-			#uadatasets$callStackIndex = uadatasets$callStackIndex + 1
-#
-			#uaFunctionacallSignature = uaLogFunArgsDetails()
-			#uadatasets$rproc[uadatasets$callStackIndex] = uaFunctionacallSignature$RuntimeParamValues
-			#uadatasets$uaTempFunctionName[uadatasets$callStackIndex] = uaFunctionacallSignature$fnCall
-			#
-			## The (uber) top most UA function names that will be logged in warning hander
-			#uadatasets$uaTempUberFunctionName = c("UAsetColDesc")
-			#
-			## Is there split or not? Split will be a property of the any given dataset within uadatasets$lst[]
-			#uadatasets$uaTempSplit = 0			
-					#
-		#withCallingHandlers(
-		#{
-			#if(is.numeric(dataSetNameOrIndex))
-			#{
-				#DataSetIndex = dataSetNameOrIndex
-			#}
-			#else
-			#{
-				#DataSetIndex <- UAgetIndexOfDataSet(dataSetNameOrIndex)
-			#}
-#
-			#if(DataSetIndex > 0)
-			#{		
-				##Error : dataSetName not found
-				#colIndex <- UAgetIndexOfColInDataSet(DataSetIndex,colName)
-				#if(colIndex > 0){
-					#attr(uadatasets$lst[[DataSetIndex]][,colIndex],"coldesc")<<-colDesc
-					## return(colDesc)
-				#}			
-				#else
-				#{
-					#cat("\nError: Cannot set Col Description. Col not found\n")
-				#}
-#
-			#}
-			#else
-			#{
-				#cat("\nError: Cannot set Col Description. Dataset name or index not found\n")
-			#}			
-		#},
-		#
-		#warning = UAwarnHandlerFn
-#
-		#) # end of withCallingHandlers for catching warnings and continuing execution		
-#
-		#},
-		#error = UAerrHandlerFn,
-		#
-		#silent =TRUE		
-	#)
-#}
-#
-#not complete
+
 #############################################################################################################
 #Function: UAsetSPSSColLevels(dataSetNameOrIndex, colName)									
 #              																			

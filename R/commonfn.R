@@ -7,45 +7,6 @@
 # uavectortostringnew
 #################################################################################################
 
-uagetindex.Anil <-function(ualistofvars=NA,uaform=NA,uaindex)
-{
-	if(!is.na(ualistofvars[1]))
-	{
-	### Added by Anil ####S
-	temp = -1 #no dataset in lst index location
-	totalloadedDS = length(uadatasets$lst)
-	if(uaindex > 0 && uaindex <= totalloadedDS )
-	{
-		temp = names(uadatasets$lst[[uaindex]])
-	}
-	else
-	{
-		temp
-	}
-	### Added by Anil ####E
-	
-	uaarr= temp #Anil commented. names(uadatasets$lst[[uaindex]])
-	len =length(ualistofvars)
-	uavarindex =rep(-1:-1,len)
-	for (i in 1:len)
-		{
-		uavarindex[i] =which(uaarr==ualistofvars[i])
-		}
-	}
-	if (!is.na(uaform))
-	{	
-		ualistofvars=all.vars(uaform, functions="FALSE")
-		uaarr =names(uadatasets$lst[[uaindex]])
- 		len =length(ualistofvars)
- 		uavarindex =rep(-1:-1,len)
- 		for (i in 1:len)
- 			{
-				uavarindex[i] =which(uaarr==ualistofvars[i])
-			}
-	}
- 	uavarindex
-}
-
 uagetindex <-function(ualistofvars=NA,uaform=NA,uaindex)
 {
 	if(!is.na(ualistofvars[1]))
