@@ -22,7 +22,7 @@ exportPattern("^[[:alpha:]]+")
  BSkyOutputTestDriver, BSkyFormat,  BSkySortDataframe, BSkyComputeExpression, BSkyRecode, BSky.Activate.Dataset)		
  
  export(bsky.plot, bsky.histogram, bsky.fullhistogram)
- export(BSkyOneSmTTest, BSkyCrossTable, bsky.one.sm.t.test.old,BSkyIndSmTTest)	
+ export(BSkyOneSmTTest, BSkyCrossTable, BSkyIndSmTTest)	
  
  #temporary function in export. Check & Remove them after implementing batch commands
  export(BSkySetCurrentDatasetName, BSkyComputeSplitdataset, BSkyGetNextDatasetSliceIndex, CommandBatch, BSkyFunctionInit, BSkyFunctionWrapUp, BSkyStoreApplicationWarnErrMsg,
@@ -45,7 +45,7 @@ export(New.version.BSkyGetNextDatasetSplitSlice, New.version.BSkyComputeSplitdat
 export(BSky.LoadRefresh.Dataframe,BSkyLoadRefreshDataframe, BSkyRemoveRefreshDataframe, BSkyReloadDataset)
 #export( BSkyFormat2, BSkyListObjectFormat, BSkyTableObjectFormat)
 export(BSkyBatchFunctionModeResetForUberFunction )
-export(BSkyVersion, BSkyFormat.old)
+export(BSkyVersion)
 
 #RCmdr Functions
 export(bin.var, BSkyStandardizeVars, KMeans )
