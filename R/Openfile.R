@@ -60,7 +60,7 @@ uaopendataset <- function(typeoffile, directory,filename,uaperformance)
 				uadatasets$warnmsg =c(uadatasets$warnmsg, conditionMessage(ex));
 				uadatasets$warnmsgdis ="Warning(s) in opening the SPSS data file";
 				uadatasets$warncallfn =c(uadatasets$warncallfn,conditionCall(ex));
-				uawritelog(type="Warning", functionname="read.spss", uberfunct="uaopendataset", message =conditionMessage(ex),callfn =conditionCall(ex),uamessage =uadatasets$warnmsgdis);
+				uawritelog(type="Warning", functionName="read.spss", uberFunct="uaopendataset", RMessage =conditionMessage(ex),BSkyMessage =uadatasets$warnmsgdis);
 				uadatasets$warnindex=uadatasets$warnindex+1;
 				invokeRestart("muffleWarning");
 				}
@@ -71,7 +71,7 @@ uaopendataset <- function(typeoffile, directory,filename,uaperformance)
 		        {
 		        uadatasets$error =-1;
 				uadatasets$errmsgdis ="Error in opening the SPSS data file";			
-		        uawritelog(type="Error", functionname="read.spss",uberfunct="uaopendataset",message =conditionMessage(ex),callfn =conditionCall(ex),uamessage=uadatasets$errmsgdis);
+		        uawritelog(type="Error", functionName="read.spss",uberFunct="uaopendataset",RMessage =conditionMessage(ex),BSkyMessage=uadatasets$errmsgdis);
 				uadatasets$errmsg =conditionMessage(ex);
                 uadatasets$errcallfn=conditionCall(ex);
 				uadatasets$lst[[uadatasets$index]]=ex;
@@ -85,10 +85,10 @@ uaopendataset <- function(typeoffile, directory,filename,uaperformance)
 		oendtime=date()
 		endtime=proc.time()
 		time=endtime-starttime
-		uawritelog(type ="CPU time", functionname ="read.spss",uberfunct="uaopendataset",starttime =ostarttime,endtime=oendtime,usertime=time[1],systemtime=time[2],elapsed=time[3],totalcputime=time[1]+time[2])
+		uawritelog(type ="CPU time", functionName ="read.spss",uberFunct="uaopendataset",startTime =ostarttime,endTime=oendtime,userTime=time[1],systemTime=time[2],elapsed=time[3],totalCpuTime=time[1]+time[2])
 		finalmem=gc()
-		uawritelog(type="Memory", functionname="read.spss",uberfunct="uaopendataset",starttime=ostarttime,endtime=oendtime, initNcells=initialmem[1,2],
-		initVcells=initialmem[2,2],initTotal=initialmem[1,2]+initialmem[2,2], finNcells=finalmem[1,2], finVcells=finalmem[2,2], finTotal=finalmem[1,2]+finalmem[2,2],maxNcells=finalmem[1,6],maxVcells=finalmem[2,6],maxTotal=finalmem[1,6]+finalmem[2,6])
+		uawritelog(type="Memory", functionName="read.spss",uberFunct="uaopendataset",startTime=ostarttime,endTime=oendtime, initNCells=initialmem[1,2],
+		initVCells=initialmem[2,2],initTotal=initialmem[1,2]+initialmem[2,2], finNCells=finalmem[1,2], finVCells=finalmem[2,2], finTotal=finalmem[1,2]+finalmem[2,2],maxNCells=finalmem[1,6],maxVCells=finalmem[2,6],maxTotal=finalmem[1,6]+finalmem[2,6])
 		}
 	uadatasets$name[uadatasets$index]=filename
 	uadatasets$fullpath[uadatasets$index]=datasetpath

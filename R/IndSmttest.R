@@ -636,7 +636,7 @@ ualevene.test <-function(cindex,uavarindex,groupindex,noofvars, index)
 				uadatasets$uawarnvar =c(uadatasets$uawarnvar,uawarnvar)
 				uadatasets$uawarnmsgdis =c(uadatasets$uawarnmsgdis,uawarnmsgdis)
 				uadatasets$uarwarnmsg =c(uadatasets$uarwarnmsg,uarwarnmsg );
-				uawritelog(type="Warning", functionname="t.test", uberfunct="uaindsmt.test",message =uarwarnmsg,callfn =conditionCall(ex),uamessage =uadatasets$warnmsgdis);
+				uawritelog(type="Warning", functionName="t.test", uberFunct="uaindsmt.test",RMessage =uarwarnmsg,BSkyMessage =uadatasets$warnmsgdis);
 				invokeRestart("muffleWarning");
 				}
 			         ) # end of withCallingHandlers for catching warnings and continuing execution
@@ -650,7 +650,7 @@ ualevene.test <-function(cindex,uavarindex,groupindex,noofvars, index)
 					uaerrvar =names(uadatasets$lst[[index]][uavarindex[i]])
 					uaerrmsgdis =sprintf("Levenes test on variable %s generated an error",uaerrvar) 		
 					uarerrmsg=conditionMessage(ex)
-					uawritelog(type="Error", functionname="levene.test",uberfunct="uaindsmt.test",message =uarerrmsg,callfn =conditionCall(ex),uamessage=uaerrmsgdis);
+					uawritelog(type="Error", functionName="levene.test",uberFunct="uaindsmt.test",RMessage =uarerrmsg,BSkyMessage=uaerrmsgdis);
 					uadatasets$results=c(as.character(i),"-1",uaerrvar,uaerrmsgdis, uarerrmsg)		        
 		        },
 		silent =TRUE) #end of try catch

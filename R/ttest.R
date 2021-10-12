@@ -728,123 +728,6 @@ Bskycheckempty<-function(uavarindex,index)
 }
 
 
-uaonesample.old<-function(uavarindex, mu,conf.level,index, missing)
-{
-	### Sanjays new template
-	BSkyFunctionInit()
-	BSkyErrMsg="Error in One Sample T.test";
-	BSkyWarnMsg="Warning in One Sample T.test";
-	#BSkyErrMsg = paste(BSkyErrMsg, "Current Factors, if there is Split :",paste(BSkyComputeCurrentVarNamesAndFactorValues(bSkyDatasetname), collapse = ","),sep=" * ")
-	#BSkyWarnMsg = paste(BSkyWarnMsg, "Current Factors, if there is Split :",paste(BSkyComputeCurrentVarNamesAndFactorValues(bSkyDatasetname), collapse = ","),sep=" * ")
-	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	###
-	#Code below handles the case of running a t test with an empty dataset
-	#NOTE AN EMPTY DATASET CAN BE GENERATED IN MANY WAYS
- 	#A. CONSIDER A DATASET WITH VALID CASES FOR TG1, TG1, BUT TG3 DOES NOT HAVE ANY VALID CASES AND MISSING VALUES IS LISTWISE
-	#However the case above is best handled in the code for the descriptives and one sample t.test after we have handled missing values
-	
-	bskyNoofTables=length(uadatasets$retstructure)
-		#cat("\nuaonesample bskyNoofTables =",bskyNoofTables,"\n")
-		#cat("\n Aaron's Entry uaonesample:\n")
-		#print(uadatasets$retstructure)
-		#cat("\n############Entry###############\n")		
-	if (nrow(uadatasets$lst[[index]])==0 )
-	{
-		#cat("\n onesample1")
-		uawritelog(type="Error",BSkyMessage ="One sample T test cannot be run as the dataset is empty");
-		#We create the return structure only if its not been created already
-		#The return structure mat be created by an unhandled warning
-		#cat("\n onesample2")
-		if (bskyNoofTables ==0)
-		{
-			#cat("\n onesample2.1")
-			#uadatasets$retstructure <-list(NULL)
-			uadatasets$retstructure[[1]]<-list()
-			uadatasets$retstructure[[1]]$metadatatable[[1]]=data.frame()
-			uadatasets$retstructure[[1]]$type="table"
-			uadatasets$retstructure[[1]]$metadata="yes"
-			uadatasets$retstructure[[1]]$nometadatatables=1
-			uadatasets$retstructure[[1]]$metadatatabletype="normal"
-			uadatasets$retstructure[[1]]$metadatatable=list()
-			uadatasets$retstructure[[1]]$metadatatable[[1]]=data.frame(varIndex=NA,type=-2,varName=NA,dataTableRow=NA,startCol=NA,endCol=NA,BSkyMsg="One sample T test cannot be run as the dataset is empty",Rmsg=NA)
-			uadatasets$retstructure[[1]]$datatable=NULL
-			uadatasets$error =-1;
-			uadatasets$errorindex =uadatasets$errorindex +1
-			# every ua sub function must call the following function to write the log
-		}
-		else
-		{
-			#cat("\n onesample2.2")
-			uadatasets$retstructure[[bskyNoofTables]]$metadatatable[[1]]=rbind(uadatasets$retstructure[[bskyNoofTables]]$metadatatable[[1]],data.frame(varIndex=NA,type=-2,varName=NA,dataTableRow=NA,startCol=NA,endCol=NA,BSkyMsg="One sample T test cannot be run as the dataset is empty",Rmsg=NA))
-		}
-		BSkyFunctionWrapUp()
-		return(TRUE)
-	}
-		
-	#cat("\n onesample3")
-	noofvars=length(uavarindex)
-	#Get the index of all the paired variables in the dataset for which the ttest needs to be computed
-	#cindex =uaonesmhandlemissvals(index,uavarindex,noofvars,missing)
-	#cat("\n onesample4")
-	cindex =uabihandlemissvalsnew1(index,uavarindex,noofvars,missing)
-	# Depending on the missing values option, we could introduce an option where mising =1 (for listwise)
-	# where we check if the dataset is empty. However for analysis by analysis we will have to check for every column
-	#We create the return structure only if its not been created already
-		#The return structure mat be created by an unhandled warning
-	#cat("\n onesample5")	
-	if (bskyNoofTables ==0)
-	{	
-		#uadatasets$retstructure <-list(NULL)
-		uadatasets$retstructure[[1]]<-list()
-		uadatasets$retstructure[[1]]$type="table"
-		uadatasets$retstructure[[1]]$metadata="yes"
-		uadatasets$retstructure[[1]]$nometadatatables=1
-		uadatasets$retstructure[[1]]$metadatatabletype=c("normal")
-		#The line of code below is very important, this declares that metadatatable is a list.
-		#If we don't do this and the object is undefined and we browse the object 
-		#uadatasets$retstructure[[1]]$metadatatable, we get the value of uadatasets$retstructure[[1]]$metadatatabletype
-		#This is because if x$test =10 and if x$te is undefined, when you browse x$te you get x$test
-		uadatasets$retstructure[[1]]$metadatatable=list()
-		
-		#The line of code below is very important. This allocates an object for the 1 element of the list
-		
-		uadatasets$retstructure[[1]]$metadatatable[[1]]=data.frame()
-		#cat("\n onesample5.1")
-	}
-	#cat("\n onesample6")
-	uaonesmdesc(cindex,uavarindex,noofvars, index)
-	#cat("\n onesample7")
-	#warning("Aaron's warning in 1 sample")
-	#########  ASK AARON ABOUT  ##### For testing ####
-	uadatasets$retstructure[[2]]<-list()
-	uadatasets$retstructure[[2]]$type="table"
-	uadatasets$retstructure[[2]]$metadata="yes"
-	uadatasets$retstructure[[2]]$nometadatatables=1
-	uadatasets$retstructure[[2]]$metadatatabletype=c("normal")
-	#The line of code below is very important, this declares that metadatatable is a list.
-	#If we don't do this and the object is undefined and we browse the object 
-	#uadatasets$retstructure[[1]]$metadatatable, we get the value of uadatasets$retstructure[[1]]$metadatatabletype
-	#This is because if x$test =10 and if x$te is undefined, when you browse x$te you get x$test
-	uadatasets$retstructure[[2]]$metadatatable=list()
-	#The line of code below is very important. This allocates an object for the 1 element of the list
-	uadatasets$retstructure[[2]]$metadatatable[[1]]=data.frame()
-	uaonesamttest(cindex, uavarindex, noofvars,"two.sided", conf.level, FALSE, index,mu)
-	#warning("warning here")
-	#uadatasets$delete=uadatasets$delete+1
-	#if (uadatasets$delete==6)
-	#{
-	#	stop("Foo foo")		
-	#}		
-	#return(list(uadesc,uamat[[1]],uamat[[2]]))
-	# every ua sub function must call the following function to write the log
-	
-		#cat("\n Aaron's Exit uaonesample:\n")
-		#print(uadatasets$retstructure)
-		#cat("\n############Exit###############\n")	
-    BSkyFunctionWrapUp()
-	return(TRUE)
-}
-	
 #30Jul2018	
 # Changes to BSkyOneSmTTest,  uaonesample, uaonesamttest to support alternative	
  uaonesample<- function (uavarindex, mu, conf.level, alternative,cohens_d=FALSE, cohensd_correction=FALSE,hedges_g =FALSE, hedgesg_correction=FALSE,glass_d=FALSE, glassd_correction=FALSE,index, missing) 
@@ -952,96 +835,6 @@ uaonesample.old<-function(uavarindex, mu,conf.level,index, missing)
 
 
 
-uaonesamttest.old <-function(cindex,uavarindex, len,uaopt1pass ="two.sided", uacipass=.95, uatyoftestpass =FALSE,index,valuetocompare)
-{
-	# every ua sub function must call the following two 
-    # initislization call at the begining of the function as follows 
-   BSkyFunctionInit()
-
-	#uadatasets$retstructure[[1]]$metadatatable=list(BSkyonesmdesc[[2]])
-	uadatasets$retstructure[[2]]$datatable=matrix(nrow=len,ncol=6)
-	i=1
-	j=1
-	#warning ("Valerie");
-
-while (i <=len)
-{
-  if (!is.na(uavarindex[i]))
-  { 
-	if(uaperformance==2)
-	{
-	uastartlog("t.test","uaonesmt.test")	
-	#ostarttime =date()
-	#starttime=proc.time()
-	#initialmem=gc()
-	}
-	uavar =names(uadatasets$lst[[index]][uavarindex[i]])
-	uadatasets$uawarnmsgdis =sprintf("One sample T test on variable %s generated a warning",uavar)
-	uadatasets$uaerrmsgdis =sprintf("One sample T test on variable %s generated an error",uavar)		
-	tryCatch(
-	{
-		#NOTE: THE CODE HANDLES THE FACT THAT THERE CAN BE AN ERROR AND ONE OR MORE WARNINGS
-		#ON RUNNING A ONE SAMPLE T.TEST ON A SINGLE VARIABLE. WE ALWAYS RETURN THE ERROR FIRST EVEN THOUGH THE WARNING OCCURED FIRST
-		withCallingHandlers(
-				{
-				uatemp <-uarettest(eval(uadatasets$temppairs[i]), mu=valuetocompare, alternative=uaopt1pass, conf.level=uacipass, paired=uatyoftestpass)
-				},
-			        warning = UAwarnHandlerFn
-				           ) # end of withCallingHandlers for catching warnings and continuing execution
-	},
-
-	error = UAerrHandlerFn,
-	silent =TRUE)
-	if(uaperformance==2)
-	{
-	ualogcommand()	
-	}
-	
-	if( uadatasets$errorfn ==-1)
-			{
-				uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=i,type=-1,varName=uavar,dataTableRow=i,startCol=1,endCol=6,BSkyMsg=uadatasets$uaerrmsgdis, RMsg=uadatasets$uarerrmsg))
-				# AS the t test for the variable failed, the entries in the uamat for that variable should be NA
-				# we need to advance the uamat to the next variable
-				j=j+1
-			}	
-	if(uadatasets$uawarnfn ==-1)
-			{
-				len1 =length(uadatasets$uarwarnmsg)
-				# k is used for indexing the warning variables
-				k=1
-				for (k in 1:len1)
-				{
-					#1st position is the index of the variable in uavarindex
-					#2nd position is whether everything is OK (1), its an error(-1) or warning(-2)
-					#3rd position is the variable name
-					#4th position is the warning message that should be displayed
-					#5th position is the R warning message
-					uadatasets$retstructure[[2]]$metadatatable[[1]] = rbind(uadatasets$retstructure[[2]]$metadatatable[[1]] , data.frame(varIndex=i,type=1,varName=uavar,dataTableRow=i,startCol=1,endCol=6,BSkyMsg=uadatasets$uawarnmsgdis,RMsg=uadatasets$uarwarnmsg[k]))
-				}	
-				uadatasets$uawarnvar=NULL
-				uadatasets$uawarnmsgdis=NULL
-				uadatasets$uarwarnmsg=NULL
-			}
-	if (uadatasets$errorfn != -1)
-			{			
-				uadatasets$errorfn =0
-				uadatasets$warning=0
-				uadatasets$retstructure[[2]]$datatable[j,1] <-uatemp$statistic
-				uadatasets$retstructure[[2]]$datatable[j,2] <-uatemp$parameter
-				uadatasets$retstructure[[2]]$datatable[j,3] <-uatemp$p.value
-				uadatasets$retstructure[[2]]$datatable[j,4]<-uatemp$estimate -valuetocompare
-				uadatasets$retstructure[[2]]$datatable[j,5] <-uatemp$conf.int[1]-valuetocompare
-				uadatasets$retstructure[[2]]$datatable[j,6] <-uatemp$conf.int[2]-valuetocompare
-				j<-j+1
-			}
-			uadatasets$errorfn=0
-			uadatasets$uawarnfn=0
-		}#End of if
-	i=i+1
-	}#End of while
-BSkyFunctionWrapUp()
-return(TRUE)
-}
 
 #30Jul2018	
 # Changes to BSkyOneSmTTest,  uaonesample, uaonesamttest to support alternative
@@ -1463,7 +1256,7 @@ uagetcorr <-function(cindex,uavarindex,len1,uadatasets,index)
 							uadatasets$uawarnvar =c(uadatasets$uawarnvar,uawarnvar)
 							uadatasets$uawarnmsgdis =c(uadatasets$uawarnmsgdis,uawarnmsgdis)
 							uadatasets$uarwarnmsg =c(uadatasets$warnmsg,uawarnmsg );
-							uawritelog(type="Warning", functionname="cor.test", uberfunct="uapairedsm.test",message =uarwarnmsg,callfn =conditionCall(ex),uamessage =uadatasets$warnmsgdis, );
+							uawritelog(type="Warning", functionName="cor.test", uberFunct="uapairedsm.test",RMessage =uarwarnmsg,BSkyMessage =uadatasets$warnmsgdis, );
 							uadatasets$warnindex=uadatasets$warnindex+1;
 							invokeRestart("muffleWarning");
 							}
@@ -1478,7 +1271,7 @@ uagetcorr <-function(cindex,uavarindex,len1,uadatasets,index)
 					uaerrvar =names(uadatasets$lst[[index]][uavarindex[i]:uavarindex[i+1]])
 					uaerrmsgdis =sprintf("Correlation test on variables %s failed",uaerrvar) 		
 					uarerrmsg=conditionMessage(ex)
-					uawritelog(type="Error", functionname="cor.test",uberfunct="uapairedsm.test",message =uarerrmsg,callfn =conditionCall(ex),uamessage=uaerrmsgdis);
+					uawritelog(type="Error", functionName="cor.test",uberFunct="uapairedsm.test",RMessage =uarerrmsg,BSkyMessage=uaerrmsgdis);
 					#1st position is the index of the variable in uavarindex
 					#2nd position is whether everything is OK (0), its an error(-1) or a warning (1)
 					#3rd position is the variable name 
@@ -1600,7 +1393,7 @@ while (i <=len)
 				uadatasets$uawarnvar =c(uadatasets$uawarnvar,uawarnvar)
 				uadatasets$uawarnmsgdis =c(uadatasets$uawarnmsgdis,uawarnmsgdis)
 				uadatasets$uarwarnmsg =c(uadatasets$uarwarnmsg,uarwarnmsg );
-				uawritelog(type="Warning", functionname="t.test", uberfunct="uapairedsm.test",message =uarwarnmsg,callfn =conditionCall(ex),uamessage =uadatasets$warnmsgdis, );
+				uawritelog(type="Warning", functionName="t.test", uberFunct="uapairedsm.test",RMessage =uarwarnmsg,BSkyMessage =uadatasets$warnmsgdis, );
 				uadatasets$warnindex=uadatasets$warnindex+1;
 				invokeRestart("muffleWarning");
 				}
@@ -1615,7 +1408,7 @@ while (i <=len)
 				uaerrvar =names(uadatasets$lst[[index]][uavarindex[i]:uavarindex[i+1]])
 				uaerrmsgdis =sprintf("Paired sample T.test variables %s failed",uaerrvar) 		
 				uarerrmsg=conditionMessage(ex)
-		        uawritelog(type="Error", functionname="t.test",uberfunct="uapairedsm.test",message =uarerrmsg,callfn =conditionCall(ex),uamessage=uaerrmsgdis);
+		        uawritelog(type="Error", functionName="t.test",uberFunct="uapairedsm.test",RMessage =uarerrmsg,BSkyMessage=uaerrmsgdis);
 				uadatasets$results=c(as.character(m),"-1",uaerrvar,uaerrmsgdis, uarerrmsg)
 				},
 	silent =TRUE)
