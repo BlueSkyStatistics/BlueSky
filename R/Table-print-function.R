@@ -4524,7 +4524,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 
 
 #08Oct2021
-BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = NULL)
+BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = NULL, maxsum = 0)
 {
 	table_list = list()
 	table_list_names = c()
@@ -4604,11 +4604,16 @@ BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = 
 		selected_group_by_col_list_obj = eval(parse(text = paste("list(", 
 					selected_group_by_col_list, ")", sep = "")))
 		
+		if(maxsum == 0)
+		{
+			maxsum = 1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels))
+		}
+		
 		BSky_Summary_Statistics = by(stripped_data, 
 		  #ifelse(length(group_by_col_names) ==1, list(data[,group_by_col_names]), as.list(data[,group_by_col_names])),
 		  selected_group_by_col_list_obj,
 		  base::summary,
-		  maxsum = 1+max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels)))
+		  maxsum = maxsum)
 		  
 		#BSkyFormat(BSky_Summary_Statistics, singleTableOutputHeader=c("Summary Statistics by Group"))
 		table_list = c(table_list, list(BSky_Summary_Statistics))
