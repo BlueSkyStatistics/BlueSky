@@ -210,3 +210,5 @@ export(BSky.print.text, BSky.print.html, BSky.print.latex)
 
 export( BSky.summary.aov, BSkyFormatsummary.Anova.mlm, BSkyprint.linearHypothesis.mlm, BSky.print.anova)
 
+export(BSky_options)
+
