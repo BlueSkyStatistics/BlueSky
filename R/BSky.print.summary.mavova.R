@@ -64,7 +64,7 @@ BSky.summary.aov  <- function (x)
 		{
 			temp = as.data.frame(x[[i]])
 			table_list = c(table_list, list(temp))
-			table_list_names = c(table_list_names, names(x)[i])
+			table_list_names = c(table_list_names, paste ("Univariate ", names(x)[i], sep=""))
 		}
 	names(table_list) = table_list_names
 	return(table_list)
