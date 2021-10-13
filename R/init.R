@@ -13,6 +13,7 @@ uadatasets.sk <- NULL
 {
 require(data.table)
 require(kableExtra)
+require(dplyr)
  #cat("Initializing the package in .onLoad function\n")
  #print(libname)
  #print(pkgname) 
