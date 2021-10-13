@@ -11,6 +11,8 @@ uadatasets.sk <- NULL
 #bskyCurrentDatasetSplitSliceObj <- NULL
 .onLoad<-function(libname, pkgname)
 {
+require(data.table)
+require(kableExtra)
  #cat("Initializing the package in .onLoad function\n")
  #print(libname)
  #print(pkgname) 

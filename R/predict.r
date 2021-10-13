@@ -2298,7 +2298,7 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
                     {
                         
                         dependentvariable =as.factor(dependentvariable)
-						predictions =as.factor(predictions, levels =levels(dependentvariable))
+						predictions =factor(predictions, levels =levels(dependentvariable)) #as.factor(predictions, levels =levels(dependentvariable))
                     }
 					else if (dependentclass =="character" &&  predictionsclass =="factor" && (modclass=="mlp" || modclass =="rsnns" || modclass=="xgb.Booster"))
                     {

@@ -1536,7 +1536,11 @@ BSkyFormat2 <- function(obj, silentFormatting = FALSE, decimalDigitsRounding = B
 	#	{
 #ptm1 <- proc.time()
 			
-	
+			if((length(class(obj))> 0) && class(obj)[1]=="anova" )
+			{
+				obj = as.data.frame(obj)
+			}
+			
 			if((length(class(obj))> 0) && class(obj)[1]=="BSkyMessage" )## 22 Nov 2020 added for electron app.
 			{
 			
@@ -4604,17 +4608,29 @@ BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = 
 		selected_group_by_col_list_obj = eval(parse(text = paste("list(", 
 					selected_group_by_col_list, ")", sep = "")))
 		
+		# print(max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels)))
+		# if(maxsum == 0)
+		# {
+			# maxsum = 1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels))
+		# }
+		
 		if(maxsum == 0)
 		{
-			maxsum = 1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels))
+			BSky_Summary_Statistics = by(stripped_data, 
+			  #ifelse(length(group_by_col_names) ==1, list(data[,group_by_col_names]), as.list(data[,group_by_col_names])),
+			  selected_group_by_col_list_obj,
+			  base::summary,
+			  maxsum =  1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels)))
 		}
-		
-		BSky_Summary_Statistics = by(stripped_data, 
-		  #ifelse(length(group_by_col_names) ==1, list(data[,group_by_col_names]), as.list(data[,group_by_col_names])),
-		  selected_group_by_col_list_obj,
-		  base::summary,
-		  maxsum = maxsum)
-		  
+		else
+		{
+			BSky_Summary_Statistics = by(stripped_data, 
+			  #ifelse(length(group_by_col_names) ==1, list(data[,group_by_col_names]), as.list(data[,group_by_col_names])),
+			  selected_group_by_col_list_obj,
+			  base::summary,
+			  maxsum =  maxsum)
+		}		  
+
 		#BSkyFormat(BSky_Summary_Statistics, singleTableOutputHeader=c("Summary Statistics by Group"))
 		table_list = c(table_list, list(BSky_Summary_Statistics))
 		table_list_names = c(table_list_names, "Summary Statistics by Group")
