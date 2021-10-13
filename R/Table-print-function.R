@@ -4588,7 +4588,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 			BSky_Summary_By_Variable = BSkyTableObjectFormat(BSky_Summary_By_Variable)
 			
 			tab_name = BSky_Summary_By_Variable[1,]
-			BSky_Summary_By_Variable = BSky_Summary_By_Variable[-c(1),]
+			BSky_Summary_By_Variable = as.data.frame( BSky_Summary_By_Variable[-c(1),] )
 			names(BSky_Summary_By_Variable) = tab_name
 			row.names(BSky_Summary_By_Variable) = c()
 			
