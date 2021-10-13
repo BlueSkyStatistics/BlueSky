@@ -7,7 +7,7 @@
 #30Jul2018	
 # Changes to BSkyOneSmTTest,  uaonesample, uaonesamttest to support alternative
 
-#08Oct2021
+#13Oct2021
 BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 0, conf.level = 0.95, alternative = 'two.sided',
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, 
 	cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 
@@ -198,6 +198,18 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	}
 	
 	#print("Returning from one sample")
-    invisible(bsky_return_structure)
+    #invisible(bsky_return_structure)
+	table_list = BSkyFormatBSkyOneSampleTtest(bsky_return_structure)
+	table_list = table_list$tables[1:(table_list$nooftables -1)]
+	
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
+
 

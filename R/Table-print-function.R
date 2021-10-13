@@ -3514,7 +3514,7 @@ objClassMatrix=FALSE #by Anil
 }
 
 
-BSkySetDecimalDigitSetting <- function(decimalDigitSetting = 2)
+BSkySetDecimalDigitSetting <- function(decimalDigitSetting = 4)
 {
 	#26May2020 For handlin e notation to decimals in tibble. Bob suggest this from following url
 	#https://stackoverflow.com/questions/60004515/how-to-convert-scientific-notation-to-decimal-in-tibbles/60004882#60004882
@@ -3532,7 +3532,7 @@ BSkyGetDecimalDigitSetting <- function()
 	}
 	else
 	{
-		return(invisible((uadatasets.sk$BSkyDecimalDigitSetting = 2)))
+		return(invisible((uadatasets.sk$BSkyDecimalDigitSetting = 4)))
 	}
 }
 
@@ -4012,13 +4012,14 @@ BSkyReturnStructure2 <-function(bskyAdditionalTableList = list()) ### passs as l
 ## SK 02/18/21 Made quite a bit of changes to allow random quantile/probability values between 0 and 1 
 ## i.e. other than the standard values allowed earlier like 0 (min), 0.25 (1st Qu), 0.50 (median), 0.75 (3rd Qu), and 1.00 (max) 
 ################################################################################################################################
-#08Oct2021
-BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByColumnObjects=list(), datasetName=c(), statFunctionList=c(), quantilesProbs=c(0, 0.25, 0.5, 0.75, 1), additionalStats = c(), bSkyFormatAppRequest = FALSE, ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE)
+#13Oct2021
+BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByColumnObjects=list(), datasetName=c(), stats=c(min=TRUE, max=TRUE, mean=TRUE, median=TRUE, quantiles=TRUE), quantilesProbs=c(0, 0.25, 0.5, 0.75, 1), additionalStats = c(), maxsum = 30, bSkyFormatAppRequest = FALSE, ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE)
 {
 	#print(match.call())
 	#cat("\n")
 	
 	stripped_data = data
+	statFunctionList = stats
 	
 	if(!is.null(data))
 	{
@@ -4044,6 +4045,12 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	else if(length(datasetName) == 0)
 	{
 		return(invisible(NULL))
+	}
+	else
+	{
+		Dataset = (eval(parse(text = datasetName)))
+		stripped_data = Dataset[names(datasetColumnObjects)]
+		dataset_name_str = datasetName
 	}
 	
 	
@@ -4087,15 +4094,30 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		if(length(datasetName) != 0)
 		{
 			Dataset = (eval(parse(text = datasetName)))
+			stripped_data = Dataset
 			if(length(groupByColumnObjects) == 0)
 			{
 				#return(by(Dataset,list(), summary))  # by() has stopped supporting empty grouping list ??
-				return(ftable(summary(Dataset)))
+				if(BSkyIsRmarkdownOutputOn() == TRUE)
+				{
+					return(ftable(summary(Dataset)))
+				}
+				else
+				{
+					return(invisible(ftable(summary(Dataset))))
+				}
 				
 			}
 			else
 			{
-				return(by(Dataset,groupByColumnObjects, summary))
+				if(BSkyIsRmarkdownOutputOn() == TRUE)
+				{
+					return(by(Dataset,groupByColumnObjects, summary))
+				}
+				else
+				{
+					return(invisible(by(Dataset,groupByColumnObjects, summary)))
+				}
 			}
 		}
 		else
@@ -4106,6 +4128,11 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	
 #statFunctionList = c(min=FALSE,max=TRUE,mean=TRUE,median=FALSE,sd=TRUE,stderror=FALSE,iqr=FALSE,quantiles=TRUE), probs=c(0,0.25,0.5,0.75,1)),
 #additionalStats = c("min,"var")
+
+	if(all(as.logical(lapply(stripped_data, is.numeric)) == FALSE))
+	{
+		statFunctionList = c()
+	}
 
 	temp_statFunctionList = statFunctionList 
 	stat_methods = c()
@@ -4435,7 +4462,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		bsky_stat_result_layer_stat_column = as.data.frame(bsky_stat_result_layer_stat_column[-1,])
 		row.names(bsky_stat_result_layer_stat_column) = NULL
 		
-		final_data_frmae_column_names = c(final_data_frmae_column_names, "stat function")
+		final_data_frmae_column_names = c(final_data_frmae_column_names, "stats") # function")
 		
 		#print(bsky_stat_result_layer_stat_column)
 		
@@ -4470,7 +4497,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		stat_function = c(statFunctionList, "n", "NAs")
 		
 		bsky_stat_result_layer_stat_column = data.frame(stat_function)
-		names(bsky_stat_result_layer_stat_column) = "stat function"
+		names(bsky_stat_result_layer_stat_column) = "stats" # function"
 		row.names(bsky_stat_result_layer_stat_column) = NULL
 		
 		final_data_frmae_column_names = names(bsky_stat_result_layer_stat_column)
@@ -4506,7 +4533,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	#print(bsky_stat_result_layer_stat_column)
 	
 	
-	if(!is.null(data))
+	#if(!is.null(data))
 	{
 		BSky_Dataset_Overview =  data.frame(Dataset = dataset_name_str, Variables = dim(stripped_data)[2], Observations = nrow(stripped_data))
 		
@@ -4518,16 +4545,111 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		table_list_names = c(table_list_names, "Numerical Statistical Analysis by Variable")
 		names(table_list) = table_list_names
 		
-		return(invisible(table_list))
+		#return(invisible(table_list))
+		#return((table_list))
+	}
+	# else
+	# {
+	# 	#return(invisible(bsky_stat_result_layer_stat_column))
+	# 	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	# 	{
+	# 		return((bsky_stat_result_layer_stat_column))
+	# 	}
+	# 	else
+	# 	{
+	# 		return(invisible((bsky_stat_result_layer_stat_column)))
+	# 	}
+	# }
+	
+	
+	stripped_data = stripped_data[names(stripped_data)[as.logical(lapply(stripped_data, is.factor))]]
+	
+	if(!is.null(stripped_data) && dim(stripped_data)[2] > 0)
+	{
+		#datasetColumnObjects
+		#groupByColumnObjects
+		
+		#group_by_col_names
+		
+		if(length(groupByColumnObjects) == 0)
+		{
+			if(maxsum == 0)
+			{
+				BSky_Summary_By_Variable <- ftable(summary(stripped_data, maxsum = 1+max(sapply(stripped_data 
+								 [,sapply(stripped_data, is.factor)], nlevels  )) ))
+			}
+			else
+			{
+				BSky_Summary_By_Variable <- ftable(summary(stripped_data, maxsum = maxsum))
+			}
+
+			BSky_Summary_By_Variable[is.na(BSky_Summary_By_Variable[])]=c("")
+			
+			BSky_Summary_By_Variable = BSkyTableObjectFormat(BSky_Summary_By_Variable)
+			
+			tab_name = BSky_Summary_By_Variable[1,]
+			BSky_Summary_By_Variable = BSky_Summary_By_Variable[-c(1),]
+			names(BSky_Summary_By_Variable) = tab_name
+			row.names(BSky_Summary_By_Variable) = c()
+			
+			table_list = c(table_list, list(BSky_Summary_By_Variable))
+			table_list_names = c(table_list_names, "Summary Factor Variable")
+			names(table_list) = table_list_names
+		}
+		else
+		{
+			# selected_group_by_col_list = paste(paste(groupByColumnObjects, "=", dataset_name_str, 
+						# "$", groupByColumnObjects, sep = ""), sep = "", collapse = ",")
+				
+			# selected_group_by_col_list_obj = eval(parse(text = paste("list(", 
+						# selected_group_by_col_list, ")", sep = "")))
+			
+			selected_group_by_col_list_obj = rev(groupByColumnObjects)
+			
+			if(maxsum == 0)
+			{
+				BSky_Summary_Statistics = by(stripped_data, 
+				  selected_group_by_col_list_obj,
+				  base::summary,
+				  maxsum = 1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels)))
+			}
+			else
+			{
+				BSky_Summary_Statistics = by(stripped_data, 
+				  selected_group_by_col_list_obj,
+				  base::summary,
+				  maxsum = maxsum)
+			}
+			
+			BSky_Summary_Statistics = BSkyByObjectFormat(BSky_Summary_Statistics)
+			
+			num_group_by_cols = length(groupByColumnObjects)
+			tab_name = names(BSky_Summary_Statistics)
+			partial_tab_name = BSky_Summary_Statistics[1,c((num_group_by_cols+1):dim(BSky_Summary_Statistics)[2])]
+			tab_name = c(tab_name[1:num_group_by_cols], partial_tab_name)
+			BSky_Summary_Statistics = BSky_Summary_Statistics[-c(1),]
+			names(BSky_Summary_Statistics) = tab_name
+			row.names(BSky_Summary_Statistics) = c()
+			
+			table_list = c(table_list, list(BSky_Summary_Statistics))
+			table_list_names = c(table_list_names, "Summary Factor by Variable by Group")
+			names(table_list) = table_list_names
+		}
+	}
+	
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
 	}
 	else
 	{
-		return(invisible(bsky_stat_result_layer_stat_column))
+		return(invisible(table_list))
 	}
 }
 
 
-#08Oct2021
+
+#13Oct2021
 BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = NULL, maxsum = 0)
 {
 	table_list = list()
@@ -4590,8 +4712,15 @@ BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = 
 	
 	if(length(group_by_col_names) == 0)
 	{
-		BSky_Summary_By_Variable <- ftable(summary(stripped_data, maxsum = 1+max(sapply(stripped_data 
+		if(maxsum == 0)
+		{
+			BSky_Summary_By_Variable <- ftable(summary(stripped_data, maxsum = 1+max(sapply(stripped_data 
 							 [,sapply(stripped_data, is.factor)], nlevels  )) ))
+		}
+		else
+		{
+			BSky_Summary_By_Variable <- ftable(summary(stripped_data, maxsum = maxsum))
+		}
 
 		BSky_Summary_By_Variable[is.na(BSky_Summary_By_Variable[])]=c("")
 		
@@ -4608,19 +4737,13 @@ BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = 
 		selected_group_by_col_list_obj = eval(parse(text = paste("list(", 
 					selected_group_by_col_list, ")", sep = "")))
 		
-		# print(max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels)))
-		# if(maxsum == 0)
-		# {
-			# maxsum = 1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels))
-		# }
-		
 		if(maxsum == 0)
 		{
 			BSky_Summary_Statistics = by(stripped_data, 
 			  #ifelse(length(group_by_col_names) ==1, list(data[,group_by_col_names]), as.list(data[,group_by_col_names])),
 			  selected_group_by_col_list_obj,
 			  base::summary,
-			  maxsum =  1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels)))
+			  maxsum = 1 + max(sapply(stripped_data[,sapply(stripped_data, is.factor)], nlevels)))
 		}
 		else
 		{
@@ -4628,16 +4751,25 @@ BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = 
 			  #ifelse(length(group_by_col_names) ==1, list(data[,group_by_col_names]), as.list(data[,group_by_col_names])),
 			  selected_group_by_col_list_obj,
 			  base::summary,
-			  maxsum =  maxsum)
-		}		  
-
+			  maxsum = maxsum)
+		}
+		  
 		#BSkyFormat(BSky_Summary_Statistics, singleTableOutputHeader=c("Summary Statistics by Group"))
 		table_list = c(table_list, list(BSky_Summary_Statistics))
 		table_list_names = c(table_list_names, "Summary Statistics by Group")
 		names(table_list) = table_list_names
 	}
 	
-	return(invisible(table_list))
+	
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
+
 
 

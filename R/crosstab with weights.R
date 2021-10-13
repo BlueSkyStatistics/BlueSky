@@ -64,7 +64,7 @@
 #and the variables for which we should display nothing as there are errors and warnings
 #Note: we will display the errors and warnings at the top of the table
 #If there is a split,???
-#08Oct2021
+#13Oct2021
 BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3, max.width = 5, expected=FALSE, prop.r=FALSE, prop.c=FALSE,
            prop.t=FALSE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
            resid=FALSE, sresid=FALSE, asresid=FALSE,
@@ -396,8 +396,23 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 		bsky_return_structure$uasummary[[7]] = replace_uasummary_7
 	}
 	
-	invisible(bsky_return_structure)
+	#return(invisible(bsky_return_structure))
+	#return(bsky_return_structure)
+	table_list = BSkyFormatBSkyCrossTable(bsky_return_structure)
+	table_list = table_list$tables[1:(table_list$nooftables -1)]
+	
+
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
+
+
 
 
 

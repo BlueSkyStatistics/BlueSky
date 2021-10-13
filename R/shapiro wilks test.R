@@ -1,5 +1,5 @@
 
-#08Oct2021
+#13Oct2021
 BSky_Shapiro_Wilk_normality_test <- function (data = NULL, vars = NULL, dataset = NULL) 
 {
 	table_list = list()
@@ -99,6 +99,15 @@ BSky_Shapiro_Wilk_normality_test <- function (data = NULL, vars = NULL, dataset 
 	table_list_names = c("Shapiro Wilks Normality Test")
 	names(table_list) = table_list_names
 	
-	return(invisible(table_list))
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
+
+
 

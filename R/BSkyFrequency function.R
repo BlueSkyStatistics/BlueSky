@@ -4,7 +4,7 @@
 # data is the dataset object itself not the string name
 
 #This function goes into BSky R package 
-#08Oct2021
+#13Oct2021
 BSkyFrequency <- function (data = NULL, vars = NULL) 
 {
 	table_list = list()
@@ -108,6 +108,13 @@ BSkyFrequency <- function (data = NULL, vars = NULL)
 		names(table_list) = table_list_names
     }
 	
-	return(invisible(table_list))
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
 

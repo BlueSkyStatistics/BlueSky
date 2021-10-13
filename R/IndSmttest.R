@@ -1,5 +1,5 @@
 #r CMD INSTALL --build uadatapackage
-#08Oct2021
+#13Oct2021
 BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group = NULL, conf.level = 0.95, alternative="two.sided",
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, excludeEnvPrefix = FALSE,
     cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 
@@ -195,8 +195,22 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 		bsky_return_structure$uasummary[[7]] = replace_uasummary_7
 	}
 	
-    invisible(bsky_return_structure)
+    #invisible(bsky_return_structure)
+	#return(bsky_return_structure)
+	table_list = BSkyFormatBSkyIndSampleTtest(bsky_return_structure)
+	table_list = table_list$tables[1:(table_list$nooftables -1)]
+	
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
+
+
 
 
 

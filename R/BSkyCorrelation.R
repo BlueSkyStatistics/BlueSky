@@ -40,7 +40,7 @@
     # BSkyPlotCorrelationMatrix() %>%
     # BSkyCorrelationMatrix()
 
-
+#13Oct2021
 BSkyCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pearson", missingValues = "complete.obs", pValue = "adjP")
 {
 	if(class(data)[1] != "character")
@@ -60,11 +60,6 @@ BSkyCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pearson",
 		data = eval(parse(text=data), envir = globalenv())
 	}
 	
-	# if(class(data)[1] != "data.frame" && class(data)[1] != "matrix")
-	# {
-		# return(invisible(NULL))
-	# }
-	
 	if(is.null(vars) || length(trimws(vars)) == 0)
 	{
 		vars = dimnames(data)[[2]]
@@ -76,9 +71,18 @@ BSkyCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pearson",
 	row.names(results) <- NULL
 	results = list (results)
 	names(results) = paste(correlationType, " correlation", sep="")
-	return(invisible(results))
 	
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((results))
+	}
+	else
+	{
+		return(invisible(results))
+	}
 }
+
+
 
 
 BSkyPlotCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pearson", missingValues = "complete.obs", visualizeCorrelation = TRUE, plotWeb = TRUE)
@@ -174,4 +178,47 @@ BSkyFormatRcorr_adjust <- function(a, showPvalue=c("adjP"))
  return(invisible(df))
 }
 
-
+#13Oct2021
+BSky_options <- function()
+{
+	fmt = BSkyGetKableAndRmarkdownFormatting()
+	
+	if(fmt$doTextFormatting == TRUE)
+	{
+		print_mode = "print = text"
+		print_style = paste("text_style =", BSkyGetTextTableFormat())
+	}
+	else if(fmt$doLatexFormatting == TRUE)
+	{
+		print_mode = "print = latex"
+		print_style = c(" ")
+	}
+	else if(fmt$doRmarkdownFormatting == TRUE || fmt$doKableFormatting == TRUE)
+	{
+		print_mode = "print = html"
+		
+		if(uadatasets.sk$BSkykableStyleTheme == "kable_classic")
+		{
+			print_style = "html_style = APA"
+		}
+		else
+		{
+			print_style = "html_style = non-APA"
+		}
+	}
+	
+	p_value_show = paste("p_value_show =", as.character(uadatasets.sk$showActualPValueInOutput))
+	p_value_asterix = paste("p_value_drop_asterisk =", as.character(uadatasets.sk$pvalueDropAsterisk))
+	
+	bsky_digits = paste("bsky_digits =", BSkyGetDecimalDigitSetting())
+	
+	bsky_scipen = paste("bsky_scipen_on =", as.character(BSkyGetEngNotationSetting()))
+	
+	bsky_rounding = paste("bsky_rounding_on =", as.character(BSkyGetRound()))
+	
+	cat("\n", print_mode, "and", print_style, "\n")
+	cat("\n", p_value_show, "and", p_value_asterix, "\n")
+	cat("\n", bsky_digits, "\n")
+	cat("\n", bsky_scipen, "\n")
+	cat("\n", bsky_rounding, "\n")
+}
