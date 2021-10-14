@@ -5,6 +5,19 @@ naCheck <- function (weights, data)
 	return(bool)
 }
 
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Expand Weights
+#'
+#' @description Creates a new dataset with rows expanded as per weights. Expands (replicates) the rows of a data.frame  by a value contained in one of the columns in the source data.frame or data.table. BSkySetWeights() calls expandRows() from the package splitstackshape.
+#'
+#' @param weights The dataset variable that contains the weights.
+#' @param data The input data.frame or data.table.
+#' @param newdata The new dataset where the rows are replicated for the weights specified.
+#'
+#' @return expanded dataset according to the weights
+#'
+#' @examples
 BSkySetWeight <- function( weights, data, newdata)
 {
 	BSkybool = !naCheck(weights,data)

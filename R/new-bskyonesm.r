@@ -8,6 +8,23 @@
 # Changes to BSkyOneSmTTest,  uaonesample, uaonesamttest to support alternative
 
 #13Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title t-test, One Sample
+#'
+#' @description Performs one sample t-tests on selected variables. Optionally computes effect size indices for standardized differences: Cohen's d and Hedges' g (This function returns the population estimate.)
+#'
+#' @param varNamesOrVarGlobalIndices selected scale variables (say var1, var2)
+#' @param mu a number indicating the true value of the mean. (say 10)
+#' @param conf.level a numeric value  (say 0.95).
+#' @param missing missing values are handled on a per variable basis (missing =0) or list wise across all variables (missing=1).
+#' @param datasetNameOrDatasetGlobalIndex Name of the dataset (say Dataset)  from which var1, var2 and var3 are selected.
+#' @param alternative  a character string specifying the alternative hypothesis, must be one of "two.sided"  (default), "greater" or "less". You can specify just the initial letter.
+#'
+#' @return A list with the results of the test
+#'
+#' @examples Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'))
+#' BSky_One_Simple_T_Test = BSkyOneSmTTest(varNamesOrVarGlobalIndices =c('Sales','Expenses'),mu=.9,conf.level=0.95,alternative ="two.sided", datasetNameOrDatasetGlobalIndex ='Dataset',missing=1)
 BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 0, conf.level = 0.95, alternative = 'two.sided',
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, 
 	cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 

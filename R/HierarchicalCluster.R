@@ -71,6 +71,25 @@ return(invisible(retlist))
 }
 
 #18Apr2019 some defect fixed by Aaron for BSS ver 6.0 release
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Hierarchical Cluster
+#'
+#' @description Hierarchical cluster analysis on a set of dissimilarities and methods for analyzing it.
+#'
+#' @param varsToCluster The variables to analyze 
+#' @param method the agglomeration method to be used. This should be (an unambiguous abbreviation of) one of "ward.D", "ward.D2", 
+#' "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA),"median" (= WPGMC) or "centroid" (= UPGMC).
+#' @param noOfClusters The number of clusters desired
+#' @param plotDendogram Plot a dendogram True or false
+#' @param assignClusterToDataset Save the cluster assignments to the dataset
+#' @param label name for the new variable that stores the cluster assignments
+#' @param plotBiplot plot Biplot TRUE or FALSE
+#' @param dataset Name of the dataset
+#'
+#' @return
+#'
+#' @examples
 BSkyHierClus<-function (varsToCluster, method, noOfClusters, distance, plotDendogram,
     assignClusterToDataset, label = "", plotBiplot, dataset,
     excludeEnvPrefix = FALSE)

@@ -1,5 +1,22 @@
 #r CMD INSTALL --build uadatapackage
 #13Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title t-test, Independent Samples
+#'
+#' @description Performs a one sample t-tests against the two groups formed by a factor variable (with two levels). Displays results for equal variances TRUE and FALSE. For equal variances the pooled variance is used otherwise the Welch (or Satterthwaite) approximation to the degrees of freedom is used. Internally calls t.test in the stats package for every selected variable 
+#'
+#' @param varNamesOrVarGlobalIndices selected scale variables (say var1, var2)
+#' @param group a factor variable with two levels (say var3)
+#' @param conf.level a numeric value  (say 0.95).
+#' @param missing missing values are handled on a per variable basis (missing =0) or list wise across all variables (missing=1).
+#' @param datasetNameOrDatasetGlobalIndex Name of the dataset (say Dataset)  from which var1, var2 and var3 are selected.
+#' @param alternative  a character string specifying the alternative hypothesis, must be one of "two.sided"  (default), "greater" or "less". You can specify just the initial letter.
+#'
+#' @return A list with resulting tables is returned.
+#'
+#' @examples Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'))
+#' BSky_One_Simple_T_Test = BSkyIndSmTTest(varNamesOrVarGlobalIndices =c('Sales','Expenses'),group=c('Deptt'),conf.level=0.95, alternative="less", datasetNameOrDatasetGlobalIndex ='Dataset')
 BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group = NULL, conf.level = 0.95, alternative="two.sided",
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, excludeEnvPrefix = FALSE,
     cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 

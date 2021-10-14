@@ -6,6 +6,18 @@
 #Given a model class returns the objects /models of that class, also returns objects 
 #returnClassTrain =TRUE suppresses all models of class train (Built with Model Tuning) that have a finalModel class in objclasslist=c("lm", "glm", "randomForest")
 ###########################################################
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Fetches currently available models
+#'
+#' @description Fetches currently available models of a specified classes.
+#'
+#' @param objclasslist class of model to fetch
+#' @param returnClassTrain 
+#'
+#' @return
+#'
+#' @examples
 BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE)
 {
 	
@@ -48,7 +60,18 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 }
 
 
-
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Fetches currently available models
+#'
+#' @description Fetches currently available models of a specified classes.
+#'
+#' @param objclasslist class of model to fetch
+#' @param returnClassTrain
+#'
+#' @return
+#'
+#' @examples
 BSkyGetAvailableModelsCP <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE)
 {
 	

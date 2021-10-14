@@ -15,7 +15,36 @@ BSkyGetDatasetNameTitle <-function(package ="")
 
 }
 
-
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title  
+#'
+#' @description 
+#'
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param
+#' @param
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param
+#' @param
+#'
+#' @return
+#'
+#' @examples
 BSkyGetDatasetNameFromPackageDatasetList <-function(datasetAndPackagedetails)
 {
 return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),3])

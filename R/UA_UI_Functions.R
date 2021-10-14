@@ -1238,6 +1238,21 @@ UAgetDataframeSplit<-function(dataSetNameOrIndex)
 		return(invisible(splitprop)) # return(BSkyReturnStructure(splitprop))
 }
 
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Set or Remove Split
+#'
+#' @description Splits the data into groups based on the factors selected, once the dataset is split, the analysis you select is performed independently for each split. For example if you run a crosstabulation analysis or a hypothesis test, this analysis is performed independently for each split (the output of the analysis is also generated separately for each split). 
+#' OR
+#' Removes the split on the dataset. Splits, see Data>Group By>Set Split splits the data into groups based on the factors selected, once the dataset is split, the analysis you select is performed independently for each split. For example if you run a crosstabulation analysis or a hypothesis test, this analysis is performed independently for each split (the output of the analysis is also generated separately for each split). 
+#' 
+#' @param col.names These are the column names/variable names that you want to split the dataset by, e.g. col.names =c("var1", "var2"). To reset the split, set to c().
+#' @param datasetnameorindex this is the name of the index.​
+#' @param removeall.splits TRUE splits are removed, FALSE splits are added.
+#'
+#' @return
+#'
+#' @examples
 BSkySetDataFrameSplit <- function(col.names, datasetnameorindex, removeall.splits=FALSE)
 {
 	BSkyFunctionInit()

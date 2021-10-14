@@ -2,6 +2,16 @@
 # Just Last Modification Date. Time can also be included
 # ver: 2011.w.d  #W starts on Mon=1
 ############################################################
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title BlueSky package adn other details
+#'
+#' @description Get BlueSky package details along with R session related details.
+#'
+#'
+#' @return prints details about system, R session etc.
+#'
+#' @examples BSkyVersion()
 BSkyVersion<-function()
 {
 bskyver= "Version: 7.74"

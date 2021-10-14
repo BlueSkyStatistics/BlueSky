@@ -1,3 +1,21 @@
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title K-Means Cluster
+#'
+#' @description Performs K-means clustering
+#'
+#' @param vars The variables to analyze in a vector of form c('var1','var2'...)
+#' @param centers either the number of clusters, say k, or a set of initial (distinct) cluster centers. If a number, a random set of (distinct) 
+#' rows in x is chosen as the initial centers.
+#' @param iter.max the maximum number of iterations allowed.
+#' @param num.seeds The number of different starting random seeds to use. Each random seed results in a different k-means solution.
+#' @param storeClusterInDataset Save the cluster assignments to the dataset
+#' @param varNameForCluster The variable names for the assigned clusters
+#' @param dataset The dataset to analyze
+#'
+#' @return
+#'
+#' @examples
 BSkyKMeans <-function (vars, centers, iter.max = 10, num.seeds = 10,storeClusterInDataset =FALSE, varNameForCluster="", dataset, excludeEnvPrefix=FALSE) 
  {
   BSkyFunctionInit()

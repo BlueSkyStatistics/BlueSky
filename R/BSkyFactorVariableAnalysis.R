@@ -6,6 +6,20 @@
 
 #This function goes into BSky R package
 #13Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Factor Variable Analysis, top N
+#'
+#' @description Displays the counts of every level of each factor variable.
+#'
+#' @param data The dataset name
+#' @param vars The factor variables to display level counts
+#' @param show.only.top.factors A boolean determining whether counts of only top levels or all levels should be displayed.
+#' @param max.number.top.factors if show.only.top.factors = TRUE , specifies the number of levels to display counts for
+#'
+#' @return Factor variable analysis
+#'
+#' @examples
 BSkyFactorVariableAnalysis <- function(data = NULL, vars = NULL, show.only.top.factors=TRUE, max.number.top.factors=30)
 {
 		ChkboxShowOnlyTopFewFactors = show.only.top.factors
