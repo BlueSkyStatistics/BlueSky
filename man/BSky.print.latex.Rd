@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyFormat.r
 \name{BSky.print.latex}
 \alias{BSky.print.latex}
-\title{show output in LaTex format}
+\title{shows output in LaTex format}
 \usage{
 BSky.print.latex()
 }

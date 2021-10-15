@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyFormat.r
 \name{BSky.print.html}
 \alias{BSky.print.html}
-\title{show output in HTML format}
+\title{shows output in HTML format}
 \usage{
 BSky.print.html(app = "rmarkdown", html_style = "APA")
 }

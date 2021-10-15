@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyFormat.r
 \name{BSky.print.text}
 \alias{BSky.print.text}
-\title{show output in text format}
+\title{shows output in text format}
 \usage{
 BSky.print.text(textFormat = "simple")
 }
