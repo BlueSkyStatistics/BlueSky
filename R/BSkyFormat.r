@@ -13,13 +13,13 @@
 #' @param obj is an object of type data.frame, matrix, list, text or BSkyReturnStructure object, that is to be formatted.
 #' @param maxOutputTables maximum tables to output if obj contains mulitple tables
 #' @param outputTableIndex the order in which output tables are printed
-#' @param outputColumnIndex
-#' @param outputTableRenames
-#' @param outputColumnRenames
-#' @param outputColumnRenamesRow
-#' @param maxRowLimit
-#' @param
-#' @param
+#' @param outputColumnIndex the order of columns in the table
+#' @param outputTableRenames custom name assigned to the table
+#' @param outputColumnRenames custom column names for the columns in a table
+#' @param outputColumnRenamesRow custom row names
+#' @param maxRowLimit maximum row to show in the output table
+#' @param maxColLimit maximum columns to show in the output table
+#' @param ... other advanced level parameters
 #'
 #' @return
 #'

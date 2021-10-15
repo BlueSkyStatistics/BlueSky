@@ -50,6 +50,20 @@ BSkyFormat(
 \item{maxOutputTables}{maximum tables to output if obj contains mulitple tables}
 
 \item{outputTableIndex}{the order in which output tables are printed}
+
+\item{outputColumnIndex}{the order of columns in the table}
+
+\item{outputTableRenames}{custom name assigned to the table}
+
+\item{outputColumnRenames}{custom column names for the columns in a table}
+
+\item{outputColumnRenamesRow}{custom row names}
+
+\item{maxRowLimit}{maximum row to show in the output table}
+
+\item{maxColLimit}{maximum columns to show in the output table}
+
+\item{...}{other advanced level parameters}
 }
 \value{
 
