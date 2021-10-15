@@ -1,5 +1,5 @@
 #r CMD INSTALL --build uadatapackage
-#13Oct2021
+#14Oct2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
 #' @title t-test, Independent Samples
@@ -52,6 +52,14 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 	else if(length(datasetNameOrDatasetGlobalIndex) == 0)
 	{
 		return(invisible(NULL))
+	}
+	else 
+	{
+		# For Rstudio to work correctly when data parameter is NULL (i.e. not used with %>%)
+		# data  is null but datasetNameOrDatasetGlobalIndex has the dataset name
+		# BSkyLoadRefresh is needed to load the dataset in ua dataset list global obj
+		# for BSKy functions e.g. crosstab, ind sample and one sample to work in RStudio 
+		BSkyLoadRefresh(datasetNameOrDatasetGlobalIndex)
 	}
 	
 	
@@ -226,7 +234,6 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 		return(invisible(table_list))
 	}
 }
-
 
 
 

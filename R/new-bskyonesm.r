@@ -7,7 +7,9 @@
 #30Jul2018	
 # Changes to BSkyOneSmTTest,  uaonesample, uaonesamttest to support alternative
 
-#13Oct2021
+#14Oct2021
+# Means> T-test, Independent Sample 
+# Last modified 10/7/2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
 #' @title t-test, One Sample
@@ -61,6 +63,14 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	else if(length(datasetNameOrDatasetGlobalIndex) == 0)
 	{
 		return(invisible(NULL))
+	}
+	else 
+	{
+		# For Rstudio to work correctly when data parameter is NULL (i.e. not used with %>%)
+		# data  is null but datasetNameOrDatasetGlobalIndex has the dataset name
+		# BSkyLoadRefresh is needed to load the dataset in ua dataset list global obj
+		# for BSKy functions e.g. crosstab, ind sample and one sample to work in RStudio 
+		BSkyLoadRefresh(datasetNameOrDatasetGlobalIndex)
 	}
 	
 	
@@ -228,5 +238,3 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 		return(invisible(table_list))
 	}
 }
-
-
