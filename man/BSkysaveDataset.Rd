@@ -5,9 +5,15 @@
 \title{BSkysaveDataset saves a BlueSky Statistics UI datagrid loaded dataset to the supported file formats.
 [supported file formats : .XLSX, .CSV, .RDATA, and .DBF]}
 \usage{
-BSkysaveDataset(fullpathfilename, filetype, Rownames = TRUE,
-  Colnames = FALSE, newWorksheetName = NULL, factor2char = TRUE,
-  dataSetNameOrIndex)
+BSkysaveDataset(
+  fullpathfilename,
+  filetype,
+  Rownames = TRUE,
+  Colnames = FALSE,
+  newWorksheetName = NULL,
+  factor2char = TRUE,
+  dataSetNameOrIndex
+)
 }
 \arguments{
 \item{fullpathfilename}{is a full path filename of a disk file to which will dataset will be written. Use forward slash as path separator.}
@@ -29,4 +35,3 @@ df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 BSkyLoadRefreshDataframe(df) #dataframe must be loaded in the grid before you try to save it to different formats.
 BSkysaveDataset("D:/mytestdata.rdata", filetype="RDATA", dataSetNameOrIndex='df')
 }
-

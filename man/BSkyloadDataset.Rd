@@ -6,8 +6,20 @@
 it loads the dataset in the UI datagrid.
 [supported file types : .SAV, .XLSX, .XLS, .CSV, .SAS7BDAT, .RDATA, .DBF, and .DAT]}
 \usage{
-BSkyloadDataset(fullpathfilename, filetype, worksheetName = NULL,
-  replace_ds = FALSE, load.missing = FALSE, csvHeader = TRUE, datasetName)
+BSkyloadDataset(
+  fullpathfilename,
+  filetype,
+  worksheetName = NULL,
+  replace_ds = FALSE,
+  load.missing = FALSE,
+  csvHeader = TRUE,
+  character.to.factor = FALSE,
+  isBasketData = FALSE,
+  trimSPSStrailing = FALSE,
+  sepChar = ",",
+  deciChar = ".",
+  datasetName
+)
 }
 \arguments{
 \item{fullpathfilename}{is a full path filename of a disk file, that is to be loaded into R. Use forward slash as a path separator.}
@@ -39,4 +51,3 @@ datasetName <- 'exceldata' #This parameter is not required when executing from B
 BSkyloadDataset(fullpathfilename=fullpathfilename)
 BSkyLoadRefreshDataframe(exceldata)
 }
-

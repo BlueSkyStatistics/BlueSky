@@ -3,29 +3,27 @@
 \alias{BlueSky}
 \docType{package}
 \title{
-What the package does (short line)
-~~ package title ~~
+Open various file formats, run various inbuilt analysis on them and get output in text, html or LaTex format.
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+This package can be used to open various file formats(RDATA, CSV, DAT, XLS, XLSX, SAV, DTA, SAS7BDAT) and run various inbuilt analysis on them producing output in text, html or LaTex format.
 }
 \details{
 \tabular{ll}{
 Package: \tab BlueSky\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
-Date: \tab 2015-03-31\cr
-License: \tab What license is it under?\cr
+Date: \tab 2021-10-15\cr
+License: \tab GPL (version 3 or later)\cr
 }
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
+Package can be used with BlueSky Statistics application or any other R environment
+
 }
 \author{
-Who wrote it
+BlueSky Statistics.
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
-~~ The author and/or maintainer of the package ~~
+Maintainer: contact us <support@blueskystatistics.com>
+
 }
 \references{
 ~~ Literature or other references for background information ~~
