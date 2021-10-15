@@ -5,7 +5,7 @@
 #BSkyNullMucher = BSkyFactorVariableAnalysis( vars = c("var1 name", "var2 name",...) , data = {{%DATASET%}}, show.only.top.factors ={{ChkboxShowOnlyTopFewFactors}}, max.number.top.factors={{txtNumTopFactorsToShow}})
 
 #This function goes into BSky R package
-#08Oct2021
+#13Oct2021
 BSkyFactorVariableAnalysis <- function(data = NULL, vars = NULL, show.only.top.factors=TRUE, max.number.top.factors=30)
 {
 		ChkboxShowOnlyTopFewFactors = show.only.top.factors
@@ -170,6 +170,15 @@ BSkyFactorVariableAnalysis <- function(data = NULL, vars = NULL, show.only.top.f
 		}
 		cat(message)
 		
-		return(invisible(table_list))
+		if(BSkyIsRmarkdownOutputOn() == TRUE)
+		{
+			return((table_list))
+		}
+		else
+		{
+			return(invisible(table_list))
+		}
 }
+
+
 

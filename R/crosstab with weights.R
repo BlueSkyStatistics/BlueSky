@@ -64,7 +64,10 @@
 #and the variables for which we should display nothing as there are errors and warnings
 #Note: we will display the errors and warnings at the top of the table
 #If there is a split,???
-#08Oct2021
+#13Oct2021
+
+# Analysis> Crosstab
+# Last modified 10/14/2021
 BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3, max.width = 5, expected=FALSE, prop.r=FALSE, prop.c=FALSE,
            prop.t=FALSE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
            resid=FALSE, sresid=FALSE, asresid=FALSE,
@@ -79,20 +82,41 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 	
 	datasetname_passed = c("")
 	
-	if(is.null(datasetname))
+	if(!is.null(data))
 	{
 		if(class(data)[1] != "character")
 		{
-			datasetname_passed = deparse(substitute(data))
+			dataset_name_str = deparse(substitute(data))
 			
-			if(datasetname_passed == ".")
+			if(dataset_name_str == ".")
 			{
-				datasetname = "data" 
+				datasetname_passed = dataset_name_str
+				dataset_name_str = "data" 
 			}
 			
 			#print(head(data))
 		}
+		else
+		{
+			dataset_name_str = data
+			data = eval(parse(text=data), envir = globalenv())
+		}
+		
+		datasetname = dataset_name_str
 	}
+	else if(length(datasetname) == 0)
+	{
+		return(invisible(NULL))
+	}
+	else 
+	{
+		# For Rstudio to work correctly when data parameter is NULL (i.e. not used with %>%)
+		# data  is null but datasetname has the dataset name
+		# BSkyLoadRefresh is needed to load the dataset in ua dataset list global obj
+		# for BSKy functions e.g. crosstab, ind sample and one sample to work in RStudio 
+		BSkyLoadRefresh(datasetname)
+	}
+	
 	
 	if(is.na(x) && is.na(y))
 	{
@@ -396,8 +420,23 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 		bsky_return_structure$uasummary[[7]] = replace_uasummary_7
 	}
 	
-	invisible(bsky_return_structure)
+	#return(invisible(bsky_return_structure))
+	#return(bsky_return_structure)
+	table_list = BSkyFormatBSkyCrossTable(bsky_return_structure)
+	table_list = table_list$tables[1:(table_list$nooftables -1)]
+	
+
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
+
+
 
 
 

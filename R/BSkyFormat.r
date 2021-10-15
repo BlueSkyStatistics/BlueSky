@@ -3,92 +3,6 @@
 ## a  <- array(data=1:12,dim=c(3,4), dimnames=list(c("r1","r2","r3"), c("c1","c2","c3","c4")))
 ## m  <- matrix(data=1:12,nrow=4,ncol=3, dimnames=list(c("ro1","ro2","ro3","ro4"), c("co1","co2","co3")))
 ## l <- list(1,2,3,4,5)
- BSkyFormat.old <- function(obj)
- {
- bskyfunctioninit()
-	 #bskysetcurrentdatasetname(datasetnameorindex)
-	
-	 bskyerrmsg = paste("bskyformat: error in formatting bsky object : ", "object :", paste(obj, collapse = ","),sep="")
-	 bskywarnmsg = paste("bskyformat: warning in formatting bsky object : ", "object :", paste(obj, collapse = ","),sep="")
-	 bskystoreapplicationwarnerrmsg(bskywarnmsg, bskyerrmsg)
-	 trycatch(
-		 {
-	
-		 withcallinghandlers(
-		 {
-	 if(class(obj)=="data.frame" || class(obj)== "matrix" || class(obj)=="array")
-	 {
-		 ## modify obj to look like list of list. 
-		 ## location [[2]] will be output template name which is same as function name.
-		 ## newobj = modified obj;
-		 #-return(obj)
-	 }
-	 else if( class(obj)== "list")
-	{
-		 if(obj[1] == "d:/gimage.png") ##for bsky graphic commands
-		 {
-			 #-return(obj)
-		 }
-		 else if(obj[[8]]$type=="table") ## [[2]] will contain the name of bskyfunction. which is the same as the name of the output template.
-		 {
-			 #-return(obj)
-		 }
-		else
-		 {
-			 #print("type of obj cannot be formatted")
-			 bskyerrmsg =paste("bskyformat: bsky cannot format this object.")
-			 warning("bskyformat: bsky cannot format this object.")
-			 obj=""
-			 #-return(null)
-		 }
-	 }
-	 else
-	 {
-		 # print("type of obj cannot be formatted")
-		 bskyerrmsg =paste("bskyformat: bsky cannot format this object.")
-		 warning("bskyformat: bsky cannot format this object.")
-		 obj=""
-		 #-return(null)
-	 }
-			 },
-		
-		 warning = uawarnhandlerfn
-
-		 ) # end of withcallinghandlers for catching warnings and continuing execution	
-	
-		 },
-		error = uaerrhandlerfn,
-		
-		 silent =true		
-	 )
-	
-	    if(bskylocalerrorfound() == true)
-    	 {
-    		 # if anything needs to be checked or print etc
-			 # error is already handled and logged
-			# whereever the error occured execution cannot continue
-			 # control will be passed to the error handler function
-			# and then the control will come out ogf the try-catch block 
-			
-			# # cat("error caught in bskyformat \n")
-			 #bskylocalerrorflagsreset() #if needed
-    	}
-		 #cat("\nwarning:: top level bsky foramt function\n")
-		 if(bskylocalwarningfound() == true)
-    	 {
-    		 # if anything needs to be checked or print etc
-			 # all bsky functions continue from the point where the warning occured
-			 # so by the time controls comes here - all warnings are already handled 
-			 # and execution of the code had continued
-			
-			 # cat("warning caught in bskyformat \n")
-			 bskylocalwarningflagsreset() #if needed to continue without returning back to the top level function 
-    	 }
-		 bskyfunctionwrapup()
-		# #print(bskyreturnstructure())
-		 #cat("returning return structure from this top level bsky foramt function\n")
-		 return(invisible(bskyreturnstructure(list(extra=list(obj)))))
- }
 
 
 ##08Oct2021
@@ -100,6 +14,18 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 	
 	# print(class(obj))
 	# print(obj)
+	##############################################################################################
+	# set the BSkySetKableAndRmarkdownFormatting() environment only once if BSky package is loaded
+	# out of the BSky native app environment e.g. BSky package is loaded into Rstudio
+	# to set the default printing to be text 
+	###############################################################################################
+	if(exists("uadatasets.sk") && !exists("BSkyTextFormatting", env=uadatasets.sk))
+	{
+		BSkySetKableAndRmarkdownFormatting(BSkyKableFormatting = FALSE, 
+										   BSkyRmarkdownFormatting = FALSE, 
+										   BSkyLaTeXFormatting = FALSE, 
+										   BSkyTextFormatting = TRUE)
+	}
 	
 	doKableFormatting = FALSE
 	doLatexFormatting = TRUE

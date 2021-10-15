@@ -7,7 +7,9 @@
 #30Jul2018	
 # Changes to BSkyOneSmTTest,  uaonesample, uaonesamttest to support alternative
 
-#08Oct2021
+#14Oct2021
+# Means> T-test, Independent Sample 
+# Last modified 10/7/2021
 BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 0, conf.level = 0.95, alternative = 'two.sided',
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, 
 	cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 
@@ -44,6 +46,14 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	else if(length(datasetNameOrDatasetGlobalIndex) == 0)
 	{
 		return(invisible(NULL))
+	}
+	else 
+	{
+		# For Rstudio to work correctly when data parameter is NULL (i.e. not used with %>%)
+		# data  is null but datasetNameOrDatasetGlobalIndex has the dataset name
+		# BSkyLoadRefresh is needed to load the dataset in ua dataset list global obj
+		# for BSKy functions e.g. crosstab, ind sample and one sample to work in RStudio 
+		BSkyLoadRefresh(datasetNameOrDatasetGlobalIndex)
 	}
 	
 	
@@ -198,6 +208,16 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	}
 	
 	#print("Returning from one sample")
-    invisible(bsky_return_structure)
+    #invisible(bsky_return_structure)
+	table_list = BSkyFormatBSkyOneSampleTtest(bsky_return_structure)
+	table_list = table_list$tables[1:(table_list$nooftables -1)]
+	
+	if(BSkyIsRmarkdownOutputOn() == TRUE)
+	{
+		return((table_list))
+	}
+	else
+	{
+		return(invisible(table_list))
+	}
 }
-
