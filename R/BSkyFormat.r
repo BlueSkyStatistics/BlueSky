@@ -24,6 +24,8 @@
 #' @return
 #'
 #' @examples
+#' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
+#' BSkyFormat(df)
 ##08Oct2021
 BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, isTextOutput = FALSE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", textTableFormat = BSkyGetTextTableFormat(), tableStylingOptions = "table_border = F, column_align = r, header_background = \"#bdbdbd\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))", RM.SSP = TRUE, RM.SSPE = RM.SSP) # bdbdbd F0F8FF
 {

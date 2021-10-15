@@ -71,3 +71,7 @@ BSkyFormat(
 \description{
 
 }
+\examples{
+df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
+BSkyFormat(df)
+}
