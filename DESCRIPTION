@@ -1,8 +1,8 @@
 Package: BlueSky
 Type: Package
 Title: BlueSky package that works with BlueSky Statistics application
-Version: 7.74
-Date: 2021-10-13
+Version: 7.75
+Date: 2021-10-14
 Depends: R (>= 4.0.0)
 Author: BlueSky Statistics.
 Maintainer: contact us <support@blueskystatistics.com>
@@ -10,3 +10,4 @@ Description: This package is supposed to be used with a GUI application BlueSky 
 Imports: gdata, stringr, openxlsx, haven, readr, readxl, data.table, foreign, kableExtra, tidyverse, formatR, dplyr, effectsize, RcmdrMisc, DescTools
 License: GPL (version 2 or later)
 LazyLoad: yes
+RoxygenNote: 7.1.2

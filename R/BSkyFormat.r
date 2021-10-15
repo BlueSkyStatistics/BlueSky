@@ -2112,7 +2112,7 @@ BSkyIsRmarkdownOutputOn <- function()
 ##08Oct2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title 
+#' @title show output in text format
 #'
 #' @description 
 #'
@@ -2130,7 +2130,7 @@ BSky.print.text <- function(textFormat = "simple")
 # #08Oct2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title 
+#' @title show output in HTML format
 #'
 #' @description 
 #'
@@ -2165,7 +2165,7 @@ BSky.print.html <- function(app = "rmarkdown", html_style = "APA")
 # #08Oct2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title 
+#' @title show output in LaTex format
 #'
 #' @description 
 #'
@@ -2282,7 +2282,7 @@ BSkyGetKableAndRmarkdownFormatting <- function()
 ##08Oct2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title 
+#' @title Set Html Styling Setting
 #'
 #' @description 
 #'

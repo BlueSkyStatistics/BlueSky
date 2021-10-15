@@ -2107,7 +2107,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 #Generates the confusion matrix for train classes created by model tuning
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title 
+#' @title ConfusionMatrix Train
 #'
 #' @description 
 #'
