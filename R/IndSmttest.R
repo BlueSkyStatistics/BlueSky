@@ -1,5 +1,6 @@
 #r CMD INSTALL --build uadatapackage
 #14Oct2021
+
 BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group = NULL, conf.level = 0.95, alternative="two.sided",
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, excludeEnvPrefix = FALSE,
     cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 
@@ -210,7 +211,7 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 	
 	if(BSkyIsRmarkdownOutputOn() == TRUE)
 	{
-		return((table_list))
+		return(noquote(table_list))
 	}
 	else
 	{

@@ -212,9 +212,10 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	table_list = BSkyFormatBSkyOneSampleTtest(bsky_return_structure)
 	table_list = table_list$tables[1:(table_list$nooftables -1)]
 	
+	
 	if(BSkyIsRmarkdownOutputOn() == TRUE)
 	{
-		return((table_list))
+		return(noquote(table_list))
 	}
 	else
 	{
