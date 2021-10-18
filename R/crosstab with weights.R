@@ -67,7 +67,8 @@
 
 
 # Analysis> Crosstab
-# Last modified 10/14/2021
+# Last modified 10/7/2021
+#Last modified 10/17/2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
 #' @title Crosstab
@@ -102,7 +103,7 @@
 BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3, max.width = 5, expected=FALSE, prop.r=FALSE, prop.c=FALSE,
            prop.t=FALSE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
            resid=FALSE, sresid=FALSE, asresid=FALSE,
-           missing.include=TRUE, dnn = NULL, datasetname = NULL, bSkyHandleSplit = TRUE)
+           missing.include=TRUE, dnn = NULL, datasetname = NULL, bSkyHandleSplit = TRUE, long_table = FALSE)
            
 {
 	
@@ -453,20 +454,18 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 	
 	#return(invisible(bsky_return_structure))
 	#return(bsky_return_structure)
-	table_list = BSkyFormatBSkyCrossTable(bsky_return_structure)
-	table_list = table_list$tables[1:(table_list$nooftables -1)]
-	
+	table_list = BSkyFormatBSkyCrossTable(bsky_return_structure, long_table = long_table)
+	#table_list = table_list$tables[1:(table_list$nooftables -1)]
 
 	if(BSkyIsRmarkdownOutputOn() == TRUE)
 	{
-		return((table_list))
+		return(noquote(table_list))
 	}
 	else
 	{
 		return(invisible(table_list))
 	}
 }
-
 
 
 

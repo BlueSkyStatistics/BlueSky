@@ -227,7 +227,7 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 	
 	if(BSkyIsRmarkdownOutputOn() == TRUE)
 	{
-		return((table_list))
+		return(noquote(table_list))
 	}
 	else
 	{

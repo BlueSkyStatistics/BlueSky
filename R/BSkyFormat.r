@@ -1796,7 +1796,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						{
 							if(!(textTableFormat %in% c("simple", "pipe", "rst")))
 							{
-								textTableFormat = "simple" 
+								textTableFormat = "rst" 
 							}
 							#abc = knitr::kable(new_table_removed_empty_rows, caption = tableCaption1, align = 'r', format="pipe")
 							textTableOutput = kableExtra::kbl(new_table_removed_empty_rows, caption = tableCaption1, align = 'r', format= textTableFormat)
@@ -2048,7 +2048,7 @@ BSkyIsRmarkdownOutputOn <- function()
 #' @return
 #'
 #' @examples
-BSky.print.text <- function(textFormat = "simple")
+BSky.print.text <- function(textFormat = "rst")
 {
 	BSkySetKableAndRmarkdownFormatting (BSkyKableFormatting = FALSE, BSkyRmarkdownFormatting = FALSE, BSkyLaTeXFormatting = FALSE, BSkyTextFormatting = TRUE)
 	BSkySetTextTableFormat (textTableFormat = textFormat)
@@ -2518,7 +2518,7 @@ BSkySetHtmlStylingSetting <- function(tableTheme = "kable_styling", fontFamily =
 }
 
 ##08Oct2021
-BSkySetTextTableFormat <- function(textTableFormat = "simple")
+BSkySetTextTableFormat <- function(textTableFormat = "rst")
 {
 	if(exists("uadatasets.sk"))
 	{
@@ -2531,7 +2531,7 @@ BSkySetTextTableFormat <- function(textTableFormat = "simple")
 ##08Oct2021
 BSkyGetTextTableFormat <- function()
 {
-	textTableFormat = "simple"
+	textTableFormat = "rst"
 	
 	if(exists("uadatasets.sk") && exists("BSkyKabletableTextTableFormat", env=uadatasets.sk))
 	{
@@ -3832,13 +3832,15 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 	return(invisible(obj))
 }
 
-BSkyFormatBSkyCrossTable <- function(obj)
+#10/17/2021 transposing the Y variable if there are many factors
+BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 {
 	#BSkyCrossTable( asresid=c(TRUE ), bSkyHandleSplit=c(TRUE ), chisq=c(FALSE ), datasetname=c('mtcars' ), 
 	#digits=c(3 ), dnn=NULL, expected=c(TRUE ), fisher=c(FALSE ), layers=c('am' ,'cyl' ), max.width=c(5 ), 
 	#mcnemar=c(FALSE ), missing.include=c(TRUE ), prop.c=c(FALSE ), prop.chisq=c(FALSE ), prop.r=c(FALSE ), 
 	#prop.t=c(FALSE ), resid=c(TRUE ), sresid=c(TRUE ), weight=c(NA ), x=c('transmission' ), y=c('region' ) )
 	# resid=TRUE, sresid=TRUE, asresid=TRUE Residual, Std. Residual, Adjusted Residual
+	table_list = list()
 	
 	if( (typeof(obj) == "list") || (class(obj)[1]== "list"))
 	{		
@@ -3856,6 +3858,7 @@ BSkyFormatBSkyCrossTable <- function(obj)
 				param_row_prop = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "prop.r")
 				param_col_prop = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "prop.c")
 				
+				# SK Need the following three 
 				param_row = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "x")
 				param_col = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "y")
 				param_layers = trimws(BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "layers"))
@@ -3940,7 +3943,7 @@ BSkyFormatBSkyCrossTable <- function(obj)
 					additional_tests_count = additional_tests_count + 1
 				}
 					
-				
+				# SK need this 
 				tabulation_levels = tabulation
 				
 				tabulation = c(tabulation, rep("Count", dataset_nrow - length(tabulation)))
@@ -4002,6 +4005,23 @@ BSkyFormatBSkyCrossTable <- function(obj)
 					
 					cross_table_skeleton = cross_table_skeleton[- extra_Total_rows_to_be_deleted,]
 				}
+				
+				# SK the values
+				# cat("\n++++++++++ CrossTab intermediate Values ++++++++++++\n")
+				# cat("\n tabulation_levels \n")
+				# print(tabulation_levels)
+				# cat("\n param_row \n")
+				# print(param_row)
+				# cat("\n param_col \n")
+				# print(param_col)
+				# cat("\n param_layers \n")
+				# print(param_layers)
+				# cat("\n table_exe_string to eval \n")
+				# print(table_exe_string)
+				
+				#cat("\n cross_table_skeleton \n")
+				#print(cross_table_skeleton)
+				
 				
 				######################################################################################
 				# set it up for split iteration if there is a split - otherwise it will just loop once 
@@ -4464,6 +4484,271 @@ BSkyFormatBSkyCrossTable <- function(obj)
 								table_list = c(table_list, list(cross_table_skeleton3))
 								names(table_list) = table_list_names
 								
+								if(long_table == TRUE)
+								{
+									# cat("\n=======================\n")
+									# cat("\n original table cross_table_skeleton3 \n")
+									# print(cross_table_skeleton3)
+									# cat("\n=======================\n")
+									
+									cross_table_skeleton_inverted = cross_table_skeleton3 
+									
+									###################################################################################
+									# Remove extra rows if present from the "Total" section of the skeleton table like 
+									# Residual, Std. Residual, Adjusted Residual
+									###################################################################################
+									extra_Total_rows_to_be_deleted = c()
+									
+									number_of_rows_to_skip = num_count_elements - num_extra_count_elements + 1
+									# cat("\n number_of_rows_to_skip \n")
+									# print(number_of_rows_to_skip)
+									
+									
+									for(i in 1: nrow(cross_table_skeleton_inverted))
+									{
+										if(cross_table_skeleton_inverted[i,param_row_col_index] == "Total")
+										{
+											extra_Total_rows_to_be_deleted = c(extra_Total_rows_to_be_deleted, i:(i+ number_of_rows_to_skip-1))
+										}
+									}
+									
+									if(length(extra_Total_rows_to_be_deleted) > 0)
+									{
+										cross_table_skeleton_inverted = cross_table_skeleton_inverted[- extra_Total_rows_to_be_deleted,]
+									}
+									
+									# cat("\n=======================\n")
+									# cat("\n Total deleted from cross_table_skeleton_inverted \n")
+									# print(cross_table_skeleton_inverted)
+									# cat("\n=======================\n")
+									
+									
+									param_row_col_index = length(param_layers) + 1
+									
+									num_total_non_empty_param_row_levels = length(which((cross_table_skeleton_inverted[,param_row_col_index] != "")) == TRUE)
+									
+									#cat("\n num_total_non_empty_param_row_levels \n")
+									#print(num_total_non_empty_param_row_levels)
+									
+									param_col_levels = c(as.character(levels(eval(parse(text = paste(database_name, "$", param_col, sep = "")), envir = globalenv()))), "Total")  # "Total1","Total2","Total3", "Total4")
+									
+									# cat("\n param_col_levels \n")
+									# print(param_col_levels)
+									
+									param_col_levels_column = rep(param_col_levels, num_total_non_empty_param_row_levels)
+									param_col_levels_column = c("", param_col_levels_column)
+									
+									non_empty_param_row_levels_row_indices = which((cross_table_skeleton_inverted[,param_row_col_index] != "") == TRUE)
+									
+									if(length(non_empty_param_row_levels_row_indices) > 1)
+									{
+										number_of_rows_between_two_row_levels = non_empty_param_row_levels_row_indices[2] - non_empty_param_row_levels_row_indices[1]
+									}
+									else
+									{
+										number_of_rows_between_two_row_levels = 1
+									}
+									
+									# print(cross_table_skeleton3)
+									# cat("\n===========================\n")
+									# print(cross_table_skeleton_inverted)
+									
+									if(number_of_rows_between_two_row_levels != length(param_col_levels))
+									{
+										if(length(param_col_levels) > number_of_rows_between_two_row_levels)
+										{
+											num_rows_to_insert = length(param_col_levels) - number_of_rows_between_two_row_levels
+											
+											#cat("\n num_rows_to_insert \n")
+											#print(num_rows_to_insert)
+											
+											filler_matrix = matrix(rep(c(""), num_rows_to_insert*dim(cross_table_skeleton_inverted)[2]), ncol= dim(cross_table_skeleton_inverted)[2])
+											
+											# cat("\n filler_matrix \n")
+											# print(filler_matrix)
+											
+											#print(non_empty_param_row_levels_row_indices)
+											non_empty_param_row_levels_row_indices = rev(non_empty_param_row_levels_row_indices)
+											#print(non_empty_param_row_levels_row_indices)
+											
+											for(index in 1:length(non_empty_param_row_levels_row_indices))
+											{
+												if((non_empty_param_row_levels_row_indices[index]+1) <= nrow(cross_table_skeleton_inverted))
+												{
+													cross_table_skeleton_inverted = rbind(cross_table_skeleton_inverted[(1:non_empty_param_row_levels_row_indices[index]),],
+																						filler_matrix,
+																						cross_table_skeleton_inverted[((non_empty_param_row_levels_row_indices[index]+1):nrow(cross_table_skeleton_inverted)),]
+																					  )
+												}
+												else
+												{
+													cross_table_skeleton_inverted = rbind(cross_table_skeleton_inverted[(1:non_empty_param_row_levels_row_indices[index]),],
+																						filler_matrix)
+												}
+																					
+												# cat("\n iterration ", index, "row index ", non_empty_param_row_levels_row_indices[index],"\n")
+												# print(cross_table_skeleton_inverted)
+											}
+											
+											# cat("\n+++++++++++++++++++++++++++++++++\n")
+											# print(cross_table_skeleton_inverted)
+										}
+										else
+										{
+											num_rows_to_delete =  number_of_rows_between_two_row_levels - length(param_col_levels)
+											
+											# cat("\n num_rows_to_delete \n")
+											# print(num_rows_to_delete)
+											
+											rows_be_deleted_indices =c()
+											
+											for(index in 1:length(non_empty_param_row_levels_row_indices))
+											{
+												rows_be_deleted_indices = c(rows_be_deleted_indices, (non_empty_param_row_levels_row_indices[index]+1): (non_empty_param_row_levels_row_indices[index]+1 + num_rows_to_delete -1))
+											}
+											
+											cross_table_skeleton_inverted = cross_table_skeleton_inverted[-c(rows_be_deleted_indices),]
+										}
+									}
+									
+									# cat("\n non_empty_param_row_levels_row_indices \n")
+									# print(non_empty_param_row_levels_row_indices)
+									
+									# cat("\n=======================\n")
+									# cat("\n Rows adjusted deletion and addition to cross_table_skeleton_inverted \n")
+									# print(cross_table_skeleton_inverted)
+									# print(cross_table_skeleton3)
+									# cat("\n=======================\n")
+									
+							
+									orig_names = dimnames(cross_table_skeleton_inverted)[[2]][1:param_row_col_index]
+									cross_table_skeleton_inverted = cbind(cross_table_skeleton_inverted[,c(1:param_row_col_index)], param_col_levels_column)
+									
+									dimnames(cross_table_skeleton_inverted)[[2]] = c(orig_names, paste(param_col))
+									
+									# cat("\n=======================\n")
+									# cat("\n Inverted Y param added as column to cross_table_skeleton_inverted \n")
+									# print(cross_table_skeleton_inverted)
+									# cat("\n=======================\n")
+									
+									#cat("\n tabulation_levels \n")
+									#print(tabulation_levels)
+									
+									filler_matrix = matrix(seq(1:((dim(cross_table_skeleton_inverted)[[1]] -1)*length(tabulation_levels))), ncol = length(tabulation_levels))
+									filler_matrix = rbind(tabulation_levels, filler_matrix)
+									
+									#print(dim(filler_matrix))
+									#print(filler_matrix)
+									
+									orig_names = dimnames(cross_table_skeleton_inverted)[[2]]
+									cross_table_skeleton_inverted = cbind(cross_table_skeleton_inverted, filler_matrix)
+									
+									dimnames(cross_table_skeleton_inverted)[[2]] = c(orig_names, rep("count", length(tabulation_levels)))
+									rownames(cross_table_skeleton_inverted) = NULL
+									
+									# cat("\n=======================\n")
+									# cat("\n tabulation columns added as column to cross_table_skeleton_inverted \n")
+									# print(cross_table_skeleton_inverted)
+									# cat("\n=======================\n")
+									
+									
+									# param_layers_combinotorial_levels_count = 1
+									
+									# for (i in 1:length(param_layers))
+									# {
+										# param_layers_combinotorial_levels_count = param_layers_combinotorial_levels_count * 
+											# length(levels(eval(parse(text = paste(database_name, "$", param_layers[i], sep = "")), envir = globalenv())))
+									# }
+									
+									# cat("\n param_layers_combinotorial_levels_count \n")
+									# print(param_layers_combinotorial_levels_count)
+									
+									# param_row_levels_count = length(levels(eval(parse(text = paste(database_name, "$", param_row, sep = "")), envir = globalenv())))
+									# cat("\n param_row_levels_count \n")
+									# print(param_row_levels_count)
+									
+									number_of_rows_to_read = length(tabulation_levels)
+									#cat("\n number_of_rows_to_read \n")
+									#print(number_of_rows_to_read)
+									
+									#cat("\n number_of_rows_to_skip \n")
+									#print(number_of_rows_to_skip)
+									
+									number_of_rows_to_write = length(param_col_levels)
+									
+									col_index_read_from = length(param_layers) + 3
+									#cat("\n col_index_read_from \n")
+									#print(col_index_read_from)
+									
+									row_index_read_from = 2
+									rows_index_write_into = 2
+									
+									
+									###################################################################################
+									# Remove extra rows if present from the "Total" section of the skeleton table like 
+									# Residual, Std. Residual, Adjusted Residual
+									###################################################################################
+									extra_Total_rows_to_be_deleted = c()
+									
+									number_of_rows_to_skip = num_count_elements - num_extra_count_elements + 1
+									
+									for(i in 1: nrow(cross_table_skeleton3))
+									{
+										if(cross_table_skeleton3[i,param_row_col_index] == "Total")
+										{
+											extra_Total_rows_to_be_deleted = c(extra_Total_rows_to_be_deleted, i:(i+ number_of_rows_to_skip-1))
+										}
+									}
+									
+									if(length(extra_Total_rows_to_be_deleted) > 0)
+									{
+										cross_table_skeleton3 = cross_table_skeleton3[- extra_Total_rows_to_be_deleted,]
+									}
+									
+									# cat("\n cross_table_skeleton3 \n")
+									# print(cross_table_skeleton3)
+									# cat("\n cross_table_skeleton_inverted \n")
+									# print(cross_table_skeleton_inverted)
+									# print(num_total_non_empty_param_row_levels)
+									# cat("======================================\n")
+									
+									for(layer_count in 1: num_total_non_empty_param_row_levels)
+									{
+										# cat("\n", "iteration count ", layer_count, "\n")
+										# print(rows_index_write_into)
+										# print(number_of_rows_to_write)
+										# print(row_index_read_from)
+										# print(number_of_rows_to_read)
+										
+							
+										# print(cross_table_skeleton_inverted[c(rows_index_write_into:(rows_index_write_into+number_of_rows_to_write-1)), c(col_index_read_from : dim(cross_table_skeleton_inverted)[2])])
+										# print((cross_table_skeleton3[c(row_index_read_from:(row_index_read_from+number_of_rows_to_read -1)), c(col_index_read_from : dim(cross_table_skeleton3)[2])]))
+										# print(t(cross_table_skeleton3[c(row_index_read_from:(row_index_read_from+number_of_rows_to_read -1)), c(col_index_read_from : dim(cross_table_skeleton3)[2])]))
+										
+											cross_table_skeleton_inverted[c(rows_index_write_into:(rows_index_write_into+number_of_rows_to_write-1)), c(col_index_read_from : dim(cross_table_skeleton_inverted)[2])] =
+											  t(cross_table_skeleton3[c(row_index_read_from:(row_index_read_from+number_of_rows_to_read -1)), c(col_index_read_from : dim(cross_table_skeleton3)[2])])
+										
+											row_index_read_from = row_index_read_from + number_of_rows_to_read #+ number_of_rows_to_skip
+											rows_index_write_into = rows_index_write_into + number_of_rows_to_write
+										
+										# cat("\n cross_table_skeleton_inverted \n")
+										# print(cross_table_skeleton_inverted)
+									}
+									
+									# cat("\n cross_table_skeleton3 \n")
+									# print(cross_table_skeleton3)
+									# cat("\n cross_table_skeleton_inverted \n")
+									# print(cross_table_skeleton_inverted)
+									
+									# print(names(table_list))
+									# print(str(table_list))
+									table_list_names = c(table_list_names, "Multiway CrossTab (Long Table Format)")
+									table_list = c(table_list, list(cross_table_skeleton_inverted))
+									names(table_list) = table_list_names
+									# print(names(table_list))
+									# print(str(table_list))
+								}
+								
 								######################################################
 								# SK - Do not forget toremove before the final builld 
 								######################################################
@@ -4830,19 +5115,25 @@ BSkyFormatBSkyCrossTable <- function(obj)
 				# Add back the BSky error/warning table from the return structure
 				################################################################
 				
-				table_list = c(table_list, list(obj$tables[[obj$nooftables]]))
-				table_list_names = c(table_list_names, "")
-				names(table_list) = table_list_names
+				# table_list = c(table_list, list(obj$tables[[obj$nooftables]]))
+				# table_list_names = c(table_list_names, "")
+				# names(table_list) = table_list_names
 				
-				obj$tables = table_list
-				obj$nooftables = length(obj$tables)
+				# obj$tables = table_list
+				# obj$nooftables = length(obj$tables)
 		   }
 		}
 	}
 	
-	return(invisible(obj))
+	if(length(table_list))
+	{
+		return(invisible(table_list))
+	}
+	else
+	{
+		return(invisible(obj))
+	}
 }
-
 
 
 
