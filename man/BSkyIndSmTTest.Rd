@@ -2,7 +2,7 @@
 % Please edit documentation in R/IndSmttest.R
 \name{BSkyIndSmTTest}
 \alias{BSkyIndSmTTest}
-\title{t-test, Independent Samples}
+\title{t-test, independent samples}
 \usage{
 BSkyIndSmTTest(
   data = NULL,

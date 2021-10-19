@@ -181,7 +181,7 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
   
   ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Exponential Smoothing
+#' @title Exponential smoothing
 #'
 #' @description BSkyHoltWintersSeasonal is a wrapper function for HoltWinters from package stats that computes Holt-Winters Filtering of a given time series. Unknown parameters are determined by minimizing the squared prediction error. Internally calls HoltWinters with  gamma parameter used for the seasonal component set to FALSE, beta parameter of Holt-Winters Filter is set to FALSE to do exponential smoothing and seasonal = "None".
 #' 

@@ -1,6 +1,6 @@
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @, percentage should be escaped using back slash)
-#' @title Convert Character To Date
+#' @title Convert character to date
 #'
 #' @description Converts a character to a date (POSIXct class). You need to specify the format of the date  stored in a character string.
 #' The function above internally calls strptime in the base package. We have extended strftime to support multiple variables.

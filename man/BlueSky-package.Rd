@@ -3,10 +3,12 @@
 \alias{BlueSky}
 \docType{package}
 \title{
-Open various file formats, run various inbuilt analysis on them and get output in text, html or LaTex format.
+BlueSky Collection of Functions for Data Access, Analysis, and Formatting.
 }
 \description{
-This package can be used to open various file formats(RDATA, CSV, DAT, XLS, XLSX, SAV, DTA, SAS7BDAT) and run various inbuilt analysis on them producing output in text, html or LaTex format.
+This package provides a variety of useful functions for accessing data, analyzing data and creating publication-quality output
+in text, HTML, and LaTeX.
+The functions are used extensively in the BlueSky Statistics user interface to R, but are useful to any R users.
 }
 \details{
 \tabular{ll}{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/timeseries.R
 \name{BSkyHoltWintersSeasonal}
 \alias{BSkyHoltWintersSeasonal}
-\title{Exponential Smoothing}
+\title{Exponential smoothing}
 \usage{
 BSkyHoltWintersSeasonal(
   vars,

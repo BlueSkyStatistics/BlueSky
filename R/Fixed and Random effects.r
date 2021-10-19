@@ -1,6 +1,6 @@
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Mixed Models
+#' @title Mixed models
 #'
 #' @description Print model summary
 #'

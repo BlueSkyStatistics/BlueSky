@@ -2,7 +2,7 @@
 % Please edit documentation in R/Fixed and Random effects.r
 \name{BSkyprint.summary.merMod}
 \alias{BSkyprint.summary.merMod}
-\title{Mixed Models}
+\title{Mixed models}
 \usage{
 BSkyprint.summary.merMod(
   x,

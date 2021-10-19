@@ -200,7 +200,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 # Aaron fixed 28Jun2018
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Recode Variables
+#' @title Recode variables
 #'
 #' @description Recodes one or more a numeric vector, character vector, or factors according to  recode specifications. You can store the results by overwriting existing variables, specifying new variable names to store recoded values or choosing to store the recoded values in  new variables with a suitable prefix or suffix. the prefix or suffix will be applied to the existing variable name.
 #' Note: We will not convert from numeric to factor. When  a numeric is recoded, it will remain a numeric, when a factor variable is recoded it will remain a factor.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyVersion.r
 \name{BSkyVersion}
 \alias{BSkyVersion}
-\title{BlueSky package adn other details}
+\title{BlueSky package version and other details}
 \usage{
 BSkyVersion()
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyFrequency function.R
 \name{BSkyFrequency}
 \alias{BSkyFrequency}
-\title{Frequency Table}
+\title{Frequency table}
 \usage{
 BSkyFrequency(data = NULL, vars = NULL)
 }

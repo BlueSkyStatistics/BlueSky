@@ -2,7 +2,7 @@
 % Please edit documentation in R/NonAnalytics.R
 \name{BSkyRecode}
 \alias{BSkyRecode}
-\title{Recode Variables}
+\title{Recode variables}
 \usage{
 BSkyRecode(
   colNames,

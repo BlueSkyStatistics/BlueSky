@@ -4016,7 +4016,7 @@ BSkyReturnStructure2 <-function(bskyAdditionalTableList = list()) ### passs as l
 #13Oct2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Summary Statistics
+#' @title Summary statistics
 #'
 #' @description Outputs the  following numerical statistics:
 #' min, max, mean, median, sum, sd, stderror, iqr,  quartiles. If quartiles is selected, you can specify the comma separated quartiles needed.

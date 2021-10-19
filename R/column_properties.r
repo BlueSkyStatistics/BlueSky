@@ -1855,7 +1855,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 ## So I am use following method.
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Make Factor Variable
+#' @title Make factor variable
 #'
 #' @description The function factor is used to encode a vector as a factor (the terms ‘category’ and ‘enumerated type’ are also used for factors). If argument ordered is TRUE, the factor levels are assumed to be ordered. For compatibility with S there is also a function ordered.
 #' is.factor, is.ordered, as.factor and as.ordered are the membership and coercion functions for these classes.

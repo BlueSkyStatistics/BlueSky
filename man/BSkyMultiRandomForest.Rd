@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyRandomForest.r
 \name{BSkyMultiRandomForest}
 \alias{BSkyMultiRandomForest}
-\title{Optimal No of Trees}
+\title{Optimal number of trees}
 \usage{
 BSkyMultiRandomForest(x, y = NULL, startval, endval, stepval, mtry)
 }

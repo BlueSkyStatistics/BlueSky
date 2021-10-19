@@ -93,7 +93,7 @@ BSkyPrintRandomForest <- function (x, ...)
 
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Optimal No of Trees
+#' @title Optimal number of trees
 #'
 #' @description Starting with the default value of mtry, search for the optimal value (with respect to Out-of-Bag error estimate) of ntree (no of trees to grow) for randomForest. The function BSkyMultiRandomForest calls the function randomForest with the arguments defined below
 #'

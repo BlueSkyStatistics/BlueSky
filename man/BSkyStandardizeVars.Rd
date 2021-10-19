@@ -2,7 +2,7 @@
 % Please edit documentation in R/rcmdr.functions.R
 \name{BSkyStandardizeVars}
 \alias{BSkyStandardizeVars}
-\title{Standardize Variable(s)}
+\title{Standardize variable(s)}
 \usage{
 BSkyStandardizeVars(
   vars,

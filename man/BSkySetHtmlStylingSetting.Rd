@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyFormat.r
 \name{BSkySetHtmlStylingSetting}
 \alias{BSkySetHtmlStylingSetting}
-\title{Set Html Styling Setting}
+\title{Set HTML style}
 \usage{
 BSkySetHtmlStylingSetting(
   tableTheme = "kable_styling",

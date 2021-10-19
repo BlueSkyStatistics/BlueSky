@@ -26,7 +26,8 @@ BSkyCrossTable(
   missing.include = TRUE,
   dnn = NULL,
   datasetname = NULL,
-  bSkyHandleSplit = TRUE
+  bSkyHandleSplit = TRUE,
+  long_table = FALSE
 )
 }
 \arguments{

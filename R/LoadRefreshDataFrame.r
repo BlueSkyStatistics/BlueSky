@@ -283,20 +283,20 @@ BSkyLoadRefreshDataframe2 <- function(dframe)
 ##Refreshes values in C1Datagrid, if dataset/dataframe was modified from syntax.
 #Basically loads/refreshes the grid from memory(dataset/dataframe). Not by reading disk file from disk.
 
-#' BSkyLoadRefreshDataframe loads the specified dataframe in the BlueSky Statistics UI datagrid. 
-#' If dataframe is already loaded in the UI datagrid then it refresh it for any changes done.
-#'
-#' To use BSkyLoadRefreshDataframe you must run it from within the BlueSky Statistics application.
-#'
-#' @name BSkyLoadRefreshDataframe
-#' @param dframe is the dataframe object(do not use quotes around the object)
-#' @param load.dataframe is provided so that you can selectively refresh or not refresh the UI datagrid. 
-#' This parameter is defined in the dialog to make the decision, whether to refresh the UI datagrid or not.
-#' Default value is TRUE.
-#' @export 
-#' @examples
-#' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
-#' BSkyLoadRefreshDataframe(df)
+# BSkyLoadRefreshDataframe loads the specified dataframe in the BlueSky Statistics UI datagrid. 
+# If dataframe is already loaded in the UI datagrid then it refresh it for any changes done.
+#
+# To use BSkyLoadRefreshDataframe you must run it from within the BlueSky Statistics application.
+#
+# @name BSkyLoadRefreshDataframe
+# @param dframe is the dataframe object(do not use quotes around the object)
+# @param load.dataframe is provided so that you can selectively refresh or not refresh the UI datagrid. 
+# This parameter is defined in the dialog to make the decision, whether to refresh the UI datagrid or not.
+# Default value is TRUE.
+# @export 
+# @examples
+# df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
+# BSkyLoadRefreshDataframe(df)
 BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 {
 	#if(load.dataframe)
@@ -310,6 +310,21 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 	BSkyLoadRefresh(dframe, load.dataframe);
 }
 
+
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Loading a dataframe in the BlueSky Statistics UI datagrid
+#'
+#' @description loads the specified dataframe in the BlueSky Statistics UI datagrid. 
+#'
+#' @param bskyDatasetName is the dataframe name (use quotes around the name)
+#' @param load.dataframe is provided so that you can selectively refresh or not refresh the UI datagrid. 
+#' This parameter is defined in the dialog to make the decision, whether to refresh the UI datagrid or not. Default value is TRUE.
+#'
+#'
+#' @examples 
+#' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
+#' BSkyLoadRefresh('df')
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE

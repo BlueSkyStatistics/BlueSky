@@ -1,12 +1,12 @@
 Package: BlueSky
 Type: Package
-Title: BlueSky package that works with BlueSky Statistics application
-Version: 7.77
-Date: 2021-10-17
+Title: BlueSky Collection of Functions for Data Access, Analysis, and Formatting.
+Version: 7.79
+Date: 2021-10-19
 Depends: R (>= 4.0.0)
 Author: BlueSky Statistics.
 Maintainer: contact us <support@blueskystatistics.com>
-Description: This package is supposed to be used with a GUI application BlueSky Statistics.
+Description: This package provides a variety of useful functions for accessing data, analyzing data and creating publication-quality output in text, HTML, and LaTeX. The functions are used extensively in the BlueSky Statistics user interface to R, but are useful to any R users.
 Imports: gdata, stringr, openxlsx, haven, readr, readxl, data.table, foreign, kableExtra, tidyverse, formatR, dplyr, effectsize, RcmdrMisc, DescTools
 License: GPL (version 2 or later)
 LazyLoad: yes

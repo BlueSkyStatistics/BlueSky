@@ -93,7 +93,7 @@ BSkyStandardizeVars.old2 <-function (vars, stingToPrefixOrSuffix, prefixOrSuffix
 #Aaron changed 10Dec2018. For Daniel
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Standardize Variable(s)
+#' @title Standardize variable(s)
 #'
 #' @description Standardizes variables (z scores).  The standardized values are stored in new variables with either the prefix or suffix of the original variables. The option is provide to center and/or scale.
 #' Note: We will not convert from numeric to factor. When  a numeric is recoded, it will remain a numeric, when a factor variable is recoded it will remain a factor.

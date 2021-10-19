@@ -2,7 +2,7 @@
 #14Oct2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title t-test, Independent Samples
+#' @title t-test, independent samples
 #'
 #' @description Performs a one sample t-tests against the two groups formed by a factor variable (with two levels). Displays results for equal variances TRUE and FALSE. For equal variances the pooled variance is used otherwise the Welch (or Satterthwaite) approximation to the degrees of freedom is used. Internally calls t.test in the stats package for every selected variable 
 #'

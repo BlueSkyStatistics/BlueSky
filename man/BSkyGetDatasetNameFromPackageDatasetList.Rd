@@ -2,7 +2,7 @@
 % Please edit documentation in R/loadDatasetFromPackage.r
 \name{BSkyGetDatasetNameFromPackageDatasetList}
 \alias{BSkyGetDatasetNameFromPackageDatasetList}
-\title{Get Dataset Name From Package Dataset List}
+\title{Get dataset name from package dataset list}
 \usage{
 BSkyGetDatasetNameFromPackageDatasetList(datasetAndPackagedetails)
 }

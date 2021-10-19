@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkySetWeight.r
 \name{BSkySetWeight}
 \alias{BSkySetWeight}
-\title{Expand Weights}
+\title{Expand weights}
 \usage{
 BSkySetWeight(weights, data, newdata)
 }

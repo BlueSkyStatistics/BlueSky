@@ -2,7 +2,7 @@
 % Please edit documentation in R/column_properties.r
 \name{BSkyMakeMultiColumnFactor}
 \alias{BSkyMakeMultiColumnFactor}
-\title{Make Factor Variable}
+\title{Make factor variable}
 \usage{
 BSkyMakeMultiColumnFactor(colNames, dataSetNameOrIndex)
 }

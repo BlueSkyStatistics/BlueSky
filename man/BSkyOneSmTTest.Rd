@@ -2,7 +2,7 @@
 % Please edit documentation in R/new-bskyonesm.r
 \name{BSkyOneSmTTest}
 \alias{BSkyOneSmTTest}
-\title{t-test, One Sample}
+\title{t-test, one sample}
 \usage{
 BSkyOneSmTTest(
   data = NULL,

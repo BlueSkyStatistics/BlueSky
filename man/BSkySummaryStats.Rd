@@ -2,7 +2,7 @@
 % Please edit documentation in R/Table-print-function.R
 \name{BSkySummaryStats}
 \alias{BSkySummaryStats}
-\title{Summary Statistics}
+\title{Summary statistics}
 \usage{
 BSkySummaryStats(
   data = NULL,

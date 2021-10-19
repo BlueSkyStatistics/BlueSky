@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.r
 \name{BSkyConfusionMatrixTrain}
 \alias{BSkyConfusionMatrixTrain}
-\title{ConfusionMatrix Train}
+\title{Confusion matrix train}
 \usage{
 BSkyConfusionMatrixTrain(predictions, reference)
 }

@@ -205,31 +205,29 @@ BSkyEmpty <-function(datasetName ,noOfRows,noOfCols)
 # filetype   -> Diff file formats. Currently supports:- SPSS, XLS, XLSX, CSV, DBF, RDATA [This is case sensitive
 # 				right now, provide exactly what the current support list shows]
 ###################################################################################################################
-#' BSkyloadDataset loads a dataset into R by reading data from a disk file. When this function is executed from BlueSky R Command Editor
+#' @title Load dataset
+#'
+#' @description 
+#' loads a dataset into R by reading data from a disk file. When this function is executed from BlueSky R Command Editor
 #' it loads the dataset in the UI datagrid.
-#' [supported file types : .SAV, .XLSX, .XLS, .CSV, .SAS7BDAT, .RDATA, .DBF, and .DAT]
+#' [supported file types : .SAV, .XLSX, .XLS, .CSV, .SAS7BDAT, .DTA, .RDATA, .DBF, and .DAT]
 #'
 #' @name BSkyloadDataset
 #' @param fullpathfilename is a full path filename of a disk file, that is to be loaded into R. Use forward slash as a path separator.
-#' @param filetype is one of the ("SPSS", "SAS7BDAT", "XLS", "XLSX", "CSV", "DBF", "RDATA" and "DAT"). Not required when executing from BlueSky R Command Editor.
-#' @param worksheetName is the name of the worksheet. Used only when reading Excel file type. Not required when executing from BlueSky R Command Editor.
-#' @param datasetName is a name of the object in R that corresponds to the dataset you have loaded. Not required when executing from BlueSky R Command Editor.
+#' @param filetype is one of the ("SPSS", "SAS7BDAT", "DTA", "XLS", "XLSX", "CSV", "DBF", "RDATA" and "DAT").
+#' @param worksheetName is the name of the worksheet. Used only when reading Excel file type. 
+#' @param datasetName is a name of the object in R that corresponds to the dataset you have loaded. 
 #'
 #' Parameters replace_ds, load.missing, csvHeader are for internal use.
 #' @export 
 #' @examples
 #' fullpathfilename <- 'C:/BlueSky Statistics/Sample Datasets/Sample R Datasets(.rdata)/caranalysis.RData'
-#' filetype <- 'RDATA' #This parameter is not required when executing from BlueSky R Command Editor.
-#' datasetName <- 'rdataset' #This parameter is not required when executing from BlueSky R Command Editor.
-#' BSkyloadDataset(fullpathfilename=fullpathfilename)
-#' BSkyLoadRefreshDataframe(testdata)
+#' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'RDATA', datasetName <- 'rdataset')
+#' BSkyLoadRefresh(rdataset)
 #'
 #' fullpathfilename <- 'C:/BlueSky Statistics/Sample Datasets/Excel/sample.xls'
-#' filetype <- 'XLS' #This parameter is not required when executing from BlueSky R Command Editor.
-#' worksheetName = 'Sheet1' #This parameter is not required when executing from BlueSky R Command Editor.
-#' datasetName <- 'exceldata' #This parameter is not required when executing from BlueSky R Command Editor.
-#' BSkyloadDataset(fullpathfilename=fullpathfilename)
-#' BSkyLoadRefreshDataframe(exceldata)
+#' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
+#' BSkyLoadRefresh(exceldata)
 BSkyloadDataset <-function(fullpathfilename,  filetype, worksheetName=NULL, replace_ds=FALSE, 
 load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName )
 {
@@ -444,19 +442,21 @@ BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colna
 # filetype -> Case sensitive only supports SPSS, XLS, XLSX, DBF, CSV, RDATA
 ###################################################################################################################
 
-#' BSkysaveDataset saves a BlueSky Statistics UI datagrid loaded dataset to the supported file formats.
-#' [supported file formats : .XLSX, .CSV, .RDATA, and .DBF]
-#' @name BSkysaveDataset
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Save a memory dataset to a file
+#'
+#' @description saves a BlueSky Statistics UI datagrid loaded dataset to the supported file formats.
+#' [supported file formats : .SAV, .SAS7BDAT, .DTA, .XLSX, .CSV, .RDATA, and .DBF]
+#'
 #' @param fullpathfilename is a full path filename of a disk file to which will dataset will be written. Use forward slash as path separator.
-#' @param filetype is the file format you want to save to. It must be one of the ("XLSX", "CSV", "DBF", "RDATA").
-#' @param worksheetName is the name of the excel worksheet. Used only when saving to an Excel file format.
+#' @param filetype is the file format you want to save to. It must be one of the ("XLSX", "CSV", "DBF", "RDATA", "SAV", "SAS7BDAT", "DTA").
+#' @param newWorksheetName is the name of the excel worksheet. Used only when saving to an Excel file format.
 #' @param dataSetNameOrIndex is a name of the dataset that already loaded in the BlueSky Statistics UI datagrid. Use single quotes around dataset name.
-#' 
-#' Parameters Rownames, Colnames, newWorksheetName, factor2char are for internal use.
-#' @export 
+#'
 #' @examples
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
-#' BSkyLoadRefreshDataframe(df) #dataframe must be loaded in the grid before you try to save it to different formats.
+#' BSkyLoadRefresh('df') #dataframe must be loaded in the grid before you try to save it to different formats.
 #' BSkysaveDataset("D:/mytestdata.rdata", filetype="RDATA", dataSetNameOrIndex='df')
 BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex)
 {
@@ -1240,7 +1240,7 @@ UAgetDataframeSplit<-function(dataSetNameOrIndex)
 
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Set or Remove Split
+#' @title Set or remove split
 #'
 #' @description Splits the data into groups based on the factors selected, once the dataset is split, the analysis you select is performed independently for each split. For example if you run a crosstabulation analysis or a hypothesis test, this analysis is performed independently for each split (the output of the analysis is also generated separately for each split). 
 #' OR

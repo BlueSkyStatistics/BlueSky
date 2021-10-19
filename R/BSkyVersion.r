@@ -4,7 +4,7 @@
 ############################################################
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title BlueSky package adn other details
+#' @title BlueSky package version and other details
 #'
 #' @description Get BlueSky package details along with R session related details.
 #'
@@ -14,9 +14,9 @@
 #' @examples BSkyVersion()
 BSkyVersion<-function()
 {
-bskyver= "Version: 7.77"
-bskydate="Date: 2021-10-17"
-bskytime="10:46AM"
+bskyver= "Version: 7.79"
+bskydate="Date: 2021-10-19"
+bskytime="12:30PM"
 rver = R.Version()
 print("------ BlueSky R package version ------")
 print(bskyver) 
@@ -43,6 +43,41 @@ print(l10n_info())
 
 cat("\n\n------ System Info ------\n")
 print(Sys.info()[c(1:3,5)])
+
+if(.Platform$OS.type == "windows")
+{ 
+	cat("\n\n------ RAM and Drive Info ------\n")
+	disks_type <- system('powershell get-physicaldisk', inter=TRUE)
+	disks_type = disks_type[c(grep("[0-9]+", disks_type))] 
+	
+	disks <- system("wmic logicaldisk get size,freespace,caption", inter=TRUE)
+	disks <- read.fwf(textConnection(disks[1:(length(disks)-1)]), 
+			 widths=c(9, 13, 13), strip.white=TRUE, stringsAsFactors=FALSE)
+
+	colnames(disks) <- disks[1,]
+	disks <- disks[-1,]
+	orig_names = dimnames(disks)[[2]]
+	if(dim(disks)[1] == 1)
+	{
+	disks <- cbind(disks[,1], t(round(as.numeric(disks[,-c(1)])/(1000*1000*1000), digits = 0)))
+	}
+	else
+	{
+	 disks <- cbind(disks[,1], round((apply((disks[,-c(1)]),2, as.numeric))/(1024*1024*1024)))
+	}
+	dimnames(disks)[[2]] = c("Drives(GB)", orig_names[2:length(orig_names)])
+	rownames(disks) <- NULL
+	disks = noquote(disks)
+
+	withAutoprint({
+	memory.size() # memory (MB) currently used by R
+	memory.size(TRUE) # maximum memory (MB) has been used by R in the current session
+	memory.limit() # memory (MB) size in the machine 
+	disks # different disk drives in the machine
+	disks_type # brand and whether SDD or HDD - SDD will say fixed i.e. not removable HDD drive
+	})
+}
+
 
 # location of R's own temp directory
 cat("\n\n------ R's temp directory ------\n")

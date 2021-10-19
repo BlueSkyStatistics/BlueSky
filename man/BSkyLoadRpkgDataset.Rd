@@ -2,7 +2,7 @@
 % Please edit documentation in R/LoadRpkgDataset.R
 \name{BSkyLoadRpkgDataset}
 \alias{BSkyLoadRpkgDataset}
-\title{Load Dataset From Package}
+\title{Load dataset from a package}
 \usage{
 BSkyLoadRpkgDataset(datasetname, datasetobj, RPkgName)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/BSkyDateTime.r
 \name{BSkystrptime}
 \alias{BSkystrptime}
-\title{Convert Character To Date}
+\title{Convert character to date}
 \usage{
 BSkystrptime(
   varNames = "",

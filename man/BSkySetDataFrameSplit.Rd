@@ -2,7 +2,7 @@
 % Please edit documentation in R/UA_UI_Functions.R
 \name{BSkySetDataFrameSplit}
 \alias{BSkySetDataFrameSplit}
-\title{Set or Remove Split}
+\title{Set or remove split}
 \usage{
 BSkySetDataFrameSplit(col.names, datasetnameorindex, removeall.splits = FALSE)
 }

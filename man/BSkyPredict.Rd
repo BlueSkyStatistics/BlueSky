@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.r
 \name{BSkyPredict}
 \alias{BSkyPredict}
-\title{Score A Dataset Using A Model}
+\title{Score a dataset using a model}
 \usage{
 BSkyPredict(
   modelname = "multinom",

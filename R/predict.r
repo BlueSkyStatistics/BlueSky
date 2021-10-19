@@ -476,7 +476,7 @@ AddPredictColToDataset <- function(predictor, newcolname, datasetname)
 #If dependent variable is not in dataset which often happens when you are scoring brand new data, then dependent variable =NULL and a confusionmatrix and ROC is not displayed
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Score A Dataset Using A Model
+#' @title Score a dataset using a model
 #'
 #' @description     Model scoring does the following
 #' 1. Scores the current dataset using the selected prebuilt model. Stores predictions with the specified confidence interval in the current dataset using the specified prefix.
@@ -2107,7 +2107,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 #Generates the confusion matrix for train classes created by model tuning
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title ConfusionMatrix Train
+#' @title Confusion matrix train
 #'
 #' @description 
 #'

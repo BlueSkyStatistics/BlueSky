@@ -2,9 +2,9 @@
 % Please edit documentation in R/BSkyFormat.r
 \name{BSky.print.text}
 \alias{BSky.print.text}
-\title{shows output in text format}
+\title{Show output in text format}
 \usage{
-BSky.print.text(textFormat = "simple")
+BSky.print.text(textFormat = "rst")
 }
 \value{
 

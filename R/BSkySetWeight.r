@@ -7,7 +7,7 @@ naCheck <- function (weights, data)
 
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title Expand Weights
+#' @title Expand weights
 #'
 #' @description Creates a new dataset with rows expanded as per weights. Expands (replicates) the rows of a data.frame  by a value contained in one of the columns in the source data.frame or data.table. BSkySetWeights() calls expandRows() from the package splitstackshape.
 #'

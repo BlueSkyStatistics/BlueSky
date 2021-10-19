@@ -12,7 +12,7 @@
 # Last modified 10/7/2021
 ### title should fit on one line, be written in sentence case, but not end in a full stop
 ### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
-#' @title t-test, One Sample
+#' @title t-test, one sample
 #'
 #' @description Performs one sample t-tests on selected variables. Optionally computes effect size indices for standardized differences: Cohen's d and Hedges' g (This function returns the population estimate.)
 #'
