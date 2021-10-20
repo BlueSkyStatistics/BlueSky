@@ -28,7 +28,7 @@ Maintainer: contact us <support@blueskystatistics.com>
 
 }
 \references{
-~~ Literature or other references for background information ~~
+\href{https://www.blueskystatistics.com/Articles.asp?ID=301}{Click here}
 }
 
 
