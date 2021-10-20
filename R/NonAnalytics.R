@@ -198,6 +198,24 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 ### '\"Male\"=\"Man\" ; \"Female\"=3'
 ### two sets separated by semi colon. Strings enclosed in double quotes, hence backslash used with double quotes. Numeric without quotes.
 # Aaron fixed 28Jun2018
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Recode variables
+#'
+#' @description Recodes one or more a numeric vector, character vector, or factors according to  recode specifications. You can store the results by overwriting existing variables, specifying new variable names to store recoded values or choosing to store the recoded values in  new variables with a suitable prefix or suffix. the prefix or suffix will be applied to the existing variable name.
+#' Note: We will not convert from numeric to factor. When  a numeric is recoded, it will remain a numeric, when a factor variable is recoded it will remain a factor.
+#' 
+#' @param colNames A character vector containing one or more variables in the dataset to recode
+#' @param newColNames  A character vector containing the names of the new columns.
+#' @param OldNewVals A character string of recode specifications in the form oldval1,newval1, oldval2,newval2
+#' @param NewCol A Boolean indicating whether recoded values are stored in new  variables (TRUE) or existing variables are overwritten(FALSE).
+#' @param prefixOrSuffix Specify if you want to store the recoded values in new variables prefixed or suffixed with the name you specify.  Enter prefix or suffix.
+#' @param prefixOrSuffixString Enter a string to use as a prefix or suffix to the existing variable name. Recoded values will be stored in these variables.
+#' @param dataSetNameOrIndex The dataset/dataframe name
+#'
+#' @return
+#'
+#' @examples
 BSkyRecode <-function (colNames, newColNames = "", OldNewVals, NewCol = FALSE, prefixOrSuffix='',prefixOrSuffixString='',makeNumeric=FALSE,dontMakeFactor=FALSE,dataSetNameOrIndex) 
 {
     BSkyFunctionInit()

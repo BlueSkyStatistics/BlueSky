@@ -3,41 +3,33 @@
 \alias{BlueSky}
 \docType{package}
 \title{
-What the package does (short line)
-~~ package title ~~
+BlueSky Collection of Functions for Data Access, Analysis, and Formatting.
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+This package provides a variety of useful functions for accessing data, analyzing data and creating publication-quality output
+in text, HTML, and LaTeX.
+The functions are used extensively in the BlueSky Statistics user interface to R, but are useful to any R users.
 }
 \details{
 \tabular{ll}{
 Package: \tab BlueSky\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
-Date: \tab 2015-03-31\cr
-License: \tab What license is it under?\cr
+Date: \tab 2021-10-15\cr
+License: \tab GPL (version 3 or later)\cr
 }
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
+Package can be used with BlueSky Statistics application or any other R environment
+
 }
 \author{
-Who wrote it
+BlueSky Statistics.
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
-~~ The author and/or maintainer of the package ~~
+Maintainer: contact us <support@blueskystatistics.com>
+
 }
 \references{
-~~ Literature or other references for background information ~~
+\href{https://www.blueskystatistics.com/Articles.asp?ID=301}{Click here}
 }
-\keyword{ 
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
-~~ the R documentation directory ~~
-package }
-\seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
-}
-\examples{
-~~ simple examples of the most important functions ~~
-}
+
+
+

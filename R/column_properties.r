@@ -1853,6 +1853,19 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 ## I need to loop through each variable because I need to save and restore attributes of each colum.
 ## If I use lapply then I will loose all those colums those were not passed to lapply for conversion.
 ## So I am use following method.
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Make factor variable
+#'
+#' @description The function factor is used to encode a vector as a factor (the terms ‘category’ and ‘enumerated type’ are also used for factors). If argument ordered is TRUE, the factor levels are assumed to be ordered. For compatibility with S there is also a function ordered.
+#' is.factor, is.ordered, as.factor and as.ordered are the membership and coercion functions for these classes.
+#'
+#' @param colNames Variables to be converted to factor
+#' @param dataSetNameOrIndex the dataset name that contains the columns those will be converted to factor
+#'
+#' @return
+#'
+#' @examples
 BSkyMakeMultiColumnFactor <- function(colNames, dataSetNameOrIndex)
 {
 	count=length(colNames)

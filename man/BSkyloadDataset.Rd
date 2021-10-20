@@ -2,41 +2,45 @@
 % Please edit documentation in R/UA_UI_Functions.R
 \name{BSkyloadDataset}
 \alias{BSkyloadDataset}
-\title{BSkyloadDataset loads a dataset into R by reading data from a disk file. When this function is executed from BlueSky R Command Editor
-it loads the dataset in the UI datagrid.
-[supported file types : .SAV, .XLSX, .XLS, .CSV, .SAS7BDAT, .RDATA, .DBF, and .DAT]}
+\title{Load dataset}
 \usage{
-BSkyloadDataset(fullpathfilename, filetype, worksheetName = NULL,
-  replace_ds = FALSE, load.missing = FALSE, csvHeader = TRUE, datasetName)
+BSkyloadDataset(
+  fullpathfilename,
+  filetype,
+  worksheetName = NULL,
+  replace_ds = FALSE,
+  load.missing = FALSE,
+  csvHeader = TRUE,
+  character.to.factor = FALSE,
+  isBasketData = FALSE,
+  trimSPSStrailing = FALSE,
+  sepChar = ",",
+  deciChar = ".",
+  datasetName
+)
 }
 \arguments{
 \item{fullpathfilename}{is a full path filename of a disk file, that is to be loaded into R. Use forward slash as a path separator.}
 
-\item{filetype}{is one of the ("SPSS", "SAS7BDAT", "XLS", "XLSX", "CSV", "DBF", "RDATA" and "DAT"). Not required when executing from BlueSky R Command Editor.}
+\item{filetype}{is one of the ("SPSS", "SAS7BDAT", "DTA", "XLS", "XLSX", "CSV", "DBF", "RDATA" and "DAT").}
 
-\item{worksheetName}{is the name of the worksheet. Used only when reading Excel file type. Not required when executing from BlueSky R Command Editor.}
+\item{worksheetName}{is the name of the worksheet. Used only when reading Excel file type.}
 
-\item{datasetName}{is a name of the object in R that corresponds to the dataset you have loaded. Not required when executing from BlueSky R Command Editor.
+\item{datasetName}{is a name of the object in R that corresponds to the dataset you have loaded. 
 
 Parameters replace_ds, load.missing, csvHeader are for internal use.}
 }
 \description{
-BSkyloadDataset loads a dataset into R by reading data from a disk file. When this function is executed from BlueSky R Command Editor
+loads a dataset into R by reading data from a disk file. When this function is executed from BlueSky R Command Editor
 it loads the dataset in the UI datagrid.
-[supported file types : .SAV, .XLSX, .XLS, .CSV, .SAS7BDAT, .RDATA, .DBF, and .DAT]
+[supported file types : .SAV, .XLSX, .XLS, .CSV, .SAS7BDAT, .DTA, .RDATA, .DBF, and .DAT]
 }
 \examples{
 fullpathfilename <- 'C:/BlueSky Statistics/Sample Datasets/Sample R Datasets(.rdata)/caranalysis.RData'
-filetype <- 'RDATA' #This parameter is not required when executing from BlueSky R Command Editor.
-datasetName <- 'rdataset' #This parameter is not required when executing from BlueSky R Command Editor.
-BSkyloadDataset(fullpathfilename=fullpathfilename)
-BSkyLoadRefreshDataframe(testdata)
+BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'RDATA', datasetName <- 'rdataset')
+BSkyLoadRefresh(rdataset)
 
 fullpathfilename <- 'C:/BlueSky Statistics/Sample Datasets/Excel/sample.xls'
-filetype <- 'XLS' #This parameter is not required when executing from BlueSky R Command Editor.
-worksheetName = 'Sheet1' #This parameter is not required when executing from BlueSky R Command Editor.
-datasetName <- 'exceldata' #This parameter is not required when executing from BlueSky R Command Editor.
-BSkyloadDataset(fullpathfilename=fullpathfilename)
-BSkyLoadRefreshDataframe(exceldata)
+BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
+BSkyLoadRefresh(exceldata)
 }
-

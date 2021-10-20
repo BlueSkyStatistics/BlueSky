@@ -1,3 +1,20 @@
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Mixed models
+#'
+#' @description Print model summary
+#'
+#' @param x 
+#' @param digits 
+#' @param correlation 
+#' @param symbolic.cor 
+#' @param signif.stars 
+#' @param ranef.comp 
+#' @param show.resids 
+#'
+#' @return
+#'
+#' @examples
 BSkyprint.summary.merMod  <-function (x, digits = max(3, getOption("digits") - 3), correlation = NULL, 
     symbolic.cor = FALSE, signif.stars = getOption("show.signif.stars"), 
     ranef.comp = c("Variance", "Std.Dev."), show.resids = TRUE, 

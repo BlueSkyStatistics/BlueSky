@@ -4,7 +4,28 @@
 ## m  <- matrix(data=1:12,nrow=4,ncol=3, dimnames=list(c("ro1","ro2","ro3","ro4"), c("co1","co2","co3")))
 ## l <- list(1,2,3,4,5)
 
-
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in documentation escape with one more @ (e.g. @@ prints @)
+#' @title BSkyFormat generates formatted output (text or table)
+#'
+#' @description 
+#'
+#' @param obj is an object of type data.frame, matrix, list, text or BSkyReturnStructure object, that is to be formatted.
+#' @param maxOutputTables maximum tables to output if obj contains mulitple tables
+#' @param outputTableIndex the order in which output tables are printed
+#' @param outputColumnIndex the order of columns in the table
+#' @param outputTableRenames custom name assigned to the table
+#' @param outputColumnRenames custom column names for the columns in a table
+#' @param outputColumnRenamesRow custom row names
+#' @param maxRowLimit maximum row to show in the output table
+#' @param maxColLimit maximum columns to show in the output table
+#' @param ... other advanced level parameters
+#'
+#' @return
+#'
+#' @examples
+#' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
+#' BSkyFormat(df)
 ##08Oct2021
 BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, isTextOutput = FALSE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", textTableFormat = BSkyGetTextTableFormat(), tableStylingOptions = "table_border = F, column_align = r, header_background = \"#bdbdbd\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))", RM.SSP = TRUE, RM.SSPE = RM.SSP) # bdbdbd F0F8FF
 {
@@ -2016,6 +2037,17 @@ BSkyIsRmarkdownOutputOn <- function()
 
 
 ##08Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Show output in text format
+#'
+#' @description 
+#'
+#' @param 
+#'
+#' @return
+#'
+#' @examples
 BSky.print.text <- function(textFormat = "rst")
 {
 	BSkySetKableAndRmarkdownFormatting (BSkyKableFormatting = FALSE, BSkyRmarkdownFormatting = FALSE, BSkyLaTeXFormatting = FALSE, BSkyTextFormatting = TRUE)
@@ -2023,6 +2055,17 @@ BSky.print.text <- function(textFormat = "rst")
 }
 
 # #08Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Show output in HTML format
+#'
+#' @description 
+#'
+#' @param 
+#'
+#' @return
+#'
+#' @examples
 BSky.print.html <- function(app = "rmarkdown", html_style = "APA")
 {
 	if(app == "rmarkdown")
@@ -2047,6 +2090,17 @@ BSky.print.html <- function(app = "rmarkdown", html_style = "APA")
 }
 
 # #08Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Show output in LaTeX format
+#'
+#' @description 
+#'
+#' @param 
+#'
+#' @return
+#'
+#' @examples
 BSky.print.latex <- function()
 {
 	BSkySetKableAndRmarkdownFormatting (BSkyKableFormatting = TRUE, BSkyRmarkdownFormatting = TRUE, BSkyLaTeXFormatting = TRUE, BSkyTextFormatting = FALSE)
@@ -2153,6 +2207,36 @@ BSkyGetKableAndRmarkdownFormatting <- function()
 
 
 ##08Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Set HTML style
+#'
+#' @description 
+#'
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param
+#' @param
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param
+#' @param
+#'
+#' @return
+#'
+#' @examples
 BSkySetHtmlStylingSetting <- function(tableTheme = "kable_styling", fontFamily = "Helvetica", tableHeaderBackgroundColor = "#bdbdbd", ColumnAlign = "Right", tablePosition = "Left", fullWidthDisplay = TRUE, tableOuterBorder = FALSE, tableGridLines = FALSE, striped = TRUE, hover = TRUE, latex_scale_down = FALSE, latex_hold_position = FALSE, columHeaderScrollFixed = TRUE, fontSize = 0, overrideStylingSettings = TRUE)
 {
 	function_name = "BSkySetHtmlStylingSetting"

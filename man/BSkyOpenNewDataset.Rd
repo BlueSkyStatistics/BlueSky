@@ -2,20 +2,17 @@
 % Please edit documentation in R/UA_UI_Functions.R
 \name{BSkyOpenNewDataset}
 \alias{BSkyOpenNewDataset}
-\title{BSkyOpenNewDataset
-Creates a blank dataset.}
+\title{Creates a blank dataset.}
 \usage{
-BSkyOpenNewDataset(datasetName)
+BSkyOpenNewDataset(datasetName, noOfRows = 30, noOfCols = 6)
 }
 \arguments{
 \item{datasetName}{is the dataset object name which points to the blank dataset that got created.}
 }
 \description{
-BSkyOpenNewDataset
 Creates a blank dataset.
 }
 \examples{
 BSkyOpenNewDataset( 'mydata' ) # create new blank datagrid. Does not loads it in UI datagrid.
 BSkyLoadRefreshDataframe(mydata) # to load the new dataset in the BlueSky Statistics UI datagrid
 }
-

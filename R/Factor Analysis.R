@@ -157,6 +157,22 @@ legend("topright", c("Cutoff for factors"),lty=3)
  
 #26Jun2018 Aaron modified for Daniel's issue (limit to 33 variables)
 #27Aug2018 Aaron modified for Daniel's issue (cannot calulate factor scores)
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Factor Analysis
+#'
+#' @description Perform maximum-likelihood factor analysis on a covariance matrix or data matrix and generates a screeplot. Calls the function factanal in the stats package.
+#'
+#' @param vars One or more numeric variables to extract factors from.
+#' @param autoextraction Automatically determine the number factors or extract specific numbers of factors.
+#' @param screeplot If TRUE generates a screeplot.
+#' @param rotation determine the type of rotation and takes one of the values (none, quartimax, geominT, varimax, oblimin, simplimax, promax, geominQ and bentlerQ)
+#' @param saveScores saves the factor scores in the dataset
+#' @param dataset The dataset from which the 'vars' have been picked.
+#'
+#' @return
+#'
+#' @examples
 BSkyFactorAnalysis <-function (vars, autoextraction = TRUE, factors = 1, rotation = "varimax", 
     saveScores = FALSE, screeplot = FALSE, scores = "none", prefixForScores = "", 
     dataset, excludeEnvPrefix = FALSE) 

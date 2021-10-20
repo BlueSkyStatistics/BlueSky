@@ -1,5 +1,20 @@
 
 #13Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Shapiro-Wilk Normality Test
+#'
+#' @description Performs the Shapiro-Wilk test of normality.
+#'
+#' @param x: a numeric vector of data values. Missing values are allowed, but the number of non-missing values must be between 3 and 5000.
+#'
+#' @return A list with class "htest" containing the following components:
+#' statistic: the value of the Shapiro-Wilk statistic.
+#' p.value: an approximate p-value for the test. This is said in Royston (1995) to be adequate for p.value < 0.1.
+#' method: the character string "Shapiro-Wilk normality test".
+#' data.name: a character string giving the name(s) of the data.
+#'
+#' @examples
 BSky_Shapiro_Wilk_normality_test <- function (data = NULL, vars = NULL, dataset = NULL) 
 {
 	table_list = list()

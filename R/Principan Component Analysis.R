@@ -1,4 +1,27 @@
-
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Principal Component Analysis
+#'
+#' @description Performs a principal components analysis on the given numeric data matrix and returns the results as an object of class princomp. Internally calls princomp in the stats package.
+#'
+#' @param vars: The variables in a character vector to extract components from
+#' @param cor: A boolean that specifies whether the calculation should use a correlation or covariance matrix
+#' @param componentsToRetain: A numeric that Specifies the number of components to retain in the dataset. A new variable is created in the dataset for each component invoked
+#' @param ​generateScreeplot: Generates a screeplot
+#' @param prefixForComponents: Prefix to use when saving the components to a dataset
+#' @param dataset: The name of the dataset as a string
+#'
+#' @return princomp returns a list with class "princomp" containing the following components
+#' sdev: the standard deviations of the principal components.
+#' loadings: the matrix of variable loadings (i.e., a matrix whose columns contain the eigenvectors). This is of class "loadings": see loadings for its print method.
+#' center: the means that were subtracted.
+#' scale: the scalings applied to each variable.
+#' n.obs: the number of observations.
+#' scores: if scores = TRUE, the scores of the supplied data on the principal components. These are non-null only if x was supplied, and if covmat was also supplied if it was a covariance list. For the formula method, napredict() is applied to handle the treatment of values omitted by the na.action.
+#' call: the matched call.
+#' na.action: If relevant.
+#'
+#' @examples
 BSkyPrinCompAnalysis <-function (vars,cor=FALSE,componentsToRetain=0, generateScreeplot=FALSE,prefixForComponents="", dataset, excludeEnvPrefix=FALSE)
 
 {

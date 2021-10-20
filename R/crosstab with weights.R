@@ -64,12 +64,42 @@
 #and the variables for which we should display nothing as there are errors and warnings
 #Note: we will display the errors and warnings at the top of the table
 #If there is a split,???
-#13Oct2021
+
 
 # Analysis> Crosstab
-# Last modified 10/14/2021
 # Last modified 10/7/2021
 #Last modified 10/17/2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Crosstab
+#'
+#' @description Creates crosstab with row, column and layer variables and optionally displays the following
+#' Expected counts
+#' Row and column percentages
+#' Unstandardized, standardized and adjusted residuals
+#' Chisq with odds ratio, McNemar and Fisher statistics
+#'
+#' @param x row variable
+#' @param y column variable
+#' @param layers one or more variables for layers
+#' @param weights a numeric variable containing the frequency weights
+#' @param datasetname Name of the dataset from which x,y and layers (variables) are chosen
+#' @param chisq  if TRUE generates chi-square table
+#' @param prop.r Row percentages are produced if this is TRUE
+#' @param prop.c Column percentages are generated if this is TRUE
+#' @param resid if TRUE, unstandardized residual are generated
+#' @param sresid if TRUE, standardized residuals are generated
+#' @param expected Expected counts are generated if this is TRUE
+#' @param asresid  if TRUE, adjusted residuals are generated
+#'
+#' @return A list with the results
+#'
+#' @examples BSky_Multiway_Cross_Tab = BSkyCrossTable(x=c('manufact'),y=c('model'),
+#' layers=c('type'),datasetname='Dataset2',
+#' chisq = FALSE,prop.r=FALSE,prop.c=FALSE,
+#' resid=FALSE,sresid=FALSE,expected=FALSE,
+#' asresid=FALSE)
+#' BSkyFormat(BSky_Multiway_Cross_Tab)
 BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3, max.width = 5, expected=FALSE, prop.r=FALSE, prop.c=FALSE,
            prop.t=FALSE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
            resid=FALSE, sresid=FALSE, asresid=FALSE,

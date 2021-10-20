@@ -2,31 +2,33 @@
 % Please edit documentation in R/UA_UI_Functions.R
 \name{BSkysaveDataset}
 \alias{BSkysaveDataset}
-\title{BSkysaveDataset saves a BlueSky Statistics UI datagrid loaded dataset to the supported file formats.
-[supported file formats : .XLSX, .CSV, .RDATA, and .DBF]}
+\title{Save a memory dataset to a file}
 \usage{
-BSkysaveDataset(fullpathfilename, filetype, Rownames = TRUE,
-  Colnames = FALSE, newWorksheetName = NULL, factor2char = TRUE,
-  dataSetNameOrIndex)
+BSkysaveDataset(
+  fullpathfilename,
+  filetype,
+  Rownames = TRUE,
+  Colnames = FALSE,
+  newWorksheetName = NULL,
+  factor2char = TRUE,
+  dataSetNameOrIndex
+)
 }
 \arguments{
 \item{fullpathfilename}{is a full path filename of a disk file to which will dataset will be written. Use forward slash as path separator.}
 
-\item{filetype}{is the file format you want to save to. It must be one of the ("XLSX", "CSV", "DBF", "RDATA").}
+\item{filetype}{is the file format you want to save to. It must be one of the ("XLSX", "CSV", "DBF", "RDATA", "SAV", "SAS7BDAT", "DTA").}
 
-\item{dataSetNameOrIndex}{is a name of the dataset that already loaded in the BlueSky Statistics UI datagrid. Use single quotes around dataset name.
+\item{newWorksheetName}{is the name of the excel worksheet. Used only when saving to an Excel file format.}
 
-Parameters Rownames, Colnames, newWorksheetName, factor2char are for internal use.}
-
-\item{worksheetName}{is the name of the excel worksheet. Used only when saving to an Excel file format.}
+\item{dataSetNameOrIndex}{is a name of the dataset that already loaded in the BlueSky Statistics UI datagrid. Use single quotes around dataset name.}
 }
 \description{
-BSkysaveDataset saves a BlueSky Statistics UI datagrid loaded dataset to the supported file formats.
-[supported file formats : .XLSX, .CSV, .RDATA, and .DBF]
+saves a BlueSky Statistics UI datagrid loaded dataset to the supported file formats.
+[supported file formats : .SAV, .SAS7BDAT, .DTA, .XLSX, .CSV, .RDATA, and .DBF]
 }
 \examples{
 df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
-BSkyLoadRefreshDataframe(df) #dataframe must be loaded in the grid before you try to save it to different formats.
+BSkyLoadRefresh('df') #dataframe must be loaded in the grid before you try to save it to different formats.
 BSkysaveDataset("D:/mytestdata.rdata", filetype="RDATA", dataSetNameOrIndex='df')
 }
-

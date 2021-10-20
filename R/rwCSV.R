@@ -196,8 +196,8 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 ###################################################################################################################
 #' UAwriteExcel writes a in memory dataset to a disk file in Excel format
 #'
-#' @name UAwriteExcel
-#' @param excelfilename is a full path filename of a new Excel file that is to be created.
+#' @name UAwriteCSV
+#' @param csvfilename is a full path filename of a new CSV file that is to be created.
 #' @param dataSetNameOrIndex is a name of a dataset that is a reference for loaded Excel dataset.
 #' @export 
 UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)

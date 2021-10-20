@@ -3543,7 +3543,8 @@ BSkyGetDecimalDigitSetting <- function()
 # Python app tier just needs to call BSkyGetHoldFormatObjList() without any parameter to get the new global queue structure
 # bSkyDebug parameter is just for testing the global queue content to avoid NULLing it if Debug=1 is passed as parameter 
 ###################################################################
-
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
 BSkyGetHoldFormatObjList <- function(bSkyCompatibility=0, bSkyDebug = 0)
 {
 	# SK modified on 06/13/15
@@ -4013,6 +4014,25 @@ BSkyReturnStructure2 <-function(bskyAdditionalTableList = list()) ### passs as l
 ## i.e. other than the standard values allowed earlier like 0 (min), 0.25 (1st Qu), 0.50 (median), 0.75 (3rd Qu), and 1.00 (max) 
 ################################################################################################################################
 #13Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Summary statistics
+#'
+#' @description Outputs the  following numerical statistics:
+#' min, max, mean, median, sum, sd, stderror, iqr,  quartiles. If quartiles is selected, you can specify the comma separated quartiles needed.
+#' In addition to these, the user can pass, a list of comma separated statistical function names for example var.
+#'
+#' @param datasetColumnObjects: selected scale variables (say Dataset$var1, Dataset$var2)
+#' @param groupByColumnObjects: one or more factor variables to group by (say  Dataset$var3, Dataset$var4)
+#' @param statFunctionList: List of functions. The ones set to TRUE will be executed. (say min=TRUE, sd=TRUE)​
+#' @param ​quantilesProbs: Probabilities of the quantiles
+#' @param additionalStats: Addition statistical function that user can pass ( say var)
+#' @param datasetName: Name of the dataset from which datasetColumnObjects and groupByColumnObjects are chosen
+#'
+#' @return An object of class "data.frame", giving the results for each function on each variable.
+#'
+#' @examples Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'))</br>
+#' Result_Numerical_Statistics_Analysis = BSkySummaryStats(datasetColumnObjects = list(Sales = Dataset$Sales, Expenses = Dataset$Expenses), groupByColumnObjects = list(Deptt= Dataset$Deptt), stats = c(min=FALSE,max=FALSE,mean=TRUE,median=TRUE,sum=FALSE,sd=FALSE,stderror=FALSE,iqr=FALSE,quantiles=FALSE),datasetName="Dataset" )
 BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByColumnObjects=list(), datasetName=c(), stats=c(min=TRUE, max=TRUE, mean=TRUE, median=TRUE, quantiles=TRUE), quantilesProbs=c(0, 0.25, 0.5, 0.75, 1), additionalStats = c(), maxsum = 30, bSkyFormatAppRequest = FALSE, ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE)
 {
 	#print(match.call())

@@ -84,7 +84,22 @@ BSkyCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pearson",
 
 
 
-
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Correlation Analysis
+#'
+#' @description This function uses the rcorr function in the Hmisc package to compute matrices of Pearson or Spearman correlations along with the pair wise p-values among the correlations. The p-values are corrected for multiple inference using Holm's method (see p.adjust). Observations are filtered for missing data, and only complete observations are used.
+#'
+#' @param data a numeric matrix or data frame, or an object of class "rcorr.adjust" to be printed.
+#' @param vars
+#' @param correlationType "pearson" or "spearman", depending upon the type of correlations desired; the default is "pearson".
+#' @param missingValues how to handle missing data: "complete.obs", the default, use only complete cases; "pairwise.complete.obs", use all cases with valid data for each pair.
+#' @param visualizeCorrelation prints PlotCorr()
+#' @param plotWeb prints PlotWeb()
+#'
+#' @return Returns an object of class "rcorr.adjust", which is normally just printed.
+#'
+#' @examples
 BSkyPlotCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pearson", missingValues = "complete.obs", visualizeCorrelation = TRUE, plotWeb = TRUE)
 {
 	if(class(data)[1] != "character")
@@ -179,6 +194,15 @@ BSkyFormatRcorr_adjust <- function(a, showPvalue=c("adjP"))
 }
 
 #13Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title BSky_options
+#'
+#' @description Get current BlueSky options
+#'
+#' @return current BlueSky options
+#'
+#' @examples BSky_options()s
 BSky_options <- function()
 {
 	fmt = BSkyGetKableAndRmarkdownFormatting()

@@ -474,6 +474,22 @@ AddPredictColToDataset <- function(predictor, newcolname, datasetname)
 
 #Called when the dependent variable is part of the dataset or is not present 
 #If dependent variable is not in dataset which often happens when you are scoring brand new data, then dependent variable =NULL and a confusionmatrix and ROC is not displayed
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Score a dataset using a model
+#'
+#' @description     Model scoring does the following
+#' 1. Scores the current dataset using the selected prebuilt model. Stores predictions with the specified confidence interval in the current dataset using the specified prefix.
+#' 2. Optionally creates a confusion matrix and a ROC curve
+#' predict is a generic function for making predictions using the selected model.
+#' 
+#' @param modelname a model object for which prediction is desired.
+#' @param prefix prefix string that will be used to create new variables containing the predictions.
+#' @param datasetname is the current dataset to score and save predictions to.
+#'
+#' @return
+#'
+#' @examples
 BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALSE, level =.95, datasetname='Dataset4') 
 {
     
@@ -2089,6 +2105,36 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 
 
 #Generates the confusion matrix for train classes created by model tuning
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Confusion matrix train
+#'
+#' @description 
+#'
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param
+#' @param
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param 
+#' @param
+#' @param
+#'
+#' @return
+#'
+#' @examples
 BSkyConfusionMatrixTrain <- function (predictions, reference)
 {
 
@@ -2142,7 +2188,20 @@ msg = paste0("ERROR: Confusion matrix and ROC curve cannot be created as the cla
 }
 
 #Creates the confusion matrix for models created by the specific modeling algorithm
-
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Confusion matrix
+#'
+#' @description Creates a confusion matrix by cross-tabulating the observed and predicted classes with associated statistics. 
+#'
+#' @param modelname a model object for which confusion matrix is desired.
+#' @param showCofusionMatrix  logical, if TRUE the confusion matrix is generated (if it applies), if FALSE, confusion matrix is not generated.
+#' @param predictions an object that is returned as a result of predict() call.
+#' @param datasetname is the current datasetname using which we want to make predictions.
+#'
+#' @return Displays the confusion matrix using the function confusionMatrix in the package caret
+#'
+#' @examples
 BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictions, 
     datasetname) 
 {

@@ -5,6 +5,18 @@
 
 #This function goes into BSky R package 
 #13Oct2021
+### title should fit on one line, be written in sentence case, but not end in a full stop
+### to print @ in the documentation, escape with one more @ (e.g. @@ prints @)
+#' @title Frequency table
+#'
+#' @description Generates the frequencies for every unique value in one or more variables or column names selected.
+#'
+#' @param data The dataset name
+#' @param vars selected variables
+#'
+#' @return frequency table
+#'
+#' @examples
 BSkyFrequency <- function (data = NULL, vars = NULL) 
 {
 	table_list = list()
