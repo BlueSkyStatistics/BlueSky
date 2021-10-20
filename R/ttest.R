@@ -789,7 +789,7 @@ Bskycheckempty<-function(uavarindex,index)
       alternative,  conf.level, FALSE, index, mu)
 	  
 	indexInReturnStructure=3		  
-	if (cohens_d )
+	if (cohens_d ||cohensd_correction )
 	{
 	
 	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
@@ -800,11 +800,11 @@ Bskycheckempty<-function(uavarindex,index)
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
 	
-	cohensd (cindex,uavarindex, noofvars,correction=cohensd_correction, uacipass=.95, index,mu, indexInReturnStructure)
+	cohensd (cindex,uavarindex, noofvars,correction=cohensd_correction, uacipass=conf.level, index,mu, indexInReturnStructure)
 	indexInReturnStructure =indexInReturnStructure+1
 	
 	}
-	if (hedges_g)
+	if (hedges_g || hedgesg_correction)
 	{
 	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
     uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
@@ -813,10 +813,10 @@ Bskycheckempty<-function(uavarindex,index)
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
-	hedgesg (cindex,uavarindex, noofvars,correction=hedgesg_correction, uacipass=.95, index,mu,indexInReturnStructure)
+	hedgesg (cindex,uavarindex, noofvars,correction=hedgesg_correction, uacipass=conf.level, index,mu,indexInReturnStructure)
 	indexInReturnStructure =indexInReturnStructure+1
 	}
-	if (glass_d)
+	if (glass_d || glassd_correction)
 	{
 	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
     uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
@@ -825,7 +825,7 @@ Bskycheckempty<-function(uavarindex,index)
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
-	glassd (cindex,uavarindex, noofvars,correction=glassd_correction, uacipass=.95, index,mu,indexInReturnStructure)
+	glassd (cindex,uavarindex, noofvars,correction=glassd_correction, uacipass=conf.level, index,mu,indexInReturnStructure)
 	}
 	  
 	

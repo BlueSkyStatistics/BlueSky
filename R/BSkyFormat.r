@@ -2757,6 +2757,10 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 				cohens_d = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "cohens_d")
 				hedges_g = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "hedges_g")
 				glass_d = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "glass_d")
+				
+				cohensd_correction = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "cohensd_correction")
+				hedgesg_correction = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "hedgesg_correction")
+				glassd_correction = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "glassd_correction")
 						
 				table_list = list()
 				table_list_names = c()
@@ -2960,7 +2964,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 						
 						n = n+1
 						
-						if(n <= num_tables && cohens_d == TRUE)
+						if(n <= num_tables && (cohens_d == TRUE || cohensd_correction == TRUE))
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -2986,9 +2990,18 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 									row.names(obj$tables[[n]]$datatable) = var_names
 								}
 								
+								if(cohensd_correction == TRUE)	
+								{
+									table_header = "Cohen's d with bias corrected"
+								}
+								else
+								{
+									table_header = "Cohen's d"
+								}
+								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Cohen's d")
+									table_list_names = c(table_list_names, table_header)
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -2996,7 +3009,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Cohen's d")
+									table_list_names = c(table_list_names, table_header)
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3038,7 +3051,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 							n = n+1
 						}
 						
-						if(n <= num_tables && hedges_g == TRUE)
+						if(n <= num_tables && (hedges_g == TRUE || hedgesg_correction == TRUE) )
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -3064,9 +3077,19 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 									row.names(obj$tables[[n]]$datatable) = var_names
 								}
 								
+								if(hedgesg_correction == TRUE)
+								{
+									table_header = "Hedges' g with bias corrected"
+								}
+								else
+								{
+									table_header = "Hedges' g"
+								}
+								
+								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Hedges' g")
+									table_list_names = c(table_list_names, table_header)
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -3074,7 +3097,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Hedges' g")
+									table_list_names = c(table_list_names, table_header)
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3116,7 +3139,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 							n = n+1
 						}
 						
-						if(n <= num_tables && glass_d == TRUE)
+						if(n <= num_tables && (glass_d == TRUE || glassd_correction == TRUE))
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -3142,9 +3165,19 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 									row.names(obj$tables[[n]]$datatable) = var_names
 								}
 								
+								if(glassd_correction == TRUE)
+								{
+									table_header = "Glass's d with bias corrected"
+								}
+								else
+								{
+									table_header = "Glass's d"
+								}
+								
+								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Glass' delta")
+									table_list_names = c(table_list_names, table_header)
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -3152,7 +3185,7 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Glass' delta")
+									table_list_names = c(table_list_names, table_header)
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3237,6 +3270,10 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 				cohens_d = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "cohens_d")
 				hedges_g = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "hedges_g")
 				glass_d = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "glass_d")
+				
+				cohensd_correction = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "cohensd_correction")
+				hedgesg_correction = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "hedgesg_correction")
+				glassd_correction = BSkyFormatBSkyFunctionParamParsing(obj$uasummary[[7]], "glassd_correction")
 				
 				group_factor_var_values = levels(eval(parse(text= paste(database_name, "$", group_factor_var, sep = "")), envir=globalenv()))
 				
@@ -3495,7 +3532,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 						
 						n = n + 1
 						
-						if(n <= num_tables && cohens_d == TRUE)
+						if(n <= num_tables && (cohens_d == TRUE || cohensd_correction ==TRUE))
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -3521,9 +3558,20 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 									row.names(obj$tables[[n]]$datatable) = var_names
 								}
 								
+								if(cohensd_correction == TRUE)
+								{
+									table_header = "Cohen's d bias corrected"
+								}
+								else
+								{
+									table_header = "Cohen's d"
+								}
+								
+								
+								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Cohen's d")
+									table_list_names = c(table_list_names, table_header)
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -3531,7 +3579,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Cohen's d")
+									table_list_names = c(table_list_names, table_header)
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3573,7 +3621,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 							n = n+1
 						}
 						
-						if(n <= num_tables && hedges_g == TRUE)
+						if(n <= num_tables && (hedges_g == TRUE || hedgesg_correction ==TRUE ))
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -3599,9 +3647,18 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 									row.names(obj$tables[[n]]$datatable) = var_names
 								}
 								
+								if(hedgesg_correction == TRUE)
+								{
+									table_header = "Hedges' g bias corrected"
+								}
+								else
+								{
+									table_header = "Hedges' g"
+								}
+								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Hedges' g")
+									table_list_names = c(table_list_names, table_header)
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -3609,7 +3666,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Hedges' g")
+									table_list_names = c(table_list_names, table_header)
 								}
 								
 								if(X_has_been_printed == TRUE)
@@ -3651,7 +3708,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 							n = n+1
 						}
 						
-						if(n <= num_tables && glass_d == TRUE)
+						if(n <= num_tables && (glass_d == TRUE || glassd_correction ==TRUE))
 						{
 							if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0 )
 							{  
@@ -3677,9 +3734,18 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 									row.names(obj$tables[[n]]$datatable) = var_names
 								}
 								
+								if(glassd_correction == TRUE)
+								{
+									table_header = "Glass's d with bias corrected"
+								}
+								else
+								{
+									table_header = "Glass's d"
+								}
+								
 								if(obj$BSkySplit == 1)
 								{
-									table_list_names = c(table_list_names, "Glass' delta")
+									table_list_names = c(table_list_names, table_header)
 									#table_list_names = c(table_list_names, paste("One Sample Statistics -", obj$tables[[n]]$cartlevel))
 									
 									#attr(obj$tables[[n]]$datatable, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
@@ -3687,7 +3753,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								}
 								else
 								{
-									table_list_names = c(table_list_names, "Glass' delta")
+									table_list_names = c(table_list_names, table_header)
 								}
 								
 								if(X_has_been_printed == TRUE)

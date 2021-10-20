@@ -281,7 +281,7 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
 	
 	
 	indexInReturnStructure=3		  
-	if (cohens_d )
+	if (cohens_d || cohensd_correction )
 	{
 	
 	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
@@ -292,14 +292,14 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
 	
-	cohensdIndSmTTest (cindex,uavarindex, groupindex, noofvars,correction=cohensd_correction, uacipass=.95, index, indexInReturnStructure)
+	cohensdIndSmTTest (cindex,uavarindex, groupindex, noofvars,correction=cohensd_correction, uacipass=conf.level, index, indexInReturnStructure)
 	
 
 	
 	indexInReturnStructure =indexInReturnStructure+1
 	
 	}
-	if (hedges_g)
+	if (hedges_g || hedgesg_correction)
 	{
 	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
     uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
@@ -308,10 +308,10 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
-	hedgesgIndSmTTest (cindex,uavarindex,groupindex, noofvars,correction=hedgesg_correction, uacipass=.95, index,indexInReturnStructure)
+	hedgesgIndSmTTest (cindex,uavarindex,groupindex, noofvars,correction=hedgesg_correction, uacipass=conf.level, index,indexInReturnStructure)
 	indexInReturnStructure =indexInReturnStructure+1
 	}
-	if (glass_d)
+	if (glass_d || glassd_correction )
 	{
 	 uadatasets$retstructure[[indexInReturnStructure]] <- list()
     uadatasets$retstructure[[indexInReturnStructure]]$type = "table"
@@ -320,7 +320,7 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatabletype = c("normal")
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable = list()
     uadatasets$retstructure[[indexInReturnStructure]]$metadatatable[[1]] = data.frame()
-	glassdIndSmTTest (cindex,uavarindex, groupindex,noofvars,correction=glassd_correction, uacipass=.95, index,indexInReturnStructure)
+	glassdIndSmTTest (cindex,uavarindex, groupindex,noofvars,correction=glassd_correction, uacipass=conf.level, index,indexInReturnStructure)
 	}
 	
 	
