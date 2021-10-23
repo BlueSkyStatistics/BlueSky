@@ -53,7 +53,7 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 	{
 		return(invisible(NULL))
 	}
-	else 
+	else if(BSkyIsRmarkdownOutputOn() == TRUE)
 	{
 		# For Rstudio to work correctly when data parameter is NULL (i.e. not used with %>%)
 		# data  is null but datasetNameOrDatasetGlobalIndex has the dataset name

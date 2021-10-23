@@ -140,7 +140,7 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 	{
 		return(invisible(NULL))
 	}
-	else 
+	else if(BSkyIsRmarkdownOutputOn() == TRUE)
 	{
 		# For Rstudio to work correctly when data parameter is NULL (i.e. not used with %>%)
 		# data  is null but datasetname has the dataset name
