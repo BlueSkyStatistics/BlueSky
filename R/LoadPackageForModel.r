@@ -587,6 +587,7 @@ mdat <- matrix(c(modelfamily,package,parameter), nrow = 3, ncol = 1, byrow = TRU
 BSkyFormat(mdat, singleTableOutputHeader="Model Tuning Summary")
 }
 
+
 #new 21 Jan 2020
 loadReqModelPackage <-function (modelselected = NULL) 
 {
@@ -603,7 +604,7 @@ loadReqModelPackage <-function (modelselected = NULL)
 				printModelSummary(modelfamily, package, parameter)
 				
             }
-            m1 = LoadPackage("plyr")
+            m1 = LoadPackage("dplyr")
             if (!grepl("ERROR", m1)) {
                 success = TRUE
             }
@@ -632,7 +633,7 @@ loadReqModelPackage <-function (modelselected = NULL)
 				parameter="xgbTree"
 				printModelSummary(modelfamily, package, parameter)
             }
-            m1 = LoadPackage("plyr")
+            m1 = LoadPackage("dplyr")
             if (!grepl("ERROR", m1)) {
                 success = TRUE
             }
@@ -646,7 +647,7 @@ loadReqModelPackage <-function (modelselected = NULL)
 				parameter="C5.0"
 				printModelSummary(modelfamily, package, parameter)
             }
-            m1 = LoadPackage("plyr")
+            m1 = LoadPackage("dplyr")
             if (!grepl("ERROR", m1)) {
                 success = TRUE
             }
@@ -661,7 +662,7 @@ loadReqModelPackage <-function (modelselected = NULL)
 				printModelSummary(modelfamily, package, parameter)
 				
             }
-            m1 = LoadPackage("plyr")
+            m1 = LoadPackage("dplyr")
             if (!grepl("ERROR", m1)) {
                 success = TRUE
             }
@@ -821,7 +822,7 @@ loadReqModelPackage <-function (modelselected = NULL)
             if (!grepl("ERROR", m1)) {
                 success = TRUE
             }
-            m1 = LoadPackage("dplyr")
+            m1 = LoadPackage("ddplyr")
             if (!grepl("ERROR", m1)) {
                 success = TRUE
             }
@@ -936,5 +937,9 @@ loadReqModelPackage <-function (modelselected = NULL)
     }
     invisible(success)
 }
+
+
+
+
 
 #####end  ### New Functions 11Sep2017
