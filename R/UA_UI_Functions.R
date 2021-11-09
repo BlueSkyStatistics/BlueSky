@@ -429,7 +429,8 @@ BSkyReloadDataset<-function(fullpathfilename,  filetype, sheetname=NULL, csvHead
 BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex)
 {
 	bskyret = BSkysaveDataset(fullpathfilename=fullpathfilename,  filetype=filetype, Rownames = Rownames, Colnames = Colnames, newWorksheetName=newWorksheetName,factor2char=factor2char, dataSetNameOrIndex=dataSetNameOrIndex)
-	return(invisible(bskyret))
+	# print(bskyret)
+	return(invisible("bskyret"))
 }
 ###################################################################################################################
 # fullpathfilename -> Full path filename(drive directory and filename) of an existing file to load the UA memory space
@@ -463,8 +464,8 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(dataSetNameOrIndex)
 	
-	BSkyErrMsg = paste("UAsaveDataset: Error in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
-	BSkyWarnMsg = paste("UAsaveDataset: Warning in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
+	BSkyErrMsg = paste("BSkysaveDataset: Error in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
+	BSkyWarnMsg = paste("BSkysaveDataset: Warning in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
 	tryCatch(
@@ -519,7 +520,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			# control will be passed to the error handler function
 			# and then the control will come out ogf the Try-Catch block 
 			
-			# cat("Error caught in UAsaveDataset \n")
+			#cat("Error caught in BSkysaveDataset \n")
 			#BSkyLocalErrorFlagsReset() #if needed
     	}
 		#cat("\nWARNING:: top level save dataset function\n")
@@ -530,7 +531,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			# so by the time controls comes here - all warnings are already handled 
 			# and execution of the code had continued
 			
-			# cat("Warning caught in UAsaveDataset \n")
+			#cat("Warning caught in BSkysaveDataset \n")
 			BSkyLocalWarningFlagsReset() #if needed to continue without returning back to the top level function 
     	}
 		BSkyFunctionWrapUp()
@@ -555,20 +556,22 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 #' @examples
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkycloseDataset(df)
+
 BSkycloseDataset<-function(dataSetNameOrIndex)
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(dataSetNameOrIndex)
 	
-	BSkyErrMsg = paste("UAcloseDataset: Error in Closing Dataset : ", "DataSetName :", dataSetNameOrIndex,sep="")
-	BSkyWarnMsg = paste("UAcloseDataset: Warning in Closing Dataset : ", "DataSetName :", dataSetNameOrIndex,sep="")
+	BSkyErrMsg = paste("BSkycloseDataset: Error in Closing Dataset : ", "DataSetName :", dataSetNameOrIndex,sep="")
+	BSkyWarnMsg = paste("BSkycloseDataset: Warning in Closing Dataset : ", "DataSetName :", dataSetNameOrIndex,sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	tryCatch(
 		{
 			
 		withCallingHandlers(
 		{
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+			datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+
 			if(!is.null(datasetname))
 			{
 				#Setting DataSetIndex location in uadatasets to NULL, to remove it.
@@ -606,7 +609,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 							#cat("\n+++", oldds[i])
 						}
 					}
-					
+
 				}
 				#-return(NULL)
 				eval(parse(text=paste('remove(',dataSetNameOrIndex, ', envir=.GlobalEnv)')))
@@ -1170,8 +1173,11 @@ UAsetMissing<-function( colNameOrIndex, missvals=NULL, dataSetNameOrIndex)
 BSkyGetDatasetSplitInfo <- function(datasetNameStr)
 {
 	splitVarList = c()
+	#cat("B4 Split Info:")
 	splitInfo = UAgetDataframeSplit(datasetNameStr)
-
+	#cat(datasetNameStr)
+	#cat("Split Info:")
+	#print(splitInfo)
 	if(!is.null(splitInfo) && length(splitInfo) > 0 && splitInfo$DFsplit == TRUE)
 	{
 		splitVarList = splitInfo$DFsplitcolnames
