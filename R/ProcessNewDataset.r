@@ -125,6 +125,25 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 					# }
 				# }
 		# }
+
+			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
+			for(i in 1:colcount)
+			{
+			coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
+			###creating missing value attribute, which is dataset level att.
+			colmisatt <- eval(parse(text=paste(coluname,'<-list(',coluname,'=list(type="none", value=""))')))
+			# print(colmisatt)
+			if(i>1)
+			eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(attr(',datasetname,',"misvals"), ',colmisatt,')')))
+			else
+			eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(',colmisatt,')')))
+			# cat("done!@")
+			}
+
+			#cat("\nCreating Extra attributes for new DS. ")
+			eval(parse(text=paste('attr(',datasetname,',"maxfactor") <<-', bskymaxfactors)))
+			UAcreateExtraAttributes(datasetname, "RDATA")
+
 		},
 		
 		warning = UAwarnHandlerFn
