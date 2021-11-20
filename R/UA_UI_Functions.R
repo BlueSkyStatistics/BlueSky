@@ -229,7 +229,7 @@ BSkyEmpty <-function(datasetName ,noOfRows,noOfCols)
 #' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
 #' BSkyLoadRefresh(exceldata)
 BSkyloadDataset <-function(fullpathfilename,  filetype, worksheetName=NULL, replace_ds=FALSE, 
-load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName )
+load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL )
 {
 
 	BSkyFunctionInit()
@@ -239,16 +239,18 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 	BSkyWarnMsg = paste("BSkyloadDataset: Warning in Loading dataset : ", "DataSetName :", datasetName," ", "Filepath :", paste(fullpathfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	datasetname <- datasetName
-	tryCatch(
-		{
-		withCallingHandlers(
-		{
+	success=0
+	eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+	# # # tryCatch(
+		# # # {
+		# # # withCallingHandlers(
+		# # # {
 			#cat("Top Level - Start Loading Dataset:",datasetname)
 			#print(Sys.time())
 			#find extension
 			#extn = File.sav
 			if(filetype=="SPSS"){
-				UAloadSPSSinDataFrame(fullpathfilename, datasetname, replace=replace_ds, loadMissingValue=load.missing, trimSPSStrailing=trimSPSStrailing) 
+				success = UAloadSPSSinDataFrame(fullpathfilename, datasetname, replace=replace_ds, loadMissingValue=load.missing, trimSPSStrailing=trimSPSStrailing, encoding=encoding) 
 			}
 			if(filetype=="SAS7BDAT"){
 				BSkyLoadSASinDataFrame(fullpathfilename, datasetname, replace=replace_ds) 
@@ -315,16 +317,16 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 				# stop("The dataset has duplicate column names.")
 				# cat("\nStopped!")
 			# }
-		},
+		# # # },
 		
-		warning = UAwarnHandlerFn
+		# # # warning = UAwarnHandlerFn
 
-		) # end of withCallingHandlers for catching warnings and continuing execution		
-		},
-		error = UAerrHandlerFn,
+		# # # ) # end of withCallingHandlers for catching warnings and continuing execution		
+		# # # },
+		# # # error = UAerrHandlerFn,
 		
-		silent =TRUE		
-	)
+		# # # silent =TRUE		
+	# # # )
 
 	    	if(BSkyLocalErrorFound() == TRUE)
     	{
@@ -352,7 +354,8 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		# cat("Returning return structure from this top level load dataset function\n")
-		return(invisible(BSkyReturnStructure2()))
+		# # # return(invisible(BSkyReturnStructure2()))
+		return(success)
 }
 
 #Reloads data along with attributes. If you modified data and want to get original data back(reload from disk).
@@ -428,9 +431,11 @@ BSkyReloadDataset<-function(fullpathfilename,  filetype, sheetname=NULL, csvHead
 
 BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex)
 {
+	BSkyProcessNewDataset(datasetName=dataSetNameOrIndex, NAstrings = c("NA"), stringAsFactor=TRUE)
 	bskyret = BSkysaveDataset(fullpathfilename=fullpathfilename,  filetype=filetype, Rownames = Rownames, Colnames = Colnames, newWorksheetName=newWorksheetName,factor2char=factor2char, dataSetNameOrIndex=dataSetNameOrIndex)
 	# print(bskyret)
-	return(invisible("bskyret"))
+	BSkycloseDataset(dataSetNameOrIndex)
+	return(invisible(bskyret))
 }
 ###################################################################################################################
 # fullpathfilename -> Full path filename(drive directory and filename) of an existing file to load the UA memory space
@@ -467,7 +472,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 	BSkyErrMsg = paste("BSkysaveDataset: Error in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkysaveDataset: Warning in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	
+	success=0
 	tryCatch(
 		{
 		withCallingHandlers(
@@ -496,7 +501,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 				UAwriteDBF(fullpathfilename, dataSetNameOrIndex, fact2char=factor2char)
 			}
 			else if(filetype == "RDATA" || filetype == "RDA"){
-				UAwriteRObj(fullpathfilename,dataSetNameOrIndex)
+				success = UAwriteRObj(fullpathfilename,dataSetNameOrIndex)
 			}			
 			else  if(filetype == "TXT"){
 			}
@@ -537,7 +542,8 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level save dataset function\n")
-		return(invisible(BSkyReturnStructure()))
+		# # # return(invisible(BSkyReturnStructure()))
+		return(success)
 }
 
 # "UAsaveDataset('F:/SPSS/d2.xls', 'Dataset1',  newWorksheetName='Sheet1', filetype='XLS')"
