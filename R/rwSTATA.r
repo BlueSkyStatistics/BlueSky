@@ -1,6 +1,6 @@
 ## copied from rwObj and then modified for stata. So comments may not make sense in all places in the code in this file.
 
-BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE) 
+BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE, encoding=NULL) 
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -8,7 +8,7 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE)
 	BSkyErrMsg = paste("BSkyReadStata: Error reading Stata file : ", "DataSetName :", datasetname," ", "Stata Filename  :", paste(stataFilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkyReadStata: Warning reading Stata file : ", "DataSetName :", datasetname," ", "Stata Filename :", paste(stataFilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-
+	success=0
 	##loading the dbf file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
 	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
@@ -24,23 +24,65 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE)
 			#cat("DS Closed")						
 		}
 
-		eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(read_dta(file = "',stataFilename,'"))' , sep=''   )))
-		colcount = eval(parse(text=paste('ncol(',datasetname,')')))
-		for(i in 1:colcount)
+		# cat("\nBefore Try Catch\n")
+		corecommand=c()
+		#R command to open data file (SPSS)
+		if(is.null(encoding))
 		{
-			coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
-			colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
-
-			if(colclass[1] == "haven_labelled")##"haven_labelled" "vctrs_vctr"     "double"
-			{
-				eval(parse(text=paste('.GlobalEnv$',datasetname,'$',coluname,'<- as_factor(',datasetname,'$',coluname,')',sep='' )))
-			}
+			corecommand = paste('read_dta(file=\'',stataFilename,'\')',sep='')
+			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_dta(file=\'',stataFilename,'\'))',sep='')
 		}
-		uadatasets$name <- c(uadatasets$name, datasetname)
-
-		#Creating extra attributes at column level
-		UAcreateExtraAttributes(datasetname, "DTA")
+		else{
+			corecommand = paste('read_dta(file=\'',stataFilename,'\', encoding=\'',encoding,'\')', sep='')
+			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_dta(file=\'',stataFilename,'\', encoding=\'',encoding,'\'))',sep='')
+		}
+		opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')', sep='')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+		#trying to open the datafile
+		tryCatch({
 		
+				withCallingHandlers({
+					eval(parse(text = opendatafilecmd))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully opened\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError opening file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}	
+
+		##following line was in use before(11Nov2021) above tryCatch
+		# eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(read_dta(file = "',stataFilename,'"))' , sep=''   )))
+		if(success==0)
+		{
+			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
+			for(i in 1:colcount)
+			{
+				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
+				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
+
+				if(colclass[1] == "haven_labelled")##"haven_labelled" "vctrs_vctr"     "double"
+				{
+					eval(parse(text=paste('.GlobalEnv$',datasetname,'$',coluname,'<- as_factor(',datasetname,'$',coluname,')',sep='' )))
+				}
+			}
+			uadatasets$name <- c(uadatasets$name, datasetname)
+
+			#Creating extra attributes at column level
+			UAcreateExtraAttributes(datasetname, "DTA")
+		}
 	}		
 	else
 	{
@@ -49,6 +91,7 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE)
 	}			
 
 	BSkyFunctionWrapUp()
+	return(success)
 }
 
 
@@ -61,13 +104,41 @@ BSkyWriteStata <- function(stataFilename,dataSetNameOrIndex) ##  index of datase
 	BSkyErrMsg = paste("BSkywriteStata: Error writing Stata file : ", "DataSetName :", dataSetNameOrIndex," ", "Stata Filename  :", paste(stataFilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkywriteStata: Warning writing Stata file : ", "DataSetName :", dataSetNameOrIndex," ", "Stata Filename :", paste(stataFilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=0
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	#cat("\nDS obj:", datasetname," ::\n")
 	if(!is.null(datasetname))
 	{		
+		corecommand = paste('write_dta(',datasetname,', path = "',stataFilename,'")',sep='')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
+		#trying to save the datafile
+		tryCatch({
+		
+				withCallingHandlers({
+					eval(parse(text=corecommand))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully saved\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError saving file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}		
+		
 		#datasetname <- ExtractDatasetNameFromGlobal(datasetname)
-	
-		eval(parse(text=paste('write_dta(',datasetname,', path = "',stataFilename,'")',sep='')))
+		# following command was in use before adding tryCatch above
+		# eval(parse(text=paste('write_dta(',datasetname,', path = "',stataFilename,'")',sep='')))
 	}
 	else
 	{
@@ -75,6 +146,7 @@ BSkyWriteStata <- function(stataFilename,dataSetNameOrIndex) ##  index of datase
 		BSkyErrMsg =paste("BSkywriteStata:  Cannot write Stata. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
 		warning("BSkywriteStata:  Cannot write Stata. Dataset name or index not found.")
 	}		
-	BSkyFunctionWrapUp()			
+	BSkyFunctionWrapUp()	
+	return(success)
 
 }

@@ -29,17 +29,26 @@
 #																											
 #Example: UAloadSPSSinDataFrame("C:\\satisf.sav", "mydataset",TRUE)																								
 #############################################################################################################
-
-UAloadSPSSinDataFrame <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf, usehaven=TRUE)
+# OpenStatus=-1
+UAloadSPSSinDataFrame <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf, usehaven=TRUE, encoding=NULL)
 {
+	success=0
 	if(usehaven)
 	{
-		UAloadSPSSinDataFrame.haven(SPSSfileName=SPSSfileName, datasetname=datasetname, replace=replace, loadMissingValue=loadMissingValue, trimSPSStrailing=trimSPSStrailing, max.factor=max.factor)
+		success = UAloadSPSSinDataFrame.haven(SPSSfileName=SPSSfileName, datasetname=datasetname, replace=replace, loadMissingValue=loadMissingValue, trimSPSStrailing=trimSPSStrailing, max.factor=max.factor, encoding=encoding)
+		if(success!=0)
+		{
+			# OpenStatus <<- success
+			# e <- simpleError("test error")
+			# stop(e)
+		}
 	}
 	else 
 	{
 		UAloadSPSSinDataFrame.foreign(SPSSfileName=SPSSfileName, datasetname=datasetname, replace=replace, loadMissingValue=loadMissingValue, trimSPSStrailing=trimSPSStrailing, max.factor=max.factor)
 	}
+	# OpenStatus=-1
+	return(success)
 }
 
 UAloadSPSSinDataFrame.foreign <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf)
@@ -315,7 +324,7 @@ temp <- NULL
 }
 
 ##uses haven for reading SPSS files
-UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf)
+UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE, loadMissingValue=FALSE, trimSPSStrailing=FALSE, max.factor=Inf, encoding=NULL)
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -323,7 +332,7 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 	BSkyErrMsg = paste("UAloadSPSSinDataFrame: Error loading SPSS file : ", "DataSetName :", datasetname," ", "SPSS filepath & filename  :", paste(SPSSfileName, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAloadSPSSinDataFrame: Warning loading SPSS file : ", "DataSetName :", datasetname," ", "SPSS filepath & filename   :", paste(SPSSfileName, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-
+	success = 0;
 		# New Dataset name is only added if you want to replace existing, Or you will check that it should not already be present
 		curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
 		if((replace == TRUE) || (replace == FALSE && curidx == -1))
@@ -338,9 +347,49 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			}
 
 			missingval <- NULL
-						
-			eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sav(file=\'',SPSSfileName,'\',))',sep='')))
+			# cat("\nBefore Try Catch\n")
+			corecommand=c()
+			#R command to open data file (SPSS)
+			if(is.null(encoding))
+			{
+				corecommand = paste('read_sav(file=\'',SPSSfileName,'\')',sep='')
+				# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sav(file=\'',SPSSfileName,'\'))',sep='')
+			}
+			else{
+				corecommand = paste('read_sav(file=\'',SPSSfileName,'\', encoding=\'',encoding,'\')', sep='')
+				# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sav(file=\'',SPSSfileName,'\', encoding=\'',encoding,'\'))',sep='')
+			}
+			opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')', sep='')
+			#reset global error-warning flag
+			eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+			#trying to open the datafile
+			tryCatch({
+			
+					withCallingHandlers({
+						eval(parse(text = opendatafilecmd))
+					}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+			}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+			
+			if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+			{
+				## maybe return 0 for success
+				# cat("\nSuccessfully opened\n") 
+				# print(corecommand) #no need to print this
+			}
+			else ## Failure
+			{
+				cat("\nError opening file:\n") 
+				# cat("\n\nCommand executed:\n")
+				print(corecommand)
+				## gracefully report error to the app layer about the issue so it does not keep waiting. 
+				## maybe return -1 for failure
+				success = -1;
+			}			
 
+			##following line was in use before(11Nov2021) above tryCatch
+			# eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sav(file=\'',SPSSfileName,'\',))',sep='')))
+			if(success == 0)
+			{
 			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
 			for(i in 1:colcount)
 			{
@@ -402,6 +451,7 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			}# load missing only when flag is ON.
 				
 			UAcreateExtraAttributes(datasetname, "SPSS")
+			}
 		}
 		else
 		{
@@ -410,9 +460,31 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 					# }
 		#cat("\nLoading SPSS Done!\n")		
 		BSkyFunctionWrapUp()	
+		return(success)
 		#return(BSkyReturnStructure())
 }
 
+BSkyOpenDatafileCommandErrWarnHandler <- function(m)
+{
+	#print(str(m))
+
+	if("error" %in% attr(m, "class")) ##quit
+	{
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = TRUE"), envir=globalenv())
+		cat("\n")
+		message("Error: ", as.character(m$message))
+		
+		#print(sys.calls()) #to print the stack trace - not very helpful 
+	}
+	else if("warning" %in% attr(m, "class"))
+	{
+		message("Warning: ", as.character(m$message))
+	}
+	else
+	{
+		message("Msg: ", as.character(m$message))
+	}
+}
 
 # WRITE ROLLBACK FUNCTION, IF CREATEATRRIBUTE FAILS THEN U "may" NEED TO ROLLBACK AND REMOVE THE CURRENT LATEST LOADED DATASET FOR WHICH ATTIBUTES FAILED TO CREATE
 # internal function called from UAloadSPSSinDataFrame, to create following extra attributes
@@ -1228,23 +1300,53 @@ BSkywriteSAV <- function(savfilename, dataSetNameOrIndex)
 	BSkyErrMsg = paste("BSkywriteSAV: Error writing SAV file : ", "DataSetName :", dataSetNameOrIndex," ", "SAV filename  :", paste(savfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkywriteSAV: Warning writing SAV file : ", "DataSetName :", dataSetNameOrIndex," ", "SAV filename  :", paste(savfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=0
 			##dataset saved to SAV file is from uadatasets
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 			
-			if(!is.null(datasetname))
-			{		
-				require(rio)
-				eval(parse(text=paste('export(',datasetname,', savfilename)')))
-			}
-			else
-			{
-				BSkyErrMsg =paste("BSkywriteSAV:  Cannot write SAV. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
-				# cat("\nError: Cannot write CSV. Dataset name or index not found\n")
-				warning("BSkywriteSAV:  Cannot write SAV. Dataset name or index not found.")
-			}			
-				BSkyFunctionWrapUp()	
+	if(!is.null(datasetname))
+	{		
+		require(rio)
+		# eval(parse(text=paste('export(',datasetname,', savfilename)')))
+		#above line was in use before adding tryCatch below
+		
+		corecommand = paste('export(',datasetname,', savfilename)')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+		#trying to save the datafile
+		tryCatch({
+		
+				withCallingHandlers({
+					eval(parse(text=corecommand))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully saved\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError saving file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}		
+		
+	}
+	else
+	{
+		BSkyErrMsg =paste("BSkywriteSAV:  Cannot write SAV. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
+		# cat("\nError: Cannot write CSV. Dataset name or index not found\n")
+		warning("BSkywriteSAV:  Cannot write SAV. Dataset name or index not found.")
+	}			
+		BSkyFunctionWrapUp()	
 				
-	
+	return(success)
 }
 
 

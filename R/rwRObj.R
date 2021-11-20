@@ -25,124 +25,153 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 	BSkyErrMsg = paste("UAreadRObj: Error reading R Obj file : ", "DataSetName :", datasetname," ", "R Obj Filename  :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAreadRObj: Warning reading R Obj file : ", "DataSetName :", datasetname," ", "R Obj Filename :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=0
+	##loading the dbf file from disk to uadatasets array
+	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
+	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
+	#cat("\nCur Index of RObj:",curidx)
+	if((replace == TRUE) || (replace == FALSE && curidx == -1)){
+		# if i>0 then datasetname already exists && you want to replace it.
+		if(replace == TRUE && curidx > 0){
+			# Delete the existing dataset from the global list first. 
+			# if dataset already exists, its index is in i.
+			# uadatasets$lst[i]<-NULL
+			#UAcloseDataset(datasetname)
+			BSkyCloseForReloading(datasetname)
+			#cat("DS Closed")						
+		}
 
-				##loading the dbf file from disk to uadatasets array
-				# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
-				curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
-				#cat("\nCur Index of RObj:",curidx)
-				if((replace == TRUE) || (replace == FALSE && curidx == -1)){
-					# if i>0 then datasetname already exists && you want to replace it.
-					if(replace == TRUE && curidx > 0){
-						# Delete the existing dataset from the global list first. 
-						# if dataset already exists, its index is in i.
-						# uadatasets$lst[i]<-NULL
-						#UAcloseDataset(datasetname)
-						BSkyCloseForReloading(datasetname)
-						#cat("DS Closed")						
-					}
-	
-					filetype="RDATA"
-					if(length(grep(".RData", RObjfileName, ignore.case = TRUE)==0))
-						filetype = "RDA"
-			#cat("Before actual function call load():",datasetname)
-			#print(Sys.time())			
-					# library(RODBC) #no need
-					bskysig=NULL ##support for old .RData format where data.fram was stored in UAObj
-					UAObj <- NULL
-					UAObj$info <- NULL
-					UAObj$obj <- NULL
-					bsky.class <- ""
-					isDFname=FALSE
-					
-					
+		filetype="RDATA"
+		if(length(grep(".RData", RObjfileName, ignore.case = TRUE)==0))
+			filetype = "RDA"
+		#cat("Before actual function call load():",datasetname)
+		#print(Sys.time())			
+		# library(RODBC) #no need
+		bskysig=NULL ##support for old .RData format where data.fram was stored in UAObj
+		UAObj <- NULL
+		UAObj$info <- NULL
+		UAObj$obj <- NULL
+		bsky.class <- ""
+		isDFname=FALSE
+		bsky.rdataname = NULL
+		corecommand = paste('load(file= ',RObjfileName,')',sep='')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+		#trying to open the datafile
+		tryCatch({
+		
+				withCallingHandlers({					
 					bsky.rdataname <- load(file = RObjfileName)#, uadatasets$lst[Newindex])
-					if( length(bsky.rdataname) == 1 && bsky.rdataname=="UAObj")##support old format (BSky format) #D:/BSky/Misc/Datasets/rdata/empfull.rdata
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully opened\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError opening file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}					
+				
+		if(success==0)		
+		{
+			if( length(bsky.rdataname) == 1 && bsky.rdataname=="UAObj")##support old format (BSky format) #D:/BSky/Misc/Datasets/rdata/empfull.rdata
+			{
+				bskysig <- UAObj$info 
+			}
+			else
+			{
+				bsky.class <- class(get(bsky.rdataname))
+				
+				if(length(bsky.class) > 1)
+				{
+					#warning("UAreadRObj: .RData file has multiple objects.");
+					
+					objidxs = which(bsky.class == 'tbl_df') #there may be more than one datasets
+					if( length(objidxs) == 0)#19Oct2019
+						objidxs = which(bsky.class == 'data.frame')
+					if(length(objidxs) > 1)
 					{
-						bskysig <- UAObj$info 
+						#warning("UAreadRObj: .RData file has multiple data.frame(s). Loading the first one only.");
+						firstdfidx = objidxs[1]
 					}
 					else
 					{
-						bsky.class <- class(get(bsky.rdataname))
-						
-						if(length(bsky.class) > 1)
-						{
-							#warning("UAreadRObj: .RData file has multiple objects.");
-							
-							objidxs = which(bsky.class == 'tbl_df') #there may be more than one datasets
-							if( length(objidxs) == 0)#19Oct2019
-								objidxs = which(bsky.class == 'data.frame')
-							if(length(objidxs) > 1)
-							{
-								#warning("UAreadRObj: .RData file has multiple data.frame(s). Loading the first one only.");
-								firstdfidx = objidxs[1]
-							}
-							else
-							{
-								firstdfidx = objidxs
-							}
-							bsky.rdataname <-  get(bsky.rdataname[firstdfidx] )
-							bsky.class=class(bsky.rdataname)  #get class for the selected item from the RDATA
-							if(length(bsky.class) > 1)
-								bsky.class = bsky.class[1]
-							
-							isDFname=FALSE # no need to set this. It is default
-						}
-						else
-						{
-							isDFname=TRUE
-							## no need of this block because while running load() above we assigned to bsky.rdataname
-							## which works when there is just one data.frame in RData file.
-						}
-						
+						firstdfidx = objidxs
 					}
-					# print(bsky.rdataname);
-					if(bsky.class=="tbl_df" || bsky.class=="data.frame")
-					{
-						#eval( parse(text=paste( datasetname,' <<- get(bsky.rdataname)' , sep=''   )))
-						if(isDFname)
-						{
-							eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(',bsky.rdataname,')' , sep=''   )))
-						}
-						else
-						{
-							eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(bsky.rdataname)' , sep=''   )))
-						}
-
-						uadatasets$name <- c(uadatasets$name, datasetname)
-
-						#Creating extra attributes at column level
-						UAcreateExtraAttributes(datasetname, filetype)
-					}
-					else if(!is.null(bskysig) && bskysig$ver==1.2 && bskysig$name=="BSky")##supporting old format in which we saved dat frame in our UAObj
-					{
-						eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- UAObj$obj' , sep=''   ))) ## Working
-						uadatasets$name <- c(uadatasets$name, datasetname)
-						#Creating extra attributes at column level
-						UAcreateExtraAttributes(datasetname, filetype)
-					}
-					else
-					{
-						BSkyErrMsg =paste("UAreadRObj: .RData file should only contain one data.frame object"," File Name:", RObjfileName)
-						warning("UAreadRObj: .RData file should only contain one data.frame object");
-						# cat("\nNot a Blue Sky file version.\n")
-					}
-				}		
+					bsky.rdataname <-  get(bsky.rdataname[firstdfidx] )
+					bsky.class=class(bsky.rdataname)  #get class for the selected item from the RDATA
+					if(length(bsky.class) > 1)
+						bsky.class = bsky.class[1]
+					
+					isDFname=FALSE # no need to set this. It is default
+				}
 				else
 				{
-					BSkyErrMsg =paste("UAreadRObj: Dataset with the same name already on the global list ."," Dataset Name:", datasetname)
-					warning("UAreadRObj: Dataset with the same name already on the global list ")
-				}			
-			# if(objInfo$ver == 1.2)
-			# {
-				# cat("Internal Obj...\n")
-			# }
-			# else
-			# {
-				# cat("External Object...\n")
-			# }
-			#cat("Wrapup:",datasetname)
-			#print(Sys.time())	
-			BSkyFunctionWrapUp()
+					isDFname=TRUE
+					## no need of this block because while running load() above we assigned to bsky.rdataname
+					## which works when there is just one data.frame in RData file.
+				}
+				
+			}
+			# print(bsky.rdataname);
+			if(bsky.class=="tbl_df" || bsky.class=="data.frame")
+			{
+				#eval( parse(text=paste( datasetname,' <<- get(bsky.rdataname)' , sep=''   )))
+				if(isDFname)
+				{
+					eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(',bsky.rdataname,')' , sep=''   )))
+				}
+				else
+				{
+					eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(bsky.rdataname)' , sep=''   )))
+				}
+
+				uadatasets$name <- c(uadatasets$name, datasetname)
+
+				#Creating extra attributes at column level
+				UAcreateExtraAttributes(datasetname, filetype)
+			}
+			else if(!is.null(bskysig) && bskysig$ver==1.2 && bskysig$name=="BSky")##supporting old format in which we saved dat frame in our UAObj
+			{
+				eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- UAObj$obj' , sep=''   ))) ## Working
+				uadatasets$name <- c(uadatasets$name, datasetname)
+				#Creating extra attributes at column level
+				UAcreateExtraAttributes(datasetname, filetype)
+			}
+			else
+			{
+					BSkyErrMsg =paste("UAreadRObj: .RData file should only contain one data.frame object"," File Name:", RObjfileName)
+					warning("UAreadRObj: .RData file should only contain one data.frame object");
+					# cat("\nNot a Blue Sky file version.\n")
+			}
+		}
+	}		
+	else
+	{
+		BSkyErrMsg =paste("UAreadRObj: Dataset with the same name already on the global list ."," Dataset Name:", datasetname)
+		warning("UAreadRObj: Dataset with the same name already on the global list ")
+	}			
+	# if(objInfo$ver == 1.2)
+	# {
+		# cat("Internal Obj...\n")
+	# }
+	# else
+	# {
+		# cat("External Object...\n")
+	# }
+	#cat("Wrapup:",datasetname)
+	#print(Sys.time())	
+	BSkyFunctionWrapUp()
+	return(success)
 }
 
 
@@ -171,68 +200,102 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 	BSkyErrMsg = paste("UAwriteRObj: Error writing R Obj file : ", "DataSetName :", dataSetNameOrIndex," ", "R Obj Filename  :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAwriteRObj: Warning writing R Obj file : ", "DataSetName :", dataSetNameOrIndex," ", "R Obj Filename :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
-#cat("\nDS obj:", datasetname," ::\n")
-			if(!is.null(datasetname))
-			{		
-				datasetname <- ExtractDatasetNameFromGlobal(datasetname)
+	success=0
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	#cat("\nDS obj:", datasetname," ::\n")
+	if(!is.null(datasetname))
+	{		
+		datasetname <- ExtractDatasetNameFromGlobal(datasetname)
+		
+		extnPattern = ".RData"
+		
+		DatasetNameSameAsFilename = TRUE #TRUE means save the dataset with the same name as the name of the file
+		# first make a copy of 'Dataset1' Dataset2 with the same name as the filename (provided by the user)
+		# then save this newly created dataset in a file instead of the 'Dataset1', 'Dataset2' etc.
+		# not sure what to do with 'Dataset1', 'Dataset2'. Maybe make them null.
+		if(DatasetNameSameAsFilename)
+		{
+			#get filename for the fullpath fileName. Get Dir name using: dirname("C:/some_dir/a.ext")
+			onlyfilenamewithextension = basename(RObjfileName)
+			
+			if(length(grep(".RData", onlyfilenamewithextension, ignore.case = TRUE))==0)
+				extnPattern = ".RDa"
 				
-				extnPattern = ".RData"
-				
-				DatasetNameSameAsFilename = TRUE #TRUE means save the dataset with the same name as the name of the file
-				# first make a copy of 'Dataset1' Dataset2 with the same name as the filename (provided by the user)
-				# then save this newly created dataset in a file instead of the 'Dataset1', 'Dataset2' etc.
-				# not sure what to do with 'Dataset1', 'Dataset2'. Maybe make them null.
-				if(DatasetNameSameAsFilename)
-				{
-					#get filename for the fullpath fileName. Get Dir name using: dirname("C:/some_dir/a.ext")
-					onlyfilenamewithextension = basename(RObjfileName)
-					
-					if(length(grep(".RData", onlyfilenamewithextension, ignore.case = TRUE))==0)
-						extnPattern = ".RDa"
-						
-					#get filename without extension
-					onlyfilename = stringr::str_replace(onlyfilenamewithextension, regex(extnPattern, ignore_case = TRUE), "")
-					
-					#remove spaces or specialchars in filename, else eval/parse below will not work.
-  				    onlyfilename =str_replace_all(onlyfilename, "[^[:alnum:]]", "")
+			#get filename without extension
+			onlyfilename = stringr::str_replace(onlyfilenamewithextension, regex(extnPattern, ignore_case = TRUE), "")
+			
+			#remove spaces or specialchars in filename, else eval/parse below will not work.
+			onlyfilename =str_replace_all(onlyfilename, "[^[:alnum:]]", "")
 
-					if(onlyfilename != datasetname)# if they re not exactly same name (case sensitive)
-					{
-						####01Feb2021 Following 2 eval-pasrse modified. 
-						####Double arrow dropped and .GlobalEnv$ introduced.
-						#creating a copy of the new dataset (Dataset1, Dataset2, etc.) with the same name as the filename in RObjFilename
-						eval(parse(text=paste('.GlobalEnv$',onlyfilename, '<- .GlobalEnv$', datasetname, sep='')))
-						
-						#Make 'Dataset1', 'Dataset2' etc. NULL. For releasing the memory.
-						eval(parse(text=paste('.GlobalEnv$',datasetname, '<- NULL', sep='')))
-						
-						#replace 'Dataset1', 'Dataset2' etc in dataset with whatever name is in the onlyfilename (which is the filename user provided)
-						datasetname = onlyfilename 
-					}
-				}
-				
-				
-				#eval(parse(text=paste('save(',datasetname,', file = RObjfileName)',sep='')))
-				eval(parse(text=paste('save(',datasetname,', file = RObjfileName)',sep='')))
-				#save(datasetname, file = RObjfileName)
-				# save(uadatasets$lst[1],"F:/myuads")
-				
-				# # # eval( parse(text= paste("save(",name,",file=",filename,")") ) )
-				#paste("save(",name,",file=",filename,")")
-				#output "save( myobj ,file= myfile )"
-				# no one else could
-				#1.look for sig. If not found "not BlueSky" Continue loading? Show list to choose. dF1, df2.
-				#2.''''''''''''', read DF, flag in sig (read anyway), Name of DF filename-d1....4,
-			}
-			else
+			if(onlyfilename != datasetname)# if they re not exactly the same name (case sensitive)
 			{
-				# cat("\nError: Cannot write RData. Dataset name or index not found\n")
-				BSkyErrMsg =paste("UAwriteRObj:  Cannot write RData. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
-				warning("UAwriteRObj:  Cannot write RData. Dataset name or index not found.")
-			}		
-		BSkyFunctionWrapUp()			
-
+				####01Feb2021 Following 2 eval-pasrse modified. 
+				####Double arrow dropped and .GlobalEnv$ introduced.
+				#creating a copy of the new dataset (Dataset1, Dataset2, etc.) with the same name as the filename in RObjFilename
+				eval(parse(text=paste('.GlobalEnv$',onlyfilename, '<- .GlobalEnv$', datasetname, sep='')))
+				
+				#Make 'Dataset1', 'Dataset2' etc. NULL. For releasing the memory.
+				###eval(parse(text=paste('.GlobalEnv$',datasetname, '<- NULL', sep='')))
+				
+				#replace 'Dataset1', 'Dataset2' etc in dataset with whatever name is in the onlyfilename (which is the filename user provided)
+				datasetname = onlyfilename 
+			}
+		}
+		
+		
+		#eval(parse(text=paste('save(',datasetname,', file = RObjfileName)',sep='')))
+		# # # # eval(parse(text=paste('save(',datasetname,', file = RObjfileName)',sep='')))
+		#save(datasetname, file = RObjfileName)
+		# save(uadatasets$lst[1],"F:/myuads")
+		# # # # eval(parse(text=paste('.GlobalEnv$',datasetname, '<- NULL', sep='')))
+		# # # eval( parse(text= paste("save(",name,",file=",filename,")") ) )
+		#paste("save(",name,",file=",filename,")")
+		#output "save( myobj ,file= myfile )"
+		# no one else could
+		#1.look for sig. If not found "not BlueSky" Continue loading? Show list to choose. dF1, df2.
+		#2.''''''''''''', read DF, flag in sig (read anyway), Name of DF filename-d1....4,
+		
+		####### make dataset NULL if SAVE is successful
+		#reset global error-warning flag
+		success =0
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+		corecommand = paste('save(',datasetname,', file = RObjfileName)',sep='')
+		tryCatch({
+	
+			withCallingHandlers({
+				eval(parse(text=corecommand))
+			}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+			}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+	
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully saved\n") 
+			# print(corecommand) #no need to print this
+			eval(parse(text=paste('.GlobalEnv$',datasetname, '<- NULL', sep='')))
+		}
+		else ## Failure
+		{
+			cat("\nError saving file:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}
+	}
+	else
+	{
+		# cat("\nError: Cannot write RData. Dataset name or index not found\n")
+		BSkyErrMsg =paste("UAwriteRObj:  Cannot write RData. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
+		warning("UAwriteRObj:  Cannot write RData. Dataset name or index not found.")
+	}		
+	BSkyFunctionWrapUp()			
+	# if(success!=0)
+	# {
+		# e <- simpleError("Error in saving")
+		# stop(e)
+	# }
+	return(success)
 }
 
 #ReturnObjectName will contain the contents of RData file after loading

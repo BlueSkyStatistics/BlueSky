@@ -28,6 +28,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 	BSkyErrMsg = paste("UAreadExcel: Error reading Excel file : ", "DataSetName :", datasetname," ", "Excel filename  :", paste(excelfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAreadExcel: Warning reading Excel file : ", "DataSetName :", datasetname," ", "Excel filename :", paste(excelfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=0
 	##loading the dbf file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
 	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
@@ -65,29 +66,59 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		# odbcCloseAll()
 		######### Using RODBC package ########ends####
 		
-		#03Aug2016 change "character" cols to "factor" ## This take more time to load in grid. 
-		#Dataset(with many character cols loan.csv) which was taking 27sec earlier, took 1min:45sec to load when "character" changed to "factor"
-		if(character.to.factor) 
-		{
-			eval( parse(text=paste('bskytempx <<- NULL',sep='')))## 03Aug2016 Clean x
-			######### Using readxl package ########		datasetname <- read_excel(path, sheet = 1)
-			eval( parse(text=paste('bskytempx <<- as.data.frame( read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\'))', sep=''  ))) # use with lapply
-			
-			#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
-			GenerateUniqueColName('bskytempx')
-			
-			#following line : empty col name replaced by something like C..NA..NA..NA
-			eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (bskytempx, function(y) {if(class(y) == "character") y = factor(y) else y} ) )',sep='' )))
-		}
-		else
-		{
-			eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\'))', sep=''  ))) 
-			#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
-			GenerateUniqueColName(datasetname)				
+		#R command to open data file
+		corecommand = paste('read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\')', sep='')
 
-		}		
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
 		
-	
+		# eval( parse(text=paste('bskytempx <<- NULL',sep='')))## 03Aug2016 Clean x
+		
+		#trying to open the datafile
+		tryCatch({		
+			withCallingHandlers({		
+				# eval( parse(text=paste('bskytempx <<- as.data.frame(',corecommand,')', sep=''  )))
+
+				#03Aug2016 change "character" cols to "factor" ## This take more time to load in grid. 
+				#Dataset(with many character cols loan.csv) which was taking 27sec earlier, took 1min:45sec to load when "character" changed to "factor"
+				if(character.to.factor) 
+				{
+					eval( parse(text=paste('bskytempx <<- NULL',sep='')))## 03Aug2016 Clean x
+					######### Using readxl package ########		datasetname <- read_excel(path, sheet = 1)
+					eval( parse(text=paste('bskytempx <<- as.data.frame(',corecommand,')', sep=''  ))) # use with lapply
+					
+					#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
+					GenerateUniqueColName('bskytempx')
+					
+					#following line : empty col name replaced by something like C..NA..NA..NA
+					eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (bskytempx, function(y) {if(class(y) == "character") y = factor(y) else y} ) )',sep='' )))
+				}
+				else
+				{
+					eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')', sep=''  ))) 
+					#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
+					GenerateUniqueColName(datasetname)				
+
+				}						
+				
+			}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully opened\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError opening file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}	
 		##03Aug2016 following block was used earlier. Now the if-else above is used. 
 		## FALSE in 'if' below is added to not execute that code.
 		## Ealier, the following block was with 'if' and without curly brackets
@@ -110,42 +141,45 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 			#as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )
 		}
 		
-		## 03Sep2016 We had to put following code because hadley's was not handling the special characters
-		#Now replace special chars with underscore and prefix 'X' if there is digit in the first index  of colum name.
-		colcount <- eval(parse(text=paste('length(names(.GlobalEnv$',datasetname,'))', sep='' ))) #colcount = length(names(datasetname))
-		#cat('Count=')
-		#cat(colcount)
-		#ptm= proc.time()
-		for( i in 1:colcount)
+		if(success==0)
 		{
-			eval(parse(text=paste('names(','.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
-		}
-		
-		# set the name (Which is passed as an input parameter to this function)
-		# to the newly created data frame within the global list
-		# names(uadatasets$lst)[length(uadatasets$lst)]<-datasetname
-		uadatasets$name <- c(uadatasets$name, datasetname)
-		#cat("\nLoaded Excel dataset :", datasetname)					
-		
-		# if(replace == FALSE)
-		# {						
-			# #for old code compatibility put same list in 'name' also
-			# uadatasets$name <- c(uadatasets$name, datasetname)
-		# }	
-					
-		# DataSetIndex <- UAgetIndexOfDataSet(datasetname)
-		ftype = "XLS"
-		if(xlsx)
-		{
-			ftype = "XLSX"
-		}
+			## 03Sep2016 We had to put following code because hadley's was not handling the special characters
+			#Now replace special chars with underscore and prefix 'X' if there is digit in the first index  of colum name.
+			colcount <- eval(parse(text=paste('length(names(.GlobalEnv$',datasetname,'))', sep='' ))) #colcount = length(names(datasetname))
+			#cat('Count=')
+			#cat(colcount)
+			#ptm= proc.time()
+			for( i in 1:colcount)
+			{
+				eval(parse(text=paste('names(','.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+			}
+			
+			# set the name (Which is passed as an input parameter to this function)
+			# to the newly created data frame within the global list
+			# names(uadatasets$lst)[length(uadatasets$lst)]<-datasetname
+			uadatasets$name <- c(uadatasets$name, datasetname)
+			#cat("\nLoaded Excel dataset :", datasetname)					
+			
+			# if(replace == FALSE)
+			# {						
+				# #for old code compatibility put same list in 'name' also
+				# uadatasets$name <- c(uadatasets$name, datasetname)
+			# }	
+						
+			# DataSetIndex <- UAgetIndexOfDataSet(datasetname)
+			ftype = "XLS"
+			if(xlsx)
+			{
+				ftype = "XLSX"
+			}
 
 
-		#Creating extra attributes at column level
-		UAcreateExtraAttributes(datasetname, ftype)		
-				#cat("\nFixing UTC")
-				#MakeAllDateColUTC(datasetname)
-				#cat("\nUTC Fixed")		
+			#Creating extra attributes at column level
+			UAcreateExtraAttributes(datasetname, ftype)		
+					#cat("\nFixing UTC")
+					#MakeAllDateColUTC(datasetname)
+					#cat("\nUTC Fixed")		
+		}
 	}
 	else
 	{
@@ -153,6 +187,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		warning("UAreadExcel: Dataset with the same name already on the global list ")
 	}				
 	BSkyFunctionWrapUp()
+	return(success)
 }
 
 ###################################################################################################################
@@ -181,56 +216,85 @@ UAwriteExcel <- function(excelfilename, dataSetNameOrIndex, sheetname, row.names
 	BSkyErrMsg = paste("UAwriteExcel: Error writing Excel file : ", "DataSetName :", dataSetNameOrIndex," ", "Excel filename  :", paste(excelfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAwriteExcel: Warning writing Excel file : ", "DataSetName :", dataSetNameOrIndex," ", "Excel filename :", paste(excelfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	success=0
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
-			if(!is.null(datasetname))
-			{		
+	if(!is.null(datasetname))
+	{		
 			
-			#The openxlsx package provides a write option and it also uses Rcpp to work 
-			#so it is much much faster than the xlsx package.
-				# library(RODBC)
-				# channel<-NULL
-				# if(xlsx)
-				# {
-					# channel <- odbcConnectExcel2007(excelfilename, readOnly=FALSE)
-				# }
-				# else
-				# {
-					# channel <- odbcConnectExcel(excelfilename, readOnly=FALSE)
-				# }			
+		#The openxlsx package provides a write option and it also uses Rcpp to work 
+		#so it is much much faster than the xlsx package.
+		# library(RODBC)
+		# channel<-NULL
+		# if(xlsx)
+		# {
+			# channel <- odbcConnectExcel2007(excelfilename, readOnly=FALSE)
+		# }
+		# else
+		# {
+			# channel <- odbcConnectExcel(excelfilename, readOnly=FALSE)
+		# }			
 
-				# #channel is a handle that points to excel file
-				# # sqlSave(channel, uadatasets$lst[[1]],tablename="Sheet1")
-				# eval(parse(text=paste('sqlSave(channel, ',datasetname,', tablename=sheetname, rownames = row.names, colnames = col.names)')))
-				# odbcCloseAll()
-				
-	#a. openxlsx : looks good choice so far
-	#b. xlsx : documentation says :"per-formance for very large data.frame may be an issue"
-	#c. gdata : reads Excel but saves as "fixed width format"
-	#d. XLConnect : reads Excel: load workbook > createsheet > writeWorksheet >saveWorkBook (looks like does not saves data.frame but only workbook)				
+		# #channel is a handle that points to excel file
+		# # sqlSave(channel, uadatasets$lst[[1]],tablename="Sheet1")
+		# eval(parse(text=paste('sqlSave(channel, ',datasetname,', tablename=sheetname, rownames = row.names, colnames = col.names)')))
+		# odbcCloseAll()
+					
+		#a. openxlsx : looks good choice so far
+		#b. xlsx : documentation says :"per-formance for very large data.frame may be an issue"
+		#c. gdata : reads Excel but saves as "fixed width format"
+		#d. XLConnect : reads Excel: load workbook > createsheet > writeWorksheet >saveWorkBook (looks like does not saves data.frame but only workbook)				
 
-			#using openxlsx
-			require(openxlsx)
-			## formatting
-			#options("openxlsx.borderColour" = "#4F80BD") ## set default border colour
-			#write.xlsx(iris, file = "writeXLSX1.xlsx", colNames = TRUE, borders = "columns")
-			#write.xlsx(iris, file = "writeXLSX2.xlsx", colNames = TRUE, borders = "surrounding")
-			#hs <- createStyle(textDecoration = "BOLD", fontColour = "#FFFFFF", fontSize=12,fontName="Arial Narrow", fgFill = "#4F80BD")
-			#write.xlsx(iris, file = "writeXLSX3.xlsx", colNames = TRUE, borders = "rows", headerStyle = hs)
-			
-			#Works well but No SheetName. Was in use before 07Jul2016
-			#eval(parse(text=paste('write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE)',sep='')))
-			#With SheetName
-			eval(parse(text=paste('write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE, sheetName="',sheetname,'", overwrite=TRUE)',sep='')))
-			}
-			else
-			{
-				# cat("Error: Cannot write Excel. Dataset name or index not found")
-				BSkyErrMsg =paste("UAwriteExcel: Cannot write Excel. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
-				warning("UAwriteExcel: Cannot write Excel. Dataset name or index not found.")
-			}			
-				BSkyFunctionWrapUp()
-
+		#using openxlsx
+		require(openxlsx)
+		## formatting
+		#options("openxlsx.borderColour" = "#4F80BD") ## set default border colour
+		#write.xlsx(iris, file = "writeXLSX1.xlsx", colNames = TRUE, borders = "columns")
+		#write.xlsx(iris, file = "writeXLSX2.xlsx", colNames = TRUE, borders = "surrounding")
+		#hs <- createStyle(textDecoration = "BOLD", fontColour = "#FFFFFF", fontSize=12,fontName="Arial Narrow", fgFill = "#4F80BD")
+		#write.xlsx(iris, file = "writeXLSX3.xlsx", colNames = TRUE, borders = "rows", headerStyle = hs)
+		
+		#Works well but No SheetName. Was in use before 07Jul2016
+		#eval(parse(text=paste('write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE)',sep='')))
+		#With SheetName
+		corecommand = paste('write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE, sheetName="',sheetname,'", overwrite=TRUE)', sep='')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
+		#trying to save the datafile
+		tryCatch({
+		
+				withCallingHandlers({
+					eval(parse(text=corecommand))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully saved\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError saving file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}
+		## following was in use before enclosing it in tryCatch above
+		#eval(parse(text=paste('write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE, sheetName="',sheetname,'", overwrite=TRUE)',sep='')))
+	
+	}
+	else
+	{
+		# cat("Error: Cannot write Excel. Dataset name or index not found")
+		BSkyErrMsg =paste("UAwriteExcel: Cannot write Excel. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
+		warning("UAwriteExcel: Cannot write Excel. Dataset name or index not found.")
+	}			
+	BSkyFunctionWrapUp()
+	return(success)
 }
 
 GetTableList <- function(excelfilename, xlsx=FALSE)
@@ -292,10 +356,10 @@ GetTableList <- function(excelfilename, xlsx=FALSE)
 # 1.If you are the user of an application, consult your application documentation for details on how 
 # to use the appropriate driver.
 # 2.If you are an application developer using OLEDB, set the Provider argument of the ConnectionString
- # property to “Microsoft.ACE.OLEDB.12.0”
-# •If you are connecting to Microsoft Office Excel data, add “Excel 12.0” to the Extended Properties
+ # property to ï¿½Microsoft.ACE.OLEDB.12.0ï¿½
+# ï¿½If you are connecting to Microsoft Office Excel data, add ï¿½Excel 12.0ï¿½ to the Extended Properties
  # of the OLEDB connection string.
 # 3.If you are application developer using ODBC to connect to Microsoft Office Access data, 
-# set the Connection String to “Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=path to mdb/accdb file”
+# set the Connection String to ï¿½Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=path to mdb/accdb fileï¿½
 # 4.If you are application developer using ODBC to connect to Microsoft Office Excel data, 
-# set the Connection String to “Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};DBQ=path to xls/xlsx/xlsm/xlsb file”						
+# set the Connection String to ï¿½Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};DBQ=path to xls/xlsx/xlsm/xlsb fileï¿½						

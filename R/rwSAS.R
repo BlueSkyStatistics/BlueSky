@@ -1,5 +1,5 @@
 ## Following function not at all ready
-BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE)
+BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, encoding=NULL)
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -7,6 +7,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE)
 	BSkyErrMsg = paste("BSkyLoadSASinDataFrame: Error reading SAS file : ", "DataSetName :", datasetname," ", "SAS filename  :", paste(SASfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkyLoadSASinDataFrame: Warning reading SAS file : ", "DataSetName :", datasetname," ", "SAS filename :", paste(SASfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=0
 	##loading the dbf file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
 	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
@@ -24,29 +25,71 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE)
 			#cat("DS Closed")			
 		}
 
+		# cat("\nBefore Try Catch\n")
+		corecommand=c()
+		#R command to open data file (SPSS)
+		if(is.null(encoding))
+		{
+			corecommand = paste('read_sas(data_file=\'',SASfilename,'\')',sep='')
+			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sas(file=\'',SASfilename,'\'))',sep='')
+		}
+		else{
+			corecommand = paste('read_sas(data_file=\'',SASfilename,'\', encoding=\'',encoding,'\')', sep='')
+			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sas(file=\'',SASfilename,'\', encoding=\'',encoding,'\'))',sep='')
+		}
+		opendatafilecmd = paste('x <- as.data.frame( ',corecommand,')', sep='')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+		#trying to open the datafile
+		tryCatch({
+		
+				withCallingHandlers({
+					eval(parse(text = opendatafilecmd))
+					eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )', sep='' )))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully opened\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError opening file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}	
+
 		#df <- read_sas("D:/BlueSky Statistics/Misc/Data_Files/SAS/ctcodes-procedures.sas7bdat")
-		eval( parse(text=paste('x <- as.data.frame( read_sas(\'',SASfilename,'\'))', sep=''  ))) # use with lapply
-
-		eval(parse(text=paste(datasetname,' <<- as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )' )))
+		##following 2 lines were in use before(11Nov2021) above tryCatch
+		# eval( parse(text=paste('x <- as.data.frame( read_sas(\'',SASfilename,'\'))', sep=''  ))) # use with lapply
+		# eval(parse(text=paste(datasetname,' <<- as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )' )))
 		
-	
-		# set the name (Which is passed as an input parameter to this function)
-		# to the newly created data frame within the global list
-		# names(uadatasets$lst)[length(uadatasets$lst)]<-datasetname
-		uadatasets$name <- c(uadatasets$name, datasetname)
-		#cat("\nLoaded SAS dataset :", datasetname)					
-		
-		# if(replace == FALSE)
-		# {						
-			# #for old code compatibility put same list in 'name' also
-			# uadatasets$name <- c(uadatasets$name, datasetname)
-		# }	
-					
-		# DataSetIndex <- UAgetIndexOfDataSet(datasetname)
+		if(success==0)
+		{
+			# set the name (Which is passed as an input parameter to this function)
+			# to the newly created data frame within the global list
+			# names(uadatasets$lst)[length(uadatasets$lst)]<-datasetname
+			uadatasets$name <- c(uadatasets$name, datasetname)
+			#cat("\nLoaded SAS dataset :", datasetname)					
+			
+			# if(replace == FALSE)
+			# {						
+				# #for old code compatibility put same list in 'name' also
+				# uadatasets$name <- c(uadatasets$name, datasetname)
+			# }	
+						
+			# DataSetIndex <- UAgetIndexOfDataSet(datasetname)
 
 
-		#Creating extra attributes at column level
-		UAcreateExtraAttributes(datasetname, "SAS")					
+			#Creating extra attributes at column level
+			UAcreateExtraAttributes(datasetname, "SAS")		
+		}		
 	}
 	else
 	{
@@ -54,6 +97,12 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE)
 		warning("BSkyLoadSASinDataFrame: Dataset with the same name already on the global list ")
 	}				
 	BSkyFunctionWrapUp()
+	return(success)
+	# if(success==0)
+	# {
+		# e <- simpleError("Error in opening sas7bdat")
+		# stop(e)
+	# }
 }
 
 
@@ -65,13 +114,39 @@ BSkyWriteSas <- function(sasFilename,dataSetNameOrIndex) ##  index of dataset an
 	BSkyErrMsg = paste("BSkyWriteSas: Error writing SAS file : ", "DataSetName :", dataSetNameOrIndex," ", "SAS Filename  :", paste(sasFilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkyWriteSas: Warning writing SAS file : ", "DataSetName :", dataSetNameOrIndex," ", "SAS Filename :", paste(sasFilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=0
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	#cat("\nDS obj:", datasetname," ::\n")
 	if(!is.null(datasetname))
 	{		
-		#datasetname <- ExtractDatasetNameFromGlobal(datasetname)
-		eval(parse(text=paste('tmpsasx <- as.data.frame( lapply (',datasetname,', function(y) {if(class(y) == "factor") y = as.character(y) else y} ) )' )))
-		eval(parse(text=paste('write_sas(tmpsasx, path = "',sasFilename,'")',sep='')))
+		corecommand = paste('write_sas(',datasetname,', path = "',sasFilename,'")', sep='')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
+		#trying to save the datafile
+		# tryCatch({
+		
+				# withCallingHandlers({
+					#datasetname <- ExtractDatasetNameFromGlobal(datasetname)
+					eval(parse(text=paste('tmpsasx <- as.data.frame( lapply (',datasetname,', function(y) {if(class(y) == "factor") y = as.character(y) else y} ) )' )))
+					eval(parse(text=paste('write_sas(tmpsasx, path = "',sasFilename,'")',sep='')))
+				# }, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				# }, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		# if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		# {
+			# ## maybe return 0 for success
+			# # cat("\nSuccessfully saved\n") 
+			# # print(corecommand) #no need to print this
+		# }
+		# else ## Failure
+		# {
+			# cat("\nError saving file:\n") 
+			# # cat("\n\nCommand executed:\n")
+			# print(corecommand)
+			# ## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			# ## maybe return -1 for failure
+			# success = -1;
+		# }
 	}
 	else
 	{
@@ -80,5 +155,6 @@ BSkyWriteSas <- function(sasFilename,dataSetNameOrIndex) ##  index of dataset an
 		warning("BSkyWriteSas:  Cannot write SAS. Dataset name or index not found.")
 	}		
 	BSkyFunctionWrapUp()			
+	# return(success)
 
 }

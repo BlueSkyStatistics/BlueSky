@@ -24,7 +24,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 	BSkyErrMsg = paste("UAreadCSV: Error reading CSV file : ", "DataSetName :", datasetname," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAreadCSV: Warning reading CSV file : ", "DataSetName :", datasetname," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-
+	success=0
 	logflag=FALSE
 	
 	##loading the csv file from disk to uadatasets array
@@ -47,129 +47,162 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		# cat("\nLoading..")
 		# Now add new dataset. 		
 		# uadatasets$lst <- c(uadatasets$lst, list(read.csv(csvfilename, header=Header)))
+		options(readr.show_types = FALSE) 
+		#R command to open data file //, show_col_types = FALSE
+		corecommand= paste('read_delim(file=\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\')', sep='')
 		
-		#03Aug2016 change "character" cols to "factor" ## This take more time to load in grid. 
-		#Dataset(with many character cols loan.csv) which was taking 27sec earlier, took 1min:45sec to load when "character" changed to "factor"
-		if(character.to.factor) 
-		{
-			eval( parse(text=paste('bskytempx <<- NULL',sep='')))## 03Aug2016 Clean x
-			
-			##20Jun2017 to get rid of tibble issue as.data.frame has been used below
-			## Without it if you open a CSV and saveAs (other formats like .rdata, .dbf), saveAs failed. For
-			## Excel it worked
-			## because CSV and Excel read/write function that we are using are from Hadley. Hadley introduced 
-			## tibble.			
-			#eval( parse(text=paste('bskytempx <<- as.data.frame(read_csv(\'',csvfilename,'\'))',sep='')))## 03Aug2016 
-			
-			eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_delim(\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\'))',sep=''))) #before 03Aug2016 only this line
-			
-			##### OLD eval( parse(text=paste(datasetname,' <<- as.data.frame( read_delim(\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\'))',sep='')))
-
-			if(logflag)
-			{
-				cat("\n-Before gen new col names\n")
-				print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
-			}			
-			
-			#GenerateUniqueColName(datasetname)
-
-			if(logflag)
-			{
-				cat("\n-After gen new col names\n")
-				print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
-			}
-			
-			
-			## 03Aug2016 We change "character" col class to "factor" ## I think Sanjay helped me to do that to Excel file. So same logic goes here
-			eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (.GlobalEnv$',datasetname,', function(y) {if(class(y) == "character") y = factor(y) else y} ) )',sep='' )))
-			
-			if(logflag)
-			{
-				cat("\n-After lapply new col names\n")
-				print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
-			}
-		}
-		else
-		{ 
-			##20Jun2017 to get rid of tibble issue as.data.frame has been used below
-			## Without it if you open a CSV and saveAs (other formats like .rdata, .dbf), saveAs failed. For 
-			## Excel it worked
-			## because CSV and Excel read/write function that we are using are from Hadley. Hadley introduced 
-			## tibble.
-			
-			eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_delim(\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\'))',sep=''))) #before 03Aug2016 only this line was in use. Now this is in 'else' and we added 'if'
-			
-			####
-			######old			eval( parse(text=paste(datasetname,' <<- as.data.frame( read_delim(\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\'))',sep=''))) #before 03Aug2016 only this line was in use. Now this is in 'else' and we added 'if'
-			
-			if(logflag)
-			{
-				cat("\n+Before gen new col names\n")
-				print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
-			}	
-			
-			GenerateUniqueColName(datasetname)
-			
-			if(logflag)
-			{
-				cat("\n+After gen new col names\n")
-				print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
-			}
-		}
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+		#trying to open the datafile
+		tryCatch({		
+				withCallingHandlers({		
+					eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')',sep=''))) 
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
 		
-		#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
-		#GenerateUniqueColName(datasetname)
-		# cat('\n')
-		# print(eval(parse(text=paste('names(',datasetname,')[1:7]',sep=''))))
-		#print(proc.time() - ptm)
-		#Now replace special chars with underscore and prefix 'X' if there is digit in the first index  of colum name.
-		colcount <- eval(parse(text=paste('length(names(.GlobalEnv$',datasetname,'))',sep='' ))) #colcount = length(names(datasetname))
-		#cat('Count=')
-		#cat(colcount)
-		#ptm= proc.time()
-		for( i in 1:colcount)
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
-			if(logflag)
-			{
-				cat('\n-----------------------------------------------------------------')
-				cat("\nSpl Chr:OldName = ")
-				print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']',sep=''))))
-			}			
-			eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
-			#names(datasetname)[i] = ReplaceSplChrsAndPrefixXForDigitInBegining(names(datasetname)[i])
-			
-			if(logflag)
-			{
-				cat("\nSpl Chr removed ColName = ")
-				print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']',sep=''))))
-				cat('\n-----------------------------------------------------------------')
-			}				
+			## maybe return 0 for success
+			cat("\nSuccessfully opened\n") 
+			print(corecommand) #no need to print this
 		}
-		#print(proc.time() - ptm)
-		# cat("\nLoaded")
-		# set the name (Which is passed as an input parameter to this function)
-		# to the newly created data frame within the global list
-		uadatasets$name <- c(uadatasets$name, datasetname)
-		#cat("\nLoaded CSV dataset :", datasetname)
-		
-		# if(replace == FALSE)
-		# {						
-			# #for old code compatibility put same list in 'name' also
-			# uadatasets$name <- c(uadatasets$name, datasetname)
-		# }	
-					
-		if(logflag)
+		else ## Failure
 		{
-			cat("\nBefore Creating Attributes = ")
-		}
-		#ptm <- proc.time()
-		#Creating extra attributes at column level
-		UAcreateExtraAttributes(datasetname,"CSV")		
-		#print(proc.time() - ptm)	
-		if(logflag)
-		{
-			cat("\nAfter Creating Attributes = ")
+			cat("\nError opening file:\n")
+			cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
 		}		
+		
+		if(success==0)
+		{
+		
+			#03Aug2016 change "character" cols to "factor" ## This take more time to load in grid. 
+			#Dataset(with many character cols loan.csv) which was taking 27sec earlier, took 1min:45sec to load when "character" changed to "factor"
+			if(character.to.factor) 
+			{
+				eval( parse(text=paste('bskytempx <<- NULL',sep='')))## 03Aug2016 Clean x
+				
+				##20Jun2017 to get rid of tibble issue as.data.frame has been used below
+				## Without it if you open a CSV and saveAs (other formats like .rdata, .dbf), saveAs failed. For
+				## Excel it worked
+				## because CSV and Excel read/write function that we are using are from Hadley. Hadley introduced 
+				## tibble.			
+				#eval( parse(text=paste('bskytempx <<- as.data.frame(read_csv(\'',csvfilename,'\'))',sep='')))## 03Aug2016 
+				
+				##following line was in use before(11Nov2021) above tryCatch
+				##eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')',sep=''))) #before 03Aug2016 only this line
+				
+				##### OLD eval( parse(text=paste(datasetname,' <<- as.data.frame( read_delim(\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\'))',sep='')))
+
+				if(logflag)
+				{
+					cat("\n-Before gen new col names\n")
+					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
+				}			
+				
+				#GenerateUniqueColName(datasetname)
+
+				if(logflag)
+				{
+					cat("\n-After gen new col names\n")
+					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
+				}
+				
+				## 03Aug2016 We change "character" col class to "factor" ## I think Sanjay helped me to do that to Excel file. So same logic goes here
+				eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (.GlobalEnv$',datasetname,', function(y) {if(class(y) == "character") y = factor(y) else y} ) )',sep='' )))
+				
+				if(logflag)
+				{
+					cat("\n-After lapply new col names\n")
+					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
+				}
+			}
+			else
+			{ 
+				##20Jun2017 to get rid of tibble issue as.data.frame has been used below
+				## Without it if you open a CSV and saveAs (other formats like .rdata, .dbf), saveAs failed. For 
+				## Excel it worked
+				## because CSV and Excel read/write function that we are using are from Hadley. Hadley introduced 
+				## tibble.
+				
+				##following line was in use before(11Nov2021) above tryCatch
+				#eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame(',corecommand,')',sep=''))) #before 03Aug2016 only this line was in use. Now this is in 'else' and we added 'if'
+				
+				####
+				######old			eval( parse(text=paste(datasetname,' <<- as.data.frame( read_delim(\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\'))',sep=''))) #before 03Aug2016 only this line was in use. Now this is in 'else' and we added 'if'
+				
+				if(logflag)
+				{
+					cat("\n+Before gen new col names\n")
+					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
+				}	
+				
+				GenerateUniqueColName(datasetname)
+				
+				if(logflag)
+				{
+					cat("\n+After gen new col names\n")
+					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')',sep=''))))
+				}
+			}		
+		
+			#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
+			#GenerateUniqueColName(datasetname)
+			# cat('\n')
+			# print(eval(parse(text=paste('names(',datasetname,')[1:7]',sep=''))))
+			#print(proc.time() - ptm)
+			#Now replace special chars with underscore and prefix 'X' if there is digit in the first index  of colum name.
+			colcount <- eval(parse(text=paste('length(names(.GlobalEnv$',datasetname,'))',sep='' ))) #colcount = length(names(datasetname))
+			#cat('Count=')
+			#cat(colcount)
+			#ptm= proc.time()
+			for( i in 1:colcount)
+			{
+				if(logflag)
+				{
+					cat('\n-----------------------------------------------------------------')
+					cat("\nSpl Chr:OldName = ")
+					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']',sep=''))))
+				}			
+				eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+				#names(datasetname)[i] = ReplaceSplChrsAndPrefixXForDigitInBegining(names(datasetname)[i])
+				
+				if(logflag)
+				{
+					cat("\nSpl Chr removed ColName = ")
+					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']',sep=''))))
+					cat('\n-----------------------------------------------------------------')
+				}				
+			}
+			#print(proc.time() - ptm)
+			# cat("\nLoaded")
+			# set the name (Which is passed as an input parameter to this function)
+			# to the newly created data frame within the global list
+			uadatasets$name <- c(uadatasets$name, datasetname)
+			#cat("\nLoaded CSV dataset :", datasetname)
+			
+			# if(replace == FALSE)
+			# {						
+				# #for old code compatibility put same list in 'name' also
+				# uadatasets$name <- c(uadatasets$name, datasetname)
+			# }	
+						
+			if(logflag)
+			{
+				cat("\nBefore Creating Attributes = ")
+			}
+			#ptm <- proc.time()
+			#Creating extra attributes at column level
+			UAcreateExtraAttributes(datasetname,"CSV")		
+			#print(proc.time() - ptm)	
+			if(logflag)
+			{
+				cat("\nAfter Creating Attributes = ")
+			}	
+		}
 	}
 	else
 	{
@@ -177,7 +210,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		warning("UAreadCSV: Dataset with the same name already on the global list ")
 	}
 	BSkyFunctionWrapUp()
-	
+	return(success)
 }
 
 ###################################################################################################################
@@ -208,23 +241,52 @@ UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)
 	BSkyErrMsg = paste("UAwriteCSV: Error writing CSV file : ", "DataSetName :", dataSetNameOrIndex," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAwriteCSV: Warning writing CSV file : ", "DataSetName :", dataSetNameOrIndex," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=0
 			##dataset saved to csv file is from uadatasets
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 			
-			if(!is.null(datasetname))
-			{		
-				#if you dont do  row.names=FALSE then defaul t TRUE will create one extra column which make it difficult
-				# to open CSV file in VirtualDyanamic 
-				eval(parse(text=paste('write.csv(',datasetname,', csvfilename,  row.names=FALSE)')))
-			}
-			else
-			{
-				BSkyErrMsg =paste("UAwriteCSV:  Cannot write CSV. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
-				# cat("\nError: Cannot write CSV. Dataset name or index not found\n")
-				warning("UAwriteCSV:  Cannot write CSV. Dataset name or index not found.")
-			}			
-				BSkyFunctionWrapUp()	
+	if(!is.null(datasetname))
+	{		
+		#if you dont do  row.names=FALSE then default TRUE will create one extra column which make it difficult
+		# to open CSV file in VirtualDyanamic 
+		# eval(parse(text=paste('write.csv(',datasetname,', csvfilename,  row.names=FALSE)')))
+		# above line was in use before putting tryCatch around it (below)
+		
+		corecommand = paste('write.csv(',datasetname,', csvfilename,  row.names=FALSE)')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
+		#trying to save the datafile
+		tryCatch({
+		
+				withCallingHandlers({
+					eval(parse(text=corecommand))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			## maybe return 0 for success
+			# cat("\nSuccessfully saved\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError saving file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}
+	}
+	else
+	{
+		BSkyErrMsg =paste("UAwriteCSV:  Cannot write CSV. Dataset name or index not found."," Dataset Name:", dataSetNameOrIndex)
+		# cat("\nError: Cannot write CSV. Dataset name or index not found\n")
+		warning("UAwriteCSV:  Cannot write CSV. Dataset name or index not found.")
+	}			
+	BSkyFunctionWrapUp()	
 				
-	
+	return(success)
 }
 
