@@ -2646,6 +2646,31 @@ BSkySetPvalueDisplaySetting <- function(showActualPValueInOutput = uadatasets.sk
 }
 
 
+# Last modified 11/19/2021
+BSkySetRHelpHTTPServer <- function(RHelpHTTPServer = FALSE)
+{
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyRHelpHTTPServer = RHelpHTTPServer
+	}
+	
+	return(invisible(RHelpHTTPServer))
+}
+
+# Last modified 11/19/2021
+BSkyGetRHelpHTTPServer <- function()
+{
+	RHelpHTTPServer = FALSE
+	
+	if(exists("uadatasets.sk") && exists("BSkyRHelpHTTPServer", env=uadatasets.sk))
+	{
+		RHelpHTTPServer = uadatasets.sk$BSkyRHelpHTTPServer
+	}
+	
+	return(invisible(RHelpHTTPServer))
+}
+
+
 #14Jun2021
 #https://data.princeton.edu/r/linearmodels
 BSkyFormatLmerMod <- function(obj, decimalDigits = BSkyGetDecimalDigitSetting())
@@ -5731,7 +5756,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 
 
 
-#09Nov2021
+#20Nov2021
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	parsed_Rcommands = c()
@@ -5903,9 +5928,32 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		
 		# print(HelpOrCommentOrBlankLineStr)
 		# cat("<br>")
-		if(substr(HelpOrCommentOrBlankLineStr,1,3) == "`?`" || substr(HelpOrCommentOrBlankLineStr,1,5) == "help(" || substr(HelpOrCommentOrBlankLineStr,1,5) == "help ")
+		if(BSkyGetRHelpHTTPServer() == FALSE && (substr(HelpOrCommentOrBlankLineStr,1,3) == "`?`" || substr(HelpOrCommentOrBlankLineStr,1,5) == "help(" || substr(HelpOrCommentOrBlankLineStr,1,5) == "help "))
 		{
 			helpfile = c()
+			package_only_help_command = FALSE
+			
+			topic_param_name_found = grep("\\btopic\\b", HelpOrCommentOrBlankLineStr)
+			# cat("\ntopic_param_name_found\n")
+			# print(topic_param_name_found)
+			# return()
+			
+			if(length(topic_param_name_found) == 0)
+			{
+				package_param_name_found = grep("\\bpackage\\b", HelpOrCommentOrBlankLineStr)
+				
+				if(length(package_param_name_found) != 0)
+				{
+					y = strsplit(HelpOrCommentOrBlankLineStr, ",")
+					non_topic_param_in_1st_place = grep("=", y[[1]][1])
+					
+					if(length(non_topic_param_in_1st_place) != 0)
+					{
+						options(help_type = 'text')
+						package_only_help_command = TRUE
+					}
+				}
+			}
 			
 			tryCatch({
 					withCallingHandlers({
@@ -5924,19 +5972,82 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 					
 				if(class(helpfile)[1] == "help_files_with_topic" && length(as.character(helpfile)) > 0)
 				{
+					temp_help_file_path = c()
+					
 					pkgname <- basename(dirname(dirname(helpfile)))
-					temp_help_file_path <- tools::Rd2HTML(utils:::.getHelpFile(helpfile), out = tempfile(pattern = "BSkyhelpsink", fileext = ".html"), package = pkgname)
+					
+					if(length(pkgname) > 1)
+					{
+						cat("\nhelp topic is found in multiple packages: ", pkgname, "\n")
+						cat("Displaying the help topic from the first package", pkgname[1], "found in the package search path\n")
+						cat("if you want the help(topic) from a specific package, add the package parameter to help(topic, package = 'pkg name')\n")
+					}
+					
+					temp_help_file_path <- tools::Rd2HTML(utils:::.getHelpFile(helpfile[1]), out = tempfile(pattern = "BSkyhelpsink", fileext = ".html"), package = pkgname[1])
 					
 					# For testing purpose to copy the file in the download directory as R removes all temp files upon closing the R session 
 					#file.copy(temp_help_file_path, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
 					
 					cat("\n")
+					#print(str(helpfile))
+					#print(as.character(helpfile))
 					cat(paste("BSkyHelpCommandMarker ", temp_help_file_path, sep=""))
+					cat("\n")
+				}
+				else if (class(helpfile)[1] == "packageInfo")
+				{	
+					title = gettextf("Documentation for package %s", sQuote(helpfile$name))
+					
+					outFile = tempfile(pattern = "BSkyhelpsink", fileext = ".html")
+					
+					#print(format(gsub(" ","&nbsp;",helpfile)
+					
+					content = format(helpfile)
+					
+					cat("<!DOCTYPE html>\n<html>\n<body>\n", file = outFile, append = TRUE)
+					cat("<table>\n", file = outFile, append = TRUE)
+					for(cont in 1:length(content))
+					{
+						content[cont] = trimws(content[cont])
+						splitline = gregexpr(":|\\s+", content[cont])
+						
+						cat("<tr>\n", file = outFile, append = TRUE) 
+						if(splitline[[1]][1] == -1)
+						{
+							cat("<td colspan=\"2\">\n", file = outFile, append = TRUE)
+							cat(content[cont],file = outFile, append = TRUE)
+							cat("\n</td>\n", file = outFile, append = TRUE)
+						}
+						else
+						{
+							cat("<td>\n", file = outFile, append = TRUE)
+							cat(substr(content[cont], 1, (splitline[[1]][1])),file = outFile, append = TRUE)
+							cat("\n</td>\n", file = outFile, append = TRUE)
+							
+							if((splitline[[1]][1] + 1) <= nchar(content[cont]))
+							{
+								cat("<td>\n", file = outFile, append = TRUE)
+								cat(substr(content[cont], (splitline[[1]][1] + 1), nchar(content[cont])),file = outFile, append = TRUE)
+								cat("\n</td>\n", file = outFile, append = TRUE)
+							}
+						}
+						
+						cat("</tr>\n", file = outFile, append = TRUE)
+					}
+					cat("</table>\n", file = outFile, append = TRUE)
+					cat("\n</body>\n</html>", file = outFile, append = TRUE)
+					
+					# For testing purpose to copy the file in the download directory as R removes all temp files upon closing the R session 
+					# file.copy(outFile, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
+					
+					cat("\n")
+					#print(str(helpfile))
+					cat(paste("BSkyHelpCommandMarker ", outFile, sep=""))
 					cat("\n")
 				}
 				else
 				{
-					cat("\n", paste("No documentation for the topic in specified packages and libraries :", parsed_Rcommands[[i]]),"\n")
+					cat("\n", paste("No documentation for the package or the topic in specified packages and libraries :", parsed_Rcommands[[i]]),"\n")
 				}
 				
 				if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
@@ -5949,6 +6060,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 			{
 				eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
 			}
+			
+			options(help_type = 'html')
 			
 			isHelpCommand = TRUE
 		}
@@ -5977,8 +6090,9 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 					{
 						cat("<pre class=\"r\"><code>")
 					}
-					cat("\n----------------------")
-					cat("\nDIAGNOSTIC MESSAGE: The above R errors and/or warnings are generated by the following R code\n")
+					
+					cat("\n----------------------\n")
+					cat("DIAGNOSTIC MESSAGE: The above R errors and/or warnings are generated by the following R code")
 					cat("\n----------------------\n")
 				
 					if(length(origRcommands) > 0)
