@@ -25,7 +25,7 @@ UAreadDBF <- function(dbffilename,  datasetname, replace=FALSE)
 	BSkyErrMsg = paste("UAreadDBF: Error reading DBF : ", "DataSetName :", datasetname," ", "DBF filename  :", paste(dbffilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAreadDBF: Warning reading DBF : ", "DataSetName :", datasetname," ", "DBF filename :", paste(dbffilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	#library(foreign)
 
 	##loading the dbf file from disk to uadatasets array
@@ -48,7 +48,7 @@ UAreadDBF <- function(dbffilename,  datasetname, replace=FALSE)
 			# cat("\nBefore Try Catch\n")
 		corecommand=c()
 		#R command to open data file (SPSS)
-		corecommand = paste('read.dbf(file=\'',dbffilename,'\')',sep='')
+		corecommand = paste('foreign::read.dbf(file=\'',dbffilename,'\')',sep='')
 		# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read.dbf(file=\'',stataFilename,'\'))',sep='')
 
 		opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- ',corecommand, sep='')
@@ -64,9 +64,10 @@ UAreadDBF <- function(dbffilename,  datasetname, replace=FALSE)
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
-			# cat("\nSuccessfully opened\n") 
-			# print(corecommand) #no need to print this
+			cat("\nSuccessfully opened using:\n") 
+			print(corecommand) #no need to print this
 		}
 		else ## Failure
 		{
@@ -136,11 +137,11 @@ UAwriteDBF <- function(dbffilename, dataSetNameOrIndex, fact2char = TRUE)
 	BSkyErrMsg = paste("UAwriteDBF: Error writing DBF : ", "DataSetName :", dataSetNameOrIndex," ", "DBF filename  :", paste(dbffilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAwriteDBF: Warning writing DBF : ", "DataSetName :", dataSetNameOrIndex," ", "DBF filename :", paste(dbffilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	if(!is.null(datasetname))
 	{		
-		corecommand = paste('write.dbf(',datasetname,', dbffilename, factor2char = fact2char)')
+		corecommand = paste('foreign::write.dbf(',datasetname,', dbffilename, factor2char = fact2char)')
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
 		#trying to save the datafile
@@ -153,6 +154,7 @@ UAwriteDBF <- function(dbffilename, dataSetNameOrIndex, fact2char = TRUE)
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
 			# cat("\nSuccessfully saved\n") 
 			# print(corecommand) #no need to print this

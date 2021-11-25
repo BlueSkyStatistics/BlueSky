@@ -239,7 +239,7 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 	BSkyWarnMsg = paste("BSkyloadDataset: Warning in Loading dataset : ", "DataSetName :", datasetName," ", "Filepath :", paste(fullpathfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	datasetname <- datasetName
-	success=0
+	success=-1
 	eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
 	# # # tryCatch(
 		# # # {
@@ -253,16 +253,16 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 				success = UAloadSPSSinDataFrame(fullpathfilename, datasetname, replace=replace_ds, loadMissingValue=load.missing, trimSPSStrailing=trimSPSStrailing, encoding=encoding) 
 			}
 			if(filetype=="SAS7BDAT"){
-				BSkyLoadSASinDataFrame(fullpathfilename, datasetname, replace=replace_ds) 
+				success = BSkyLoadSASinDataFrame(fullpathfilename, datasetname, replace=replace_ds) 
 			}	
 			if(filetype=="DTA"){
-				BSkyReadStata(fullpathfilename, datasetname, replace=replace_ds) 
+				success = BSkyReadStata(fullpathfilename, datasetname, replace=replace_ds) 
 			}			
 			else if(filetype == "XLS"){
-				UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=FALSE, character.to.factor=character.to.factor)
+				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=FALSE, character.to.factor=character.to.factor)
 			}
 			else if(filetype == "XLSX"){
-				UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=TRUE, character.to.factor=character.to.factor)
+				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=TRUE, character.to.factor=character.to.factor)
 			}			
 			else if(isBasketData && (filetype == "CSV" || filetype == "DAT" || filetype == "TXT") ) #if its mkt basket data in a flat file having extension csv, txt or data
 			{
@@ -273,14 +273,14 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 					# but not the vertical tab character. We want our sepChar to not match to any
 					# separator available to user. Appropriate candidate is vertical tab.
 					sepChar='\v' #vertical tab should never be found as a separator in user data file.
-				BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar)			
+				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar)			
 			}
 			else if(filetype == "CSV"){
 
-				UAreadCSV(fullpathfilename, datasetname, Header=csvHeader, replace=replace_ds, character.to.factor=character.to.factor, sepCh=sepChar, deciCh=deciChar)
+				success = UAreadCSV(fullpathfilename, datasetname, Header=csvHeader, replace=replace_ds, character.to.factor=character.to.factor, sepCh=sepChar, deciCh=deciChar)
 			}
 			else if(filetype == "DBF"){
-				UAreadDBF(fullpathfilename, datasetname,replace=replace_ds)
+				success = UAreadDBF(fullpathfilename, datasetname,replace=replace_ds)
 			}
 			else if(filetype == "RDATA" || filetype == "RDA"){ ##this block only runs when BSkyReloadDataset() is run on RData with single dataframe object.
 			## so load.refresh is needed below.
@@ -290,13 +290,13 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 				#BSky.LoadRefresh.Dataframe(dframe)
 				
 				#19Oct2019 above 2 line does not seem to work so code below should just work fine for single dataset RDATA file
-				eval(parse(text=paste('UAreadRObj(RObjfileName="',fullpathfilename,'", datasetname="',datasetname,'", replace=TRUE)',sep='')))
+				success = eval(parse(text=paste('UAreadRObj(RObjfileName="',fullpathfilename,'", datasetname="',datasetname,'", replace=TRUE)',sep='')))
 			}			
 			else if(filetype=="DAT"){
-				BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
+				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
 			}					
 			else  if(filetype == "TXT"){
-				BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
+				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
 			}
 			#cat("Top Level - Finished Loading Dataset:",datasetname)
 			#print(Sys.time())
@@ -432,11 +432,50 @@ BSkyReloadDataset<-function(fullpathfilename,  filetype, sheetname=NULL, csvHead
 BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex)
 {
 	BSkyProcessNewDataset(datasetName=dataSetNameOrIndex, NAstrings = c("NA"), stringAsFactor=TRUE)
-	bskyret = BSkysaveDataset(fullpathfilename=fullpathfilename,  filetype=filetype, Rownames = Rownames, Colnames = Colnames, newWorksheetName=newWorksheetName,factor2char=factor2char, dataSetNameOrIndex=dataSetNameOrIndex)
-	# print(bskyret)
-	BSkycloseDataset(dataSetNameOrIndex)
-	return(invisible(bskyret))
+	success =  BSkysaveDataset(fullpathfilename=fullpathfilename,  filetype=filetype, Rownames = Rownames, Colnames = Colnames, newWorksheetName=newWorksheetName,factor2char=factor2char, dataSetNameOrIndex=dataSetNameOrIndex)
+	# cat("\nSuccess = ")
+	# cat(success)
+	if(success == 0)
+	{
+		BSkycloseDataset(dataSetNameOrIndex)
+	}
+	else #saveas failed and we did not close the dataset. So we can load it back but we first remove 
+	{ #entry from uadatasets$name as load-refresh will add entry back in uadatasets$name
+		BSkyRemoveEntry(dataSetNameOrIndex)
+	}
+	return(invisible(success))
 }
+
+
+#remove entry from uadatasets$name so that loadrefresh can add it back from memory dataset
+BSkyRemoveEntry <-function(dataSetNameOrIndex)
+{
+	idx = UAgetIndexOfDataSet(dataSetNameOrIndex) 
+	#cat('\nNo .GlobalEnv: Index of the dataset:\n')
+	#print(idx)
+	
+	if(idx > 0) #19Oct2016 do not use this --> if(length(idx) > 0)
+	{
+		uadatasets$name[idx] <- "" ## making the closed dataset blank. So index of existsing open dataset will not change.
+		dscount =  length(uadatasets$name)
+		#cat('\nTotal DS\n')
+		#print(dscount)
+		oldds <- uadatasets$name
+		uadatasets$name <- NULL
+		for(i in 1 : dscount)
+		{
+			#cat("\n", oldds[i], "\t", nchar(oldds[i]))
+			if(nchar(oldds[i]) > 0)
+			{
+				uadatasets$name <- c(uadatasets$name, oldds[i])
+				#cat("\n+++", oldds[i])
+			}
+		}
+
+	}
+}
+
+
 ###################################################################################################################
 # fullpathfilename -> Full path filename(drive directory and filename) of an existing file to load the UA memory space
 # dataSetNameOrIndex -> dataset name thats already given to dataset while reading/loading. Or index of dataset
@@ -480,25 +519,25 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			#find extension
 			#extn = File.sav
 			if(filetype=="SAV"){
-				BSkywriteSAV(fullpathfilename, dataSetNameOrIndex)  #requires rio R package
+				success = BSkywriteSAV(fullpathfilename, dataSetNameOrIndex)  #requires rio R package
 			}
 			if(filetype=="SAS7BDAT"){
-				BSkyWriteSas(fullpathfilename, dataSetNameOrIndex)  #requires haven R package
+				success = BSkyWriteSas(fullpathfilename, dataSetNameOrIndex)  #requires haven R package
 			}
 			if(filetype=="DTA"){
-				BSkyWriteStata(fullpathfilename, dataSetNameOrIndex)  #requires haven R package
+				success = BSkyWriteStata(fullpathfilename, dataSetNameOrIndex)  #requires haven R package
 			}			
 			else if(filetype == "XLS"){
-				UAwriteExcel(fullpathfilename, dataSetNameOrIndex, newWorksheetName, row.names = Rownames, col.names = Colnames, xlsx=FALSE)
+				success = UAwriteExcel(fullpathfilename, dataSetNameOrIndex, newWorksheetName, row.names = Rownames, col.names = Colnames, xlsx=FALSE)
 			}
 			else if(filetype == "XLSX"){
-				UAwriteExcel(fullpathfilename, dataSetNameOrIndex, newWorksheetName, row.names = Rownames, col.names = Colnames, xlsx=TRUE)
+				success = UAwriteExcel(fullpathfilename, dataSetNameOrIndex, newWorksheetName, row.names = Rownames, col.names = Colnames, xlsx=TRUE)
 			}			
 			else if(filetype == "CSV"){
-				UAwriteCSV(fullpathfilename, dataSetNameOrIndex)
+				success = UAwriteCSV(fullpathfilename, dataSetNameOrIndex)
 			}
 			else if(filetype == "DBF"){
-				UAwriteDBF(fullpathfilename, dataSetNameOrIndex, fact2char=factor2char)
+				success = UAwriteDBF(fullpathfilename, dataSetNameOrIndex, fact2char=factor2char)
 			}
 			else if(filetype == "RDATA" || filetype == "RDA"){
 				success = UAwriteRObj(fullpathfilename,dataSetNameOrIndex)

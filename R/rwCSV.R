@@ -24,8 +24,18 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 	BSkyErrMsg = paste("UAreadCSV: Error reading CSV file : ", "DataSetName :", datasetname," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAreadCSV: Warning reading CSV file : ", "DataSetName :", datasetname," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success= -1
 	logflag=FALSE
+	
+	##for testing UI app when exception occurs in R
+	# if(success==0) 
+	# {
+		# e <- simpleError("Error in opening CSV file.")
+		# stop(e)
+	# }
+	
+	##for testing UI app when file could not be opened in R
+	# return(-1) #i.e. failed to open file
 	
 	##loading the csv file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already be present
@@ -49,7 +59,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		# uadatasets$lst <- c(uadatasets$lst, list(read.csv(csvfilename, header=Header)))
 		options(readr.show_types = FALSE) 
 		#R command to open data file //, show_col_types = FALSE
-		corecommand= paste('read_delim(file=\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\')', sep='')
+		corecommand= paste('readr::read_delim(file=\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\')', sep='')
 		
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
@@ -62,8 +72,9 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
-			cat("\nSuccessfully opened\n") 
+			cat("\nSuccessfully opened using:\n") 
 			print(corecommand) #no need to print this
 		}
 		else ## Failure
@@ -241,7 +252,7 @@ UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)
 	BSkyErrMsg = paste("UAwriteCSV: Error writing CSV file : ", "DataSetName :", dataSetNameOrIndex," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAwriteCSV: Warning writing CSV file : ", "DataSetName :", dataSetNameOrIndex," ", "CSV filename  :", paste(csvfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 			##dataset saved to csv file is from uadatasets
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 			
@@ -252,7 +263,7 @@ UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)
 		# eval(parse(text=paste('write.csv(',datasetname,', csvfilename,  row.names=FALSE)')))
 		# above line was in use before putting tryCatch around it (below)
 		
-		corecommand = paste('write.csv(',datasetname,', csvfilename,  row.names=FALSE)')
+		corecommand = paste('utils::write.csv(',datasetname,', csvfilename,  row.names=FALSE)')
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
 		#trying to save the datafile
@@ -265,6 +276,7 @@ UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0 
 			## maybe return 0 for success
 			# cat("\nSuccessfully saved\n") 
 			# print(corecommand) #no need to print this

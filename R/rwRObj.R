@@ -25,7 +25,7 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 	BSkyErrMsg = paste("UAreadRObj: Error reading R Obj file : ", "DataSetName :", datasetname," ", "R Obj Filename  :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAreadRObj: Warning reading R Obj file : ", "DataSetName :", datasetname," ", "R Obj Filename :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	##loading the dbf file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
 	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
@@ -54,7 +54,7 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 		bsky.class <- ""
 		isDFname=FALSE
 		bsky.rdataname = NULL
-		corecommand = paste('load(file= ',RObjfileName,')',sep='')
+		corecommand = paste('base::load(file= \'',RObjfileName,'\')',sep='')
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
 		#trying to open the datafile
@@ -67,9 +67,10 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success=0
 			## maybe return 0 for success
-			# cat("\nSuccessfully opened\n") 
-			# print(corecommand) #no need to print this
+			cat("\nSuccessfully opened using:\n") 
+			print(corecommand) #no need to print this
 		}
 		else ## Failure
 		{
@@ -200,7 +201,7 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 	BSkyErrMsg = paste("UAwriteRObj: Error writing R Obj file : ", "DataSetName :", dataSetNameOrIndex," ", "R Obj Filename  :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAwriteRObj: Warning writing R Obj file : ", "DataSetName :", dataSetNameOrIndex," ", "R Obj Filename :", paste(RObjfileName, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	#cat("\nDS obj:", datasetname," ::\n")
 	if(!is.null(datasetname))
@@ -255,11 +256,15 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 		#1.look for sig. If not found "not BlueSky" Continue loading? Show list to choose. dF1, df2.
 		#2.''''''''''''', read DF, flag in sig (read anyway), Name of DF filename-d1....4,
 		
+		# if(TRUE) ## success!=0) ##forcing failure
+		# {
+			# return(-1)
+		# }
+	
 		####### make dataset NULL if SAVE is successful
 		#reset global error-warning flag
-		success =0
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
-		corecommand = paste('save(',datasetname,', file = RObjfileName)',sep='')
+		corecommand = paste('base::save(',datasetname,', file = RObjfileName)',sep='')
 		tryCatch({
 	
 			withCallingHandlers({
@@ -269,6 +274,7 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 	
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
 			# cat("\nSuccessfully saved\n") 
 			# print(corecommand) #no need to print this
