@@ -58,6 +58,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 		}
 		else ## Failure
 		{
+			print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
 			cat("\nError opening file:\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)

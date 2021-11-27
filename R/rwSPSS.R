@@ -379,8 +379,8 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			}
 			else ## Failure
 			{
-				# print(paste('SysEncoding: cp',l10n_info()$codepage,sep=''))
-				print(paste('SysEncoding: ',l10n_info()$codepage,sep=''))
+				print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
+				# print(paste('SysEncoding: ',l10n_info()$codepage,sep=''))
 				cat("\nError opening file:\n") 
 				# cat("\n\nCommand executed:\n")
 				print(corecommand)
