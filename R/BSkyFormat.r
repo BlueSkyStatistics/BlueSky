@@ -5758,7 +5758,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 
 
 
-#26Nov2021
+#07Dec2021
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	parsed_Rcommands = c()
@@ -5942,30 +5942,36 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 			# print(topic_param_name_found)
 			# return()
 			
-			if(length(topic_param_name_found) == 0)
+			if(length(topic_param_name_found) == 0) #regexpr("(\\bpackage(\\s)*=)", x)
 			{
-				package_param_name_found = grep("\\bpackage\\b", HelpOrCommentOrBlankLineStr)
+				package_param_name_found = regexpr("(\\bpackage(\\s)*=)", HelpOrCommentOrBlankLineStr) #"\\bpackage\\b"
 				
-				if(length(package_param_name_found) != 0)
+				if(package_param_name_found != -1)
 				{
 					y = strsplit(HelpOrCommentOrBlankLineStr, ",")
 					non_topic_param_in_1st_place = grep("=", y[[1]][1])
 					
 					if(length(non_topic_param_in_1st_place) != 0)
 					{
-						package_name = strsplit(y[[1]][1], "=")
-						package_name = trimws(package_name[[1]][2])
-						nchar_package_name = nchar(package_name)
-						#cat("\n 1. ========= The package name is: ", package_name, "\n")
+						substr_start_from_package_param = substr(HelpOrCommentOrBlankLineStr, package_param_name_found, nchar(HelpOrCommentOrBlankLineStr))
+						package_param = strsplit(substr_start_from_package_param, ",")
+						package_name = strsplit(package_param[[1]][1], "=")
 						
-						if(nchar_package_name > 0)
+						if(trimws(package_name[[1]][1]) == "package")
 						{
-							package_name = trimws((strsplit(package_name, "\""))[[1]][2])
-							#cat("\n 2. ========= The package name is: ", package_name, "\n")
+							package_name = trimws(package_name[[1]][2])
+							nchar_package_name = nchar(package_name)
+							#cat("\n 1. ========= The package name is: ", package_name, "\n")
+							
+							if(nchar_package_name > 0)
+							{
+								package_name = trimws((strsplit(package_name, "\""))[[1]][2])
+								#cat("\n 2. ========= The package name is: ", package_name, "\n")
+							}
+							
+							options(help_type = 'text')
+							package_only_help_command = TRUE
 						}
-						
-						options(help_type = 'text')
-						package_only_help_command = TRUE
 					}
 				}
 			}
@@ -6003,7 +6009,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 						temp_help_file_path <- tools::Rd2HTML(utils:::.getHelpFile(helpfile[1]), out = tempfile(pattern = "BSkyhelpsink", fileext = ".html"), package = pkgname[1])
 						
 						# For testing purpose to copy the file in the download directory as R removes all temp files upon closing the R session 
-						file.copy(temp_help_file_path, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
+						#file.copy(temp_help_file_path, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
 						
 						cat("\n")
 						#print(str(helpfile))
@@ -6087,7 +6093,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				{
 					require(future)
 					
-					oplan <- plan(multisession, workers=2)
+					oplan <- plan(multisession, workers = 2)
 					#on.exit(plan(oplan), add = TRUE)
 					
 					if(package_only_help_command == TRUE)
@@ -6101,6 +6107,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 								}#, packages = c('base', 'stats', 'tools','dplyr'), globals = 'package_name'
 							)
 						}
+						
+						#Sys.sleep(60)
 					}
 					else
 					{
@@ -6109,6 +6117,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 								withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE);
 							} #, packages = c('base', 'stats', 'tools', 'dplyr')
 						)
+						
+						#Sys.sleep(60)
 					}
 					
 					isHelpCommand = TRUE
@@ -6127,7 +6137,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 					
 					if(port <= 0)
 					{
-						cat("\nR HTML help server could be started\n")
+						cat("\nR HTML help server could not be started\n")
 						cat("\nGo to BlueSky Application configuration menu dialog and uncheck the R help server option and then try help(..) command again\n")
 					}
 					# else
