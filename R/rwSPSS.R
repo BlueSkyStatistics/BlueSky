@@ -396,8 +396,8 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
 			for(i in 1:colcount)
 			{
-				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
-				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
+				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']',sep='')))
+				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')',sep='')))
 
 				if(colclass[1] == "haven_labelled")##"haven_labelled" "vctrs_vctr"     "double"
 				{
