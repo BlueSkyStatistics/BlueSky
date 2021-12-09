@@ -6,7 +6,7 @@ BSkyGetDatasetNameTitle <-function(package ="")
     }
     else {
         uadatasets.sk$BSkyDataFramePackageDetails <- as.data.frame(data(package = package)$results)
-		uadatasets.sk$BSkyDataFramePackageDetails <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::filter(isValidName(Item)) %>% dplyr::arrange(tolower(Item))
+		uadatasets.sk$BSkyDataFramePackageDetails <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::filter(BSkyisValidName(Item)) %>% dplyr::arrange(tolower(Item))
     }
     uadatasets.sk$BSkyDataFramePackageDetails <- uadatasets.sk$BSkyDataFramePackageDetails %>%
         mutate(Keys = paste(Item, "-[", Title, "]", "-", Package,
