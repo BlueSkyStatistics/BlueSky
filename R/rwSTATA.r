@@ -8,7 +8,7 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE, encoding=NU
 	BSkyErrMsg = paste("BSkyReadStata: Error reading Stata file : ", "DataSetName :", datasetname," ", "Stata Filename  :", paste(stataFilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkyReadStata: Warning reading Stata file : ", "DataSetName :", datasetname," ", "Stata Filename :", paste(stataFilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	##loading the dbf file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
 	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
@@ -29,7 +29,7 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE, encoding=NU
 		#R command to open data file (SPSS)
 		if(is.null(encoding))
 		{
-			corecommand = paste('read_dta(file=\'',stataFilename,'\')',sep='')
+			corecommand = paste('haven::read_dta(file=\'',stataFilename,'\')',sep='')
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_dta(file=\'',stataFilename,'\'))',sep='')
 		}
 		else{
@@ -49,12 +49,14 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE, encoding=NU
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
-			# cat("\nSuccessfully opened\n") 
-			# print(corecommand) #no need to print this
+			cat("\nSuccessfully opened using:\n") 
+			print(corecommand) #no need to print this
 		}
 		else ## Failure
 		{
+			print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
 			cat("\nError opening file:\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
@@ -104,12 +106,12 @@ BSkyWriteStata <- function(stataFilename,dataSetNameOrIndex) ##  index of datase
 	BSkyErrMsg = paste("BSkywriteStata: Error writing Stata file : ", "DataSetName :", dataSetNameOrIndex," ", "Stata Filename  :", paste(stataFilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkywriteStata: Warning writing Stata file : ", "DataSetName :", dataSetNameOrIndex," ", "Stata Filename :", paste(stataFilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	#cat("\nDS obj:", datasetname," ::\n")
 	if(!is.null(datasetname))
 	{		
-		corecommand = paste('write_dta(',datasetname,', path = "',stataFilename,'")',sep='')
+		corecommand = paste('haven::write_dta(',datasetname,', path = "',stataFilename,'")',sep='')
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
 		#trying to save the datafile
@@ -122,6 +124,7 @@ BSkyWriteStata <- function(stataFilename,dataSetNameOrIndex) ##  index of datase
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
 			# cat("\nSuccessfully saved\n") 
 			# print(corecommand) #no need to print this

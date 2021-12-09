@@ -221,6 +221,7 @@ BSkyIsEmptyDataset <- function(datasetName)
 #any more empty rows(or discuss with team)
 BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 30, defaultCols = 6)
 {
+
     datasetname <- datasetName
     rowcount = eval(parse(text = paste("nrow(", datasetname,
         ")", sep = "")))
@@ -251,4 +252,5 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 30, defaultCols = 6
                 ")+1, ] <<- newrow", sep = "")))
         }
     }
+	# cat("Exiting BSkyPutEmptyCellsBack");
 }

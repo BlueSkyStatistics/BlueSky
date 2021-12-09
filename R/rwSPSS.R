@@ -332,7 +332,7 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 	BSkyErrMsg = paste("UAloadSPSSinDataFrame: Error loading SPSS file : ", "DataSetName :", datasetname," ", "SPSS filepath & filename  :", paste(SPSSfileName, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAloadSPSSinDataFrame: Warning loading SPSS file : ", "DataSetName :", datasetname," ", "SPSS filepath & filename   :", paste(SPSSfileName, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success = 0;
+	success = -1;
 		# New Dataset name is only added if you want to replace existing, Or you will check that it should not already be present
 		curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
 		if((replace == TRUE) || (replace == FALSE && curidx == -1))
@@ -352,11 +352,11 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			#R command to open data file (SPSS)
 			if(is.null(encoding))
 			{
-				corecommand = paste('read_sav(file=\'',SPSSfileName,'\')',sep='')
+				corecommand = paste('haven::read_sav(file=\'',SPSSfileName,'\')',sep='')
 				# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sav(file=\'',SPSSfileName,'\'))',sep='')
 			}
 			else{
-				corecommand = paste('read_sav(file=\'',SPSSfileName,'\', encoding=\'',encoding,'\')', sep='')
+				corecommand = paste('haven::read_sav(file=\'',SPSSfileName,'\', encoding=\'',encoding,'\')', sep='')
 				# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sav(file=\'',SPSSfileName,'\', encoding=\'',encoding,'\'))',sep='')
 			}
 			opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')', sep='')
@@ -372,12 +372,15 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			
 			if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 			{
+				success = 0
 				## maybe return 0 for success
-				# cat("\nSuccessfully opened\n") 
-				# print(corecommand) #no need to print this
+				cat("\nSuccessfully opened using:\n") 
+				print(corecommand) #no need to print this
 			}
 			else ## Failure
 			{
+				print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
+				# print(paste('SysEncoding: ',l10n_info()$codepage,sep=''))
 				cat("\nError opening file:\n") 
 				# cat("\n\nCommand executed:\n")
 				print(corecommand)
@@ -393,8 +396,8 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
 			for(i in 1:colcount)
 			{
-				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
-				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
+				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']',sep='')))
+				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')',sep='')))
 
 				if(colclass[1] == "haven_labelled")##"haven_labelled" "vctrs_vctr"     "double"
 				{
@@ -1300,7 +1303,7 @@ BSkywriteSAV <- function(savfilename, dataSetNameOrIndex)
 	BSkyErrMsg = paste("BSkywriteSAV: Error writing SAV file : ", "DataSetName :", dataSetNameOrIndex," ", "SAV filename  :", paste(savfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkywriteSAV: Warning writing SAV file : ", "DataSetName :", dataSetNameOrIndex," ", "SAV filename  :", paste(savfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 			##dataset saved to SAV file is from uadatasets
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 			
@@ -1310,7 +1313,7 @@ BSkywriteSAV <- function(savfilename, dataSetNameOrIndex)
 		# eval(parse(text=paste('export(',datasetname,', savfilename)')))
 		#above line was in use before adding tryCatch below
 		
-		corecommand = paste('export(',datasetname,', savfilename)')
+		corecommand = paste('rio::export(',datasetname,', savfilename)')
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
 		#trying to save the datafile
@@ -1323,6 +1326,7 @@ BSkywriteSAV <- function(savfilename, dataSetNameOrIndex)
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
 			# cat("\nSuccessfully saved\n") 
 			# print(corecommand) #no need to print this

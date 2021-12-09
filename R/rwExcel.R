@@ -28,7 +28,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 	BSkyErrMsg = paste("UAreadExcel: Error reading Excel file : ", "DataSetName :", datasetname," ", "Excel filename  :", paste(excelfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAreadExcel: Warning reading Excel file : ", "DataSetName :", datasetname," ", "Excel filename :", paste(excelfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	##loading the dbf file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
 	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
@@ -67,7 +67,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		######### Using RODBC package ########ends####
 		
 		#R command to open data file
-		corecommand = paste('read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\')', sep='')
+		corecommand = paste('readxl::read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\')', sep='')
 
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
@@ -106,9 +106,10 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
-			# cat("\nSuccessfully opened\n") 
-			# print(corecommand) #no need to print this
+			cat("\nSuccessfully opened using:\n") 
+			print(corecommand) #no need to print this
 		}
 		else ## Failure
 		{
@@ -216,7 +217,7 @@ UAwriteExcel <- function(excelfilename, dataSetNameOrIndex, sheetname, row.names
 	BSkyErrMsg = paste("UAwriteExcel: Error writing Excel file : ", "DataSetName :", dataSetNameOrIndex," ", "Excel filename  :", paste(excelfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("UAwriteExcel: Warning writing Excel file : ", "DataSetName :", dataSetNameOrIndex," ", "Excel filename :", paste(excelfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 	if(!is.null(datasetname))
@@ -257,7 +258,7 @@ UAwriteExcel <- function(excelfilename, dataSetNameOrIndex, sheetname, row.names
 		#Works well but No SheetName. Was in use before 07Jul2016
 		#eval(parse(text=paste('write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE)',sep='')))
 		#With SheetName
-		corecommand = paste('write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE, sheetName="',sheetname,'", overwrite=TRUE)', sep='')
+		corecommand = paste('openxlsx::write.xlsx(',datasetname,', file="',excelfilename,'", colNames=TRUE, sheetName="',sheetname,'", overwrite=TRUE)', sep='')
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
 		#trying to save the datafile
@@ -270,6 +271,7 @@ UAwriteExcel <- function(excelfilename, dataSetNameOrIndex, sheetname, row.names
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
 			# cat("\nSuccessfully saved\n") 
 			# print(corecommand) #no need to print this

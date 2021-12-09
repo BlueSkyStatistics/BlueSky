@@ -7,7 +7,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 	BSkyErrMsg = paste("BSkyLoadSASinDataFrame: Error reading SAS file : ", "DataSetName :", datasetname," ", "SAS filename  :", paste(SASfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkyLoadSASinDataFrame: Warning reading SAS file : ", "DataSetName :", datasetname," ", "SAS filename :", paste(SASfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	##loading the dbf file from disk to uadatasets array
 	# New Dataset name is only added if you want to replace existing, Or you will check that it should not already present
 	curidx <- UAgetIndexOfDataSet(datasetname) # current index of dataset if its already loaded ( before )
@@ -30,7 +30,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 		#R command to open data file (SPSS)
 		if(is.null(encoding))
 		{
-			corecommand = paste('read_sas(data_file=\'',SASfilename,'\')',sep='')
+			corecommand = paste('haven::read_sas(data_file=\'',SASfilename,'\')',sep='')
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sas(file=\'',SASfilename,'\'))',sep='')
 		}
 		else{
@@ -51,12 +51,14 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
+			success = 0
 			## maybe return 0 for success
-			# cat("\nSuccessfully opened\n") 
-			# print(corecommand) #no need to print this
+			cat("\nSuccessfully opened using:\n") 
+			print(corecommand) #no need to print this
 		}
 		else ## Failure
 		{
+			print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
 			cat("\nError opening file:\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
@@ -98,11 +100,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 	}				
 	BSkyFunctionWrapUp()
 	return(success)
-	# if(success==0)
-	# {
-		# e <- simpleError("Error in opening sas7bdat")
-		# stop(e)
-	# }
+
 }
 
 
@@ -114,39 +112,40 @@ BSkyWriteSas <- function(sasFilename,dataSetNameOrIndex) ##  index of dataset an
 	BSkyErrMsg = paste("BSkyWriteSas: Error writing SAS file : ", "DataSetName :", dataSetNameOrIndex," ", "SAS Filename  :", paste(sasFilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkyWriteSas: Warning writing SAS file : ", "DataSetName :", dataSetNameOrIndex," ", "SAS Filename :", paste(sasFilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	#cat("\nDS obj:", datasetname," ::\n")
 	if(!is.null(datasetname))
 	{		
-		corecommand = paste('write_sas(',datasetname,', path = "',sasFilename,'")', sep='')
+		corecommand = paste('haven::write_sas(',datasetname,', path = "',sasFilename,'")', sep='')
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
 		#trying to save the datafile
-		# tryCatch({
+		tryCatch({
 		
-				# withCallingHandlers({
-					#datasetname <- ExtractDatasetNameFromGlobal(datasetname)
+				withCallingHandlers({
+					datasetname <- ExtractDatasetNameFromGlobal(datasetname)
 					eval(parse(text=paste('tmpsasx <- as.data.frame( lapply (',datasetname,', function(y) {if(class(y) == "factor") y = as.character(y) else y} ) )' )))
-					eval(parse(text=paste('write_sas(tmpsasx, path = "',sasFilename,'")',sep='')))
-				# }, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
-				# }, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+					eval(parse(text=paste('haven::write_sas(tmpsasx, path = "',sasFilename,'")',sep='')))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		
-		# if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
-		# {
-			# ## maybe return 0 for success
-			# # cat("\nSuccessfully saved\n") 
-			# # print(corecommand) #no need to print this
-		# }
-		# else ## Failure
-		# {
-			# cat("\nError saving file:\n") 
-			# # cat("\n\nCommand executed:\n")
-			# print(corecommand)
-			# ## gracefully report error to the app layer about the issue so it does not keep waiting. 
-			# ## maybe return -1 for failure
-			# success = -1;
-		# }
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			success = 0
+			## maybe return 0 for success
+			# cat("\nSuccessfully saved\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError saving file:\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}
 	}
 	else
 	{
@@ -155,6 +154,6 @@ BSkyWriteSas <- function(sasFilename,dataSetNameOrIndex) ##  index of dataset an
 		warning("BSkyWriteSas:  Cannot write SAS. Dataset name or index not found.")
 	}		
 	BSkyFunctionWrapUp()			
-	# return(success)
+	return(success)
 
 }
