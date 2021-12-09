@@ -32,6 +32,7 @@
 #' @return
 #'
 #' @examples
+
 BSkyLoadRpkgDataset <- function(datasetname, datasetobj, RPkgName)
 {
 	eval(parse(text = paste( "TmP=data('" , datasetname , "', package='" , RPkgName , "')" , sep = ''))) 

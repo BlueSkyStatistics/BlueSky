@@ -2,7 +2,7 @@ BSkyGetDatasetNameTitle <-function(package ="")
 {
     if (package == ""|| package =="All_Installed_Packages") {
         uadatasets.sk$BSkyDataFramePackageDetails <- as.data.frame(data(package = .packages(all.available = TRUE))$results)
-		uadatasets.sk$BSkyDataFramePackageDetails  <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::arrange(tolower(Item))
+		uadatasets.sk$BSkyDataFramePackageDetails  <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::filter(BSkyisValidName(Item)) %>% dplyr::arrange(tolower(Item))
     }
     else {
         uadatasets.sk$BSkyDataFramePackageDetails <- as.data.frame(data(package = package)$results)
