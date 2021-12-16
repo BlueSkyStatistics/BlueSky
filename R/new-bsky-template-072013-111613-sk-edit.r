@@ -3441,14 +3441,22 @@ BSkySetCurrentDatasetName<- function(datasetNameOrDatasetGlobalIndex, setDataset
 	
 	if(setDatasetIndex != 'N')
 	{
-		if(exists(datasetName, envir=.GlobalEnv))
+		
+		if(exists(datasetName, envir=.GlobalEnv) && !(eval(parse(text=paste("is.null(",datasetName,")")))))
 		{
 			#cat('\nDataset Exists: ',datasetName)
-			if(index > 0)
+			if(length(index) > 0)
 			{
-			
-eval(parse(text=paste("uadatasets$lst[[index]]=.GlobalEnv$",datasetName,sep='')))
-names(uadatasets$lst)[index] <- datasetName
+				# cat("\nDatasetname:\n")
+				# print(datasetName)
+				# cat("\nIndex:\n")
+				# print(index)
+				# cat("\names in lst:\n")
+				# print(names(uadatasets$lst))
+				eval(parse(text=paste("uadatasets$lst[[index]]=.GlobalEnv$",datasetName,sep='')))
+				# cat("\nHere 1")
+				names(uadatasets$lst)[index] <- datasetName
+				# cat("\nHere2\n")
 			#commenting following IF/ELSE and using 2 lines above instead
 			
 				# if(BSkyIsInBatchCommandMode() == FALSE)
@@ -3458,8 +3466,8 @@ names(uadatasets$lst)[index] <- datasetName
 						# uadatasets$lst[index] <- NULL
 					# }
 					# #17jan2016 eval(parse(text=paste("uadatasets$lst[[index]]=",datasetName)))
-# eval(parse(text=paste("uadatasets$lst[[index]]=.GlobalEnv$",datasetName,sep='')))
-# names(uadatasets$lst)[index] <- datasetName
+					# eval(parse(text=paste("uadatasets$lst[[index]]=.GlobalEnv$",datasetName,sep='')))
+					# names(uadatasets$lst)[index] <- datasetName
 
 					
 					# # cat("\nThis is set in non-Batch mode\n")
@@ -3471,10 +3479,10 @@ names(uadatasets$lst)[index] <- datasetName
 					# if(is.null(uadatasets$lst[index][[1]]) )  ## is(is.null(uadatasets$lst[index]) ) 
 					# {
 						# #17jan2016 eval(parse(text=paste("uadatasets$lst[[index]]=",datasetName)))
-# eval(parse(text=paste("uadatasets$lst[[index]]=.GlobalEnv$",datasetName,sep='')))						
+					# eval(parse(text=paste("uadatasets$lst[[index]]=.GlobalEnv$",datasetName,sep='')))						
 					# # cat("\nno of datasets in lst\t")
 					# # print(length(uadatasets$lst))
-# names(uadatasets$lst)[index] <- datasetName
+					# names(uadatasets$lst)[index] <- datasetName
 					# # cat("\nno of names in lst\t")
 					# # print(names(uadatasets$lst))
 					# }
@@ -3484,7 +3492,16 @@ names(uadatasets$lst)[index] <- datasetName
 			}
 		}
 	}
-	uadatasets.sk$currentDatasetname = datasetName
+
+	if(exists(datasetName, envir=.GlobalEnv) && !(eval(parse(text=paste("is.null(",datasetName,")")))))
+	{
+		uadatasets.sk$currentDatasetname = datasetName
+	}
+	else
+	{
+		uadatasets.sk$currentDatasetname = ""
+		index = 0
+	}
 	
 	#cat('\nBSkySetCurrentDatasetName: ',datasetNameOrDatasetGlobalIndex	)
 	#cat('\n2BSkySetCurrentDatasetName: ',uadatasets.sk$currentDatasetname,'\nAll Names:')
