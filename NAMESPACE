@@ -214,3 +214,5 @@ export(BSky_options)
 
 export(BSkySetRHelpHTTPServer, BSkyGetRHelpHTTPServer)
 
+export(RemoveNonASCIIchars, BSkySanitizeDataset, BSkyCheckNullDataset)
+
