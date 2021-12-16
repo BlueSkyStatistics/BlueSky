@@ -1496,8 +1496,8 @@ UAgetColProperties <- function(dataSetNameOrIndex, colNameOrIndex, asClass=TRUE,
 	# cat("DS index:",datasetname)	
 			if(!is.null(datasetname))
 			{		
-	colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)		
-# cat("Col index:",colIndex)	
+				colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)		
+				# cat("Col index:",colIndex)	
 
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)
@@ -1909,7 +1909,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 			else
 			{
 				# cat("\nError: Cannot set col property. Dataset name or index not found\n")
-				BSkyErrMsg =paste("BSkyMakeColumnString:  Can't make it string. Dataset name or index not found."," Dataset Name:", datasetname)
+				BSkyErrMsg =paste("BSkyMakeColumnString:  Can't make it strin Dataset name or index not found."," Dataset Name:", datasetname)
 				warning("BSkyMakeColumnString:  Can't make it string. Dataset name or index not found.")
 			}			
 
@@ -1940,7 +1940,14 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 					isfactor = eval(parse(text=paste('is.factor(',datasetname,'$',colNameOrIndex,')', sep='')))
 					if(isfactor)
 					{
-						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(as.character(',datasetname,'$',colNameOrIndex,'))', sep='')))
+						# this can be used if levels are numeric-strings like
+						# ("3.4","5","9") and we want same numbers after conversion i.e. 3.4, 5, 9
+						# but this produces NAs if levels are like ("high", "med", "low"), i.e. pure character levels
+						# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(as.character(',datasetname,'$',colNameOrIndex,'))', sep='')))
+						
+						## this can be use for levels that are pure character or character-numebers
+						# ("male", "female") or ("3.4","5","9") and converts to integer i.e. (1,2) and (1,2,3) respectively
+						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(',datasetname,'$',colNameOrIndex,')', sep='')))
 					}
 					else {
 						# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
