@@ -86,7 +86,13 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 					eval( parse(text=paste('bskytempx <<- NULL',sep='')))## 03Aug2016 Clean x
 					######### Using readxl package ########		datasetname <- read_excel(path, sheet = 1)
 					eval( parse(text=paste('bskytempx <<- as.data.frame(',corecommand,')', sep=''  ))) # use with lapply
+					# cat("\nNo global:\n")
+					# eval(parse(text=paste('objexists <- exists("bskytempx", envir=.GlobalEnv)',sep=''))) #dataset object exists
+					# print(objexists)
 					
+					# cat("\nGlobal:\n")
+					# eval(parse(text=paste('objexists <- exists(".GlobalEnv$bskytempx")',sep=''))) #dataset object exists
+					# print(objexists)					
 					#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
 					GenerateUniqueColName('bskytempx')
 					
