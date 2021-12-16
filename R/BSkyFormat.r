@@ -5252,14 +5252,17 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 }
 
 
-#25Sep2021
-BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, executeSelectOnly = FALSE, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
+#10Dec2021
+BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, executeSelectOnly = FALSE, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, additionalBskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
 	if(bskyEvalDebug == TRUE)
 	{
-		cat("callStackIndex and callStack\n")
-		print(uadatasets.sk$callStackIndex)
-		print(uadatasets.sk$callStack)
+		if(additionalBskyEvalDebug == TRUE)
+		{
+			cat("callStackIndex and callStack\n")
+			print(uadatasets.sk$callStackIndex)
+			print(uadatasets.sk$callStack)
+		}
 		
 		cat("\nParameters passed to BSKyEval function\n")
 		print(match.call())
@@ -5318,11 +5321,11 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 					RcommandStringSelect = substr(RcommandString, selectionStartpos, selectionEndpos)
 					
 					#If seelction is parse-able, just execute the selection - do not expand the selection boundary  
-					RcommandStringSelect_parse_test = BSkyRCommandParsingTest(RcommandString = RcommandStringSelect, numExprParse = numExprParse, bskyEvalDebug = bskyEvalDebug)
+					RcommandStringSelect_parse_test = BSkyRCommandParsingTest(RcommandString = RcommandStringSelect, numExprParse = numExprParse, bskyEvalDebug = additionalBskyEvalDebug)
 					
 					if(RcommandStringSelect_parse_test == 0)
 					{
-						find_first_expression = BSkyRCommandParsedExprBoundary(RcommandString = RcommandStringSelect, numExprParse = numExprParse , selectionStartpos = 0, selectionEndpos = 0, linePosOffsetAdjutment = linePosOffsetAdjutment, bskyEvalDebug = bskyEvalDebug)
+						find_first_expression = BSkyRCommandParsedExprBoundary(RcommandString = RcommandStringSelect, numExprParse = numExprParse , selectionStartpos = 0, selectionEndpos = 0, linePosOffsetAdjutment = linePosOffsetAdjutment, bskyEvalDebug = additionalBskyEvalDebug)
 					
 						#if(find_first_expression$parsingStatus == 0 && find_first_expression$firstExprStartPos > 0 && find_first_expression$lastExprEndPos > 0)
 						if(find_first_expression$firstExprStartPos > 0 && find_first_expression$lastExprEndPos > 0)
@@ -5340,16 +5343,16 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 					{
 						if(RcommandStringSelect_parse_test == 0)
 						{
-							find_first_expression = BSkyRCommandParsedExprBoundary(RcommandString = substr(RcommandString, selectionStartpos, nchar(RcommandString)), numExprParse = 1 , selectionStartpos = 0, selectionEndpos = 0, linePosOffsetAdjutment = linePosOffsetAdjutment, bskyEvalDebug = bskyEvalDebug)
+							find_first_expression = BSkyRCommandParsedExprBoundary(RcommandString = substr(RcommandString, selectionStartpos, nchar(RcommandString)), numExprParse = 1 , selectionStartpos = 0, selectionEndpos = 0, linePosOffsetAdjutment = linePosOffsetAdjutment, bskyEvalDebug = additionalBskyEvalDebug)
 							find_first_expression$firstExprStartPos = find_first_expression$firstExprStartPos + selectionStartpos - 1
 							find_first_expression$lastExprEndPos = find_first_expression$lastExprEndPos + selectionStartpos - 1
 						}
 						else
 						{
-							find_first_expression = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = 1 , selectionStartpos = selectionStartpos, selectionEndpos = 0, linePosOffsetAdjutment = 1, bskyEvalDebug = bskyEvalDebug)
+							find_first_expression = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = 1 , selectionStartpos = selectionStartpos, selectionEndpos = 0, linePosOffsetAdjutment = 1, bskyEvalDebug = additionalBskyEvalDebug)
 						}
 						
-						if(bskyEvalDebug == TRUE)
+						if(additionalBskyEvalDebug == TRUE)
 						{
 							cat("\n Printitng find_first_expression returned by BSkyRCommandParsedExprBoundary in BSkyEval\n")
 							print(nchar(RcommandString))
@@ -5429,9 +5432,9 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 			
 			no_expresson_to_execute = FALSE
 			
-			Rcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos, linePosOffsetAdjutment = linePosOffsetAdjutment, bskyEvalDebug = bskyEvalDebug)
+			Rcommands_initial_parse = BSkyRCommandParsedExprBoundary(RcommandString = RcommandString, numExprParse = numExprParse , selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos, linePosOffsetAdjutment = linePosOffsetAdjutment, bskyEvalDebug = additionalBskyEvalDebug)
 			
-			if(bskyEvalDebug == TRUE)
+			if(additionalBskyEvalDebug == TRUE)
 			{
 				cat("\n Printitng Rcommands_initial_parse returned by BSkyRCommandParsedExprBoundary in BSkyEval\n")
 				print(nchar(RcommandString))
@@ -5472,14 +5475,14 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 		{
 			newline_count = 0
 			
-			if(bskyEvalDebug == TRUE)
+			if(additionalBskyEvalDebug == TRUE)
 			{
-				cat("\n prnting ASCII value of the trainling character to skip \\n, \\r and blanks\n")
+				cat("\n prnting ASCII value of the traialing character to skip \\n, \\r and blanks\n")
 			}
 			
 			for(i in (Rcommands_initial_parse$lastExprEndPos + 1):RcommandString_before_any_modification_length)
 			{
-				if(bskyEvalDebug == TRUE)
+				if(additionalBskyEvalDebug == TRUE)
 				{
 					cat(charToRaw(substr(RcommandString_before_any_modification, i, i)))
 					cat("\n")
@@ -5564,7 +5567,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 		}
 		
 		
-		if(!is.null(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName) != "")
+		if(!is.null(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName) != "" && (exists(currentDatasetName, envir = .GlobalEnv) && !(eval(parse(text=paste("is.null(",currentDatasetName,")")))) ))
 		{
 			BSkySetCurrentDatasetName(currentDatasetName, setDatasetIndex = "y")
 			working_datasetName = currentDatasetName
@@ -5697,7 +5700,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 						BSkyFormat(paste("\n", "Begins ", BSkySplit_footer_str,"\n"))
 					}
 					#cat("\n")
-					ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified_split_footer, origRcommands = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, splitOn = TRUE, graphicsDir = graphicsDir, bskyEvalDebug = bskyEvalDebug) #, numExprParse = numExprParse, selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos)
+					ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified_split_footer, origRcommands = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, splitOn = TRUE, graphicsDir = graphicsDir, bskyEvalDebug = additionalBskyEvalDebug) #, numExprParse = numExprParse, selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos)
 				}
 				else
 				{
@@ -5723,7 +5726,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 		}
 		else
 		{
-			ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, graphicsDir = graphicsDir, bskyEvalDebug = bskyEvalDebug) #, numExprParse = numExprParse, selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos)
+			ret_char_count_array = BSkyEvalRcommandBasic(RcommandString = RcommandString_modified, echo = echoRcommand, echoInline = echoInlineRcommand, graphicsDir = graphicsDir, bskyEvalDebug = additionalBskyEvalDebug) #, numExprParse = numExprParse, selectionStartpos = selectionStartpos, selectionEndpos = selectionEndpos)
 		}
 		
 	if(ignoreSplitOn == FALSE)
@@ -5757,8 +5760,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 }
 
 
-
-#07Dec2021
+#10Dec2021
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	parsed_Rcommands = c()
@@ -6223,7 +6225,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				
 				if(bskyEvalDebug == TRUE)
 				{
-					cat("\n<br>********* SK debug Printing call details within BSkyEvalRcommandBasic - num_graphics_files and uadatasets.sk$last_count_of_bsky_graphics_files ******<br>\n")
+					cat("\n<br>********* Printing call details within BSkyEvalRcommandBasic - num_graphics_files and uadatasets.sk$last_count_of_bsky_graphics_files ******<br>\n")
 					print(num_graphics_files)
 					print(uadatasets.sk$last_count_of_bsky_graphics_files)
 					print(num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
