@@ -737,6 +737,33 @@ BSkyCloseForReloading<-function(datasetname)
 				eval(parse(text=paste('remove(',datasetname, ', envir=.GlobalEnv)')))
 			}
 }
+
+#datasetName must be a string
+BSkyCheckNullDataset <- function(datasetNameStr)
+{
+	success=-1
+	if(exists(datasetNameStr, envir=.GlobalEnv) && !(eval(parse(text=paste("is.null(",datasetNameStr,")")))))
+	{
+		uadatasets.sk$currentDatasetname = datasetNameStr
+		success=0
+	}
+	else
+	{
+		idx = which(datasetNameStr == uadatasets$name)
+		if(length(idx) > 0)
+		{
+			uadatasets$name = uadatasets$name[-idx]
+			if(uadatasets.sk$currentDatasetname == datasetNameStr)
+			{
+				uadatasets.sk$currentDatasetname = ""
+			}
+		}
+	}
+	# cat("\n Success:\n")
+	# print(success)
+	return(invisible(success))
+}
+
 # not complete
 UAgetAllData<-function()
 {
@@ -751,7 +778,7 @@ UAgetAllData<-function()
 		{
 		withCallingHandlers(
 		{
-DataSetIndex <- BSkyValidateDataset(dataSetNameOrIndex)		
+			DataSetIndex <- BSkyValidateDataset(dataSetNameOrIndex)		
 			filetype <- attr(uadatasets$lst[[DataSetIndex]],"filetype")
 			#cat("\nFile Typ:",filetype,"\n")	
 			
@@ -900,7 +927,7 @@ UAsetColProp<-function(colNameOrIndex, propertyName, propertyValue, mistype="non
 	
 		withCallingHandlers(
 		{
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)	
+			datasetname <- BSkyValidateDataset(dataSetNameOrIndex)	
 			
 			if(!is.null(datasetname))
 			{		
@@ -1026,7 +1053,7 @@ UAgetDataByIndex<-function(filetype)
 					
 		withCallingHandlers(
 		{
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+			datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 			if(!is.null(datasetname))
 			{		
@@ -1217,17 +1244,35 @@ UAsetMissing<-function( colNameOrIndex, missvals=NULL, dataSetNameOrIndex)
 ##22Aug2021 simplified BSky func to get the split column list. It will return empty character array if there is no split.
 BSkyGetDatasetSplitInfo <- function(datasetNameStr)
 {
-	splitVarList = c()
-	#cat("B4 Split Info:")
-	splitInfo = UAgetDataframeSplit(datasetNameStr)
-	#cat(datasetNameStr)
-	#cat("Split Info:")
-	#print(splitInfo)
-	if(!is.null(splitInfo) && length(splitInfo) > 0 && splitInfo$DFsplit == TRUE)
-	{
-		splitVarList = splitInfo$DFsplitcolnames
-	}
 
+	splitVarList = c()
+
+	if(exists(datasetNameStr, envir = .GlobalEnv) &&  !(eval(parse(text=paste("is.null(",datasetNameStr,")")))))
+	{
+		#cat("B4 Split Info:")
+		splitInfo = UAgetDataframeSplit(datasetNameStr)
+		#cat(datasetNameStr)
+		#cat("Split Info:")
+		#print(splitInfo)
+		if(!is.null(splitInfo) && length(splitInfo) > 0 && splitInfo$DFsplit == TRUE)
+		{
+			splitVarList = splitInfo$DFsplitcolnames
+		}
+	}
+	else 
+	{
+		idx = which(datasetNameStr == uadatasets$name)
+		if(length(idx) > 0)
+		{
+			uadatasets$name = uadatasets$name[-idx]
+			if(uadatasets.sk$currentDatasetname == datasetNameStr)
+			{
+				uadatasets.sk$currentDatasetname = ""
+			}
+		}
+	}
+	cat("\nreturn from BSkyGetDatasetSplitInfo\n")
+	print(splitVarList)
 	return(invisible(splitVarList))
 }
 
