@@ -1807,7 +1807,8 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 		BSkyFunctionWrapUp()	
 }
 
-BSkyMakeColumnFactor <- function(colNameOrIndex, dataSetNameOrIndex)
+# excludechars: a vector of values to be excluded when forming the set of levels
+BSkyMakeColumnFactor <- function(colNameOrIndex, dataSetNameOrIndex,  excludechars=c("", NA))
 {
 
 	BSkyFunctionInit()
@@ -1827,7 +1828,8 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				{
 						bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
 						# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
-						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
+												eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars)', sep='')))
+						# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
 						BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
 				}
 				else
