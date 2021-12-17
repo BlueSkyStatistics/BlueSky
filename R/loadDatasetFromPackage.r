@@ -2,17 +2,21 @@ BSkyGetDatasetNameTitle <-function(package ="")
 {
     if (package == ""|| package =="All_Installed_Packages") {
         uadatasets.sk$BSkyDataFramePackageDetails <- as.data.frame(data(package = .packages(all.available = TRUE))$results)
-		uadatasets.sk$BSkyDataFramePackageDetails  <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::arrange(tolower(Item))
+		uadatasets.sk$BSkyDataFramePackageDetails  <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::filter(BSkyisValidName(Item)) %>% dplyr::arrange(tolower(Item))
     }
     else {
         uadatasets.sk$BSkyDataFramePackageDetails <- as.data.frame(data(package = package)$results)
-		uadatasets.sk$BSkyDataFramePackageDetails <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::arrange(tolower(Item))
+		uadatasets.sk$BSkyDataFramePackageDetails <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::filter(BSkyisValidName(Item)) %>% dplyr::arrange(tolower(Item))
     }
     uadatasets.sk$BSkyDataFramePackageDetails <- uadatasets.sk$BSkyDataFramePackageDetails %>%
         mutate(Keys = paste(Item, "-[", Title, "]", "-", Package,
             sep = ""))
     return(uadatasets.sk$BSkyDataFramePackageDetails[, c("Keys")])
 
+}
+
+BSkyisValidName <- function(string) {
+    grepl("^((([[:alpha:]]|[.][._[:alpha:]])[._[:alnum:]]*)|[.])$", string)
 }
 
 ### title should fit on one line, be written in sentence case, but not end in a full stop
