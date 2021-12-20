@@ -1,3 +1,11 @@
+
+cohenTest <-function()
+{
+print("you are here")
+}
+
+
+
 cohensd <-function(cindex,uavarindex, len,correction=cohensd_correction, uacipass=.95, index,valuetocompare,indexInReturnStructure)
 {
 	# every ua sub function must call the following two 

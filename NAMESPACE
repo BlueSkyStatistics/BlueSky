@@ -213,4 +213,5 @@ export( BSky.summary.aov, BSkyFormatsummary.Anova.mlm, BSkyprint.linearHypothesi
 export(BSky_options)
 
 export(BSkySetRHelpHTTPServer, BSkyGetRHelpHTTPServer)
+export(cohenTest)
 
