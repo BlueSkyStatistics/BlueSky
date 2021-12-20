@@ -328,6 +328,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
+	ists=FALSE
 	isPkgLoaded = FALSE
 	isexists = FALSE
 	error = FALSE
@@ -372,6 +373,18 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 					#dsname = 'mtcars'
 					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
 				}
+				else 
+				{
+					#lets check if it is a "ts" object, if it is, we try to convert it to data.frame object.
+					ists = eval(parse(text=paste('"ts" %in% c(class(',pkgname,'::',dsname,'))',sep='')))	
+					if(ists)
+					{
+						##make it a data.frame and also make a copy in globalEnv
+						eval( parse(text=paste('.GlobalEnv$',dsname,' <- as.data.frame(',pkgname,'::',dsname,')',sep='')))
+						#dsname = 'mtcars'						
+						bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
+					}
+				}
 			}
 			else
 			{
@@ -395,13 +408,21 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			{
 				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
 				
-				if ( !isdataframe ) #not a data.frame and the object exists
+				#check if it is a "ts" object
+				ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
+				if(ists)
+				{
+					##make it a data.frame and also make a copy in globalEnv
+					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
+				}				
+				
+				if ( !isdataframe  && !ists ) #not a data.frame (and ts) and the object exists
 				{
 					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-					cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame object as a character string) or the object referenced is not an object of class data.frame")
+					cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame (or ts) object as a character string) or the object referenced is not an object of class data.frame (or ts)")
 					cat("\nCorrect syntax is:")
-					cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame")
-					cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame from a specific R package")
+					cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame (or ts)")
+					cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame (or ts) from a specific R package")
 					error= TRUE
 					invisible()
 				}
@@ -416,13 +437,21 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 					#dsname = 'mtcars'
 					isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
 					
-					if ( !isdataframe ) #not a data.frame and the object exists
+					#check if it is a "ts" object
+					ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
+					if(ists)
+					{
+						##make it a data.frame and also make a copy in globalEnv
+						eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
+					}					
+					
+					if ( !isdataframe && !ists ) #not a data.frame or ts and the object exists
 					{
 						cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-						cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame object as a character string) or the object referenced is not an object of class data.frame")
+						cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame (or ts) object as a character string) or the object referenced is not an object of class data.frame (or ts)")
 						cat("\nCorrect syntax is:")
-						cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame")
-						cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame from a specific R package")
+						cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame (or ts)")
+						cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame (or ts) from a specific R package")
 						error= TRUE
 						invisible()
 					}
@@ -517,3 +546,5 @@ BSkyRemoveRefreshDataframe <- function(dframe)
 {
 	BSky.RemoveRefresh.Dataframe (dframe)
 }
+
+
