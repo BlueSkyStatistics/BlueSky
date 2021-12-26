@@ -217,3 +217,5 @@ export(cohenTest)
 
 export(RemoveNonASCIIchars, BSkySanitizeDataset, BSkyCheckNullDataset)
 
+export(BSkySetHelpProcessWorkers, BSkyGetHelpProcessWorkers, BSkySetHelpProcessSleepSeconds, BSkyGetHelpProcessSleepSeconds, BSkyGetRHelpParallelHTTPServerPortNumber)
+

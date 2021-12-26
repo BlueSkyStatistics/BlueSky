@@ -2646,8 +2646,8 @@ BSkySetPvalueDisplaySetting <- function(showActualPValueInOutput = uadatasets.sk
 }
 
 
-# Last modified 11/25/2021
-BSkySetRHelpHTTPServer <- function(RHelpHTTPServer = "R_none") # other values - R_native, R_parallel
+# Last modified 12/23/2021
+BSkySetRHelpHTTPServer <- function(RHelpHTTPServer = "R_parallel") # other values - R_none, R_native, R_parallel
 {
 	if(exists("uadatasets.sk"))
 	{
@@ -2658,10 +2658,11 @@ BSkySetRHelpHTTPServer <- function(RHelpHTTPServer = "R_none") # other values - 
 }
 
 
-# Last modified 11/25/2021
+
+# Last modified 12/23/2021
 BSkyGetRHelpHTTPServer <- function()
 {
-	RHelpHTTPServer = "R_none"
+	RHelpHTTPServer = "R_parallel"
 	
 	if(exists("uadatasets.sk") && exists("BSkyRHelpHTTPServer", env=uadatasets.sk))
 	{
@@ -2669,6 +2670,137 @@ BSkyGetRHelpHTTPServer <- function()
 	}
 	
 	return(invisible(RHelpHTTPServer))
+}
+
+
+# Last modified 12/22/2021
+# #for Mac OS - minimum of workers needed is 2 to create a async/parallel sub process
+BSkySetHelpProcessWorkers <- function(num_workers = 2) 
+{	
+	if(num_workers < 2)
+	{
+		num_workers = 2
+	}
+	
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyHelpProcessWorkers = num_workers
+	}
+	
+	return(invisible(num_workers))
+}
+
+# Last modified 12/22/2021
+BSkyGetHelpProcessWorkers <- function()
+{
+	num_workers = 2
+	
+	if(exists("uadatasets.sk") && exists("BSkyHelpProcessWorkers", env=uadatasets.sk))
+	{
+		num_workers = uadatasets.sk$BSkyHelpProcessWorkers
+	}
+	
+	return(invisible(num_workers))
+}
+
+# Last modified 12/22/2021
+BSkySetHelpProcessSleepSeconds <- function(process_sleep_secconds = 60*60) 
+{	
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyHelpProcessSleepSeconds = process_sleep_secconds
+	}
+	
+	return(invisible(process_sleep_secconds))
+}
+
+# Last modified 12/22/2021
+BSkyGetHelpProcessSleepSeconds <- function()
+{
+	sub_process_sleep_time_secconds = 60*60
+	
+	if(exists("uadatasets.sk") && exists("BSkyHelpProcessSleepSeconds", env=uadatasets.sk))
+	{
+		sub_process_sleep_time_secconds = uadatasets.sk$BSkyHelpProcessSleepSeconds
+	}
+	
+	return(invisible(sub_process_sleep_time_secconds))
+}
+
+
+# Last modified 12/22/2021
+BSkyGetRHelpParallelHTTPServerPortNumber <- function(restartHelpServer = FALSE, stopHelpServer = FALSE)
+{
+	port_number = 0
+	
+	if(BSkyGetRHelpHTTPServer() == "R_parallel")
+	{
+		if(stopHelpServer == TRUE)
+		{
+			require(future)
+
+			parallel_plan = plan(sequential)
+			
+			uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber = port_number # which is 0 
+			
+			return(invisible(port_number))
+		}
+		
+		if(exists("uadatasets.sk") && exists("BSkyParallelHelpHTTPServerPortNumber", env=uadatasets.sk) && restartHelpServer == FALSE)
+		{
+			port_number = uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber
+		}
+		else
+		{
+			temp_file_write_read_port_num = tempfile()
+			
+			require(future)
+			
+			if(restartHelpServer == TRUE)
+			{
+				parallel_plan = plan(sequential)
+			}
+			
+			parallel_plan = plan(multisession, workers = BSkyGetHelpProcessWorkers())
+			
+			
+			fut_handle = future(
+							{
+								options(help_type = 'html')
+								help_http_port_number = tools::startDynamicHelp(NA) #start the http help server if not already running
+								writeLines(as.character(help_http_port_number), temp_file_write_read_port_num)
+								
+								# After launching the R HTTP help server in this R sub/parallel process - go to sleep
+								# This parallel process needs to stay alive all the time - otherwise HTTP server will be killed
+								# once this multisession worker is done and completes i.e. resolves itself - it will terminate
+								# this multisession process (specially on Mac OS - widows it seems to stay alive without the sleep)
+								# will terminate along with terminating the R http help server just launched by startDynamicHelp(NA)
+								
+								
+								while(TRUE) 
+								{
+									Sys.sleep(BSkyGetHelpProcessSleepSeconds())
+								}
+							}, package = c('tools')
+						)
+						
+			Sys.sleep(1)
+			
+			port_number = readLines(temp_file_write_read_port_num)
+			
+			uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber = port_number
+		}
+	}
+	else
+	{
+		# port number of the R native http help server if there is one already started by R (otherwise returns 0)
+		# port_number = tools:::httpdPort()
+		
+		#if return 0
+		port_number = 0 
+	}
+	
+	return(invisible(port_number))
 }
 
 
@@ -5760,7 +5892,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 }
 
 
-#10Dec2021
+#23Dec2021
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	parsed_Rcommands = c()
@@ -5971,15 +6103,24 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 								#cat("\n 2. ========= The package name is: ", package_name, "\n")
 							}
 							
-							options(help_type = 'text')
+							
+							# options(help_type = 'text')
+							# x = help(package = "dplyr") - package only help command
+							# str(x)
+							# class(x) - "packageInfo"
+
 							package_only_help_command = TRUE
 						}
 					}
 				}
 			}
-				
-			if(BSkyGetRHelpHTTPServer() == "R_none")
+			
+			# R_none BSky generates its own HTML file in temp location that app will display instead of calling R help HTTP server
+			if(BSkyGetRHelpHTTPServer() == "R_none" || BSkyGetRHelpParallelHTTPServerPortNumber() == 0)
 			{
+				# temporarily set to text to avoid R popping up browser when command format contains just pkg e.g. help(package = "dplyr")
+				options(help_type = 'text') 
+				
 				tryCatch({
 						withCallingHandlers({
 								withAutoprint({{helpfile = eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
@@ -6012,6 +6153,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 						
 						# For testing purpose to copy the file in the download directory as R removes all temp files upon closing the R session 
 						#file.copy(temp_help_file_path, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
+						# browseURL(temp_help_file_path)
 						
 						cat("\n")
 						#print(str(helpfile))
@@ -6064,6 +6206,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 						
 						# For testing purpose to copy the file in the download directory as R removes all temp files upon closing the R session 
 						# file.copy(outFile, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
+						# browseURL(outFile)
 						
 						cat("\n")
 						#print(str(helpfile))
@@ -6093,34 +6236,103 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 			{
 				if(BSkyGetRHelpHTTPServer() == "R_parallel")
 				{
-					require(future)
+					options(help_type = 'html')
 					
-					oplan <- plan(multisession, workers = 2)
+					#require(future)
+					
+					#oplan <- plan(multisession, workers = 2)
 					#on.exit(plan(oplan), add = TRUE)
+					
+					port = BSkyGetRHelpParallelHTTPServerPortNumber()
 					
 					if(package_only_help_command == TRUE)
 					{
-						if(length(package_name) > 0)
-						{
-							fut_help_command <- future(
-								{
-									port = tools::startDynamicHelp(NA);
-									browseURL(paste0("http://127.0.0.1:", port, "/library/", package_name, "/html/00Index.html"));
-								}#, packages = c('base', 'stats', 'tools','dplyr'), globals = 'package_name'
-							)
-						}
+					
+						options(help_type = 'text')
 						
-						#Sys.sleep(60)
+						tryCatch({
+						withCallingHandlers({
+								withAutoprint({{helpfile = eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
+						}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
+						}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+				
+						
+						if(bsky_rcommand_execution_an_exception_occured == FALSE)
+						{
+							options(help_type = 'html')
+							if(length(package_name) > 0)
+							{
+								# fut_help_command <- future(
+									# {
+										# port = tools::startDynamicHelp(NA);
+										# browseURL(paste0("http://127.0.0.1:", port, "/library/", package_name, "/html/00Index.html"));
+									# }#, packages = c('base', 'stats', 'tools','dplyr'), globals = 'package_name'
+								# )
+								
+								browseURL(paste0("http://127.0.0.1:", port, "/library/", package_name, "/html/00Index.html"))
+							}
+						
+							#Sys.sleep(60)
+						}
+						else
+						{
+							eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+						}
 					}
 					else
 					{
-						fut_help_command <- future(
-							{
-								withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE);
-							} #, packages = c('base', 'stats', 'tools', 'dplyr')
-						)
+						# fut_help_command <- future(
+							# {
+								# withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE);
+							# } #, packages = c('base', 'stats', 'tools', 'dplyr')
+						# )
 						
 						#Sys.sleep(60)
+						
+						options(help_type = 'text')
+						
+						tryCatch({
+						withCallingHandlers({
+								withAutoprint({{helpfile = eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
+						}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
+						}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+				
+						
+						if(bsky_rcommand_execution_an_exception_occured == FALSE)
+						{
+							options(help_type = 'html')
+							
+							if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+							{
+								cat("\n")
+								cat("<pre class=\"r\"><code>")
+							}
+								
+							if(class(helpfile)[1] == "help_files_with_topic" && length(as.character(helpfile)) > 0)
+							{	
+								pkgname <- basename(dirname(dirname(helpfile)))
+								
+								if(length(pkgname) > 1)
+								{
+									cat("\nhelp topic is found in multiple packages: ", pkgname, "\n")
+									cat("Displaying the help topic from the first package", pkgname[1], "found in the package search path\n")
+									cat("if you want the help(topic) from a specific package, add the package parameter to help(topic, package = 'pkg name')\n")
+								}
+						
+								pkgname = pkgname[1]
+								topic = basename(helpfile[1])
+								
+								# http://127.0.0.1:21072/library/stats/html/lm.html
+								# http://127.0.0.1:21072/library/dplyr/html/select.html
+								# http://127.0.0.1:21072/library/dplyr/html/dplyr-package.html
+								
+								browseURL(paste0("http://127.0.0.1:", port, "/library/", pkgname, "/html/",topic,".html"));
+							}
+						}
+						else
+						{
+							eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+						}
 					}
 					
 					isHelpCommand = TRUE
@@ -6132,7 +6344,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 					# The following is a check for the subprocess without being blocked till the sub-process resolves/completes 
 					# while (!resolved(fut_help_command)) Sys.sleep(5)
 				}
-				else
+				else # The native R html option will not work (blocking R help http server) within BlueSky/Rpy2 app 
 				{
 					options(help_type = 'html')
 					port = tools::startDynamicHelp(NA)
