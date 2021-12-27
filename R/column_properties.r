@@ -255,16 +255,16 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 					
 					###### Fix this later ### This is for dataset copy outside lst #####
 		#eval(parse(text=paste('attr(',datasetname,',"split") <<- c(FALSE)'	)))  #<<- #16Jan2016 this line changed to next one
-				eval(parse(text=paste('setattr(',datasetname,', "split", c(FALSE) )' )))
+				eval(parse(text=paste('setattr(x=',datasetname,', name= "split", value= c(FALSE) )' )))
 				#cat('\nSplit Attr set\n')
 		#eval(parse(text=paste('attr(',datasetname,',"splitcolumnnames") <<- c()'))) #<<-16Jan2016 This line replaced by next one
-				eval(parse(text=paste('setattr(',datasetname,', "splitcolumnnames", c() )' )))
+				eval(parse(text=paste('setattr(x=',datasetname,', name= "splitcolumnnames", value= c() )' )))
 				#cat('\nSplitColName Attr set\n')
 				#colindexes=UAgetIndexsOfColsInDataSet(datasetname,colNames)
 				#cat("Col Indexes for split:")
 				#print(colindexes)
 		#eval(parse(text=paste('attr(',datasetname,',"splitcolumnindex") <<- c()')))	#<<-16Jan2016 This line replaced with next one
-				eval(parse(text=paste('setattr(',datasetname,', "splitcolumnindex", c() )' )))				
+				eval(parse(text=paste('setattr(x=',datasetname,', name= "splitcolumnindex", value= c() )' )))				
 				#cat("\nDFSplit unset\n")
 				
 				}
@@ -299,16 +299,16 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 						###### Fix this later ### This is for dataset copy outside lst #####
 		#eval(parse(text=paste('attr(',datasetname,',"split") <<- c(FALSE)'	)))  #<<- #16Jan2016 this line changed to next one
-				eval(parse(text=paste('setattr(',datasetname,', "split", c(FALSE) )' )))
+				eval(parse(text=paste('setattr(x= ',datasetname,', name= "split", value= c(FALSE) )' )))
 				#cat('\nSplit Attr set\n')
 		#eval(parse(text=paste('attr(',datasetname,',"splitcolumnnames") <<- c()'))) #<<-16Jan2016 This line replaced by next one
-				eval(parse(text=paste('setattr(',datasetname,', "splitcolumnnames", c() )' )))
+				eval(parse(text=paste('(x= ',datasetname,', name= "splitcolumnnames", value= c() )' )))
 				#cat('\nSplitColName Attr set\n')
 				colindexes=UAgetIndexsOfColsInDataSet(datasetname,colNames)
 				#cat("Col Indexes for split:")
 				#print(colindexes)
 		#eval(parse(text=paste('attr(',datasetname,',"splitcolumnindex") <<- c()')))	#<<-16Jan2016 This line replaced with next one
-				eval(parse(text=paste('setattr(',datasetname,', "splitcolumnindex", c() )' )))				
+				eval(parse(text=paste('setattr(x= ',datasetname,', name= "splitcolumnindex", value= c() )' )))				
 				#cat("\nDFSplit unset\n")
 					}
 					else #change the dataframe level split prop for few cols those are still part of split
@@ -354,12 +354,12 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 						###### Fix this later ### This is for dataset copy outside lst #####
 						## set dataframe level attributes		
 						#eval(parse(text=paste('attr(',datasetname,',"split") <<- c(TRUE)'	)))#<<-16Jan2016 This line replaced  with next one
-						eval(parse(text=paste('setattr(',datasetname,', "split", c(TRUE) )' )))
+						eval(parse(text=paste('setattr(x=',datasetname,', name="split", value= c(TRUE) )' )))
 						#eval(parse(text=paste('attr(',datasetname,',"splitcolumnnames") <<- newcols')))#<<-16Jan2016 This line replaced  with next one
-						eval(parse(text=paste('setattr(',datasetname,', "splitcolumnnames", c(newcols) )' )))
+						eval(parse(text=paste('setattr(x=',datasetname,', name="splitcolumnnames", value= c(newcols) )' )))
 						colindexes=UAgetIndexsOfColsInDataSet(datasetname,newcols)
 						#eval(parse(text=paste('attr(',datasetname,',"splitcolumnindex") <<- colindexes')))	#<<-16Jan2016 This line replaced  with next one						
-						eval(parse(text=paste('setattr(',datasetname,', "splitcolumnindex", c(colindexes) )' )))	
+						eval(parse(text=paste('setattr(x=',datasetname,', name="splitcolumnindex", value= c(colindexes) )' )))	
 					}
 				}
 			}
@@ -721,7 +721,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				if(colIndex > 0){
 					#attr(uadatasets$lst[[DataSetIndex]][,colIndex],"coldesc") <- newLabel
 					#17Jul2015 eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc") <<- newLabel',sep=''))) #<<-
-					eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "coldesc", newLabel)' ,sep='')))#17Jul2015 
+					eval(parse(text=paste('setattr(x=',datasetname,'[,',colIndex,'], name= "coldesc", value= newLabel)' ,sep='')))#17Jul2015 
 					#cat("\ncoldesc Set.")
 					#attr(uadatasets$lst[[DataSetIndex]], "variable.labels")[[colIndex]] <- newLabel
 					eval(parse(text=paste('attr(',datasetname,',"variable.labels")[[colIndex]] <- newLabel',sep=''))) #<<- #. <<- to <-
@@ -932,7 +932,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 					if(is.null(currentval) || currentval=="")
 					{
 						colmisatt <- eval(parse(text=paste('list(type="none", value="")')))					
-						eval(parse(text=paste('setattr(',datasetname,', "misvals_',coluname,'", colmisatt )',sep='' )))#attr for Dataset$colname
+						eval(parse(text=paste('setattr(x=',datasetname,', name= "misvals_',coluname,'",value= colmisatt )',sep='' )))#attr for Dataset$colname
 						misvals <- colmisatt
 					}
 					else
@@ -1441,7 +1441,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 					 #cat("\nSplit Col Index:",colIndex,"\n")
 					###### ## for datasets copy outside lst #######
 		#eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"split") <<- ',colsplit, sep='' )))#16Jan2016 This line replaced by next one
-					eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "split", colsplit )' ,sep='')))
+					eval(parse(text=paste('setattr(x=',datasetname,'[,',colIndex,'], name= "split", value= colsplit )' ,sep='')))
 					 #cat("\n Split Done:",colIndex,"\n")
 					# return(colSplit)
 				}			
@@ -1818,33 +1818,33 @@ BSkyMakeColumnFactor <- function(colNameOrIndex, dataSetNameOrIndex,  excludecha
 	BSkyWarnMsg = paste("BSkyMakeColumnFactor: Warning setting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable :", paste(colNameOrIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
-			if(!is.null(datasetname))
-			{		
-colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
-				#Error: dataSetName and colname not found
-				if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
-				{
-						bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
-						# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
-												eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars)', sep='')))
-						# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
-						BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
-				}
-				else
-				{
-					# cat("\nError: Cannot set col property. Col not found\n")
-					BSkyErrMsg =paste("BSkyMakeColumnFactor: Cannot set col property. Col not found."," Col Name:", colNameOrIndex)
-					warning("BSkyMakeColumnFactor: Cannot set col property. Col not found.")
-				}				
-			}
-			else
-			{
-				# cat("\nError: Cannot set col property. Dataset name or index not found\n")
-				BSkyErrMsg =paste("BSkyMakeColumnFactor:  Can't make it factor. Dataset name or index not found."," Dataset Name:", datasetname)
-				warning("BSkyMakeColumnFactor:  Can't make it factor. Dataset name or index not found.")
-			}			
+	if(!is.null(datasetname))
+	{		
+		colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
+		#Error: dataSetName and colname not found
+		if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
+		{
+				bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
+				# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
+				eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars)', sep='')))
+				# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
+				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
+		}
+		else
+		{
+			# cat("\nError: Cannot set col property. Col not found\n")
+			BSkyErrMsg =paste("BSkyMakeColumnFactor: Cannot set col property. Col not found."," Col Name:", colNameOrIndex)
+			warning("BSkyMakeColumnFactor: Cannot set col property. Col not found.")
+		}				
+	}
+	else
+	{
+		# cat("\nError: Cannot set col property. Dataset name or index not found\n")
+		BSkyErrMsg =paste("BSkyMakeColumnFactor:  Can't make it factor. Dataset name or index not found."," Dataset Name:", datasetname)
+		warning("BSkyMakeColumnFactor:  Can't make it factor. Dataset name or index not found.")
+	}			
 
 		BSkyFunctionWrapUp()	
 }
