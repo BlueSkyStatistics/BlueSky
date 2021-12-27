@@ -269,7 +269,7 @@ temp <- NULL
 						}
 #cat("G")
 						#colmisatt <- eval(parse(text=paste('list(type="none", value="")')))
-						eval(parse(text=paste('setattr(','.GlobalEnv$',datasetname,', "misvals_',coluname,'",  colmisatt )',sep='' )))#attr for Dataset$colname
+						eval(parse(text=paste('setattr(x=','.GlobalEnv$',datasetname,', name= "misvals_',coluname,'", value= colmisatt )',sep='' )))#attr for Dataset$colname
 						#cat("H")
 					}					
 				}
@@ -418,7 +418,7 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 					{
 						coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
 						colmisatt <- eval(parse(text=paste('list(type="none", value="")')))
-						eval(parse(text=paste('setattr(','.GlobalEnv$',datasetname,', "misvals_',coluname,'",  colmisatt )',sep='' )))#attr for 
+						eval(parse(text=paste('setattr(x','.GlobalEnv$',datasetname,', name= "misvals_',coluname,'", value= colmisatt )',sep='' )))#attr for 
 					}
 				}	
 				else #if SPSS file already has missing values. Set them in new misvals_COLNAME attribute(dataset level)
@@ -448,7 +448,7 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 						{
 							colmisatt <- eval(parse(text=paste('list(type="none", value="")')))
 						}
-						eval(parse(text=paste('setattr(','.GlobalEnv$',datasetname,', "misvals_',coluname,'",  colmisatt )',sep='' )))#attr for 
+						eval(parse(text=paste('setattr(x=','.GlobalEnv$',datasetname,', name= "misvals_',coluname,'", value= colmisatt )',sep='' )))#attr for 
 					}					
 				}
 			}# load missing only when flag is ON.
@@ -503,21 +503,21 @@ UAcreateExtraAttributes <- function(dataSetNameOrIndex, filetype, usehaven=TRUE)
 	#cat("\nPrinting Data View NAMES Col..\t",dataSetNameOrIndex,"\n")
 	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	# uadatasets$lst[[DataSetIndex]][[colIndex]]
-	
+	#cat("\nPrinting Dataset name after validation..\t",datasetname,"\n")
 	#datasetname <- paste(".GlobalEnv$", datasetname1, sep='')
 	
 	#### Creatting some Dataset level attributes  #####
-	eval(parse(text=paste('setattr(',datasetname,', "split", c(FALSE) )' )))
+	eval(parse(text=paste('setattr(x=',datasetname,', name= "split", value= c(FALSE) )' )))
 	#cat("\nsplit set.\t")
-	eval(parse(text=paste('setattr(',datasetname,', "splitcolumnnames", c("") )' )))
+	eval(parse(text=paste('setattr(x=',datasetname,', name= "splitcolumnnames", value= c("") )' )))
 	#cat("splitcolumnnames set.\t")
-	eval(parse(text=paste('setattr(',datasetname,', "splitcolumnindex", c("") )' )))
+	eval(parse(text=paste('setattr(x=',datasetname,', name= "splitcolumnindex", value= c("") )' )))
 	#cat("splitcolumnindex set.\t")
-	eval(parse(text=paste('setattr(',datasetname,', "filetype", filetype)' )))
+	eval(parse(text=paste('setattr(x=',datasetname,', name= "filetype", value= filetype)' )))
 	#cat("filetype set.\t", filetype)
-	eval(parse(text=paste('setattr(',datasetname,', "slice", c(FALSE) )' )))
+	eval(parse(text=paste('setattr(x=',datasetname,', name= "slice", value= c(FALSE) )' )))
 	#cat("slice set.\t")
-	eval(parse(text=paste('setattr(',datasetname,', "maxfactor",', bskymaxfactors,' )' )))			
+	eval(parse(text=paste('setattr(x=',datasetname,', name= "maxfactor", value=', bskymaxfactors,' )' )))			
 	#cat("\nMaxfactor set")
 
 	noOfCols = eval(parse(text=paste('ncol(',datasetname,')')))
@@ -542,18 +542,18 @@ UAcreateExtraAttributes <- function(dataSetNameOrIndex, filetype, usehaven=TRUE)
 		## Because RDATA already have them (as we created RDATA files by SaveAs)  but other formats dont have ##
 		if(filetype != "RDATA" && filetype != "RDA")
 		{
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "coldesc", label)' ,sep='')))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "usermissing", c(FALSE) )' , sep='')))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "missingvalues", NULL )' , sep='' )))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "split", c(FALSE) )' ,sep='')))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "levelLabels", c("") )', sep='' )))		
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "coldesc", value= label)' ,sep='')))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "usermissing", value= c(FALSE) )' , sep='')))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "missingvalues", value= NULL )' , sep='' )))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "split", value= c(FALSE) )' ,sep='')))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "levelLabels", value= c("") )', sep='' )))		
 		
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "width",c(4) )' ,sep='')))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "decimals",c(0))' , sep='')))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "columns",c(8) )' , sep='' )))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "align",c("Left") )' ,sep='')))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "measure",c("Scale"))', sep='' )))
-			eval(parse(text=paste('setattr(',datasetname,'[,',colIndex,'], "role", c("Input") )', sep='' )))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "width", value= c(4) )' ,sep='')))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "decimals", value= c(0))' , sep='')))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "columns", value= c(8) )' , sep='' )))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "align", value= c("Left") )' ,sep='')))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "measure", value= c("Scale"))', sep='' )))
+			eval(parse(text=paste('setattr(x= ',datasetname,'[,',colIndex,'], name= "role", value= c("Input") )', sep='' )))
 		}
 		#cat("\nCol Index:",colIndex)
 		#cat("\nCreating Extra Attr :",datasetname)
