@@ -1253,7 +1253,7 @@ BSkyFilename2Datasetname<-function(nopathfilename)
 BSkyValidateDataset <- function(dataSetNameOrIndex)
 {
 		#cat(' 1.BSkyValidateDataset : ')
-		# cat(dataSetNameOrIndex)
+		#cat(dataSetNameOrIndex)
 		#if dataSetNameOrIndex is of the format .GlobalEnv$datasetname then strip out datasetname first
 		#####ptm= proc.time()
 		if(is.character(dataSetNameOrIndex))
