@@ -1271,8 +1271,8 @@ BSkyGetDatasetSplitInfo <- function(datasetNameStr)
 			}
 		}
 	}
-	cat("\nreturn from BSkyGetDatasetSplitInfo\n")
-	print(splitVarList)
+	#cat("\nreturn from BSkyGetDatasetSplitInfo\n")
+	#print(splitVarList)
 	return(invisible(splitVarList))
 }
 
