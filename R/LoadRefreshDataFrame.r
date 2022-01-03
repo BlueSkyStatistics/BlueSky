@@ -473,6 +473,22 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		}
 	}
 	
+	hasrows=FALSE
+	##Check if number of rows is greater than zero. Can't rely on column count because col count was greater than zero in subset-ed dataset that had no rows.
+	rowcount = eval( parse(text=paste('nrow(.GlobalEnv$',bskyDatasetName,')',sep='')))
+	if(rowcount>0)
+	{
+		hasrows = TRUE
+	}
+	else 
+	{
+		# The data frame 'bskyDatasetName' has zero rows, hence it will not be loaded in the datagrid
+		cat("\nThe data frame '") # forcing a new line in case someone created a cat() without a trailing new line
+		cat(bskyDatasetName)
+		cat("' has zero rows, hence it will not be loaded in the datagrid")
+		error= TRUE
+		invisible()	
+	}
 	
 	if(load.dataframe && !error)
 	{
