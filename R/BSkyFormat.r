@@ -5395,6 +5395,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 
 
 #17May2021
+#08Jan2022
 BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName = c())
 {
 	paramName = paste("(\\b", paramName, "\\b)", sep="")
@@ -5407,7 +5408,7 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 	paramValuesString = gsub("\'","", paramValuesString)
 	paramValuesString = gsub("\"","", paramValuesString)
 	  
-	paramValueList = strsplit(strsplit(strsplit(gsub("(\\(|\\))+","X", paramValuesString), "X")[[1]][2],",")[[1]], ",")
+	paramValueList = strsplit(strsplit(strsplit(gsub("(\\(|\\))+","@!#", paramValuesString), "@!#")[[1]][2],",")[[1]], ",")
 	
 	return(invisible(unlist(paramValueList)))
 }
