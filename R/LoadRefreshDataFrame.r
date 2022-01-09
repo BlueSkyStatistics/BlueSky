@@ -483,7 +483,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 	else 
 	{
 		# The data frame 'bskyDatasetName' has zero rows, hence it will not be loaded in the datagrid
-		cat("\nThe data frame '") # forcing a new line in case someone created a cat() without a trailing new line
+		cat("\nERROR: The data frame '") # forcing a new line in case someone created a cat() without a trailing new line
 		cat(bskyDatasetName)
 		cat("' has zero rows, hence it will not be loaded in the datagrid")
 		error= TRUE
