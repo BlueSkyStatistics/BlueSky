@@ -219,3 +219,5 @@ export(RemoveNonASCIIchars, BSkySanitizeDataset, BSkyCheckNullDataset)
 
 export(BSkySetHelpProcessWorkers, BSkyGetHelpProcessWorkers, BSkySetHelpProcessSleepSeconds, BSkyGetHelpProcessSleepSeconds, BSkyGetRHelpParallelHTTPServerPortNumber)
 
+export(BSkyInstall.packages)
+

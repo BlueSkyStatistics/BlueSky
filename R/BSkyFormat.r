@@ -4058,6 +4058,7 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 
 #10/17/2021 transposing the Y variable if there are many factors
 #06Jan2022
+#08Jan2022
 BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 {
 	#BSkyCrossTable( asresid=c(TRUE ), bSkyHandleSplit=c(TRUE ), chisq=c(FALSE ), datasetname=c('mtcars' ), 
@@ -4663,6 +4664,13 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 									#cat("<br> Iteration number: ", n, "<br>")
 									#return(cross_table_skeleton3)
 									
+									crosstable_table_header = paste("Multiway Cross Table:", "~", param_row, "+", param_col)
+									
+									if(length(param_layers) > 1 || ( length(param_layers) == 1 && param_layers != "NA"))
+									{
+										crosstable_table_header = paste(crosstable_table_header, "+", paste(param_layers, collapse = ' + '))
+									}
+									
 									if(obj$BSkySplit == 1)
 									{
 										#table_list_names = c(table_list_names, paste("Multiway Cross Table -", obj$tables[[n]]$cartlevel))
@@ -4680,16 +4688,19 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 										table_list = c(table_list, list(split_iteration_headline))
 										names(table_list) = table_list_names
 										
-										table_list_names = c(table_list_names, "Multiway Cross Table")
+										#table_list_names = c(table_list_names, "Multiway Cross Table")
+										table_list_names = c(table_list_names, crosstable_table_header)
 									}
 									else
 									{
-										table_list_names = c(table_list_names, "Multiway Cross Table")
+										#table_list_names = c(table_list_names, "Multiway Cross Table")
+										table_list_names = c(table_list_names, crosstable_table_header)
 									}
 									
 									if(X_has_been_printed == TRUE)
 									{
-										attr(cross_table_skeleton3, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to errors")
+										attr(cross_table_skeleton3, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to the data not meeting the requirements for the requested test, warnings, or errors") 
+										#c("X indicates incomplete result due to errors")
 									}
 									
 									num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
@@ -5313,7 +5324,8 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 								
 								if(X_has_been_printed == TRUE)
 								{
-									attr(tests_cross_table_skeleton, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to errors")
+									attr(tests_cross_table_skeleton, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to the data not meeting the requirements for the requested test, warnings, or errors") 
+									#c("X indicates incomplete result due to errors") 
 								}
 								
 								num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
@@ -5385,7 +5397,6 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 		return(invisible(obj))
 	}
 }
-
 
 
 
@@ -5923,6 +5934,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 
 
 #23Dec2021
+#09Jan2022
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	parsed_Rcommands = c()
@@ -6090,6 +6102,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		
 		isCommentOrBlankLine = FALSE
 		isHelpCommand = FALSE
+		isPkgInstallCommand = FALSE 
 		HelpOrCommentOrBlankLineStr = trimws(parsed_Rcommands[[i]])
 		
 		# print(HelpOrCommentOrBlankLineStr)
@@ -6413,8 +6426,18 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		{
 			isCommentOrBlankLine = TRUE
 		}
+		else
+		{
+			if(length(grep("install\\.packages(\\s*)\\(|update\\.packages|install_github(\\s*)\\(|devtools::install_github(\\s*)\\(|::install|githubinstall|^install_(\\s|\\S)*\\(", HelpOrCommentOrBlankLineStr)) > 0)
+			{
+				isPkgInstallCommand = TRUE
+				cat("\n")
+				cat(HelpOrCommentOrBlankLineStr)
+				cat("\nERROR: For package installation and update, please see triple dot > Install R Package and Update BlueSky R package from the top level menu in the BlueSky Statistics application\n")
+			}
+		}
 		
-		if(isCommentOrBlankLine == FALSE && isHelpCommand == FALSE)
+		if(isCommentOrBlankLine == FALSE && isHelpCommand == FALSE && isPkgInstallCommand == FALSE)
 		{
 			tryCatch({
 					withCallingHandlers({
@@ -6428,34 +6451,37 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				#if(splitOn == TRUE || echoInline == FALSE)
 				if(echoInline == FALSE)
 				{
-					cat("\n")
-					
-					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+					if(length(grep("library(\\s*)\\(|require(\\s*)\\(", HelpOrCommentOrBlankLineStr)) > 0)
 					{
-						cat("<pre class=\"r\"><code>")
-					}
+						cat("\n")
+						
+						if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+						{
+							cat("<pre class=\"r\"><code>")
+						}
+						
+						cat("\n----------------------\n")
+						cat("DIAGNOSTIC MESSAGE: The above R errors and/or warnings are generated by the following R code")
+						cat("\n----------------------\n")
 					
-					cat("\n----------------------\n")
-					cat("DIAGNOSTIC MESSAGE: The above R errors and/or warnings are generated by the following R code")
-					cat("\n----------------------\n")
-				
-					if(length(origRcommands) > 0)
-					{
-						#print(parsed_orig_Rcommands[[i]])
-						cat(parsed_orig_Rcommands[[i]])
+						if(length(origRcommands) > 0)
+						{
+							#print(parsed_orig_Rcommands[[i]])
+							cat(parsed_orig_Rcommands[[i]])
+						}
+						else
+						{
+							#print(parsed_Rcommands[[i]])
+							cat(parsed_Rcommands[[i]])
+						}
+						
+						if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+						{
+							cat("</code></pre>")
+						}
+						
+						cat("\n")
 					}
-					else
-					{
-						#print(parsed_Rcommands[[i]])
-						cat(parsed_Rcommands[[i]])
-					}
-					
-					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
-					{
-						cat("</code></pre>")
-					}
-					
-					cat("\n")
 				}
 				
 				eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
@@ -6530,7 +6556,6 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		return(invisible(RcommandString))
 	}
 }
-
 
 
 #22Sep2021
