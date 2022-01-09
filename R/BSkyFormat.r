@@ -4330,11 +4330,19 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 									if(length(obj$tables[[n]]$metadatatable) > 2 && !is.null(obj$tables[[n]]$metadatatable[[3]]) && nrow(param_layers_values_df) > dim(obj$tables[[n]]$metadatatable[[3]])[1])
 									{
 										number_of_rows_per_layer_value_combination = eval(parse(text= paste("length(levels(", database_name, "$", param_row,"))", sep = ""))) * (num_count_elements +1) + ((num_count_elements + 1) - num_extra_count_elements)
+<<<<<<< HEAD
 										
 										start_row_num = c()
 										end_row_num = c()
 										start_row = 1
 										
+=======
+										
+										start_row_num = c()
+										end_row_num = c()
+										start_row = 1
+										
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 										dimnames(obj$tables[[n]]$metadatatable[[3]])[[2]] = rev(param_layers)
 										row.names(obj$tables[[n]]$metadatatable[[3]]) = c()
 										
@@ -4383,8 +4391,13 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											
 											start_row_num = c(start_row_num, start_row)
 											end_row_num = c(end_row_num, start_row + number_of_rows_per_layer_value_combination - 1)
+<<<<<<< HEAD
 											
 											
+=======
+											
+											
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 											if(found_all_layer_value_match == FALSE)
 											{
 												to_be_deleted_row_indices = c(to_be_deleted_row_indices, c((start_row + 1):(start_row + 1 + number_of_rows_per_layer_value_combination - 1)))
@@ -4584,6 +4597,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											
 											#return(list(obj$tables[[n]]$datatable, temp_datatable))
 											obj$tables[[n]]$datatable = temp_datatable[,-c(1)]
+<<<<<<< HEAD
 										}
 										else if(is.null(obj$tables[[n]]$columnNames))
 										{
@@ -4605,6 +4619,125 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 									# cat("\n<br> dim(obj$tables[[n]]$datatable)<br>\n")
 									# print(dim(obj$tables[[n]]$datatable))
 									# print(obj$tables[[n]]$datatable)
+									# # cat("\n<br>dim(cross_table_skeleton2)<br>\n")
+									# # print(dim(cross_table_skeleton2))
+									# cat("\n<br>", "2 ====================", "<br>\n")
+									
+									if((nrow(cross_table_skeleton2) -1) > dim(obj$tables[[n]]$datatable)[1])
+									{
+										filler_row = rep("X",dim(obj$tables[[n]]$datatable)[2])
+										
+										X_has_been_printed = TRUE
+										
+										for(add_row in 1: ((nrow(cross_table_skeleton2) -1 - dim(obj$tables[[n]]$datatable)[1])))
+										{
+											obj$tables[[n]]$datatable = rbind(obj$tables[[n]]$datatable, filler_row)
+										}
+									}
+									else if((nrow(cross_table_skeleton2) -1) < dim(obj$tables[[n]]$datatable)[1])
+									{
+										obj$tables[[n]]$datatable = obj$tables[[n]]$datatable[1:nrow(cross_table_skeleton2)-1,]
+									}
+									
+									#dimnames(obj$tables[[n]]$datatable)[[2]] = paste("C",seq(1:dim(obj$tables[[n]]$datatable)[2]), sep="")
+									# return(list(cross_table_skeleton2, obj$tables[[n]]$datatable))
+					
+=======
+										}
+										else if(is.null(obj$tables[[n]]$columnNames))
+										{
+											filler_column = rep("X",dim(obj$tables[[n]]$datatable)[1])
+												
+											if(length(col_levels) > dim(obj$tables[[n]]$datatable)[2])
+											{
+												X_has_been_printed = TRUE
+												
+												for(add_col in 1: (length(levels(modified_param_col)) - dim(obj$tables[[n]]$datatable)[2]))
+												{
+													obj$tables[[n]]$datatable = cbind(obj$tables[[n]]$datatable, filler_column)
+												}
+											}
+										}
+									}
+									
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
+									# cat("\n<br> iteration num: ",n, "<br>\n")
+									# cat("\n<br> dim(obj$tables[[n]]$datatable)<br>\n")
+									# print(dim(obj$tables[[n]]$datatable))
+									# print(obj$tables[[n]]$datatable)
+<<<<<<< HEAD
+									# cat("\n<br>dim(cross_table_skeleton2)<br>\n")
+									# print(dim(cross_table_skeleton2))
+									# print(cross_table_skeleton2)
+									# cat("\n<br>", "3 ====================", "<br>\n")
+									
+									########################################################################
+									# Need to fix this in BSkyFormat after BSkyFormat2 returns so all the whole number can be 
+									# restored by removing decimal point along with trailing zeros  
+									########################################################################
+									#obj$tables[[1]]$datatable = BSkyDecimalDigitFormating(obj$tables[[1]]$datatable, decimalDigits = 0)
+									
+									cross_table_skeleton2[c(2:nrow(cross_table_skeleton2)),c((ncol(cross_table_skeleton2)- dim(obj$tables[[n]]$datatable)[2] + 1): ncol(cross_table_skeleton2))] = obj$tables[[n]]$datatable
+								
+									# cat("\n<br> iteration num: ",n, "<br>\n")
+									# cat("\n<br>dim(cross_table_skeleton2)<br>\n")
+									# print(dim(cross_table_skeleton2))
+									# print(cross_table_skeleton2)
+									# print(obj$tables[[n]]$datatable)
+									# cat("\n<br>", "4 ====================", "<br>\n")
+								}
+								
+								if(dim(cross_table_skeleton2)[1] > 0 && dim(cross_table_skeleton2)[2] > 0)
+								{
+									#Convert to matrix to get rid of row numbers - looks there is no way to get rid of rown numbers for data.frame - strange!!
+									cross_table_skeleton3 = as.matrix(cross_table_skeleton2)
+									dimnames(cross_table_skeleton3)[[2]] = names(cross_table_skeleton2)
+									row.names(cross_table_skeleton3) = c()
+									
+									#cat("<br> Iteration number: ", n, "<br>")
+									#return(cross_table_skeleton3)
+									
+									crosstable_table_header = paste("Multiway Cross Table:", "~", param_row, "+", param_col)
+									
+									if(length(param_layers) > 1 || ( length(param_layers) == 1 && param_layers != "NA"))
+									{
+										crosstable_table_header = paste(crosstable_table_header, "+", paste(param_layers, collapse = ' + '))
+									}
+									
+									if(obj$BSkySplit == 1)
+									{
+										#table_list_names = c(table_list_names, paste("Multiway Cross Table -", obj$tables[[n]]$cartlevel))
+										
+										#attr(cross_table_skeleton3, "BSkyFootnote_BSkySplit") = substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel))
+										attr(cross_table_skeleton3, "BSkyFootnote_BSkySplit") = paste("Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+									
+										split_iteration_headline_str = paste("Begins Split:", strsplit(substr(obj$tables[[n]]$cartlevel, 12, nchar(obj$tables[[n]]$cartlevel)),",")[[1]][2], sep="")
+									
+										split_iteration_headline = matrix(split_iteration_headline_str, ncol=1)
+										dimnames(split_iteration_headline)[[1]] = NULL
+										dimnames(split_iteration_headline)[[2]] = NULL
+										
+										table_list_names = c(table_list_names, "Split Headline")
+										table_list = c(table_list, list(split_iteration_headline))
+										names(table_list) = table_list_names
+										
+										#table_list_names = c(table_list_names, "Multiway Cross Table")
+										table_list_names = c(table_list_names, crosstable_table_header)
+									}
+									else
+									{
+										#table_list_names = c(table_list_names, "Multiway Cross Table")
+										table_list_names = c(table_list_names, crosstable_table_header)
+									}
+									
+									if(X_has_been_printed == TRUE)
+									{
+										attr(cross_table_skeleton3, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to the data not meeting the requirements for the requested test, warnings, or errors")
+									}
+									
+									num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
+									
+=======
 									# # cat("\n<br>dim(cross_table_skeleton2)<br>\n")
 									# # print(dim(cross_table_skeleton2))
 									# cat("\n<br>", "2 ====================", "<br>\n")
@@ -4694,6 +4827,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 									
 									num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
 									
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 									if(num_additional_info > 0)
 									{
 										index = 0 
@@ -4941,6 +5075,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 										extra_Total_rows_to_be_deleted = c()
 										
 										number_of_rows_to_skip = num_count_elements - num_extra_count_elements + 1
+<<<<<<< HEAD
 										
 										for(i in 1: nrow(cross_table_skeleton3))
 										{
@@ -4955,6 +5090,22 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											cross_table_skeleton3 = cross_table_skeleton3[- extra_Total_rows_to_be_deleted,]
 										}
 										
+=======
+										
+										for(i in 1: nrow(cross_table_skeleton3))
+										{
+											if(cross_table_skeleton3[i,param_row_col_index] == "Total")
+											{
+												extra_Total_rows_to_be_deleted = c(extra_Total_rows_to_be_deleted, i:(i+ number_of_rows_to_skip-1))
+											}
+										}
+										
+										if(length(extra_Total_rows_to_be_deleted) > 0)
+										{
+											cross_table_skeleton3 = cross_table_skeleton3[- extra_Total_rows_to_be_deleted,]
+										}
+										
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 										# cat("\n cross_table_skeleton3 \n")
 										# print(cross_table_skeleton3)
 										# cat("\n cross_table_skeleton_inverted \n")
@@ -5054,8 +5205,52 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 									tests_cross_table_skeleton_string = paste("table(", tests_cross_table_skeleton_string, ")")
 									tests_cross_table_skeleton_non_formatted = eval(parse(text= tests_cross_table_skeleton_string))
 									tests_cross_table_skeleton = BSkyTableObjectFormat(tests_cross_table_skeleton_non_formatted)
+<<<<<<< HEAD
 									
 									
+									param_layers_values = paste("table(", param_layers_values, ")")
+								
+									param_layers_values_df = (as.data.frame(eval(parse(text= param_layers_values)),stringsAsFactors = FALSE))[length(param_layers):1]
+									
+									#return(list(tests_cross_table_skeleton,param_layers_values_df))
+=======
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
+									
+									# cat("\n<br> Iteration num :", n, "<br>\n")
+									# print(param_layers)
+									# print(param_layers_values)
+									# print(param_layers_values_df)
+									# print(obj$tables[[n]]$metadatatable[[2]])
+									
+<<<<<<< HEAD
+									# cat("\n<br>\n")
+									# print(obj$tables$metadatatable)
+									# cat("<br> rev(param_layers) :", rev(param_layers), "<br>")
+									#return(param_layers_values_df)
+									
+									if(length(obj$tables[[n]]$metadatatable) > 1 && !is.null(obj$tables[[n]]$metadatatable[[2]]) && dim(obj$tables[[n]]$metadatatable[[2]])[1] > 0 && nrow(param_layers_values_df) > dim(obj$tables[[n]]$metadatatable[[2]])[1] && ncol(param_layers_values_df) == dim(obj$tables[[n]]$metadatatable[[2]])[2])
+									{
+										#number_of_rows_per_layer_value_combination = eval(parse(text= paste("length(levels(", database_name, "$", param_row,"))", sep = ""))) * (num_count_elements +1) + ((num_count_elements + 1) - num_extra_count_elements)
+										
+										number_of_rows_per_layer_value_combination = additional_tests_count
+										
+										start_row_num = c()
+										end_row_num = c()
+										start_row = 1
+										
+										if(dim(obj$tables[[n]]$metadatatable[[2]])[2] == length(rev(param_layers)))
+										{
+											dimnames(obj$tables[[n]]$metadatatable[[2]])[[2]] = rev(param_layers)
+										}
+										
+										row.names(obj$tables[[n]]$metadatatable[[2]]) = c()
+										
+										
+										to_be_deleted_row_indices = c()
+										
+										for (i in 1:nrow(param_layers_values_df))
+										{
+=======
 									param_layers_values = paste("table(", param_layers_values, ")")
 								
 									param_layers_values_df = (as.data.frame(eval(parse(text= param_layers_values)),stringsAsFactors = FALSE))[length(param_layers):1]
@@ -5095,6 +5290,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 										
 										for (i in 1:nrow(param_layers_values_df))
 										{
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 											found_all_layer_value_match = FALSE
 											
 											for(j in 1: dim(obj$tables[[n]]$metadatatable[[2]])[1])
@@ -5112,6 +5308,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 														}
 													}
 												}
+<<<<<<< HEAD
 												
 												if(cell_matched == ncol(param_layers_values_df))
 												{
@@ -5231,8 +5428,132 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											for(add_col in 1: (6 - dim(obj$tables[[n]]$datatable)[2]))
 											{
 												tests_cross_table_skeleton = cbind(tests_cross_table_skeleton, filler_column)
+=======
+												
+												if(cell_matched == ncol(param_layers_values_df))
+												{
+													# cat("<br>")
+													# print("Found")
+													# cat("<br>")
+													# print(as.character(obj$tables[[2]]$metadatatable[[2]][j,]))
+													# cat("<br>")
+													# print(i)
+													# cat("<br>")
+													
+													found_all_layer_value_match = TRUE
+												}
+											}
+											
+											start_row_num = c(start_row_num, start_row)
+											end_row_num = c(end_row_num, start_row + number_of_rows_per_layer_value_combination - 1)
+											
+											if(found_all_layer_value_match == FALSE)
+											{
+												to_be_deleted_row_indices = c(to_be_deleted_row_indices, c((start_row + 1):(start_row + 1 + number_of_rows_per_layer_value_combination - 1)))
+												
+													# cat("<br>")
+													# print("start_row")
+													# print(start_row)
+													# cat("<br>")
+													# print("number_of_rows_per_layer_value_combination")
+													# print(number_of_rows_per_layer_value_combination)
+													# cat("<br>")
+												
+												if(length(param_layers) > 1)
+												{
+													for(k in 1: (length(param_layers) - 1))
+													{
+														if(trimws(tests_cross_table_skeleton[start_row + 1,k]) != "")
+														{
+															if((start_row + 1 + number_of_rows_per_layer_value_combination) <= nrow(tests_cross_table_skeleton))
+															{
+																if(trimws(tests_cross_table_skeleton[(start_row + 1 + number_of_rows_per_layer_value_combination),k]) == "")
+																{
+																	tests_cross_table_skeleton[(start_row + 1 + number_of_rows_per_layer_value_combination),k] = tests_cross_table_skeleton[start_row + 1, k]
+																}
+															}
+														}
+													}
+												}
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
+											}
+											
+											start_row = start_row + number_of_rows_per_layer_value_combination
+										}
+										
+										# cat("<br>")
+										# print("to_be_deleted_row_indices")
+										# cat(to_be_deleted_row_indices)
+										# cat("<br>")
+										
+										param_layers_values_df = cbind(param_layers_values_df, start_row_number = start_row_num, end_row_number = end_row_num)
+										#tests_cross_table_skeleton = tests_cross_table_skeleton[- as.numeric(to_be_deleted_row_indices),] #for some odd reason this syntax did not work
+										
+										new_temp_table = c()
+										for(i in 1:nrow(tests_cross_table_skeleton))
+										{
+											if(!(i %in% as.numeric(to_be_deleted_row_indices)))
+											{
+												new_temp_table = rbind(new_temp_table, tests_cross_table_skeleton[i,])
 											}
 										}
+<<<<<<< HEAD
+=======
+										
+										names(new_temp_table) = names(tests_cross_table_skeleton)
+										
+										#return(list(param_layers_values_df, tests_cross_table_skeleton, new_temp_table))
+										
+										tests_cross_table_skeleton = new_temp_table
+										
+										# cat("\n<br>======================<br>\n")
+										# print(nrow(tests_cross_table_skeleton))
+										# print(nrow(obj$tables[[2]]$datatable))
+										# #print(tests_cross_table_skeleton)
+										# cat("\n<br>======================<br>\n")
+										
+										#return(list(param_layers_values_df, tests_cross_table_skeleton))
+									}
+									
+									tests_cross_table_skeleton = tests_cross_table_skeleton[-c(1), 1:(length(param_layers)+1)]
+									
+									if(!is.null(obj$tables[[n]]$datatable) && dim(obj$tables[[n]]$datatable)[1] > 0 && dim(obj$tables[[n]]$datatable)[2] > 0)
+									{
+										if(nrow(tests_cross_table_skeleton) == dim(obj$tables[[n]]$datatable)[1])
+										{
+											tests_cross_table_skeleton = cbind(tests_cross_table_skeleton, obj$tables[[n]]$datatable)
+										}
+										else if(nrow(tests_cross_table_skeleton) > dim(obj$tables[[n]]$datatable)[1])
+										{
+											filler_row = rep("X",ncol(obj$tables[[n]]$datatable))
+											
+											X_has_been_printed = TRUE
+											
+											for(add_row in 1: (nrow(tests_cross_table_skeleton) - dim(obj$tables[[n]]$datatable)[1]))
+											{
+												obj$tables[[n]]$datatable = rbind(obj$tables[[n]]$datatable, filler_row)
+											}
+											
+											tests_cross_table_skeleton = cbind(tests_cross_table_skeleton, obj$tables[[n]]$datatable)
+										}
+										else if(nrow(tests_cross_table_skeleton) < dim(obj$tables[[n]]$datatable)[1])
+										{
+											obj$tables[[n]]$datatable = matrix(obj$tables[[n]]$datatable[1:nrow(tests_cross_table_skeleton),], ncol = dim(obj$tables[[n]]$datatable)[2])
+											tests_cross_table_skeleton = cbind(tests_cross_table_skeleton, obj$tables[[n]]$datatable)
+										}
+										
+										if(dim(obj$tables[[n]]$datatable)[2] < 6)
+										{
+											filler_column = rep("X",nrow(tests_cross_table_skeleton))
+											
+											X_has_been_printed = TRUE
+											
+											for(add_col in 1: (6 - dim(obj$tables[[n]]$datatable)[2]))
+											{
+												tests_cross_table_skeleton = cbind(tests_cross_table_skeleton, filler_column)
+											}
+										}
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 										else if(dim(obj$tables[[n]]$datatable)[2] > 6)
 										{
 											tests_cross_table_skeleton = tests_cross_table_skeleton[,1:(ncol(tests_cross_table_skeleton) - (dim(obj$tables[[n]]$datatable)[2] - 6))]
@@ -5277,6 +5598,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 										}
 										
 										if(dim(obj$tables[[n]]$datatable)[2] < 6)
+<<<<<<< HEAD
 										{
 											filler_column = rep("X",nrow(tests_cross_table_skeleton))
 											
@@ -5291,6 +5613,22 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 										{
 											tests_cross_table_skeleton = tests_cross_table_skeleton[,1:(ncol(tests_cross_table_skeleton) - (dim(obj$tables[[n]]$datatable)[2] - 6))]
 										}
+=======
+										{
+											filler_column = rep("X",nrow(tests_cross_table_skeleton))
+											
+											X_has_been_printed = TRUE
+											
+											for(add_col in 1: (6 - ncol(obj$tables[[n]]$datatable)))
+											{
+												tests_cross_table_skeleton = cbind(tests_cross_table_skeleton, filler_column)
+											}
+										}
+										else if(dim(obj$tables[[n]]$datatable)[2] > 6)
+										{
+											tests_cross_table_skeleton = tests_cross_table_skeleton[,1:(ncol(tests_cross_table_skeleton) - (dim(obj$tables[[n]]$datatable)[2] - 6))]
+										}
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 										
 										#return(list(tests_cross_table_skeleton, obj$tables[[2]]$datatable))
 										
@@ -5313,7 +5651,11 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 								
 								if(X_has_been_printed == TRUE)
 								{
+<<<<<<< HEAD
+									attr(tests_cross_table_skeleton, "BSkyFootnote_BSkyXExplain") =  c("X indicates incomplete result due to the data not meeting the requirements for the requested test, warnings, or errors") #c("X indicates incomplete result due to errors")
+=======
 									attr(tests_cross_table_skeleton, "BSkyFootnote_BSkyXExplain") = c("X indicates incomplete result due to errors")
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 								}
 								
 								num_additional_info = dim(obj$tables[[n]]$metadatatable[[1]])[1]
@@ -5922,7 +6264,14 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 }
 
 
+<<<<<<< HEAD
+#10Dec2021
+#01Jan2022
+#Handle the filtering of the diagnostic message from require(package) and library(packake)
+#Filtering out all execution of install.packages as this could bring up a dialog
+=======
 #23Dec2021
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	parsed_Rcommands = c()
@@ -6090,6 +6439,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		
 		isCommentOrBlankLine = FALSE
 		isHelpCommand = FALSE
+		isPkgInstallCommand = FALSE 
 		HelpOrCommentOrBlankLineStr = trimws(parsed_Rcommands[[i]])
 		
 		# print(HelpOrCommentOrBlankLineStr)
@@ -6267,9 +6617,15 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				if(BSkyGetRHelpHTTPServer() == "R_parallel")
 				{
 					options(help_type = 'html')
+<<<<<<< HEAD
 					
 					#require(future)
 					
+=======
+					
+					#require(future)
+					
+>>>>>>> dc681c29f7cf0bebda31b1e6e3387ca0e3453f7e
 					#oplan <- plan(multisession, workers = 2)
 					#on.exit(plan(oplan), add = TRUE)
 					
@@ -6413,8 +6769,18 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		{
 			isCommentOrBlankLine = TRUE
 		}
+		else
+		{
+			if(length(grep("install\\.packages(\\s*)\\(|update\\.packages|install_github(\\s*)\\(|devtools::install_github(\\s*)\\(|::install|githubinstall|^install_(\\s|\\S)*\\(", HelpOrCommentOrBlankLineStr)) > 0)
+			{
+				isPkgInstallCommand = TRUE
+				cat("\n")
+				cat(HelpOrCommentOrBlankLineStr)
+				cat("\nERROR: For package installation and update, please see triple dot > Install R Package and Update BlueSky R package from the top level menu in the BlueSky Statistics application\n")
+			}
+		}
 		
-		if(isCommentOrBlankLine == FALSE && isHelpCommand == FALSE)
+		if(isCommentOrBlankLine == FALSE && isHelpCommand == FALSE && isPkgInstallCommand == FALSE)
 		{
 			tryCatch({
 					withCallingHandlers({
@@ -6428,34 +6794,37 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				#if(splitOn == TRUE || echoInline == FALSE)
 				if(echoInline == FALSE)
 				{
-					cat("\n")
-					
-					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+					if(length(grep("library(\\s*)\\(|require(\\s*)\\(", HelpOrCommentOrBlankLineStr)) > 0)
 					{
-						cat("<pre class=\"r\"><code>")
-					}
+						cat("\n")
+						
+						if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+						{
+							cat("<pre class=\"r\"><code>")
+						}
+						
+						cat("\n----------------------\n")
+						cat("DIAGNOSTIC MESSAGE: The above R errors and/or warnings are generated by the following R code")
+						cat("\n----------------------\n")
 					
-					cat("\n----------------------\n")
-					cat("DIAGNOSTIC MESSAGE: The above R errors and/or warnings are generated by the following R code")
-					cat("\n----------------------\n")
-				
-					if(length(origRcommands) > 0)
-					{
-						#print(parsed_orig_Rcommands[[i]])
-						cat(parsed_orig_Rcommands[[i]])
+						if(length(origRcommands) > 0)
+						{
+							#print(parsed_orig_Rcommands[[i]])
+							cat(parsed_orig_Rcommands[[i]])
+						}
+						else
+						{
+							#print(parsed_Rcommands[[i]])
+							cat(parsed_Rcommands[[i]])
+						}
+						
+						if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+						{
+							cat("</code></pre>")
+						}
+						
+						cat("\n")
 					}
-					else
-					{
-						#print(parsed_Rcommands[[i]])
-						cat(parsed_Rcommands[[i]])
-					}
-					
-					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
-					{
-						cat("</code></pre>")
-					}
-					
-					cat("\n")
 				}
 				
 				eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
