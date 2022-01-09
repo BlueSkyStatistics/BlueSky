@@ -6430,10 +6430,14 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		{
 			if(length(grep("install\\.packages(\\s*)\\(|update\\.packages|install_github(\\s*)\\(|devtools::install_github(\\s*)\\(|::install|githubinstall|^install_(\\s|\\S)*\\(", HelpOrCommentOrBlankLineStr)) > 0)
 			{
-				isPkgInstallCommand = TRUE
-				cat("\n")
-				cat(HelpOrCommentOrBlankLineStr)
-				cat("\nERROR: For package installation and update, please see triple dot > Install R Package and Update BlueSky R package from the top level menu in the BlueSky Statistics application\n")
+			
+				if(length(grep("BSkypackageinstall", HelpOrCommentOrBlankLineStr)) == 0)
+				{
+					isPkgInstallCommand = TRUE
+					#cat("\n")
+					#cat(HelpOrCommentOrBlankLineStr)
+					cat("\nPLEASE NOTE: For package installation and update, please see triple dot > Install R Package from the top level menu in the BlueSky Statistics application\n")
+				}
 			}
 		}
 		
@@ -6451,7 +6455,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				#if(splitOn == TRUE || echoInline == FALSE)
 				if(echoInline == FALSE)
 				{
-					if(length(grep("library(\\s*)\\(|require(\\s*)\\(", HelpOrCommentOrBlankLineStr)) > 0)
+					if(length(grep("library(\\s*)\\(|require(\\s*)\\(", HelpOrCommentOrBlankLineStr)) == 0)
 					{
 						cat("\n")
 						
