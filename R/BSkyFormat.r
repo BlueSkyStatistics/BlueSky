@@ -4115,50 +4115,6 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 				
 				dataset_nrow = nrow(eval(parse(text= paste(database_name)), envir=globalenv()))
 				
-				tabulation = c("Count")
-				
-				num_count_elements = 0
-				
-				if(toupper(param_expected) == "TRUE")
-				{
-					tabulation = c(tabulation, "Expected Count")
-					num_count_elements = num_count_elements + 1
-				}
-				
-				if(toupper(param_row_prop) == "TRUE")
-				{
-					tabulation = c(tabulation, paste("% within", param_row))
-					num_count_elements = num_count_elements + 1
-				}
-				
-				if(toupper(param_col_prop) == "TRUE")
-				{
-					tabulation = c(tabulation, paste("% within", param_col))
-					num_count_elements = num_count_elements + 1
-				}
-				
-				num_extra_count_elements = 0
-				
-				if(toupper(param_resid) == "TRUE")
-				{
-					tabulation = c(tabulation, "Residual")
-					num_count_elements = num_count_elements + 1
-					num_extra_count_elements = num_extra_count_elements + 1
-				}
-				
-				if(toupper(param_sresid) == "TRUE")
-				{
-					tabulation = c(tabulation, "Std. Residual")
-					num_count_elements = num_count_elements + 1
-					num_extra_count_elements = num_extra_count_elements + 1
-				}
-				
-				if(toupper(param_asresid) == "TRUE")
-				{
-					tabulation = c(tabulation, "Adjusted Residual")
-					num_count_elements = num_count_elements + 1
-					num_extra_count_elements = num_extra_count_elements + 1
-				}
 				
 				additional_tests_count = 0
 				additional_tests = c()
@@ -4188,7 +4144,6 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 				num_tables_per_iteration = (obj$nooftables - 1)/ total_row_col_param_combo_grid
 				n = 1 
 				
-				orig_tabulation = tabulation
 				orig_param_layers = param_layers
 				additional_tests_orig = additional_tests
 				table_list = list()
@@ -4217,13 +4172,59 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 				
 				for(split_factor_combination_iter in 1:split_factor_combination_count)
 				{
+					split_begin_header_already_printed = FALSE
+					
 					for(row_col_param_combo_grid_index in 1:total_row_col_param_combo_grid)
 					{
+						param_layers = orig_param_layers
+						
 						param_row = row_col_param_combo_grid[row_col_param_combo_grid_index, 1]
 						param_col = row_col_param_combo_grid[row_col_param_combo_grid_index, 2]
 						
-						tabulation = orig_tabulation
-						param_layers = orig_param_layers
+						tabulation = c("Count")
+				
+						num_count_elements = 0
+						
+						if(toupper(param_expected) == "TRUE")
+						{
+							tabulation = c(tabulation, "Expected Count")
+							num_count_elements = num_count_elements + 1
+						}
+						
+						if(toupper(param_row_prop) == "TRUE")
+						{
+							tabulation = c(tabulation, paste("% within", param_row))
+							num_count_elements = num_count_elements + 1
+						}
+						
+						if(toupper(param_col_prop) == "TRUE")
+						{
+							tabulation = c(tabulation, paste("% within", param_col))
+							num_count_elements = num_count_elements + 1
+						}
+						
+						num_extra_count_elements = 0
+						
+						if(toupper(param_resid) == "TRUE")
+						{
+							tabulation = c(tabulation, "Residual")
+							num_count_elements = num_count_elements + 1
+							num_extra_count_elements = num_extra_count_elements + 1
+						}
+						
+						if(toupper(param_sresid) == "TRUE")
+						{
+							tabulation = c(tabulation, "Std. Residual")
+							num_count_elements = num_count_elements + 1
+							num_extra_count_elements = num_extra_count_elements + 1
+						}
+						
+						if(toupper(param_asresid) == "TRUE")
+						{
+							tabulation = c(tabulation, "Adjusted Residual")
+							num_count_elements = num_count_elements + 1
+							num_extra_count_elements = num_extra_count_elements + 1
+						}
 						
 						# SK need this 
 						tabulation_levels = tabulation
@@ -4725,9 +4726,14 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											dimnames(split_iteration_headline)[[1]] = NULL
 											dimnames(split_iteration_headline)[[2]] = NULL
 											
-											table_list_names = c(table_list_names, "Split Headline")
-											table_list = c(table_list, list(split_iteration_headline))
-											names(table_list) = table_list_names
+											if(split_begin_header_already_printed == FALSE)
+											{
+												table_list_names = c(table_list_names, "Split Headline")
+												table_list = c(table_list, list(split_iteration_headline))
+												names(table_list) = table_list_names
+												
+												split_begin_header_already_printed = TRUE
+											}
 											
 											#table_list_names = c(table_list_names, "Multiway Cross Table")
 											table_list_names = c(table_list_names, crosstable_table_header)
@@ -5438,6 +5444,7 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 		return(invisible(obj))
 	}
 }
+
 
 
 
