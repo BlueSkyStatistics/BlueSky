@@ -34,6 +34,17 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 	
 	# print(class(obj))
 	# print(obj)
+	
+	if(is.null(obj) || is.na(obj))
+	{
+		cat("\n NULL or NA object cannot be formatted \n")
+		return(invisible(list()))
+	}
+	else if((class(obj) %in% c("data.frame", "matrix")) && (dim(obj)[1] == 0 || dim(obj)[2] == 0))
+	{
+		cat("\n The data frame or the matrix cannot be formatted because the number of rows or the number of columns is zero\n")
+		return(invisible(list()))
+	}
 	##############################################################################################
 	# set the BSkySetKableAndRmarkdownFormatting() environment only once if BSky package is loaded
 	# out of the BSky native app environment e.g. BSky package is loaded into Rstudio
