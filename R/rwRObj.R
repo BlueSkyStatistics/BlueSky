@@ -207,7 +207,10 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 	if(!is.null(datasetname))
 	{		
 		datasetname <- ExtractDatasetNameFromGlobal(datasetname)
-		
+
+		memDSname = datasetname ## backup the DS name.
+		isCopyMade = FALSE  ## if a copy of a dataset is made to match the filename this will become TRUE
+
 		extnPattern = ".RData"
 		
 		DatasetNameSameAsFilename = TRUE #TRUE means save the dataset with the same name as the name of the file
@@ -227,7 +230,7 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 			
 			#remove spaces or specialchars in filename, else eval/parse below will not work.
 			onlyfilename =str_replace_all(onlyfilename, "[^[:alnum:]]", "")
-
+			
 			if(onlyfilename != datasetname)# if they re not exactly the same name (case sensitive)
 			{
 				####01Feb2021 Following 2 eval-pasrse modified. 
@@ -235,6 +238,7 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 				#creating a copy of the new dataset (Dataset1, Dataset2, etc.) with the same name as the filename in RObjFilename
 				eval(parse(text=paste('.GlobalEnv$',onlyfilename, '<- .GlobalEnv$', datasetname, sep='')))
 				
+				isCopyMade = TRUE
 				#Make 'Dataset1', 'Dataset2' etc. NULL. For releasing the memory.
 				###eval(parse(text=paste('.GlobalEnv$',datasetname, '<- NULL', sep='')))
 				
@@ -278,7 +282,20 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 			## maybe return 0 for success
 			# cat("\nSuccessfully saved\n") 
 			# print(corecommand) #no need to print this
-			eval(parse(text=paste('.GlobalEnv$',datasetname, '<- NULL', sep='')))
+
+			#  14Jan2022 Issue in the Electron app
+			#  Whenever you try to save back the .RData file, save executes successfully and then a prompt shows up telling
+			#  the dataset is NULL and will be removed from the grid. Commenting following line fixed the issue.
+			#eval(parse(text=paste('.GlobalEnv$',datasetname, '<- NULL', sep='')))
+			#  after giving it a little more thought. We need above line but with a slight change.
+			#  whenever a memory object(Dataset1, Dataset2, etc) is saved, we create a copy with the same name  
+			#  as the filename. So we must remove the original memory dataset only if a copy is made. If the 
+			#  dataset is opened from a file then this should not needed
+			if(isCopyMade)
+			{
+				eval(parse(text=paste('.GlobalEnv$',memDSname, '<- NULL', sep='')))
+			}
+
 		}
 		else ## Failure
 		{
