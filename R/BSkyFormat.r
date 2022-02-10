@@ -35,7 +35,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 	# print(class(obj))
 	# print(obj)
 	
-	if(is.null(obj) || is.na(obj))
+	if(is.null(obj) || (length(obj) == 1 && is.na(obj)))
 	{
 		cat("\n NULL or NA object cannot be formatted \n")
 		return(invisible(list()))
