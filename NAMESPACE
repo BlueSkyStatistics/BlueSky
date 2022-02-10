@@ -221,3 +221,5 @@ export(BSkySetHelpProcessWorkers, BSkyGetHelpProcessWorkers, BSkySetHelpProcessS
 
 export(BSkyInstall.packages)
 
+export(setNewLibPath, checkNcreateUserLibs, addNewUserLib)
+
