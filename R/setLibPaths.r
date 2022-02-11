@@ -6,28 +6,36 @@
 
 # uber function : adds new userlib path (creates it if it does not exist)
 # prints a message on failure and returns success flag.
-setNewLibPath <- function(newlibpath=NULL)
+setNewLibPath <- function(newlibpath="")
 {
+	#cat("\nStart setNewLibPath")
 	success = FALSE
-	userlib = checkNcreateUserLibs(newlibpath)
-	if(nchar(userlib)>2) #min ./x
+	if(TRUE)#(BSkyIsRmarkdownOutputOn()== FALSE)## if its BlueSky app environment
 	{
-		success = addNewUserLib(userlib)
+		cat("\nUser lib to be added:\n")
+		userlib = checkNcreateUserLibs(newlibpath)
+		print(userlib)
+		if(nchar(userlib)>2) #min ./x
+		{
+			# cat("\n inside inner if")
+			success = addNewUserLib(userlib)
+		}
+		if(!success)
+		{
+			cat("\nFailed to add user lib path: ")
+			cat(newlibpath)
+			cat("\n")
+		}
 	}
-	if(!success)
-	{
-		cat("\nFailed to add user lib path: ")
-		cat(newlibpath)
-		cat("\n")
-	}
+	# cat("\n returning")
 	return(success)
 }
 
-checkNcreateUserLibs <- function(newlib=NULL)
+checkNcreateUserLibs <- function(newlib="")
 {
 	success = FALSE
 	userlib = newlib
-	if(is.null(newlib) || is.na(newlib)) #is newlib not passed use R default
+	if(nchar(newlib)==0)##is.null(newlib) || is.na(newlib)) #is newlib not passed use R default
 	{
 		#get R default
 		userlib = Sys.getenv('R_LIBS_USER')
@@ -71,15 +79,18 @@ checkNcreateUserLibs <- function(newlib=NULL)
 }
 
 #add new lib path the libPaths
-addNewUserLib <- function(newlib)
+addNewUserLib <- function(newlib = "")
 {
 	success = FALSE
-	#check if path exists else no need to set it
-	dirExist = dir.exists(paths=newlib)
-	if(dirExist) 
-	{	
-		.libPaths( c(.libPaths(), newlib) )
-		success = TRUE
+	if(nchar(newlib) > 0)
+	{
+		#check if path exists else no need to set it
+		dirExist = dir.exists(paths=newlib)
+		if(dirExist) 
+		{	
+			.libPaths( c(.libPaths(), newlib) )
+			success = TRUE
+		}
 	}
 	return(success)
 }
