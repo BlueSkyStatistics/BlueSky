@@ -4024,14 +4024,14 @@ BSkyReturnStructure2 <-function(bskyAdditionalTableList = list()) ### passs as l
 #'
 #' @param datasetColumnObjects: selected scale variables (say Dataset$var1, Dataset$var2)
 #' @param groupByColumnObjects: one or more factor variables to group by (say  Dataset$var3, Dataset$var4)
-#' @param statFunctionList: List of functions. The ones set to TRUE will be executed. (say min=TRUE, sd=TRUE)​
-#' @param ​quantilesProbs: Probabilities of the quantiles
+#' @param statFunctionList: List of functions. The ones set to TRUE will be executed. (say min=TRUE, sd=TRUE)
+#' @param quantilesProbs: Probabilities of the quantiles
 #' @param additionalStats: Addition statistical function that user can pass ( say var)
 #' @param datasetName: Name of the dataset from which datasetColumnObjects and groupByColumnObjects are chosen
 #'
 #' @return An object of class "data.frame", giving the results for each function on each variable.
 #'
-#' @examples Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'))</br>
+#' @examples Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'), stringsAsFactors = TRUE)
 #' Result_Numerical_Statistics_Analysis = BSkySummaryStats(datasetColumnObjects = list(Sales = Dataset$Sales, Expenses = Dataset$Expenses), groupByColumnObjects = list(Deptt= Dataset$Deptt), stats = c(min=FALSE,max=FALSE,mean=TRUE,median=TRUE,sum=FALSE,sd=FALSE,stderror=FALSE,iqr=FALSE,quantiles=FALSE),datasetName="Dataset" )
 BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByColumnObjects=list(), datasetName=c(), stats=c(min=TRUE, max=TRUE, mean=TRUE, median=TRUE, quantiles=TRUE), quantilesProbs=c(0, 0.25, 0.5, 0.75, 1), additionalStats = c(), maxsum = 30, bSkyFormatAppRequest = FALSE, ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE)
 {
