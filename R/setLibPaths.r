@@ -6,19 +6,19 @@
 
 # uber function : adds new userlib path (creates it if it does not exist)
 # prints a message on failure and returns success flag.
-setNewLibPath <- function(newlibpath="")
+BSkysetNewLibPath <- function(newlibpath="")
 {
 	#cat("\nStart setNewLibPath")
 	success = FALSE
 	if(TRUE)#(BSkyIsRmarkdownOutputOn()== FALSE)## if its BlueSky app environment
 	{
 		cat("\nUser lib to be added:\n")
-		userlib = checkNcreateUserLibs(newlibpath)
+		userlib = BSkycheckNcreateUserLibs(newlibpath)
 		print(userlib)
 		if(nchar(userlib)>2) #min ./x
 		{
 			# cat("\n inside inner if")
-			success = addNewUserLib(userlib)
+			success = BSkyaddNewUserLib(userlib)
 		}
 		if(!success)
 		{
@@ -31,7 +31,7 @@ setNewLibPath <- function(newlibpath="")
 	return(success)
 }
 
-checkNcreateUserLibs <- function(newlib="")
+BSkycheckNcreateUserLibs <- function(newlib="")
 {
 	success = FALSE
 	userlib = newlib
@@ -79,7 +79,7 @@ checkNcreateUserLibs <- function(newlib="")
 }
 
 #add new lib path the libPaths
-addNewUserLib <- function(newlib = "")
+BSkyaddNewUserLib <- function(newlib = "")
 {
 	success = FALSE
 	if(nchar(newlib) > 0)
