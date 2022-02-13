@@ -29,7 +29,7 @@
 #' BSky_One_Simple_T_Test = BSkyOneSmTTest(varNamesOrVarGlobalIndices =c('Sales','Expenses'),mu=.9,conf.level=0.95,alternative ="two.sided", datasetNameOrDatasetGlobalIndex ='Dataset',missing=1)
 BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 0, conf.level = 0.95, alternative = 'two.sided',
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, 
-	cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE) 
+	cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE, debug=FALSE) 
 {
     BSkyFunctionInit()
 	#print(match.call())
@@ -70,7 +70,10 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 		# data  is null but datasetNameOrDatasetGlobalIndex has the dataset name
 		# BSkyLoadRefresh is needed to load the dataset in ua dataset list global obj
 		# for BSKy functions e.g. crosstab, ind sample and one sample to work in RStudio 
-		BSkyLoadRefresh(datasetNameOrDatasetGlobalIndex)
+		if(!exists("name", envir = uadatasets) || !(datasetNameOrDatasetGlobalIndex %in% uadatasets$name))
+		{
+			BSkyLoadRefresh(datasetNameOrDatasetGlobalIndex)
+		}
 	}
 	
 	
@@ -224,6 +227,11 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 		bsky_return_structure$uasummary[[7]] = replace_uasummary_7
 	}
 	
+	if(debug == TRUE)
+	{
+		return(invisible(bsky_return_structure))
+	}
+
 	#print("Returning from one sample")
     #invisible(bsky_return_structure)
 	table_list = BSkyFormatBSkyOneSampleTtest(bsky_return_structure)

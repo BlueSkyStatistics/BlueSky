@@ -21,7 +21,7 @@
 BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE)
 {
 	
-	if ( "All_Models" %in% objclasslist)
+	if ("All_Models" %in% objclasslist )
 	{
 	#09/04/2021
 	#Removed function from the list below. This is probably one model function that returns a model of class function, I don't know what that model is
@@ -75,7 +75,7 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 BSkyGetAvailableModelsCP <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE)
 {
 	
-	if ( "All_Models" %in% objclasslist )
+	if ("All_Models" %in% objclasslist)
 	{
 	#09/04/2021
 	#Removed function from the list below. This is probably one model function that returns a model of class function, I don't know what that model is
