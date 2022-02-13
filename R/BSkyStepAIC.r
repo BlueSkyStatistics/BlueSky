@@ -262,7 +262,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	modelselmsg =  paste0('\n -Currently selected model:  ', modelname, sep='')
 	modelclasmsg =  paste0('\n -Model Class:  ', modclass, sep='')
 	datasetmsg =  paste0('\n -Currently selected dataset:  ', curdatasetname, sep='')
-	informationalMessage ="\nInformational Message: If you see errors below, validate that the model was built with na.action =na.exclude or simply remove NAs and rebuild the model and re-run the analysis. See Data>Missing Values>Remove NAs to remove missing values\n\n"
+	informationalMessage ="\nInformational Message: If you see errors below, validate that the model was built with na.action =na.exclude or simply remove NAs and rebuild the model and re-run the analysis. See Variables>Missing Values>Remove NAs to remove missing values\n\n"
 
 	finalmsg='\n\nNOTE: The variables used to build the model must be in the active dataset. \nMake sure that the correct dataset is the active dataset.\nYou can do this by simply selecting the dataset in the main application window.'
 	
@@ -372,7 +372,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 		#09/07/2020
 		#I cannot verify whether the valiables used to build the model are present in the active dataset for all models, the code below
 		#ensures that processing continues
-		notsupportedmsg =paste0('Informational Message: We have not been able to verify whether the independent variables used to create the model you selected are \navailable in the active/selected dataset in the main application window. \nWe will proceed to run the statistics requested. If you see errors, please validate that the active/selected dataset matches the dataset used to build the model.\nAlso validate that the model was built with the na.action =na.exclude or remove NAs and rebuild the model and re-run the analysis. \nSee Data>Missing Values>Remove NAs to remove missing values\n', collapse='', sep='')
+		notsupportedmsg =paste0('Informational Message: We have not been able to verify whether the independent variables used to create the model you selected are \navailable in the active/selected dataset in the main application window. \nWe will proceed to run the statistics requested. If you see errors, please validate that the active/selected dataset matches the dataset used to build the model.\nAlso validate that the model was built with the na.action =na.exclude or remove NAs and rebuild the model and re-run the analysis. \nSee Variables>Missing Values>Remove NAs to remove missing values\n', collapse='', sep='')
 		success=TRUE
 		cat(notsupportedmsg)
 		return(list(msg =notsupportedmsg, success=success))

@@ -97,7 +97,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 					GenerateUniqueColName('bskytempx')
 					
 					#following line : empty col name replaced by something like C..NA..NA..NA
-					eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (bskytempx, function(y) {if(class(y) == "character") y = factor(y) else y} ) )',sep='' )))
+					eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (bskytempx, function(y) {if("character" %in% class(y)) y = factor(y) else y} ) )',sep='' )))
 				}
 				else
 				{
@@ -144,7 +144,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 			GenerateUniqueColName('x')
 			
 			#following line : empty col name replaced by something like C..NA..NA..NA
-			eval(parse(text=paste(datasetname,' <<- as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )' )))
+			eval(parse(text=paste(datasetname,' <<- as.data.frame( lapply (x, function(y) {if("character" %in% class(y)) y = factor(y) else y} ) )' )))
 			#as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )
 		}
 		

@@ -46,7 +46,7 @@ BSkyLoadDATinDataFrame <- function(DATfilename, datasetname, replace=FALSE, Head
 					eval( parse(text=paste('x <<-  utils::read.delim(file=\'',DATfilename,'\', header =', Header,', sep = \'',sepCh,'\', dec =\'',deciCh,'\' )',sep='' ))) # use with lapply
 
 					#as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )
-					eval(parse(text=paste(datasetname,' <<- as.data.frame( lapply (x, function(y) {if(class(y) == "character") y = factor(y) else y} ) )' )))
+					eval(parse(text=paste(datasetname,' <<- as.data.frame( lapply (x, function(y) {if("character" %in% class(y)) y = factor(y) else y} ) )' )))
 				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		
