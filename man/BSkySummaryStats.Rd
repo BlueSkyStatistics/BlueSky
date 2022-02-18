@@ -25,9 +25,9 @@ BSkySummaryStats(
 
 \item{groupByColumnObjects:}{one or more factor variables to group by (say  Dataset$var3, Dataset$var4)}
 
-\item{statFunctionList:}{List of functions. The ones set to TRUE will be executed. (say min=TRUE, sd=TRUE)​}
+\item{statFunctionList:}{List of functions. The ones set to TRUE will be executed. (say min=TRUE, sd=TRUE)}
 
-\item{​quantilesProbs:}{Probabilities of the quantiles}
+\item{quantilesProbs:}{Probabilities of the quantiles}
 
 \item{additionalStats:}{Addition statistical function that user can pass ( say var)}
 
@@ -42,6 +42,6 @@ min, max, mean, median, sum, sd, stderror, iqr,  quartiles. If quartiles is sele
 In addition to these, the user can pass, a list of comma separated statistical function names for example var.
 }
 \examples{
-Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'))</br>
+Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'), stringsAsFactors = TRUE)
 Result_Numerical_Statistics_Analysis = BSkySummaryStats(datasetColumnObjects = list(Sales = Dataset$Sales, Expenses = Dataset$Expenses), groupByColumnObjects = list(Deptt= Dataset$Deptt), stats = c(min=FALSE,max=FALSE,mean=TRUE,median=TRUE,sum=FALSE,sd=FALSE,stderror=FALSE,iqr=FALSE,quantiles=FALSE),datasetName="Dataset" )
 }

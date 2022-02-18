@@ -364,10 +364,10 @@ GetTableList <- function(excelfilename, xlsx=FALSE)
 # 1.If you are the user of an application, consult your application documentation for details on how 
 # to use the appropriate driver.
 # 2.If you are an application developer using OLEDB, set the Provider argument of the ConnectionString
- # property to �Microsoft.ACE.OLEDB.12.0�
-# �If you are connecting to Microsoft Office Excel data, add �Excel 12.0� to the Extended Properties
+# property to 'Microsoft.ACE.OLEDB.12.0'
+# If you are connecting to Microsoft Office Excel data, add Excel 12.0 to the Extended Properties
  # of the OLEDB connection string.
 # 3.If you are application developer using ODBC to connect to Microsoft Office Access data, 
-# set the Connection String to �Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=path to mdb/accdb file�
+# set the Connection String to Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=path to mdb/accdb file
 # 4.If you are application developer using ODBC to connect to Microsoft Office Excel data, 
-# set the Connection String to �Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};DBQ=path to xls/xlsx/xlsm/xlsb file�						
+# set the Connection String to Driver={Microsoft Excel Driver (*.xls, *.xlsx, *.xlsm, *.xlsb)};DBQ=path to xls/xlsx/xlsm/xlsb file						

@@ -19,7 +19,8 @@ BSkyIndSmTTest(
   hedges_g = FALSE,
   hedgesg_correction = FALSE,
   glass_d = FALSE,
-  glassd_correction = FALSE
+  glassd_correction = FALSE,
+  debug = FALSE
 )
 }
 \arguments{

@@ -429,9 +429,12 @@ BSkyReloadDataset<-function(fullpathfilename,  filetype, sheetname=NULL, csvHead
 }
 
 
-BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex)
+BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex, processit=TRUE)
 {
-	BSkyProcessNewDataset(datasetName=dataSetNameOrIndex, NAstrings = c("NA"), stringAsFactor=TRUE)
+	if(processit)
+	{
+		BSkyProcessNewDataset(datasetName=dataSetNameOrIndex, NAstrings = c("NA"), stringAsFactor=TRUE)
+	}
 	success =  BSkysaveDataset(fullpathfilename=fullpathfilename,  filetype=filetype, Rownames = Rownames, Colnames = Colnames, newWorksheetName=newWorksheetName,factor2char=factor2char, dataSetNameOrIndex=dataSetNameOrIndex)
 	# cat("\nSuccess = ")
 	# cat(success)

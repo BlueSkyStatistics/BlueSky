@@ -16,7 +16,8 @@ BSkyloadDataset(
   trimSPSStrailing = FALSE,
   sepChar = ",",
   deciChar = ".",
-  datasetName
+  datasetName,
+  encoding = NULL
 )
 }
 \arguments{
