@@ -14,9 +14,9 @@
 #' @examples BSkyVersion()
 BSkyVersion<-function()
 {
-bskyver= "Version: 7.95"
-bskydate="Date: 2022-02-13"
-bskytime="09:48PM"
+bskyver= "Version: 7.96"
+bskydate="Date: 2022-02-17"
+bskytime="05:54PM"
 
 rver = R.Version()
 print("------ BlueSky R package version ------")
