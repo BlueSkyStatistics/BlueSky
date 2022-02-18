@@ -275,7 +275,20 @@ getModelIndependentVariables <- function(modelname, formulaoperators="[-+*/:^,)(
 	modelvars <- eval(parse(text=paste('attr(',modelname,',"indepvar")', sep='')))
 	if(!is.null(modelvars) )
 	{
-		modelvars <- eval(parse(text=modelvars))
+		#modelvars <- eval(parse(text=modelvars))
+		##This extracts dependent variables when they are in the formula format see neuralnet
+		##The above format is used for typical models where dependent vars are in form 'var1','var2','var3'
+		## see how formula is constructed for MLP
+		if (str_detect(modelvars, "c\\("))
+		{
+			modelvars <- eval(parse(text = modelvars))
+		}else
+		##This extracts dependent variables when they are in the format "'var1','var2','var3'"
+		##The above format is used for typical models where dependent vars are in form 'var1','var2','var3'
+		## see how formula is constructed for MLP
+		{
+			modelvars <-strsplit(gsub("'","",modelvars),",")[[1]]
+		}
 	}
 	else if(modclass =='NaiveBayes')
 	{
@@ -525,6 +538,14 @@ BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALS
     dependentvariable <- NULL
     dependentclasses = character(0)
 	
+	#Aaron 02/16/2022 
+	#we point to the sample of the dependent variable used to create the model
+	#This is necessary as the dataset been scored does not always contain the dependent variable
+	#We need the dependent variable to name the variable to contain the scores
+	#we need levels to name the predicted values with the correct levels
+	
+	dependentvariable   <- eval(parse(text = paste("attr(", modelname, ",\"depVarSample\")",
+        sep = "")))
 		
     depvar <- getModelDependentVariable(modelname)
 	
@@ -556,10 +577,13 @@ BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALS
         }
        if (!MultipleDependentVars) 
             {
-            dependentvariable <- eval(parse(text = paste(datasetname, 
-                "$", depvar, sep = "")))
-            dependentclasses = eval(parse(text = paste("class(dependentvariable)", 
-                sep = "")))
+			#Commented by Aaron 02/15/2022
+           # dependentvariable <- eval(parse(text = paste(datasetname, 
+			#"$", depvar, sep = "")))
+           # dependentclasses = eval(parse(text = paste("class(dependentvariable)", 
+            #    sep = "")))
+			dependentclasses  <- eval(parse(text = paste("attr(", modelname, ",\"classDepVar\")",
+        sep = "")))
             if (length(dependentclasses) > 1) {
                 dependentclass = dependentclasses[1]
             }
@@ -2097,7 +2121,13 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 	{
 		dependentvariable =as.numeric(dependentvariable)
 	}
-	
+	#Aaron Added 02/16/2022
+	#Restoring dependentvariable to original value so that the confusion matrix 
+	#does not display if the dependentvariable does not exist, this will happen when the 
+	#database scored does not contain the dependent variable
+	dependentvariable <- eval(parse(text = paste(datasetname, 
+                "$", depvar, sep = "")))
+				
     return(list(predictions, predictedProbs, dependentvariable, 
         ROC))
 }
