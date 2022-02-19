@@ -49,7 +49,7 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
     for (trainobj in trainObjects)
     {
         finalModelClass = eval(parse(text=paste('class('  ,trainobj, '$finalModel',  ')', collapse='', sep='')))
-        if (finalModelClass %in% originalObjClassList)
+        if (finalModelClass %in% originalObjClassList && !trainobj %in% Objs  )
         {
             Objs = c( trainobj, Objs)
         }
