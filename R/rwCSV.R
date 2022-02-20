@@ -123,7 +123,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 				}
 				
 				## 03Aug2016 We change "character" col class to "factor" ## I think Sanjay helped me to do that to Excel file. So same logic goes here
-				eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (.GlobalEnv$',datasetname,', function(y) {if("character" in class(y)) y = factor(y) else y} ) )',sep='' )))
+				eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (.GlobalEnv$',datasetname,', function(y) {if("character" %in% class(y)) y = factor(y) else y} ) )',sep='' )))
 				
 				if(logflag)
 				{
