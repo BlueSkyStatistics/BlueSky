@@ -2739,7 +2739,7 @@ BSkyGetHelpProcessSleepSeconds <- function()
 }
 
 
-# Last modified 12/22/2021
+# Last modified 2/27/2022
 BSkyGetRHelpParallelHTTPServerPortNumber <- function(restartHelpServer = FALSE, stopHelpServer = FALSE)
 {
 	port_number = 0
@@ -2774,17 +2774,30 @@ BSkyGetRHelpParallelHTTPServerPortNumber <- function(restartHelpServer = FALSE, 
 			
 			parallel_plan = plan(multisession, workers = BSkyGetHelpProcessWorkers())
 			
+			uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber = 0
 			
 			fut_handle = future(
 							{
+								uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber
+								
 								options(help_type = 'html')
 								help_http_port_number = tools::startDynamicHelp(NA) #start the http help server if not already running
 								writeLines(as.character(help_http_port_number), temp_file_write_read_port_num)
 								
+								# fileConnPort<-file(temp_file_write_read_port_num, "w")
+								# writeLines(as.character(help_http_port_number), fileConnPort)
+								# close(fileConnPort)
+								
+								uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber = help_http_port_number
+								
+								# cat("\nin child\n")
+								# print(temp_file_write_read_port_num)
+								# print(file.exists(temp_file_write_read_port_num))
+								
 								# After launching the R HTTP help server in this R sub/parallel process - go to sleep
 								# This parallel process needs to stay alive all the time - otherwise HTTP server will be killed
 								# once this multisession worker is done and completes i.e. resolves itself - it will terminate
-								# this multisession process (specially on Mac OS - widows it seems to stay alive without the sleep)
+								# this multisession process (specially on Mac OS - windows it seems to stay alive without the sleep)
 								# will terminate along with terminating the R http help server just launched by startDynamicHelp(NA)
 								
 								
@@ -2797,9 +2810,24 @@ BSkyGetRHelpParallelHTTPServerPortNumber <- function(restartHelpServer = FALSE, 
 						
 			Sys.sleep(1)
 			
-			port_number = readLines(temp_file_write_read_port_num)
+			# cat("\nin parent\n")
+			# print(temp_file_write_read_port_num)
+			# print(file.exists(temp_file_write_read_port_num))
 			
-			uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber = port_number
+			# fileConnPort<-file(temp_file_write_read_port_num, "r")
+			
+			if(uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber == 0)
+			{
+				port_number = readLines(temp_file_write_read_port_num)
+				# port_number = readLines(fileConnPort)
+				# close(fileConnPort)
+				
+				uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber = port_number
+			}
+			else
+			{
+				port_number = uadatasets.sk$BSkyParallelHelpHTTPServerPortNumber
+			}
 		}
 	}
 	else
@@ -2813,6 +2841,7 @@ BSkyGetRHelpParallelHTTPServerPortNumber <- function(restartHelpServer = FALSE, 
 	
 	return(invisible(port_number))
 }
+
 
 
 
