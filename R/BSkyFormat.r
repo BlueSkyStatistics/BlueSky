@@ -3713,7 +3713,8 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 								sig_col_header = "Sig.(2-tail)"
 							}
 							
-							stat_header_row2 = c(" ", " ","Sig.", "F", "t", "df", sig_col_header, "mean difference", "std. error difference", "lower", "upper") 
+							#stat_header_row2 = c(" ", " ","Sig.", "F", "t", "df", sig_col_header, "mean difference", "std. error difference", "lower", "upper") 
+							stat_header_row2 = c(" ", " ","F", "Sig.", "t", "df", sig_col_header, "mean difference", "std. error difference", "lower", "upper")
 											
 							colA = c()
 							colB = c()

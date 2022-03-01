@@ -738,8 +738,8 @@ ualevene.test <-function(cindex,uavarindex,groupindex,noofvars, index)
 				#uadatasets$retstructure[[2]]$datatable[j,1]
 				#uamat[j,1] <-uatemp[[1]]
 				#uamat[j,2] <-uatemp[[2]]
-				uadatasets$retstructure[[2]]$datatable[j,1]<-uatemp[[2]]
-				uadatasets$retstructure[[2]]$datatable[j,2]<-uatemp[[1]]
+				uadatasets$retstructure[[2]]$datatable[j,1]<-uatemp[[1]]
+				uadatasets$retstructure[[2]]$datatable[j,2]<-uatemp[[2]]
 				j<-j+2				
 			}
 			uadatasets$errorfn=0
