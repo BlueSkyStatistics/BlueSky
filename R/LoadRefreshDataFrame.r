@@ -364,12 +364,21 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			
 			if(isexists)
 			{
-				#check if data.frame
-				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
+				# dsclass = eval(parse(text=paste('"class(',pkgname,'::',dsname,')',sep='')))
+				# if( length(dsclass) > 1)
+				# {
+					#check if data.frame
+					# isdataframe = "data.frame" %in% dsclass
+					 isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
+					# if(isdataframe)
+					# {
+						# eval(parse(text=paste('"class(',pkgname,'::',dsname,')',sep='')))
+					# }
+				# }
 				
 				if(isdataframe)
 				{
-					eval( parse(text=paste('.GlobalEnv$',dsname,' <- ',pkgname,'::',dsname,sep='')))##make a copy in globalEnv
+					eval( parse(text=paste('.GlobalEnv$',dsname,' <- as.data.frame(',pkgname,'::',dsname,')',sep='')))##make a copy in globalEnv
 					#dsname = 'mtcars'
 					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
 				}
@@ -410,7 +419,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 				
 				#check if it is a "ts" object
 				ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
-				if(ists)
+				if(ists || isdataframe)
 				{
 					##make it a data.frame and also make a copy in globalEnv
 					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
