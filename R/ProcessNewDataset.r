@@ -12,6 +12,14 @@
 BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFactor=TRUE, excludechars=c("", NA))
 {
 	BSkyFunctionInit()
+
+	if( eval(parse(text=paste('(!exists("',datasetName,'") || is.null(',datasetName,'))',sep='' ))))
+	{
+		msg = paste(datasetName," does not exist in BSkyProcessNewDataset function")
+		warning(msg)
+		BSkyFunctionWrapUp()
+		return(invisible(BSkyReturnStructure()))
+	}
 	BSkySetCurrentDatasetName(datasetName)
 	
 	BSkyErrMsg = paste("BSkyProcessNewDataset: Error in Loading empty dataset : ", "DataSetName :", datasetName," ", sep="")
@@ -22,139 +30,141 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 		{
 		withCallingHandlers(
 		{
-		
-		#### Method 1 ## We remove all empty rows and cols from a dataset ##
-		if(FALSE) #not in use
-		{
-			#find how many rows and cols will remain after removing empty ones.
-			finalrows = eval(parse(text=paste('nrow(',datasetname,'[!apply(is.na(',datasetname,') | ',datasetname,' == "", 1, all),])', sep='')))
-			#finalcols = eval(parse(text=paste('ncol(', datasetname,'[!apply(',datasetname,', 2, function(var) length(unique(var)) == 1)])',sep='')))
-			finalcols = eval(parse(text=paste('ncol(', datasetname,'[!sapply(',datasetname,',function(x) all(x == ""))])',sep='')))
-
-
-			if(finalrows > 0 && finalcols > 0)
+			
+			#### Method 1 ## We remove all empty rows and cols from a dataset ##
+			if(FALSE) #not in use
 			{
-				## remove empty rows or rows having all NAs
-				eval(parse(text=paste(datasetname, '<<-',datasetname,'[!apply(is.na(',datasetname,') | ',datasetname,' == "", 1, all),]', sep='')))
-				
-				## remove empty columns.
-				## This does not seem to work if less than 2x2 matrix is created
-				#eval(parse(text=paste(datasetname, '<<-', datasetname,'[!apply(',datasetname,', 2, function(var) length(unique(var)) == 1)]',sep='')))
-				## Another way
-				#Dataset6 = Dataset6[!sapply(Dataset6, function(x) all(x == ""))]
-				eval(parse(text=paste(datasetname, '<<-', datasetname,'[!sapply(',datasetname,',function(x) all(x == ""))]',sep='')))
-			}
-			# OR use janitor R pkg and remove empty row as well as column in one shot
-			# require(janitor)
-			# eval(parse(text=paste(datasetname, '<<- remove_empty(',datasetname,'which=c("rows","cols"))',sep='')))
-		}
-		
-		if(TRUE) #This block removes empty rows from the bottom(moving up) and empty cols from the right(moving left)
-		{
-			# max non-empty row index and max non-empty col index, will be taken as the last cell of our data.frame.
-			# So, now we need to remove all rows and columns beyond this cell index
-			# We allow user to have empty row or empty col before the last cell of the data.frame
-			
-			# 'which' starts counting col by col. So first col has 30 values, second col first cell is index 31 and 3rd
-			# col will start at index 61, 4th col starts with 91. 5th col starts with 121.
-			#
-			#Get all non-empty cell indexes
-			allidxnotNA = eval(parse(text=paste('which(',datasetname,'!="")')))
-			
-			#find max of all the indexes in allidxnotNA
-			idx = max(allidxnotNA) 
+				#find how many rows and cols will remain after removing empty ones.
+				finalrows = eval(parse(text=paste('nrow(',datasetname,'[!apply(is.na(',datasetname,') | ',datasetname,' == "", 1, all),])', sep='')))
+				#finalcols = eval(parse(text=paste('ncol(', datasetname,'[!apply(',datasetname,', 2, function(var) length(unique(var)) == 1)])',sep='')))
+				finalcols = eval(parse(text=paste('ncol(', datasetname,'[!sapply(',datasetname,',function(x) all(x == ""))])',sep='')))
 
-			r=eval(parse(text=paste('nrow(',datasetname,')',sep='')))
-			col=eval(parse(text=paste('ncol(',datasetname,')',sep='')))
-			
-			lastcellcolidx = ceiling(idx / r)
-			
-			#finding row index is not very straight forward
-			# in allidxnotNA find if there is an index that is 
-			# completely divisible by data.frame row count 'r'
-			# if so then the last non empty row index is equal 
-			# to the row count of the data.frame.
-			remainderzeroIndexes = which( allidxnotNA %% r == 0) # list of indexes completely divisible by row-count 'r'
-			if( length(remainderzeroIndexes) > 0 )#if any such index found then max row index = row-count 'r'
-			{
-				lastcellrowidx = r
-			}
-			else #if last row was empty then the max remainder found below should be the last non empty row
-			{
-				lastcellrowidx = max(allidxnotNA %% r)
-			}
 
-			#get current col names. This will be only used if tehre is just one column
-			eval(parse(text=paste('colnames = names(',datasetname,')[1]',sep='')))
-			
-			#remove empty rows and empty col beyond the 'last cell'.
-			eval(parse(text=paste(datasetname, '<<- as.data.frame(', datasetname,'[1:lastcellrowidx, 1:lastcellcolidx])',sep='')))
-			
-			#if there is just one colum then the name of the col will be var1. We always create dataset from top left cell.
-			if(lastcellcolidx == 1)
-			{
-				eval(parse(text=paste('names(',datasetname,')=colnames',sep='')))
-			}
-		}
-
-		#Converting character col type to appropriate data type
-		#Given a character vector, it attempts to convert it to logical, integer, numeric or complex, and failing 
-		#that converts it to factor unless as.is = TRUE. So if we pass as.is=TRUE data will not convert.
-		#The first type that can accept all the non-missing values is chosen. 
-		#Vectors which are entirely missing values are converted to logical, since NA is primarily logical. 
-		#
-		#require(utils); auto <- type.convert(mtcars)
-		eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,',as.is =', !stringAsFactor,')',sep=''))) 
-		
-		#08Jun2021 This does not work. some issue with parameter na.strings.
-		#R Err Msg : invalid 'na.strings' argument  in function:  type.convert.default(x[[i]], ...)
-		#eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,', na.strings = ',NAstrings,',as.is =', !stringAsFactor,')',sep=''))) 
-		
-		#Based on discussion with Aaron, we decided to convert factors back to characters
-		# if(!stringAsFactor)
-		# {
-				# colcount = eval(parse(text=paste('ncol(',datasetname,')')))
-				# for(i in 1:colcount)
-				# {
-					# coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
-					# colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
-					
-					# if(colclass == "factor")
-					# {
-						# eval(parse(text=paste(datasetname,'$',coluname,'<<- as.character(',datasetname,'$',coluname,')',sep='' )))
-					# }
-				# }
-		# }
-
-			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
-			for(i in 1:colcount)
-			{
-				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
-				
-				## if col class is factor it may have a blank level because of the blank cell in between (in the grid). This blank level must be dropped.
-				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
-				#cat("col class:")
-				#print(colclass)
-				if("factor" %in% colclass)
+				if(finalrows > 0 && finalcols > 0)
 				{
-					eval(parse(text=paste(datasetname,'$',coluname,' <<- factor(x=',datasetname,'$',coluname,',  exclude = excludechars)', sep='')))
-					#eval(parse(text=paste('print(levels(',datasetname,'$',coluname,'))',sep='')))
-				}				
-				
-				###creating missing value attribute, which is dataset level att.
-				colmisatt <- eval(parse(text=paste(coluname,'<-list(',coluname,'=list(type="none", value=""))')))
-				# print(colmisatt)
-				if(i>1)
-					eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(attr(',datasetname,',"misvals"), ',colmisatt,')')))
-				else
-					eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(',colmisatt,')')))
-				# cat("done!@")
+					## remove empty rows or rows having all NAs
+					eval(parse(text=paste(datasetname, '<<-',datasetname,'[!apply(is.na(',datasetname,') | ',datasetname,' == "", 1, all),]', sep='')))
+					
+					## remove empty columns.
+					## This does not seem to work if less than 2x2 matrix is created
+					#eval(parse(text=paste(datasetname, '<<-', datasetname,'[!apply(',datasetname,', 2, function(var) length(unique(var)) == 1)]',sep='')))
+					## Another way
+					#Dataset6 = Dataset6[!sapply(Dataset6, function(x) all(x == ""))]
+					eval(parse(text=paste(datasetname, '<<-', datasetname,'[!sapply(',datasetname,',function(x) all(x == ""))]',sep='')))
+				}
+				# OR use janitor R pkg and remove empty row as well as column in one shot
+				# require(janitor)
+				# eval(parse(text=paste(datasetname, '<<- remove_empty(',datasetname,'which=c("rows","cols"))',sep='')))
 			}
+			
+			if(TRUE) #This block removes empty rows from the bottom(moving up) and empty cols from the right(moving left)
+			{
+				# max non-empty row index and max non-empty col index, will be taken as the last cell of our data.frame.
+				# So, now we need to remove all rows and columns beyond this cell index
+				# We allow user to have empty row or empty col before the last cell of the data.frame
+				
+				# 'which' starts counting col by col. So first col has 30 values, second col first cell is index 31 and 3rd
+				# col will start at index 61, 4th col starts with 91. 5th col starts with 121.
+				#
+				#Get all non-empty cell indexes
+				allidxnotNA = eval(parse(text=paste('which(',datasetname,'!="")')))
+				if(length(allidxnotNA) > 0)
+				{
+					#find max of all the indexes in allidxnotNA
+					idx = max(allidxnotNA) 
 
-			#cat("\nCreating Extra attributes for new DS. ")
-			eval(parse(text=paste('attr(',datasetname,',"maxfactor") <<-', bskymaxfactors)))
-			UAcreateExtraAttributes(datasetname, "RDATA")
+					r=eval(parse(text=paste('nrow(',datasetname,')',sep='')))
+					col=eval(parse(text=paste('ncol(',datasetname,')',sep='')))
+					
+					lastcellcolidx = ceiling(idx / r)
+					
+					#finding row index is not very straight forward
+					# in allidxnotNA find if there is an index that is 
+					# completely divisible by data.frame row count 'r'
+					# if so then the last non empty row index is equal 
+					# to the row count of the data.frame.
+					remainderzeroIndexes = which( allidxnotNA %% r == 0) # list of indexes completely divisible by row-count 'r'
+					if( length(remainderzeroIndexes) > 0 )#if any such index found then max row index = row-count 'r'
+					{
+						lastcellrowidx = r
+					}
+					else #if last row was empty then the max remainder found below should be the last non empty row
+					{
+						lastcellrowidx = max(allidxnotNA %% r)
+					}
 
+					#get current col names. This will be only used if tehre is just one column
+					eval(parse(text=paste('colnames = names(',datasetname,')[1]',sep='')))
+					
+					#remove empty rows and empty col beyond the 'last cell'.
+					eval(parse(text=paste(datasetname, '<<- as.data.frame(', datasetname,'[1:lastcellrowidx, 1:lastcellcolidx])',sep='')))
+					
+					#if there is just one colum then the name of the col will be var1. We always create dataset from top left cell.
+					if(lastcellcolidx == 1)
+					{
+						eval(parse(text=paste('names(',datasetname,')=colnames',sep='')))
+					}
+
+
+					#Converting character col type to appropriate data type
+					#Given a character vector, it attempts to convert it to logical, integer, numeric or complex, and failing 
+					#that converts it to factor unless as.is = TRUE. So if we pass as.is=TRUE data will not convert.
+					#The first type that can accept all the non-missing values is chosen. 
+					#Vectors which are entirely missing values are converted to logical, since NA is primarily logical. 
+					#
+					#require(utils); auto <- type.convert(mtcars)
+					eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,',as.is =', !stringAsFactor,')',sep=''))) 
+					
+					#08Jun2021 This does not work. some issue with parameter na.strings.
+					#R Err Msg : invalid 'na.strings' argument  in function:  type.convert.default(x[[i]], ...)
+					#eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,', na.strings = ',NAstrings,',as.is =', !stringAsFactor,')',sep=''))) 
+					
+					#Based on discussion with Aaron, we decided to convert factors back to characters
+					# if(!stringAsFactor)
+					# {
+							# colcount = eval(parse(text=paste('ncol(',datasetname,')')))
+							# for(i in 1:colcount)
+							# {
+								# coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
+								# colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
+								
+								# if(colclass == "factor")
+								# {
+									# eval(parse(text=paste(datasetname,'$',coluname,'<<- as.character(',datasetname,'$',coluname,')',sep='' )))
+								# }
+							# }
+					# }
+
+						colcount = eval(parse(text=paste('ncol(',datasetname,')')))
+						for(i in 1:colcount)
+						{
+							coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
+							
+							## if col class is factor it may have a blank level because of the blank cell in between (in the grid). This blank level must be dropped.
+							colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
+							#cat("col class:")
+							#print(colclass)
+							if("factor" %in% colclass)
+							{
+								eval(parse(text=paste(datasetname,'$',coluname,' <<- factor(x=',datasetname,'$',coluname,',  exclude = excludechars)', sep='')))
+								#eval(parse(text=paste('print(levels(',datasetname,'$',coluname,'))',sep='')))
+							}				
+							
+							###creating missing value attribute, which is dataset level att.
+							colmisatt <- eval(parse(text=paste(coluname,'<-list(',coluname,'=list(type="none", value=""))')))
+							# print(colmisatt)
+							if(i>1)
+								eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(attr(',datasetname,',"misvals"), ',colmisatt,')')))
+							else
+								eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(',colmisatt,')')))
+							# cat("done!@")
+						}
+
+						#cat("\nCreating Extra attributes for new DS. ")
+						eval(parse(text=paste('attr(',datasetname,',"maxfactor") <<-', bskymaxfactors)))
+						UAcreateExtraAttributes(datasetname, "RDATA")
+				}
+			}
 		},
 		
 		warning = UAwarnHandlerFn
