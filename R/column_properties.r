@@ -68,16 +68,16 @@ dfsplitprop <- list()
 				#cat('\nDF-SPlit')				
 				dfsplit <- eval(parse(text=paste('attr(',datasetname,',"split")',sep='' )))
 				if(is.null(dfsplit))#handle NULL
-					dfsplit <- c()
+					dfsplit <- c("")
 				#print(dfsplit)	
 				
 				dfsplitcolnames <- eval(parse(text=paste('attr(',datasetname,',"splitcolumnnames")',sep='' ))) 
 				if(is.null(dfsplitcolnames))#handle NULL
-					dfsplitcolnames <- c()				
+					dfsplitcolnames <- c("")				
 					
 				dfsplitcolindex <- eval(parse(text=paste('attr(',datasetname,',"splitcolumnindex")',sep='' ))) 
 				if(is.null(dfsplitcolindex))#handle NULL
-					dfsplitcolindex <- c()		
+					dfsplitcolindex <- c("")		
 									
 				dfsplitprop <- list(DFsplit=dfsplit, DFsplitcolnames=dfsplitcolnames, DFsplitcolindex=dfsplitcolindex)
 				#-return(dfsplitprop)

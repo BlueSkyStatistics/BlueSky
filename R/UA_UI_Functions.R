@@ -1257,7 +1257,7 @@ BSkyGetDatasetSplitInfo <- function(datasetNameStr)
 		#cat(datasetNameStr)
 		#cat("Split Info:")
 		#print(splitInfo)
-		if(!is.null(splitInfo) && length(splitInfo) > 0 && splitInfo$DFsplit == TRUE)
+		if(!is.null(splitInfo) && length(splitInfo) > 0 && !is.null(splitInfo$DFsplit) && splitInfo$DFsplit == TRUE)
 		{
 			splitVarList = splitInfo$DFsplitcolnames
 		}
