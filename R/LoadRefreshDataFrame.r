@@ -325,7 +325,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 #' @examples 
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyLoadRefresh('df')
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=30)## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
 	ists=FALSE
@@ -556,13 +556,30 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			uadatasets.sk$holdBSkyFormatObjectNew = c(uadatasets.sk$holdBSkyFormatObjectNew, list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName))))
 		}
 		
-		###### 23 Jan 2021 ### Addin dataset in uadataset$name  ######
+		###### 23 Jan 2021 ### Add dataset in uadataset$name if it is not in the list ######
 		datasetname <- BSkyValidateDataset(bskyDatasetName)
 		if(is.null(datasetname))
 		{
 			uadatasets$name <- c(uadatasets$name, bskyDatasetName)
 		}
 		UAcreateExtraAttributes(bskyDatasetName, "RDATA")
+
+		# columns having more than 30 factors are converted back to character
+		colcount = eval(parse(text=paste('ncol(',bskyDatasetName,')')))
+		for(i in 1:colcount)
+		{
+			coluname = eval(parse(text=paste('colnames(.GlobalEnv$',bskyDatasetName,')[',i,']',sep='')))
+			colclass = eval(parse(text=paste('class(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='')))
+
+			if("factor" %in% colclass)
+			{
+				lvlcount = eval(parse(text=paste('length(levels(.GlobalEnv$',bskyDatasetName,'$',coluname,'))',sep='')))
+				if(lvlcount > maxFactor)
+				{
+					eval(parse(text=paste('.GlobalEnv$',bskyDatasetName,'$',coluname,'<- as.character(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='' )))
+				}
+			}
+		}
 
 	}
 }

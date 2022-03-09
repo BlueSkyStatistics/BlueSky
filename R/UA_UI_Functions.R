@@ -229,7 +229,7 @@ BSkyEmpty <-function(datasetName ,noOfRows,noOfCols)
 #' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
 #' BSkyLoadRefresh(exceldata)
 BSkyloadDataset <-function(fullpathfilename,  filetype, worksheetName=NULL, replace_ds=FALSE, 
-load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL )
+load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL, maxFactor=30 )
 {
 
 	BSkyFunctionInit()
@@ -350,6 +350,25 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			# cat("Warning caught in UAloadDataset \n")
 			BSkyLocalWarningFlagsReset() #if needed to continue without returning back to the top level function 
     	}
+		
+		if(success == 0) ## if file opened successfully
+		{
+			colcount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')')))
+			for(i in 1:colcount)
+			{
+				coluname = eval(parse(text=paste('colnames(.GlobalEnv$',datasetname,')[',i,']',sep='')))
+				colclass = eval(parse(text=paste('class(.GlobalEnv$',datasetname,'$',coluname,')',sep='')))
+
+				if("factor" %in% colclass)
+				{
+					lvlcount = eval(parse(text=paste('length(levels(.GlobalEnv$',datasetname,'$',coluname,'))',sep='')))
+					if(lvlcount > maxFactor)
+					{
+						eval(parse(text=paste('.GlobalEnv$',datasetname,'$',coluname,'<- as.character(.GlobalEnv$',datasetname,'$',coluname,')',sep='' )))
+					}
+				}
+			}
+		}
 		# cat("\nWrapup now")
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
