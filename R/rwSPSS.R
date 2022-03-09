@@ -399,7 +399,7 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']',sep='')))
 				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')',sep='')))
 
-				if(colclass[1] == "haven_labelled")##"haven_labelled" "vctrs_vctr"     "double"
+				if("haven_labelled" %in% colclass )##"haven_labelled" "vctrs_vctr"     "double"
 				{
 					eval(parse(text=paste('.GlobalEnv$',datasetname,'$',coluname,'<- as_factor(',datasetname,'$',coluname,')',sep='' )))
 				}
