@@ -229,7 +229,7 @@ BSkyEmpty <-function(datasetName ,noOfRows,noOfCols)
 #' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
 #' BSkyLoadRefresh(exceldata)
 BSkyloadDataset <-function(fullpathfilename,  filetype, worksheetName=NULL, replace_ds=FALSE, 
-load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL, maxFactor=30 )
+load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL, maxFactor=BSkyGetMaxFactor() )
 {
 
 	BSkyFunctionInit()

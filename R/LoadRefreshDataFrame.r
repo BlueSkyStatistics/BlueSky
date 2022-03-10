@@ -325,7 +325,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 #' @examples 
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyLoadRefresh('df')
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=30)## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
 	ists=FALSE
@@ -589,4 +589,24 @@ BSkyRemoveRefreshDataframe <- function(dframe)
 	BSky.RemoveRefresh.Dataframe (dframe)
 }
 
+
+##10Mar2022
+BSkyGetMaxFactor <- function()
+{
+	if(exists("maxFactor", env=uadatasets.sk))
+	{
+		return(invisible(uadatasets.sk$maxFactor))
+	}
+	else
+	{
+		return(invisible(30))
+	}
+}
+
+##10Mar2022
+BSkySetMaxFactor <- function(maxFactor = 30)
+{
+		uadatasets.sk$maxFactor = maxFactor
+		return(invisible(uadatasets.sk$maxFactor))
+}
 

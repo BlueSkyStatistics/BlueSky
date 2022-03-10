@@ -223,3 +223,5 @@ export(BSkyInstall.packages)
 
 export(BSkysetNewLibPath, BSkycheckNcreateUserLibs, BSkyaddNewUserLib)
 
+export(BSkyGetMaxFactor, BSkySetMaxFactor)
+
