@@ -351,7 +351,9 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			BSkyLocalWarningFlagsReset() #if needed to continue without returning back to the top level function 
     	}
 		
-		if(success == 0) ## if file opened successfully
+		# if maxFactor = -1 then we do not convert factor col to character
+		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
+		if(success == 0 && maxFactor > 0) ## if file opened successfully
 		{
 			colcount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')')))
 			for(i in 1:colcount)

@@ -564,23 +564,27 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		}
 		UAcreateExtraAttributes(bskyDatasetName, "RDATA")
 
-		# columns having more than 30 factors are converted back to character
-		colcount = eval(parse(text=paste('ncol(',bskyDatasetName,')')))
-		for(i in 1:colcount)
+		# if maxFactor = -1 then we do not convert factor col to character
+		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
+		if(maxFactor > 0)
 		{
-			coluname = eval(parse(text=paste('colnames(.GlobalEnv$',bskyDatasetName,')[',i,']',sep='')))
-			colclass = eval(parse(text=paste('class(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='')))
-
-			if("factor" %in% colclass)
+			# columns having more than 30 factors are converted back to character
+			colcount = eval(parse(text=paste('ncol(',bskyDatasetName,')')))
+			for(i in 1:colcount)
 			{
-				lvlcount = eval(parse(text=paste('length(levels(.GlobalEnv$',bskyDatasetName,'$',coluname,'))',sep='')))
-				if(lvlcount > maxFactor)
+				coluname = eval(parse(text=paste('colnames(.GlobalEnv$',bskyDatasetName,')[',i,']',sep='')))
+				colclass = eval(parse(text=paste('class(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='')))
+
+				if("factor" %in% colclass)
 				{
-					eval(parse(text=paste('.GlobalEnv$',bskyDatasetName,'$',coluname,'<- as.character(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='' )))
+					lvlcount = eval(parse(text=paste('length(levels(.GlobalEnv$',bskyDatasetName,'$',coluname,'))',sep='')))
+					if(lvlcount > maxFactor)
+					{
+						eval(parse(text=paste('.GlobalEnv$',bskyDatasetName,'$',coluname,'<- as.character(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='' )))
+					}
 				}
 			}
 		}
-
 	}
 }
 
@@ -599,12 +603,13 @@ BSkyGetMaxFactor <- function()
 	}
 	else
 	{
-		return(invisible(30))
+		# -1 here means no restriction on maximum factors in a column
+		return(invisible(-1))#return(invisible(30))
 	}
 }
 
 ##10Mar2022
-BSkySetMaxFactor <- function(maxFactor = 30)
+BSkySetMaxFactor <- function(maxFactor = -1)
 {
 		uadatasets.sk$maxFactor = maxFactor
 		return(invisible(uadatasets.sk$maxFactor))
