@@ -1478,7 +1478,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 					#uadatasets$lst[[1]][,2]<-factor(uadatasets$lst[[1]][,2], levels=c("Female", "EMale"), labels = c("Female", "Murd"))					
 					bskyattlist <- BSkyAttributesBackup(colIndex, datasetname)
 					#eval(parse(text=paste(datasetname,'[,colIndex] <<- factor((',datasetname,'[,colIndex]),oldLevels, newLevels)', sep='')))#. <<- to <-
-					eval(parse(text=paste(datasetname,'[[colIndex]] <<- factor((',datasetname,'[[colIndex]]),oldLevels, newLevels)', sep='')))
+					eval(parse(text=paste(datasetname,'[[colIndex]] <- factor((',datasetname,'[[colIndex]]),oldLevels, newLevels)', sep='')))
 					
 					#factor(uadatasets$lst[[2]][,1], levels=c("Under 21", "26-30",""), labels=c("Under age","26-30", "D"))## Change / Del / Add. All in one
 					
