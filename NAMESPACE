@@ -225,3 +225,5 @@ export(BSkysetNewLibPath, BSkycheckNcreateUserLibs, BSkyaddNewUserLib)
 
 export(BSkyGetMaxFactor, BSkySetMaxFactor)
 
+export(BSkyGetLaTexColSpacing, BSkySetLaTexColSpacing)
+

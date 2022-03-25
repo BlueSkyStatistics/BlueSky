@@ -987,9 +987,30 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 					row_names_convert_column = TRUE
 					#num_kableExtra_cols = dim(BSkyFormat_output$tables[[i]])[2] + 1
 					
-					new_table_removed_empty_rows = cbind(dimnames(BSkyFormat_output$tables[[i]])[[1]], new_table_removed_empty_rows)
+					old_col_names = dimnames(BSkyFormat_output$tables[[i]])[[2]]
+					old_row_names = dimnames(BSkyFormat_output$tables[[i]])[[1]]
+					
+					# 03/22/22 - Latex output is messing up if rownames with enclosed <..> is converted to cols e.g. a row name as <none> 
+					if(doLatexFormatting == TRUE)
+					{
+						modified_old_row_names = gsub("<|>", "", old_row_names)
+						
+						# cat("\nConverting row names as the first column\n")
+						# cat("old_row_names : ", old_row_names, "\n")
+						# cat("modified_old_row_names : ", modified_old_row_names, "\n")
+					}
+					else
+					{
+						modified_old_row_names = old_row_names
+					}
+					
+					# new_table_removed_empty_rows = cbind(dimnames(BSkyFormat_output$tables[[i]])[[1]], new_table_removed_empty_rows)
+					new_table_removed_empty_rows = cbind(modified_old_row_names, new_table_removed_empty_rows)
 					rownames(new_table_removed_empty_rows) = NULL 
 					num_kableExtra_cols = dim(new_table_removed_empty_rows)[2]
+					
+					dimnames(new_table_removed_empty_rows)[[2]] = c(" ", old_col_names)
+					
 					
 					if(length(pvalueColumnAlignmentAdjustmentIndices) > 0)
 					{
@@ -1164,11 +1185,15 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						# print(length(trimws(names(BSkyFormat_output$tables[i]))))
 					}
 					
-					if(doLatexFormatting == TRUE)
-					{
-						tableCaption = paste(tableCaption, "\n")
-						tableCaption = linebreak(tableCaption)
-					}
+					
+					# 03/22/22 commented out the following to stop printing "makecell" table rule on the 
+					# caption line of the latex output
+					
+					# if(doLatexFormatting == TRUE)
+					# {
+						# tableCaption = paste(tableCaption, "\n")
+						# tableCaption = linebreak(tableCaption)
+					# }
 					
 					#############################################################
 					# Handle BSkyFormat("plain text", "html text", or LateX model equation printing code)  
@@ -1520,6 +1545,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 							}
 						}
 						
+							
 						if(repeated_column_header_found == TRUE)
 						{
 							if(doLatexFormatting == TRUE)
@@ -1527,13 +1553,13 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 								if(length(header_background) > 0 && trimws(header_background) != "")
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2]))) %>% 
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 		
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "") %>% 		
 											add_header_above(eval(parse(text= merged_col_top_header)), background = header_background, align= merged_col_header_alignment) #, background = eval(parse(text=header_background_color))) 
 								}
 								else
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2]))) %>% 
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 		
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "") %>% 		
 											add_header_above(eval(parse(text= merged_col_top_header)), align= merged_col_header_alignment) #, background = eval(parse(text=header_background_color))) 
 								}
 							}
@@ -1592,13 +1618,13 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 								if(length(header_background) > 0 && trimws(header_background) != "")
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2]))) %>% 
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "") %>% 
 										row_spec(0, background = header_background)	
 								}
 								else
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2])))
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions)		
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "")		
 								}
 							}
 							else
@@ -1730,6 +1756,31 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 							{
 								p =  gsub("<tr>\\D+(<th\\s+style=\"text((\\D)|(\\d))+>\\s+</th>)+\\D+</tr>\\D+</thead>", "</thead>", p)
 							}
+						}
+						 
+						if(doLatexFormatting == TRUE)
+						{
+							# 03/22/22 - add the following to get rid of the extra blank line after the 
+							# opening \begin{table} generated by kable latex
+							p =  gsub("\n\n","\n", p, fixed = TRUE)
+							
+							# 03/22/22 - add the column spacing 
+							# \begin{table}
+								# \setlength{\tabcolsep}{8pt}
+							p =  gsub("begin{table}\n", paste("begin{table}\n\\setlength{\\tabcolsep}{", BSkyGetLaTexColSpacing(), "pt}\n", sep=""), p, fixed = TRUE)
+							
+							# 03/22/2022 added to protect the column header like Pr(>|t|) to get mangled up by kable latex output 
+							# these needed a $ symbol enclosure
+							         stringPatterns = c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)")
+							modified_stringPatterns = c("Pr$(>F)$", "Pr$(>|t|)$","p.value", "Sig.(2-tailed)", "p-value", "Pr$(>|z|)$", "Pr$(>Chi)$", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.$(1-tail, >)$", "Sig.$(1-tail, <)$", "Pr$(>Chisq)$", "P$(>|Chi|)$", "Pr(Chi)")
+							 
+							for(sigp in 1:length(stringPatterns))
+							{
+								p = gsub(stringPatterns[sigp], modified_stringPatterns[sigp], p, fixed=TRUE)
+							}
+							
+							p = gsub("\\begin{tabular}", "\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}", p, fixed=TRUE)
+							p = gsub("\\end{tabular}", "\\end{tabular}}", p, fixed=TRUE)
 						}
 						
 						
@@ -2117,6 +2168,30 @@ BSky.print.latex <- function()
 	
 	BSkySetHtmlStylingSetting()
 	BSkySetHtmlStylingSetting(tableTheme = "kable_styling", latex_hold_position = FALSE, latex_scale_down = TRUE, fullWidthDisplay = FALSE, tableHeaderBackgroundColor = "", striped = FALSE)
+}
+
+# 03/22/22 - Get and set LaTeX column spacing in pt
+BSkySetLaTexColSpacing <- function(colSpacing = 4) 
+{	
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyLaTexColSpacing = colSpacing
+	}
+	
+	return(invisible(colSpacing))
+}
+
+# 03/22/22 - Get and set LaTeX column spacing in pt
+BSkyGetLaTexColSpacing <- function()
+{
+	colSpacing = 4
+	
+	if(exists("uadatasets.sk") && exists("BSkyLaTexColSpacing", env=uadatasets.sk))
+	{
+		colSpacing = uadatasets.sk$BSkyLaTexColSpacing
+	}
+	
+	return(invisible(colSpacing))
 }
 
 
