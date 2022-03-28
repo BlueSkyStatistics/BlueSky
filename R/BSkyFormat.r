@@ -4963,7 +4963,9 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											# print(cross_table_skeleton3)
 											# cat("\n=======================\n")
 											
+											orig_cross_table_skeleton3 = cross_table_skeleton3
 											cross_table_skeleton_inverted = cross_table_skeleton3 
+											
 											
 											###################################################################################
 											# Remove extra rows if present from the "Total" section of the skeleton table like 
@@ -5219,6 +5221,16 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											#table_list_names = c(table_list_names, "Multiway CrossTab (Long Table Format)")
 											temp_hdr_str = paste(crosstable_table_header, "(Long Table Format)")
 											table_list_names = c(table_list_names, temp_hdr_str)
+											
+											#print(attributes(orig_cross_table_skeleton3))
+											orig_attributes = attributes(orig_cross_table_skeleton3)
+											if(length(orig_attributes) > 2)
+											{
+												for(attr_idx in 3:length(orig_attributes))
+												{
+													attr(cross_table_skeleton_inverted, names(orig_attributes)[attr_idx]) = attr(orig_cross_table_skeleton3, names(orig_attributes)[attr_idx])
+												}
+											}
 											
 											table_list = c(table_list, list(cross_table_skeleton_inverted))
 											names(table_list) = table_list_names
@@ -7584,3 +7596,4 @@ BSkyDummyErrorWarningMuncher <- function(...)
 {
 	# Contnue the execution and munch (i.e. do nothing) all error and wanings silently without spitting out 
 }
+
