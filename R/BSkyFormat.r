@@ -294,7 +294,58 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 		{
 			for(n in 1:orig_num_tables)
 			{
-				if(grepl("(\\bMultiway Cross Table\\b)", names(BSkyFormat_output$tables)[n]))
+				#03/26/22 - added the code block to handle formatting of numbers for the Long Table Format Cross Table 
+				if(grepl("(\\bLong Table Format\\b)", names(BSkyFormat_output$tables)[n]))
+				{
+					total_rows = nrow(BSkyFormat_output$tables[[n]])
+					
+					# column_index = which(BSkyFormat_output$tables[[n]][1,] == "Count")
+					# if(length(column_index) > 0)
+					# {
+						# #if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]))))
+						# {
+							# BSkyFormat_output$tables[[n]][c(2:total_rows),column_index] = round(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]), 0)
+						# }
+					# }
+					
+					column_index = which(BSkyFormat_output$tables[[n]][1,] == "Expected Count")
+					if(length(column_index) > 0)
+					{
+						#if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]))))
+						{
+							BSkyFormat_output$tables[[n]][c(2:total_rows),column_index] = round(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]), 0)
+							BSkyFormat_output$tables[[n]][c(2:total_rows),column_index][is.na(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index])] = c("")
+						}
+					}
+					
+					# column_index = which(BSkyFormat_output$tables[[n]][1,] %in% c("Residual", "Std. Residual", "Adjusted Residual"))
+					# if(length(column_index) > 0)
+					# {
+						# #if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]))))
+						# {
+							# BSkyFormat_output$tables[[n]][c(2:total_rows),column_index] = round(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]), 0)
+						# }
+					# }
+					
+					column_index = grep("% within", BSkyFormat_output$tables[[n]][1,])
+					if(length(column_index) > 0)
+					{
+						for(col_idx in 1:length(column_index))
+						{
+							for(row_idx in 2:total_rows)
+							{
+								if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]))))
+								{
+									if(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]) == round(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]), 0))
+									{
+										BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]] = round(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]), 0)
+									}
+								}
+							}
+						}
+					}
+				}
+				else if(grepl("(\\bMultiway Cross Table\\b)", names(BSkyFormat_output$tables)[n]))
 				{
 					column_index = which(dimnames(BSkyFormat_output$tables[[n]])[[2]] == "count")
 					
@@ -4840,13 +4891,19 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 												split_begin_header_already_printed = TRUE
 											}
 											
-											#table_list_names = c(table_list_names, "Multiway Cross Table")
-											table_list_names = c(table_list_names, crosstable_table_header)
+											if(long_table == FALSE)
+											{
+												#table_list_names = c(table_list_names, "Multiway Cross Table")
+												table_list_names = c(table_list_names, crosstable_table_header)
+											}
 										}
 										else
 										{
-											#table_list_names = c(table_list_names, "Multiway Cross Table")
-											table_list_names = c(table_list_names, crosstable_table_header)
+											if(long_table == FALSE)
+											{
+												#table_list_names = c(table_list_names, "Multiway Cross Table")
+												table_list_names = c(table_list_names, crosstable_table_header)
+											}
 										}
 										
 										if(X_has_been_printed == TRUE)
@@ -4893,10 +4950,13 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											# attr(cross_table_skeleton3, "BSkyFootnote_Debug_info") = paste("BSky Debug_info: ", "Col filter hint: ", col_filter_hint, data_table_dim, row_filter_hint)
 										# }
 										
-										table_list = c(table_list, list(cross_table_skeleton3))
-										names(table_list) = table_list_names
-										
-										if(long_table == TRUE)
+										# 03/26/22 - put it in a if and else to print either long format or not but not both at the same time
+										if(long_table == FALSE)
+										{
+											table_list = c(table_list, list(cross_table_skeleton3))
+											names(table_list) = table_list_names
+										}
+										else #if(long_table == TRUE)
 										{
 											# cat("\n=======================\n")
 											# cat("\n original table cross_table_skeleton3 \n")
@@ -5154,9 +5214,15 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											
 											# print(names(table_list))
 											# print(str(table_list))
-											table_list_names = c(table_list_names, "Multiway CrossTab (Long Table Format)")
+											
+											#03/26/22 - changed to incorporate Long tabke format table name with formular variables (~ +) 
+											#table_list_names = c(table_list_names, "Multiway CrossTab (Long Table Format)")
+											temp_hdr_str = paste(crosstable_table_header, "(Long Table Format)")
+											table_list_names = c(table_list_names, temp_hdr_str)
+											
 											table_list = c(table_list, list(cross_table_skeleton_inverted))
 											names(table_list) = table_list_names
+											
 											# print(names(table_list))
 											# print(str(table_list))
 										}
@@ -7518,4 +7584,3 @@ BSkyDummyErrorWarningMuncher <- function(...)
 {
 	# Contnue the execution and munch (i.e. do nothing) all error and wanings silently without spitting out 
 }
-
