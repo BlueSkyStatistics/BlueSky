@@ -298,6 +298,13 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			else  if(filetype == "TXT"){
 				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
 			}
+			else if(filetype == "PSV" || filetype == "TSV" || filetype == "CSVY" || filetype == "ZSAV" || filetype == "XPT" ||
+			filetype == "POR" || filetype == "RDS" || filetype == "REC" || filetype == "MTP" || filetype == "SYD" || filetype == "ARFF" || 
+			filetype == "DIF" || filetype == "FWF" || filetype == "GZ" || filetype == "PARQUET" || filetype == "WF1" || filetype == "FEATHER" ||
+			filetype == "FST" || filetype == "JSON" || filetype == "MAT" || filetype == "ODS" || filetype == "HTML" || filetype == "XML" ||
+			filetype == "YML" || filetype == "PZFX"){
+				success = BSkyReadWithRio(fullpathfilename, datasetname, replace=replace_ds) 
+			}			
 			#cat("Top Level - Finished Loading Dataset:",datasetname)
 			#print(Sys.time())
 			# if ( isUniqueColumns(datasetname) )
@@ -565,6 +572,13 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			}
 			else if(filetype == "RDATA" || filetype == "RDA"){
 				success = UAwriteRObj(fullpathfilename,dataSetNameOrIndex)
+			}	
+			else if(filetype == "PSV" || filetype == "TSV" || filetype == "CSVY" || filetype == "ZSAV" || filetype == "XPT" ||
+			filetype == "POR" || filetype == "RDS" || filetype == "REC" || filetype == "MTP" || filetype == "SYD" || filetype == "ARFF" || 
+			filetype == "DIF" || filetype == "FWF" || filetype == "GZ" || filetype == "PARQUET" || filetype == "WF1" || filetype == "FEATHER" ||
+			filetype == "FST" || filetype == "JSON" || filetype == "MAT" || filetype == "ODS" || filetype == "HTML" || filetype == "XML" ||
+			filetype == "YML" || filetype == "PZFX"){
+				success = BSkyWriteWithRio(fullpathfilename, dataSetNameOrIndex) 
 			}			
 			else  if(filetype == "TXT"){
 			}

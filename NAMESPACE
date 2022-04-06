@@ -227,3 +227,6 @@ export(BSkyGetMaxFactor, BSkySetMaxFactor)
 
 export(BSkyGetLaTexColSpacing, BSkySetLaTexColSpacing)
 
+export(BSkyReadWithRio, BSkyWriteWithRio, BSkyConvertFileFormat)
+
+
