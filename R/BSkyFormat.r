@@ -1060,7 +1060,16 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 					rownames(new_table_removed_empty_rows) = NULL 
 					num_kableExtra_cols = dim(new_table_removed_empty_rows)[2]
 					
-					dimnames(new_table_removed_empty_rows)[[2]] = c(" ", old_col_names)
+					#11Apr2022 Fix an issue with the matrix with no column name and row names. GitHub issue #918. fixed.
+					# dimnames(new_table_removed_empty_rows)[[2]] = c(" ", old_col_names)
+					if(is.null(old_col_names))
+					{
+						dimnames(new_table_removed_empty_rows)[[2]] = c()
+					}
+					else
+					{
+						dimnames(new_table_removed_empty_rows)[[2]] = c(" ", old_col_names)
+					}
 					
 					
 					if(length(pvalueColumnAlignmentAdjustmentIndices) > 0)
