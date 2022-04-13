@@ -3253,13 +3253,13 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 									{
 										index = index + 1
 										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 										}
 										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3358,13 +3358,13 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 										{
 											index = index + 1
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3621,13 +3621,13 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 										{
 											index = index + 1
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3799,14 +3799,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 									if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 									{
 										index = index + 1
-										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n1.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 										}
 										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3927,14 +3930,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											# cat("\n2.\n")
+											# print(n)
+											# print(addl_msg)
+											# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -4016,14 +4022,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n3.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -4103,14 +4112,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n4.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -4190,14 +4202,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n5.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
