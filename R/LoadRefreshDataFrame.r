@@ -328,6 +328,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
+	isdesign=FALSE
 	ists=FALSE
 	isPkgLoaded = FALSE
 	isexists = FALSE
@@ -375,8 +376,14 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 						# eval(parse(text=paste('"class(',pkgname,'::',dsname,')',sep='')))
 					# }
 				# }
-				
-				if(isdataframe)
+				isdesign = eval(parse(text=paste('"design" %in% c(class(',pkgname,'::',dsname,'))',sep='')))#for DoE
+				if(isdataframe && isdesign)#DoE
+				{
+					eval( parse(text=paste('.GlobalEnv$',dsname,' <- (',pkgname,'::',dsname,')',sep='')))##make a copy in globalEnv
+					#dsname = 'mtcars'
+					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
+				}				
+				else if(isdataframe)
 				{
 					eval( parse(text=paste('.GlobalEnv$',dsname,' <- as.data.frame(',pkgname,'::',dsname,')',sep='')))##make a copy in globalEnv
 					#dsname = 'mtcars'
@@ -416,10 +423,18 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			if(inGlobalEnv)
 			{
 				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+
+				isdesign = eval(parse(text=paste('"design" %in% c(class(',bskyDatasetName,'))',sep=''))) # for DoE
 				
 				#check if it is a "ts" object
 				ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
-				if(ists || isdataframe)
+
+				if(isdesign && isdataframe)
+				{
+					##make it a data.frame and also make a copy in globalEnv
+					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- (',bskyDatasetName,')',sep='')))
+				}				
+				else if(ists || isdataframe)#DoE
 				{
 					##make it a data.frame and also make a copy in globalEnv
 					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
@@ -445,10 +460,17 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- ',bskyDatasetName,sep='')))##make a copy in globalEnv
 					#dsname = 'mtcars'
 					isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+
+					isdesign = eval(parse(text=paste('"design" %in% c(class(',bskyDatasetName,'))',sep='')))
 					
 					#check if it is a "ts" object
 					ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
-					if(ists)
+
+					if(isdesign && isdataframe)#DoE
+					{
+						eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- (',bskyDatasetName,')',sep='')))
+					}					
+					else if(ists)
 					{
 						##make it a data.frame and also make a copy in globalEnv
 						eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
