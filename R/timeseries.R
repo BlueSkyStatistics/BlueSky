@@ -319,7 +319,7 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
         
         if (savePredictedVals ==TRUE)
         {
-          stringToEvaluate =c(predictedValsDatasetName,"<<-as.data.frame(BSkyForecastRes$fitted)")
+          stringToEvaluate =c(predictedValsDatasetName,"<<-as.data.frame(BSkyForecastRes)")
           stringToEvaluate=paste(stringToEvaluate, collapse='')
           eval(parse(text=stringToEvaluate))
         }
@@ -530,7 +530,7 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
         
         if (savePredictedVals ==TRUE)
         {
-          stringToEvaluate =c(predictedValsDatasetName,"<<-as.data.frame(BSkyForecastRes$fitted)")
+          stringToEvaluate =c(predictedValsDatasetName,"<<-as.data.frame(BSkyForecastRes)")
           stringToEvaluate=paste(stringToEvaluate, collapse='')
           eval(parse(text=stringToEvaluate))
         }
