@@ -337,7 +337,9 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
         if (Ljung_Boxtest==TRUE)
         {
           boxTestRes<- Box.test(BSkyForecastRes$residuals, lag=lag.max, type="Ljung-Box")
-          htestres <-BSkyFormat2(boxTestRes)
+          #htestres <-BSkyFormat2(boxTestRes)#20Apr2022 commented with Sanjay and added a line below to print the tables in the output
+          BSkyFormat(boxTestRes)
+
           #              htestres <-BSkyFormat2 (boxTestRes, bSkyFormatAppRequest = TRUE)
           #              listForReturnStructure =list(htestres$tables[[1]])
           #              BSkyBuildReturnTableStructure2(OutputDataTableListIfPassed = listForReturnStructure)
@@ -548,7 +550,10 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
         if (Ljung_Boxtest==TRUE)
         {
           boxTestRes<- Box.test(BSkyForecastRes$residuals, lag=lag.max, type="Ljung-Box")
-          htestres <-BSkyFormat2(boxTestRes)
+
+          #htestres <-BSkyFormat2(boxTestRes)#20Apr2022 commented with Sanjay and added a line below to print the tables in the output
+          BSkyFormat(boxTestRes)
+
           #              htestres <-BSkyFormat2 (boxTestRes, bSkyFormatAppRequest = TRUE)
           #              listForReturnStructure =list(htestres$tables[[1]])
           #              BSkyBuildReturnTableStructure2(OutputDataTableListIfPassed = listForReturnStructure)
