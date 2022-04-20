@@ -229,7 +229,7 @@ BSkyEmpty <-function(datasetName ,noOfRows,noOfCols)
 #' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
 #' BSkyLoadRefresh(exceldata)
 BSkyloadDataset <-function(fullpathfilename,  filetype, worksheetName=NULL, replace_ds=FALSE, 
-load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL )
+load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL, maxFactor=BSkyGetMaxFactor() )
 {
 
 	BSkyFunctionInit()
@@ -298,6 +298,13 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			else  if(filetype == "TXT"){
 				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
 			}
+			else if(filetype == "PSV" || filetype == "TSV" || filetype == "CSVY" || filetype == "ZSAV" || filetype == "XPT" ||
+			filetype == "POR" || filetype == "RDS" || filetype == "REC" || filetype == "MTP" || filetype == "SYD" || filetype == "ARFF" || 
+			filetype == "DIF" || filetype == "FWF" || filetype == "GZ" || filetype == "PARQUET" || filetype == "WF1" || filetype == "FEATHER" ||
+			filetype == "FST" || filetype == "JSON" || filetype == "MAT" || filetype == "ODS" || filetype == "HTML" || filetype == "XML" ||
+			filetype == "YML" || filetype == "PZFX"){
+				success = BSkyReadWithRio(fullpathfilename, datasetname, replace=replace_ds) 
+			}			
 			#cat("Top Level - Finished Loading Dataset:",datasetname)
 			#print(Sys.time())
 			# if ( isUniqueColumns(datasetname) )
@@ -350,6 +357,27 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			# cat("Warning caught in UAloadDataset \n")
 			BSkyLocalWarningFlagsReset() #if needed to continue without returning back to the top level function 
     	}
+		
+		# if maxFactor = -1 then we do not convert factor col to character
+		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
+		if(success == 0 && maxFactor > 0) ## if file opened successfully
+		{
+			colcount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')')))
+			for(i in 1:colcount)
+			{
+				coluname = eval(parse(text=paste('colnames(.GlobalEnv$',datasetname,')[',i,']',sep='')))
+				colclass = eval(parse(text=paste('class(.GlobalEnv$',datasetname,'$',coluname,')',sep='')))
+
+				if("factor" %in% colclass)
+				{
+					lvlcount = eval(parse(text=paste('length(levels(.GlobalEnv$',datasetname,'$',coluname,'))',sep='')))
+					if(lvlcount > maxFactor)
+					{
+						eval(parse(text=paste('.GlobalEnv$',datasetname,'$',coluname,'<- as.character(.GlobalEnv$',datasetname,'$',coluname,')',sep='' )))
+					}
+				}
+			}
+		}
 		# cat("\nWrapup now")
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
@@ -544,6 +572,13 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			}
 			else if(filetype == "RDATA" || filetype == "RDA"){
 				success = UAwriteRObj(fullpathfilename,dataSetNameOrIndex)
+			}	
+			else if(filetype == "PSV" || filetype == "TSV" || filetype == "CSVY" || filetype == "ZSAV" || filetype == "XPT" ||
+			filetype == "POR" || filetype == "RDS" || filetype == "REC" || filetype == "MTP" || filetype == "SYD" || filetype == "ARFF" || 
+			filetype == "DIF" || filetype == "FWF" || filetype == "GZ" || filetype == "PARQUET" || filetype == "WF1" || filetype == "FEATHER" ||
+			filetype == "FST" || filetype == "JSON" || filetype == "MAT" || filetype == "ODS" || filetype == "HTML" || filetype == "XML" ||
+			filetype == "YML" || filetype == "PZFX"){
+				success = BSkyWriteWithRio(fullpathfilename, dataSetNameOrIndex) 
 			}			
 			else  if(filetype == "TXT"){
 			}
@@ -1257,7 +1292,7 @@ BSkyGetDatasetSplitInfo <- function(datasetNameStr)
 		#cat(datasetNameStr)
 		#cat("Split Info:")
 		#print(splitInfo)
-		if(!is.null(splitInfo) && length(splitInfo) > 0 && splitInfo$DFsplit == TRUE)
+		if(!is.null(splitInfo) && length(splitInfo) > 0 && !is.null(splitInfo$DFsplit) && splitInfo$DFsplit == TRUE)
 		{
 			splitVarList = splitInfo$DFsplitcolnames
 		}

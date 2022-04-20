@@ -68,16 +68,16 @@ dfsplitprop <- list()
 				#cat('\nDF-SPlit')				
 				dfsplit <- eval(parse(text=paste('attr(',datasetname,',"split")',sep='' )))
 				if(is.null(dfsplit))#handle NULL
-					dfsplit <- c()
+					dfsplit <- c("")
 				#print(dfsplit)	
 				
 				dfsplitcolnames <- eval(parse(text=paste('attr(',datasetname,',"splitcolumnnames")',sep='' ))) 
 				if(is.null(dfsplitcolnames))#handle NULL
-					dfsplitcolnames <- c()				
+					dfsplitcolnames <- c("")				
 					
 				dfsplitcolindex <- eval(parse(text=paste('attr(',datasetname,',"splitcolumnindex")',sep='' ))) 
 				if(is.null(dfsplitcolindex))#handle NULL
-					dfsplitcolindex <- c()		
+					dfsplitcolindex <- c("")		
 									
 				dfsplitprop <- list(DFsplit=dfsplit, DFsplitcolnames=dfsplitcolnames, DFsplitcolindex=dfsplitcolindex)
 				#-return(dfsplitprop)
@@ -1487,7 +1487,8 @@ UAgetColProperties <- function(dataSetNameOrIndex, colNameOrIndex, asClass=TRUE,
 #BSkyErrMsg = paste("UAgetColProperties: Error getting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable  :", paste(colNameOrIndex, collapse = ","),sep="")
 #BSkyWarnMsg = paste("UAgetColProperties: Warning getting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable :", paste(colNameOrIndex, collapse = ","),sep="")
 #BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-
+	isdesign = FALSE
+	isdataframe = FALSE
 	colProperties <- list()
 	if(!isDSValidated)
 		datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
@@ -1502,12 +1503,24 @@ UAgetColProperties <- function(dataSetNameOrIndex, colNameOrIndex, asClass=TRUE,
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)
 				{
+					#DoE dataset returns all colnames as once so we need something different here
+					# isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',datasetname,'))',sep='')))
+					# isdesign = eval(parse(text=paste('"design" %in% c(class(',datasetname,'))',sep=''))) # for DoE
+					# if(isdesign && isdataframe){
+					# 	colName <- eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']',sep='')))
+					# }
+					# else
+					# { 	#for non-design data frame
+					# 	colName <- eval(parse(text=paste('colnames(',datasetname,'[',colIndex,'])',sep='')))
+					# }
+
+					## following should work for bothe "design" as well as "data.frame" class of dataset
 					#find col name
 					#ptm= proc.time()
-					colName <- eval(parse(text=paste('colnames(',datasetname,'[',colIndex,'])',sep='')))
+					colName <- eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']',sep='')))
 					#cat("\nName:",colName)
 					#print(proc.time() - ptm)
-					
+
 					#find col type
 					#ptm= proc.time()
 					colType <- UAgetColType(datasetname, colNameOrIndex, as.class=FALSE,isDSValidated=isDSValidated)

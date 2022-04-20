@@ -325,9 +325,10 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 #' @examples 
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyLoadRefresh('df')
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
+	isdesign=FALSE
 	ists=FALSE
 	isPkgLoaded = FALSE
 	isexists = FALSE
@@ -364,12 +365,27 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			
 			if(isexists)
 			{
-				#check if data.frame
-				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
-				
-				if(isdataframe)
+				# dsclass = eval(parse(text=paste('"class(',pkgname,'::',dsname,')',sep='')))
+				# if( length(dsclass) > 1)
+				# {
+					#check if data.frame
+					# isdataframe = "data.frame" %in% dsclass
+					 isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
+					# if(isdataframe)
+					# {
+						# eval(parse(text=paste('"class(',pkgname,'::',dsname,')',sep='')))
+					# }
+				# }
+				isdesign = eval(parse(text=paste('"design" %in% c(class(',pkgname,'::',dsname,'))',sep='')))#for DoE
+				if(isdataframe && isdesign)#DoE
 				{
-					eval( parse(text=paste('.GlobalEnv$',dsname,' <- ',pkgname,'::',dsname,sep='')))##make a copy in globalEnv
+					eval( parse(text=paste('.GlobalEnv$',dsname,' <- (',pkgname,'::',dsname,')',sep='')))##make a copy in globalEnv
+					#dsname = 'mtcars'
+					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
+				}				
+				else if(isdataframe)
+				{
+					eval( parse(text=paste('.GlobalEnv$',dsname,' <- as.data.frame(',pkgname,'::',dsname,')',sep='')))##make a copy in globalEnv
 					#dsname = 'mtcars'
 					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
 				}
@@ -407,10 +423,18 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			if(inGlobalEnv)
 			{
 				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+
+				isdesign = eval(parse(text=paste('"design" %in% c(class(',bskyDatasetName,'))',sep=''))) # for DoE
 				
 				#check if it is a "ts" object
 				ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
-				if(ists)
+
+				if(isdesign && isdataframe)
+				{
+					##make it a data.frame and also make a copy in globalEnv
+					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- (',bskyDatasetName,')',sep='')))
+				}				
+				else if(ists || isdataframe)#DoE
 				{
 					##make it a data.frame and also make a copy in globalEnv
 					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
@@ -436,10 +460,17 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- ',bskyDatasetName,sep='')))##make a copy in globalEnv
 					#dsname = 'mtcars'
 					isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
+
+					isdesign = eval(parse(text=paste('"design" %in% c(class(',bskyDatasetName,'))',sep='')))
 					
 					#check if it is a "ts" object
 					ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
-					if(ists)
+
+					if(isdesign && isdataframe)#DoE
+					{
+						eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- (',bskyDatasetName,')',sep='')))
+					}					
+					else if(ists)
 					{
 						##make it a data.frame and also make a copy in globalEnv
 						eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
@@ -547,7 +578,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			uadatasets.sk$holdBSkyFormatObjectNew = c(uadatasets.sk$holdBSkyFormatObjectNew, list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName))))
 		}
 		
-		###### 23 Jan 2021 ### Addin dataset in uadataset$name  ######
+		###### 23 Jan 2021 ### Add dataset in uadataset$name if it is not in the list ######
 		datasetname <- BSkyValidateDataset(bskyDatasetName)
 		if(is.null(datasetname))
 		{
@@ -555,6 +586,27 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		}
 		UAcreateExtraAttributes(bskyDatasetName, "RDATA")
 
+		# if maxFactor = -1 then we do not convert factor col to character
+		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
+		if(maxFactor > 0)
+		{
+			# columns having more than 30 factors are converted back to character
+			colcount = eval(parse(text=paste('ncol(',bskyDatasetName,')')))
+			for(i in 1:colcount)
+			{
+				coluname = eval(parse(text=paste('colnames(.GlobalEnv$',bskyDatasetName,')[',i,']',sep='')))
+				colclass = eval(parse(text=paste('class(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='')))
+
+				if("factor" %in% colclass)
+				{
+					lvlcount = eval(parse(text=paste('length(levels(.GlobalEnv$',bskyDatasetName,'$',coluname,'))',sep='')))
+					if(lvlcount > maxFactor)
+					{
+						eval(parse(text=paste('.GlobalEnv$',bskyDatasetName,'$',coluname,'<- as.character(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='' )))
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -563,4 +615,25 @@ BSkyRemoveRefreshDataframe <- function(dframe)
 	BSky.RemoveRefresh.Dataframe (dframe)
 }
 
+
+##10Mar2022
+BSkyGetMaxFactor <- function()
+{
+	if(exists("maxFactor", env=uadatasets.sk))
+	{
+		return(invisible(uadatasets.sk$maxFactor))
+	}
+	else
+	{
+		# -1 here means no restriction on maximum factors in a column
+		return(invisible(-1))#return(invisible(30))
+	}
+}
+
+##10Mar2022
+BSkySetMaxFactor <- function(maxFactor = -1)
+{
+		uadatasets.sk$maxFactor = maxFactor
+		return(invisible(uadatasets.sk$maxFactor))
+}
 

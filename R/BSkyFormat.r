@@ -294,7 +294,58 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 		{
 			for(n in 1:orig_num_tables)
 			{
-				if(grepl("(\\bMultiway Cross Table\\b)", names(BSkyFormat_output$tables)[n]))
+				#03/26/22 - added the code block to handle formatting of numbers for the Long Table Format Cross Table 
+				if(grepl("(\\bLong Table Format\\b)", names(BSkyFormat_output$tables)[n]))
+				{
+					total_rows = nrow(BSkyFormat_output$tables[[n]])
+					
+					# column_index = which(BSkyFormat_output$tables[[n]][1,] == "Count")
+					# if(length(column_index) > 0)
+					# {
+						# #if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]))))
+						# {
+							# BSkyFormat_output$tables[[n]][c(2:total_rows),column_index] = round(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]), 0)
+						# }
+					# }
+					
+					column_index = which(BSkyFormat_output$tables[[n]][1,] == "Expected Count")
+					if(length(column_index) > 0)
+					{
+						#if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]))))
+						{
+							BSkyFormat_output$tables[[n]][c(2:total_rows),column_index] = round(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]), 0)
+							BSkyFormat_output$tables[[n]][c(2:total_rows),column_index][is.na(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index])] = c("")
+						}
+					}
+					
+					# column_index = which(BSkyFormat_output$tables[[n]][1,] %in% c("Residual", "Std. Residual", "Adjusted Residual"))
+					# if(length(column_index) > 0)
+					# {
+						# #if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]))))
+						# {
+							# BSkyFormat_output$tables[[n]][c(2:total_rows),column_index] = round(as.numeric(BSkyFormat_output$tables[[n]][c(2:total_rows),column_index]), 0)
+						# }
+					# }
+					
+					column_index = grep("% within", BSkyFormat_output$tables[[n]][1,])
+					if(length(column_index) > 0)
+					{
+						for(col_idx in 1:length(column_index))
+						{
+							for(row_idx in 2:total_rows)
+							{
+								if(!is.na(suppressWarnings(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]))))
+								{
+									if(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]) == round(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]), 0))
+									{
+										BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]] = round(as.numeric(BSkyFormat_output$tables[[n]][row_idx,column_index[col_idx]]), 0)
+									}
+								}
+							}
+						}
+					}
+				}
+				else if(grepl("(\\bMultiway Cross Table\\b)", names(BSkyFormat_output$tables)[n]))
 				{
 					column_index = which(dimnames(BSkyFormat_output$tables[[n]])[[2]] == "count")
 					
@@ -987,9 +1038,39 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 					row_names_convert_column = TRUE
 					#num_kableExtra_cols = dim(BSkyFormat_output$tables[[i]])[2] + 1
 					
-					new_table_removed_empty_rows = cbind(dimnames(BSkyFormat_output$tables[[i]])[[1]], new_table_removed_empty_rows)
+					old_col_names = dimnames(BSkyFormat_output$tables[[i]])[[2]]
+					old_row_names = dimnames(BSkyFormat_output$tables[[i]])[[1]]
+					
+					# 03/22/22 - Latex output is messing up if rownames with enclosed <..> is converted to cols e.g. a row name as <none> 
+					if(doLatexFormatting == TRUE)
+					{
+						modified_old_row_names = gsub("<|>", "", old_row_names)
+						
+						# cat("\nConverting row names as the first column\n")
+						# cat("old_row_names : ", old_row_names, "\n")
+						# cat("modified_old_row_names : ", modified_old_row_names, "\n")
+					}
+					else
+					{
+						modified_old_row_names = old_row_names
+					}
+					
+					# new_table_removed_empty_rows = cbind(dimnames(BSkyFormat_output$tables[[i]])[[1]], new_table_removed_empty_rows)
+					new_table_removed_empty_rows = cbind(modified_old_row_names, new_table_removed_empty_rows)
 					rownames(new_table_removed_empty_rows) = NULL 
 					num_kableExtra_cols = dim(new_table_removed_empty_rows)[2]
+					
+					#11Apr2022 Fix an issue with the matrix with no column name and row names. GitHub issue #918. fixed.
+					# dimnames(new_table_removed_empty_rows)[[2]] = c(" ", old_col_names)
+					if(is.null(old_col_names))
+					{
+						dimnames(new_table_removed_empty_rows)[[2]] = c()
+					}
+					else
+					{
+						dimnames(new_table_removed_empty_rows)[[2]] = c(" ", old_col_names)
+					}
+					
 					
 					if(length(pvalueColumnAlignmentAdjustmentIndices) > 0)
 					{
@@ -1164,11 +1245,15 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 						# print(length(trimws(names(BSkyFormat_output$tables[i]))))
 					}
 					
-					if(doLatexFormatting == TRUE)
-					{
-						tableCaption = paste(tableCaption, "\n")
-						tableCaption = linebreak(tableCaption)
-					}
+					
+					# 03/22/22 commented out the following to stop printing "makecell" table rule on the 
+					# caption line of the latex output
+					
+					# if(doLatexFormatting == TRUE)
+					# {
+						# tableCaption = paste(tableCaption, "\n")
+						# tableCaption = linebreak(tableCaption)
+					# }
 					
 					#############################################################
 					# Handle BSkyFormat("plain text", "html text", or LateX model equation printing code)  
@@ -1520,6 +1605,7 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 							}
 						}
 						
+							
 						if(repeated_column_header_found == TRUE)
 						{
 							if(doLatexFormatting == TRUE)
@@ -1527,13 +1613,13 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 								if(length(header_background) > 0 && trimws(header_background) != "")
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2]))) %>% 
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 		
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "") %>% 		
 											add_header_above(eval(parse(text= merged_col_top_header)), background = header_background, align= merged_col_header_alignment) #, background = eval(parse(text=header_background_color))) 
 								}
 								else
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2]))) %>% 
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 		
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "") %>% 		
 											add_header_above(eval(parse(text= merged_col_top_header)), align= merged_col_header_alignment) #, background = eval(parse(text=header_background_color))) 
 								}
 							}
@@ -1592,13 +1678,13 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 								if(length(header_background) > 0 && trimws(header_background) != "")
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2]))) %>% 
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions) %>% 
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "") %>% 
 										row_spec(0, background = header_background)	
 								}
 								else
 								{
 									#p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = c(rep(column_align, dim(new_table_removed_empty_rows)[2])))
-									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions)		
+									p = kableExtra::kbl(new_table_removed_empty_rows, format = "latex", booktabs = T, caption = tableCaption, escape = T, align = columnAlignmentPositions, linesep = "")		
 								}
 							}
 							else
@@ -1730,6 +1816,31 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 							{
 								p =  gsub("<tr>\\D+(<th\\s+style=\"text((\\D)|(\\d))+>\\s+</th>)+\\D+</tr>\\D+</thead>", "</thead>", p)
 							}
+						}
+						 
+						if(doLatexFormatting == TRUE)
+						{
+							# 03/22/22 - add the following to get rid of the extra blank line after the 
+							# opening \begin{table} generated by kable latex
+							p =  gsub("\n\n","\n", p, fixed = TRUE)
+							
+							# 03/22/22 - add the column spacing 
+							# \begin{table}
+								# \setlength{\tabcolsep}{8pt}
+							p =  gsub("begin{table}\n", paste("begin{table}\n\\setlength{\\tabcolsep}{", BSkyGetLaTexColSpacing(), "pt}\n", sep=""), p, fixed = TRUE)
+							
+							# 03/22/2022 added to protect the column header like Pr(>|t|) to get mangled up by kable latex output 
+							# these needed a $ symbol enclosure
+							         stringPatterns = c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)")
+							modified_stringPatterns = c("Pr$(>F)$", "Pr$(>|t|)$","p.value", "Sig.(2-tailed)", "p-value", "Pr$(>|z|)$", "Pr$(>Chi)$", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.$(1-tail, >)$", "Sig.$(1-tail, <)$", "Pr$(>Chisq)$", "P$(>|Chi|)$", "Pr(Chi)")
+							 
+							for(sigp in 1:length(stringPatterns))
+							{
+								p = gsub(stringPatterns[sigp], modified_stringPatterns[sigp], p, fixed=TRUE)
+							}
+							
+							p = gsub("\\begin{tabular}", "\\adjustbox{max width=\\textwidth}{\n\\begin{tabular}", p, fixed=TRUE)
+							p = gsub("\\end{tabular}", "\\end{tabular}}", p, fixed=TRUE)
 						}
 						
 						
@@ -2117,6 +2228,30 @@ BSky.print.latex <- function()
 	
 	BSkySetHtmlStylingSetting()
 	BSkySetHtmlStylingSetting(tableTheme = "kable_styling", latex_hold_position = FALSE, latex_scale_down = TRUE, fullWidthDisplay = FALSE, tableHeaderBackgroundColor = "", striped = FALSE)
+}
+
+# 03/22/22 - Get and set LaTeX column spacing in pt
+BSkySetLaTexColSpacing <- function(colSpacing = 4) 
+{	
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyLaTexColSpacing = colSpacing
+	}
+	
+	return(invisible(colSpacing))
+}
+
+# 03/22/22 - Get and set LaTeX column spacing in pt
+BSkyGetLaTexColSpacing <- function()
+{
+	colSpacing = 4
+	
+	if(exists("uadatasets.sk") && exists("BSkyLaTexColSpacing", env=uadatasets.sk))
+	{
+		colSpacing = uadatasets.sk$BSkyLaTexColSpacing
+	}
+	
+	return(invisible(colSpacing))
 }
 
 
@@ -3118,13 +3253,13 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 									{
 										index = index + 1
 										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 										}
 										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3223,13 +3358,13 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 										{
 											index = index + 1
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3486,13 +3621,13 @@ BSkyFormatBSkyOneSampleTtest <- function(obj)
 										{
 											index = index + 1
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3664,14 +3799,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 									if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 									{
 										index = index + 1
-										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n1.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 										}
 										
-										if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+										if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 										{
 											additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 											attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3792,14 +3930,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+											# cat("\n2.\n")
+											# print(n)
+											# print(addl_msg)
+											# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3881,14 +4022,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n3.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -3968,14 +4112,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n4.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -4055,14 +4202,17 @@ BSkyFormatBSkyIndSampleTtest <- function(obj)
 										if(obj$tables[[n]]$metadatatable[[1]]$type[addl_msg] == -1)
 										{
 											index = index + 1
-											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
+										# cat("\n5.\n")
+										# print(n)
+										# print(addl_msg)
+										# print(trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))											
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 											}
 											
-											if(trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
+											if(!is.na(trimws( obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg] )) && trimws(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]) != c(""))
 											{
 												additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
 												attr(obj$tables[[n]]$datatable, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
@@ -4765,13 +4915,19 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 												split_begin_header_already_printed = TRUE
 											}
 											
-											#table_list_names = c(table_list_names, "Multiway Cross Table")
-											table_list_names = c(table_list_names, crosstable_table_header)
+											if(long_table == FALSE)
+											{
+												#table_list_names = c(table_list_names, "Multiway Cross Table")
+												table_list_names = c(table_list_names, crosstable_table_header)
+											}
 										}
 										else
 										{
-											#table_list_names = c(table_list_names, "Multiway Cross Table")
-											table_list_names = c(table_list_names, crosstable_table_header)
+											if(long_table == FALSE)
+											{
+												#table_list_names = c(table_list_names, "Multiway Cross Table")
+												table_list_names = c(table_list_names, crosstable_table_header)
+											}
 										}
 										
 										if(X_has_been_printed == TRUE)
@@ -4818,17 +4974,22 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											# attr(cross_table_skeleton3, "BSkyFootnote_Debug_info") = paste("BSky Debug_info: ", "Col filter hint: ", col_filter_hint, data_table_dim, row_filter_hint)
 										# }
 										
-										table_list = c(table_list, list(cross_table_skeleton3))
-										names(table_list) = table_list_names
-										
-										if(long_table == TRUE)
+										# 03/26/22 - put it in a if and else to print either long format or not but not both at the same time
+										if(long_table == FALSE)
+										{
+											table_list = c(table_list, list(cross_table_skeleton3))
+											names(table_list) = table_list_names
+										}
+										else #if(long_table == TRUE)
 										{
 											# cat("\n=======================\n")
 											# cat("\n original table cross_table_skeleton3 \n")
 											# print(cross_table_skeleton3)
 											# cat("\n=======================\n")
 											
+											orig_cross_table_skeleton3 = cross_table_skeleton3
 											cross_table_skeleton_inverted = cross_table_skeleton3 
+											
 											
 											###################################################################################
 											# Remove extra rows if present from the "Total" section of the skeleton table like 
@@ -5079,9 +5240,25 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 											
 											# print(names(table_list))
 											# print(str(table_list))
-											table_list_names = c(table_list_names, "Multiway CrossTab (Long Table Format)")
+											
+											#03/26/22 - changed to incorporate Long tabke format table name with formular variables (~ +) 
+											#table_list_names = c(table_list_names, "Multiway CrossTab (Long Table Format)")
+											temp_hdr_str = paste(crosstable_table_header, "(Long Table Format)")
+											table_list_names = c(table_list_names, temp_hdr_str)
+											
+											#print(attributes(orig_cross_table_skeleton3))
+											orig_attributes = attributes(orig_cross_table_skeleton3)
+											if(length(orig_attributes) > 2)
+											{
+												for(attr_idx in 3:length(orig_attributes))
+												{
+													attr(cross_table_skeleton_inverted, names(orig_attributes)[attr_idx]) = attr(orig_cross_table_skeleton3, names(orig_attributes)[attr_idx])
+												}
+											}
+											
 											table_list = c(table_list, list(cross_table_skeleton_inverted))
 											names(table_list) = table_list_names
+											
 											# print(names(table_list))
 											# print(str(table_list))
 										}

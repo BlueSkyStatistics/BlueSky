@@ -4675,8 +4675,6 @@ BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = 
 	table_list = list()
 	table_list_names = c()
 	
-	stripped_data = data
-	
 	if(class(data)[1] != "character")
 	{
 		dataset_name_str = deparse(substitute(data))
@@ -4693,6 +4691,8 @@ BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = 
 		dataset_name_str = data
 		data = eval(parse(text=data), envir = globalenv())
 	}
+	
+	stripped_data = data
 	
 	if(is.null(group_by_vars))
 	{

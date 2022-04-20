@@ -3499,8 +3499,14 @@ BSkySetCurrentDatasetName<- function(datasetNameOrDatasetGlobalIndex, setDataset
 	}
 	else
 	{
-		uadatasets.sk$currentDatasetname = ""
-		index = 0
+		#13Apr2022
+		# fix for issue #921. current dataset was getting NULL by the split sliced dataset name when passed as character.
+		# for example : "uadatasets$lst[[3]]" 
+		# The error occurred  from BSkyIndSmTTest(), when back to back BSkygetIndexesOfCols() function was called twice.
+		# The uadatasets.sk$currentDatasetname was gettting emptied ("") out.
+		# to fix this the following line is commented out.
+		#uadatasets.sk$currentDatasetname = ""
+		index = which(uadatasets.sk$currentDatasetname==uadatasets$name)
 	}
 	
 	#cat('\nBSkySetCurrentDatasetName: ',datasetNameOrDatasetGlobalIndex	)
