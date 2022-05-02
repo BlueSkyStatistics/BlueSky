@@ -320,8 +320,10 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
         if (savePredictedVals ==TRUE)
         {
           stringToEvaluate =c(predictedValsDatasetName,"<<-as.data.frame(BSkyForecastRes)")
+          
           stringToEvaluate=paste(stringToEvaluate, collapse='')
           eval(parse(text=stringToEvaluate))
+          eval(parse(text=paste('names(.GlobalEnv$',predictedValsDatasetName,') = str_replace_all(names(.GlobalEnv$',predictedValsDatasetName,'), "\\\\s+", "_")',sep='' )))
         }
         
         #calculate a correlogram
@@ -535,6 +537,7 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
           stringToEvaluate =c(predictedValsDatasetName,"<<-as.data.frame(BSkyForecastRes)")
           stringToEvaluate=paste(stringToEvaluate, collapse='')
           eval(parse(text=stringToEvaluate))
+                    eval(parse(text=paste('names(.GlobalEnv$',predictedValsDatasetName,') = str_replace_all(names(.GlobalEnv$',predictedValsDatasetName,'), "\\\\s+", "_")',sep='' )))
         }
         
         #calculate a correlogram
