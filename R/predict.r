@@ -2165,7 +2165,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 #' @return
 #'
 #' @examples
-BSkyConfusionMatrixTrain <- function (predictions, reference)
+BSkyConfusionMatrixTrain <- function (predictions, reference, levelOfInterest ="1st")
 {
 
 if (class(predictions) =="factor" ||  class(predictions) =="ordered" || class(predictions) =="logical"  )
@@ -2174,20 +2174,33 @@ if (class(predictions) =="factor" ||  class(predictions) =="ordered" || class(pr
 	if (nlevels(reference) ==2)
 					{
 					
-					#The code below works
-					##########################################################################
-					#positive=levels(dependentvariable)[2]
-					#bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=tail (levels(dependentvariable),1))
-					#bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
-					#BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
-					#################################################################################################
-					# Code tat I tried to display the confusion matrix where the level of interest is in the 1st column
-					#The code below has the advantage that the confusion matrix displays the variable of interest first
-					positive=levels(reference)[2]
-					predictions =factor (predictions, levels =rev(levels(reference)))
-					reference=factor (reference, levels =rev(levels(reference)))
-					bskyconfmatrix <- caret::confusionMatrix(predictions, reference,positive=positive)
-					BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						#The code below works
+						##########################################################################
+						#positive=levels(dependentvariable)[2]
+						#bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=tail (levels(dependentvariable),1))
+						#bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
+						#BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						#################################################################################################
+						# Code tat I tried to display the confusion matrix where the level of interest is in the 1st column
+						#The code below has the advantage that the confusion matrix displays the variable of interest first
+						
+						if (levelOfInterest =="2nd")
+						{
+							predictions =factor (predictions, levels =rev(levels(reference)))
+							reference=factor (reference, levels =rev(levels(reference)))
+							#Since we have reversed the levels, R by default sets the 1st reference as the default which is the 2nd due to the reverse, there is no need to set the 2nd as default
+							positive=levels(reference)[1]
+							bskyconfmatrix <- caret::confusionMatrix(predictions, reference,positive=positive)
+							BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						} 
+						if (levelOfInterest =="1st")
+						{
+							positive=levels(reference)[1]
+							bskyconfmatrix <- caret::confusionMatrix(predictions, reference,positive=positive)
+							BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						
+						
+						}
 					}
 	else
 	{
@@ -2233,7 +2246,7 @@ msg = paste0("ERROR: Confusion matrix and ROC curve cannot be created as the cla
 #'
 #' @examples
 BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictions, 
-    datasetname) 
+    datasetname,levelOfInterest = "2nd") 
 {
     fly=""
 	modclass = character(0)
@@ -2342,11 +2355,27 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 				{
 					if (nlevels(dependentvariable) ==2)
 					{
-					positive=levels(dependentvariable)[2]
-					predictions =factor (predictions, levels =rev(levels(dependentvariable)))
-					dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
-					bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
-					BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						
+						if ( levelOfInterest = "2nd")
+						{
+						
+						positive=levels(dependentvariable)[2]
+						predictions =factor (predictions, levels =rev(levels(dependentvariable)))
+						dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
+						bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
+						BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						}
+						
+						if ( levelOfInterest = "1st")
+						{
+						
+						positive=levels(dependentvariable)[1]
+						#predictions =factor (predictions, levels =rev(levels(dependentvariable)))
+						#dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
+						bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
+						BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						}
+						
 					}
 					else
 					{
@@ -2407,11 +2436,35 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 					#################################################################################################
 					# Code tat I tried to display the confusion matrix where the level of interest is in the 1st column
 					#The code below has the advantage that the confusion matrix displays the variable of interest first
-					positive=levels(dependentvariable)[2]
-					predictions =factor (predictions, levels =rev(levels(dependentvariable)))
-					dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
-					bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
-					BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+					# positive=levels(dependentvariable)[2]
+					# predictions =factor (predictions, levels =rev(levels(dependentvariable)))
+					# dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
+					# bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
+					# BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+					
+					if ( levelOfInterest = "2nd")
+						{
+						
+						positive=levels(dependentvariable)[2]
+						predictions =factor (predictions, levels =rev(levels(dependentvariable)))
+						dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
+						bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
+						BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						}
+						
+						if ( levelOfInterest = "1st")
+						{
+						
+						positive=levels(dependentvariable)[1]
+						#predictions =factor (predictions, levels =rev(levels(dependentvariable)))
+						#dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
+						bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
+						BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
+						}
+					
+					
+					
+					
 					}
 					else
 					{
