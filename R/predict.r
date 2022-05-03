@@ -2356,7 +2356,7 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 					if (nlevels(dependentvariable) ==2)
 					{
 						
-						if ( levelOfInterest = "2nd")
+						if ( levelOfInterest == "2nd")
 						{
 						
 						positive=levels(dependentvariable)[2]
@@ -2366,7 +2366,7 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 						BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
 						}
 						
-						if ( levelOfInterest = "1st")
+						if ( levelOfInterest == "1st")
 						{
 						
 						positive=levels(dependentvariable)[1]
