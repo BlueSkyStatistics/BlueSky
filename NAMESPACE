@@ -230,3 +230,4 @@ export(BSkyGetLaTexColSpacing, BSkySetLaTexColSpacing)
 export(BSkyReadWithRio, BSkyWriteWithRio, BSkyConvertFileFormat)
 
 export(BSkyDOESetupFactorDataGrid, BSkyDOECreateFactorListParam)
+export(bivariateLevels )

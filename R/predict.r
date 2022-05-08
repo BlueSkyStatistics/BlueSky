@@ -1,3 +1,19 @@
+bivariateLevels <- function (datasetName, dependentVariable)
+  {
+ 
+  noOflevels = eval(parse( text=paste ("nlevels(.GlobalEnv$",datasetName, "$",dependentVariable, ")",sep="" )))
+  if (noOflevels !=2)
+  {
+    levelsArray=c("")
+  }else
+    {
+    levelsArray = eval(parse( text=paste ("levels(.GlobalEnv$",datasetName, "$",dependentVariable, ")",sep="" )))
+   
+  }
+  return (levelsArray)
+}
+
+
 predictPrerequisite <-function (modelname, curdatasetname) 
 {
     msg = character(0)
@@ -2165,7 +2181,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 #' @return
 #'
 #' @examples
-BSkyConfusionMatrixTrain <- function (predictions, reference, levelOfInterest ="1st")
+BSkyConfusionMatrixTrain <- function (predictions, reference, levelOfInterest ="")
 {
 
 if (class(predictions) =="factor" ||  class(predictions) =="ordered" || class(predictions) =="logical"  )
@@ -2184,7 +2200,19 @@ if (class(predictions) =="factor" ||  class(predictions) =="ordered" || class(pr
 						# Code tat I tried to display the confusion matrix where the level of interest is in the 1st column
 						#The code below has the advantage that the confusion matrix displays the variable of interest first
 						
+						
+						if (which(levels(reference) ==levelOfInterest) ==1)
+						{
+							levelOfInterest ="1st"
+						} else{
+						levelOfInterest ="2nd"
+						}
+							
+						
 						if (levelOfInterest =="2nd")
+						#Code here is introduced for Ross at mayo so that the confusion matrix is displayed differently based on the level of interest
+						#This controls whether the top left of the confusion matrix is 0 or 1
+						#Accuracy and kappa statistics are calculated based on the reference
 						{
 							predictions =factor (predictions, levels =rev(levels(reference)))
 							reference=factor (reference, levels =rev(levels(reference)))
@@ -2246,7 +2274,7 @@ msg = paste0("ERROR: Confusion matrix and ROC curve cannot be created as the cla
 #'
 #' @examples
 BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictions, 
-    datasetname,levelOfInterest = "2nd") 
+    datasetname,levelOfInterest = "") 
 {
     fly=""
 	modclass = character(0)
@@ -2356,9 +2384,17 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 					if (nlevels(dependentvariable) ==2)
 					{
 						
+						if (base::which(levels(dependentvariable) ==levelOfInterest) ==1)
+						{
+							levelOfInterest ="1st"
+						} else{
+						levelOfInterest ="2nd"
+						}
 						if ( levelOfInterest == "2nd")
 						{
-						
+						#Code here is introduced for Ross at mayo so that the confusion matrix is displayed differently based on the level of interest
+						#This controls whether the top left of the confusion matrix is 0 or 1
+						#Accuracy and kappa statistics are calculated based on the reference
 						positive=levels(dependentvariable)[2]
 						predictions =factor (predictions, levels =rev(levels(dependentvariable)))
 						dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
@@ -2442,9 +2478,18 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 					# bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
 					# BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
 					
+					if (base::which(levels(dependentvariable) ==levelOfInterest) ==1)
+						{
+							levelOfInterest ="1st"
+						} else{
+						levelOfInterest ="2nd"
+						}
+					
 					if ( levelOfInterest == "2nd")
 						{
-						
+						#Code here is introduced for Ross at mayo so that the confusion matrix is displayed differently based on the level of interest
+						#This controls whether the top left of the confusion matrix is 0 or 1
+						#Accuracy and kappa statistics are calculated based on the reference
 						positive=levels(dependentvariable)[2]
 						predictions =factor (predictions, levels =rev(levels(dependentvariable)))
 						dependentvariable=factor (dependentvariable, levels =rev(levels(dependentvariable)))
