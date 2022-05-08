@@ -2478,6 +2478,7 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 					# bskyconfmatrix <- caret::confusionMatrix(predictions, dependentvariable,positive=positive)
 					# BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
 					
+
 					if (base::which(levels(dependentvariable) ==levelOfInterest) ==1)
 						{
 							levelOfInterest ="1st"
