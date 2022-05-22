@@ -4038,6 +4038,9 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	#print(match.call())
 	#cat("\n")
 	
+	# if groupByColumnObjects list is not empty, check whether all columns passed in groupByColumnObjects are of factor type 
+	# all(as.character(lapply(groupByColumnObjects, is.factor))== TRUE) - if result is false, then return back from this function 
+	
 	stripped_data = data
 	statFunctionList = stats
 	
@@ -4114,7 +4117,9 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		if(length(datasetName) != 0)
 		{
 			Dataset = (eval(parse(text = datasetName)))
+			
 			stripped_data = Dataset
+			
 			if(length(groupByColumnObjects) == 0)
 			{
 				#return(by(Dataset,list(), summary))  # by() has stopped supporting empty grouping list ??
@@ -4152,14 +4157,17 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	if(all(as.logical(lapply(stripped_data, is.numeric)) == FALSE))
 	{
 		statFunctionList = c()
+		
+		#04/04/22 - needed to blank out any additional stat function if there is no numerical columns to compute on 
+		additionalStats = c()
 	}
 
 	temp_statFunctionList = statFunctionList 
 	stat_methods = c()
 	
 	if(length(statFunctionList) > 0)
-	{	
-		master_stat_func_list = c("min", "max", "mean", "median", "sum", "sd", "stderror", "iqr", "quantiles")
+	{			
+		master_stat_func_list = c("min", "max", "mean", "median", "sum", "sd", "stderror", "skew", "mad", "kurtos", "iqr", "quantiles")
 		statFunctionListNames = names(statFunctionList)
 		missing_stat_func = master_stat_func_list[!(master_stat_func_list %in% statFunctionListNames)]
 		
@@ -4234,6 +4242,11 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		if((statFunctionList["max"]==TRUE) || ((statFunctionList["quantiles"]==TRUE) && !is.na(match(1, quantilesProbs)))) stat_methods = c(stat_methods, "max")
 		if(statFunctionList["sd"]==TRUE) stat_methods = c(stat_methods, "sd")
 		if(statFunctionList["stderror"]==TRUE) stat_methods = c(stat_methods, "std. error")
+		
+		if(statFunctionList["skew"]==TRUE) stat_methods = c(stat_methods, "skew")
+		if(statFunctionList["mad"]==TRUE) stat_methods = c(stat_methods, "mad")
+		if(statFunctionList["kurtos"]==TRUE) stat_methods = c(stat_methods, "kurtosi")
+		
 		if(statFunctionList["iqr"]==TRUE) stat_methods = c(stat_methods, "IQR")
 		# newly added on 6/27/15
 		if(!is.na(statFunctionList["sum"]) && statFunctionList["sum"]==TRUE) stat_methods = c(stat_methods, "sum") 
@@ -4553,8 +4566,8 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	#print(bsky_stat_result_layer_stat_column)
 	
 	
-	#if(!is.null(data))
-	{
+	# if(!is.null(data))
+	# {
 		BSky_Dataset_Overview =  data.frame(Dataset = dataset_name_str, Variables = dim(stripped_data)[2], Observations = nrow(stripped_data))
 		
 		table_list = list(BSky_Dataset_Overview)
@@ -4567,22 +4580,24 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		
 		#return(invisible(table_list))
 		#return((table_list))
-	}
+	# }
 	# else
 	# {
-	# 	#return(invisible(bsky_stat_result_layer_stat_column))
-	# 	if(BSkyIsRmarkdownOutputOn() == TRUE)
-	# 	{
-	# 		return((bsky_stat_result_layer_stat_column))
-	# 	}
-	# 	else
-	# 	{
-	# 		return(invisible((bsky_stat_result_layer_stat_column)))
-	# 	}
+		# #return(invisible(bsky_stat_result_layer_stat_column))
+		# if(BSkyIsRmarkdownOutputOn() == TRUE)
+		# {
+			# return((bsky_stat_result_layer_stat_column))
+		# }
+		# else
+		# {
+			# return(invisible((bsky_stat_result_layer_stat_column)))
+		# }
 	# }
 	
 	
 	stripped_data = stripped_data[names(stripped_data)[as.logical(lapply(stripped_data, is.factor))]]
+	
+	# print(head(stripped_data))
 	
 	if(!is.null(stripped_data) && dim(stripped_data)[2] > 0)
 	{
@@ -4607,8 +4622,14 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 			
 			BSky_Summary_By_Variable = BSkyTableObjectFormat(BSky_Summary_By_Variable)
 			
+			#orig_dim = dim(BSky_Summary_By_Variable)[2]
 			tab_name = BSky_Summary_By_Variable[1,]
-			BSky_Summary_By_Variable = as.data.frame( BSky_Summary_By_Variable[-c(1),] )
+			BSky_Summary_By_Variable = as.data.frame(BSky_Summary_By_Variable[-c(1),])
+			#dim(BSky_Summary_By_Variable)[[2]] = orig_dim
+			
+			# print(BSky_Summary_By_Variable)
+			# print(class(BSky_Summary_By_Variable))
+			
 			names(BSky_Summary_By_Variable) = tab_name
 			row.names(BSky_Summary_By_Variable) = c()
 			
@@ -4666,8 +4687,6 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		return(invisible(table_list))
 	}
 }
-
-
 
 #13Oct2021
 BSkyVariableSummaryStats <- function (data = NULL, vars = NULL, group_by_vars = NULL, maxsum = 0)

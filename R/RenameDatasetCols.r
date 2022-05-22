@@ -18,3 +18,14 @@ replacePeriodWithUnderscore<-function (dataset =name)
 #print(newTemp)
 #cat("\nChanging col names done.")
 }
+
+ BSkySortDataset  <- function (alphabeticalSort = TRUE, data = datasetName)
+  {
+    if (alphabeticalSort)
+    {
+  	  data<- data %>%  dplyr::select(sort(names(.)))
+    } else 
+    {
+  	  data <- data %>% dplyr::select(rev(sort(names(.))))
+    }
+  }
