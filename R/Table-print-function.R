@@ -4041,8 +4041,11 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	# if groupByColumnObjects list is not empty, check whether all columns passed in groupByColumnObjects are of factor type 
 	# all(as.character(lapply(groupByColumnObjects, is.factor))== TRUE) - if result is false, then return back from this function 
 	
+	
 	stripped_data = data
 	statFunctionList = stats
+	
+	if(trimws(additionalStats) == "") additionalStats = c()
 	
 	if(!is.null(data))
 	{
