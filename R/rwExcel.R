@@ -96,6 +96,13 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 					#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
 					GenerateUniqueColName('bskytempx')
 					
+					##27May2022 it is found that if there is a numeric col that contains numbers as characters (e.e '24') then  this col will be 
+					## loaded as a factor col in the grid. If we make this col numeric (from the grid) the actual data is replace by factor levels
+					## 1,2,3 etc. To fix this issue we must first conver the character-numbers ('24') to numbers and then load this in the grid. Now
+					## since numeric col contains actual numbers, they should not be converted to factors.
+					#mtcars[] = lapply(mtcars, function(x) type.convert(as.character(x), as.is = TRUE))
+					eval(parse(text=paste('bskytempx <<- lapply(bskytempx, function(x) type.convert(x, as.is=TRUE))',sep='')))
+					
 					#following line : empty col name replaced by something like C..NA..NA..NA
 					eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (bskytempx, function(y) {if("character" %in% class(y)) y = factor(y) else y} ) )',sep='' )))
 				}
