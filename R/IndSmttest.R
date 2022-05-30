@@ -107,7 +107,9 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 		#temp_pipe_dataset_name = substr(temp_pipe_dataset_name, 2, nchar(temp_pipe_dataset_name))
 		temp_pipe_dataset_name = "bsky_piped_temp_dataset"
 		eval(parse(text= paste(temp_pipe_dataset_name, "<<- data"))) #, envir = globalenv())
+		#print("before call")
 		BSkyLoadRefresh(temp_pipe_dataset_name)
+		#print("after call")
 		 
 		datasetname = temp_pipe_dataset_name
 
@@ -215,7 +217,7 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
     if (BSkyGlobalWarningFound() == TRUE) {
     }
     BSkyFunctionWrapUp()
-	
+
 	bsky_return_structure = BSkyReturnStructure2()
 	
 	if(datasetname_passed == ".")
