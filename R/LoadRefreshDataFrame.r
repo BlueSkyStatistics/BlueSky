@@ -337,6 +337,9 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 	dsname = c()
 	pkgEnv = c()
 	ischar = is.character(bskyDatasetName) 
+	originalDatasetname = bskyDatasetName
+	#print(originalDatasetname)
+	#print(class(originalDatasetname))
 	if(ischar)## is argument a character. If not we print error in the sink and exit
 	{
 		hasPkgname = grepl("::", bskyDatasetName)
@@ -560,22 +563,27 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		# }
 		
 		# after the above processing do the following
-		if(isRmarkdownOutputOn == FALSE)
+		if(isRmarkdownOutputOn == FALSE && trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
 		{
 			cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
+			#print("Entered")
+			#print(originalDatasetname)
 			print("BSkyDataGridRefresh")
 		}
 		###################################################################################
 		#11/24/20 - The following code is for creating an in memory queue instead of a sync file to signal the new (Python, etc) application tier
 		####################################################################################
 		
-		if(!exists("holdBSkyFormatObjectNew", env=uadatasets.sk) || is.null(uadatasets.sk$holdBSkyFormatObjectNew))
+		if(trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
 		{
-			uadatasets.sk$holdBSkyFormatObjectNew = list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName)))
-		}
-		else
-		{
-			uadatasets.sk$holdBSkyFormatObjectNew = c(uadatasets.sk$holdBSkyFormatObjectNew, list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName))))
+			if(!exists("holdBSkyFormatObjectNew", env=uadatasets.sk) || is.null(uadatasets.sk$holdBSkyFormatObjectNew))
+			{
+				uadatasets.sk$holdBSkyFormatObjectNew = list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName)))
+			}
+			else
+			{
+				uadatasets.sk$holdBSkyFormatObjectNew = c(uadatasets.sk$holdBSkyFormatObjectNew, list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName))))
+			}
 		}
 		
 		###### 23 Jan 2021 ### Add dataset in uadataset$name if it is not in the list ######
