@@ -37,6 +37,8 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	datasetname_passed = c("")
 	
 	stripped_data = data
+	orig_datasetNameOrDatasetGlobalIndex = datasetNameOrDatasetGlobalIndex
+
 	
 	if(!is.null(data))
 	{
@@ -72,7 +74,7 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 		# for BSKy functions e.g. crosstab, ind sample and one sample to work in RStudio 
 		if(!exists("name", envir = uadatasets) || !(datasetNameOrDatasetGlobalIndex %in% uadatasets$name))
 		{
-			BSkyLoadRefresh(datasetNameOrDatasetGlobalIndex)
+			BSkyLoadRefresh(datasetNameOrDatasetGlobalIndex, load.UIgrid = FALSE)
 		}
 	}
 	
@@ -114,13 +116,20 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	
 	if(datasetname_passed == ".")
 	{
-		#temp_pipe_dataset_name = tempfile(pattern = "pipe_data_", tmpdir = "")
-		#temp_pipe_dataset_name = substr(temp_pipe_dataset_name, 2, nchar(temp_pipe_dataset_name))
-		temp_pipe_dataset_name = "bsky_piped_temp_dataset"
-		eval(parse(text= paste(temp_pipe_dataset_name, "<<- data"))) #, envir = globalenv())
-		BSkyLoadRefresh(temp_pipe_dataset_name)
-		 
-		datasetname = temp_pipe_dataset_name
+		if(length(orig_datasetNameOrDatasetGlobalIndex) == 0)
+		{
+			#temp_pipe_dataset_name = tempfile(pattern = "pipe_data_", tmpdir = "")
+			#temp_pipe_dataset_name = substr(temp_pipe_dataset_name, 2, nchar(temp_pipe_dataset_name))
+			temp_pipe_dataset_name = "bsky_piped_temp_dataset"
+			eval(parse(text= paste(temp_pipe_dataset_name, "<<- data"))) #, envir = globalenv())
+			BSkyLoadRefresh(temp_pipe_dataset_name, load.UIgrid = FALSE)
+			 
+			datasetname = temp_pipe_dataset_name
+		}
+		else
+		{
+			datasetname = orig_datasetNameOrDatasetGlobalIndex
+		}
 
 		BSkySetCurrentDatasetName(datasetname, setDatasetIndex ="y")
 		bSkyDatasetname = BSkyGetDatasetName(datasetname)
@@ -148,6 +157,8 @@ BSkyOneSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, mu = 
 	}
 	else
 	{
+		datasetNameOrDatasetGlobalIndex = orig_datasetNameOrDatasetGlobalIndex
+		
 		#This is just to set the context to the current dataset name
 		#This also copies the dataset to uadatasets$lst for backward compatibility
 		BSkySetCurrentDatasetName(datasetNameOrDatasetGlobalIndex, setDatasetIndex ="y")

@@ -112,6 +112,8 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 	# warning and error handler to log the calling details in logfile
 	BSkyFunctionInit()
 	
+	orig_datasetname = datasetname  
+	
 	datasetname_passed = c("")
 	
 	if(!is.null(data))
@@ -148,7 +150,7 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 		# for BSKy functions e.g. crosstab, ind sample and one sample to work in RStudio 
 		if(!exists("name", envir = uadatasets) || !(datasetname %in% uadatasets$name))
 		{
-			BSkyLoadRefresh(datasetname)
+			BSkyLoadRefresh(datasetname, load.UIgrid = FALSE)
 		}
 	}
 	
@@ -169,7 +171,14 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 			
 			if(is.na(layers) && length(col_names) > 2)
 			{
-				layers = col_names[3:length(col_names)]
+				if(is.na(weight))
+				{
+					layers = col_names[3:length(col_names)]
+				}
+				else 
+				{
+					layers = col_names[3:(length(col_names)-1)]
+				}
 			}
 		}
 	}
@@ -177,19 +186,26 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 	
 	if(datasetname_passed == ".")
 	{
-		#temp_pipe_dataset_name = tempfile(pattern = "pipe_data_", tmpdir = "")
-		#temp_pipe_dataset_name = substr(temp_pipe_dataset_name, 2, nchar(temp_pipe_dataset_name))
-		temp_pipe_dataset_name = "bsky_piped_temp_dataset"
-		eval(parse(text= paste(temp_pipe_dataset_name, "<<- data"))) #, envir = globalenv())
-		BSkyLoadRefresh(temp_pipe_dataset_name)
-		 
-		datasetname = temp_pipe_dataset_name
-		
-		#print(head(eval(parse(text= paste(temp_pipe_dataset_name)), envir = globalenv())))
-		#print(datasetname)
-		# print(head(data))
-		
-		# return()
+		if(length(orig_datasetname) == 0)
+		{
+			#temp_pipe_dataset_name = tempfile(pattern = "pipe_data_", tmpdir = "")
+			#temp_pipe_dataset_name = substr(temp_pipe_dataset_name, 2, nchar(temp_pipe_dataset_name))
+			temp_pipe_dataset_name = "bsky_piped_temp_dataset"
+			eval(parse(text= paste(temp_pipe_dataset_name, "<<- data"))) #, envir = globalenv())
+			BSkyLoadRefresh(temp_pipe_dataset_name, load.UIgrid = FALSE)
+			 
+			datasetname = temp_pipe_dataset_name
+			
+			#print(head(eval(parse(text= paste(temp_pipe_dataset_name)), envir = globalenv())))
+			#print(datasetname)
+			# print(head(data))
+			
+			# return()
+		}
+		else
+		{
+			datasetname = orig_datasetname
+		}
 
 		BSkySetCurrentDatasetName(datasetname, setDatasetIndex ="y")
 		bSkyDatasetname = BSkyGetDatasetName(datasetname)
@@ -227,6 +243,8 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 	}
 	else
 	{
+		datasetname = orig_datasetname
+		
 		#This is just to set the context to the current dataset name
 		#This also copies the dataset to uadatasets$lst for backward compatibility
 		BSkySetCurrentDatasetName(datasetname, setDatasetIndex ="y")
