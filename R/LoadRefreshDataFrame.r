@@ -325,7 +325,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 #' @examples 
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyLoadRefresh('df')
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor())## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor())## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
 	isdesign=FALSE
@@ -562,8 +562,9 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 			# isRmarkdownOutputOn = doRmarkdownFormatting
 		# }
 		
-		# after the above processing do the following
-		if(isRmarkdownOutputOn == FALSE && trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
+		# after the above processing do the following 
+		# if(isRmarkdownOutputOn == FALSE && trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
+		if(isRmarkdownOutputOn == FALSE && load.UIgrid == TRUE)
 		{
 			cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
 			#print("Entered")
@@ -574,7 +575,8 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		#11/24/20 - The following code is for creating an in memory queue instead of a sync file to signal the new (Python, etc) application tier
 		####################################################################################
 		
-		if(trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
+		#if(trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
+		if(load.UIgrid == TRUE)
 		{
 			if(!exists("holdBSkyFormatObjectNew", env=uadatasets.sk) || is.null(uadatasets.sk$holdBSkyFormatObjectNew))
 			{
@@ -617,6 +619,7 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, isRmarkdown
 		}
 	}
 }
+
 
 BSkyRemoveRefreshDataframe <- function(dframe)
 {
