@@ -1956,13 +1956,26 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 					if(isfactor)
 					{
 						# this can be used if levels are numeric-strings like
-						# ("3.4","5","9") and we want same numbers after conversion i.e. 3.4, 5, 9
+						# ("3.4","5","9") and we want the same numbers after conversion i.e. 3.4, 5, 9
 						# but this produces NAs if levels are like ("high", "med", "low"), i.e. pure character levels
 						# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(as.character(',datasetname,'$',colNameOrIndex,'))', sep='')))
 						
 						## this can be use for levels that are pure character or character-numebers
 						# ("male", "female") or ("3.4","5","9") and converts to integer i.e. (1,2) and (1,2,3) respectively
-						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(',datasetname,'$',colNameOrIndex,')', sep='')))
+						#30May2022eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(',datasetname,'$',colNameOrIndex,')', sep='')))
+						
+						
+						#30May2022 First we convert factor to character and then type.convert() should convert the column to the correct type based on the data
+						# if the data in col is like ("High","med","low") it will remain character if the data is ("12","23","34") then it changes to (12,23,34)
+						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- type.convert(as.character(',datasetname,'$',colNameOrIndex,'),as.is=TRUE)', sep='')))
+						
+						##This may be used in future.
+						##check if col is a character col ("Male","Female"). You can convert these levels to numeric levels (1,2)
+						#ischaracter = eval(parse(text=paste('is.character(',datasetname,'$',colNameOrIndex,')', sep='')))
+						#if(ischaracter)
+						#{
+							#eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(as.factor(',datasetname,'$',colNameOrIndex,'))', sep='')))
+						#}
 					}
 					else {
 						# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
