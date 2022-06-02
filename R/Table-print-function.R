@@ -4033,7 +4033,7 @@ BSkyReturnStructure2 <-function(bskyAdditionalTableList = list()) ### passs as l
 #'
 #' @examples Dataset <- data.frame(Expenses=c(20,23,19,25,26), Sales=c(48,50,55,51,49), Gender=c('m','f','f','m','m'), Deptt=c('IT', 'Sales', 'IT','Sales','IT'), stringsAsFactors = TRUE)
 #' Result_Numerical_Statistics_Analysis = BSkySummaryStats(datasetColumnObjects = list(Sales = Dataset$Sales, Expenses = Dataset$Expenses), groupByColumnObjects = list(Deptt= Dataset$Deptt), stats = c(min=FALSE,max=FALSE,mean=TRUE,median=TRUE,sum=FALSE,sd=FALSE,stderror=FALSE,iqr=FALSE,quantiles=FALSE),datasetName="Dataset" )
-BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByColumnObjects=list(), datasetName=c(), stats=c(min=TRUE, max=TRUE, mean=TRUE, median=TRUE, quantiles=TRUE), quantilesProbs=c(0, 0.25, 0.5, 0.75, 1), additionalStats = c(), maxsum = 30, bSkyFormatAppRequest = FALSE, ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE)
+BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByColumnObjects=list(), datasetName=c(), stats=c(min=TRUE, max=TRUE, mean=TRUE, median=TRUE, quantiles=TRUE), quantilesProbs=c(0, 0.25, 0.5, 0.75, 1), additionalStats = c(), maxsum = 30, long_table=FALSE, bSkyFormatAppRequest = FALSE, ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE)
 {
 	#print(match.call())
 	#cat("\n")
@@ -4577,6 +4577,14 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		table_list_names = c("Dataset Overview")
 		names(table_list) = table_list_names
 		
+		if(length(groupByColumnObjects) == 0 && long_table == TRUE)
+		{
+			temp_tbl = data.frame(t(bsky_stat_result_layer_stat_column))
+			dimnames(temp_tbl)[[2]] = temp_tbl[1,]
+			temp_tbl = temp_tbl[-1,]
+			bsky_stat_result_layer_stat_column = temp_tbl
+		}
+		
 		table_list = c(table_list, list(bsky_stat_result_layer_stat_column))
 		table_list_names = c(table_list_names, "Numerical Statistical Analysis by Variable")
 		names(table_list) = table_list_names
@@ -4635,6 +4643,14 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 			
 			names(BSky_Summary_By_Variable) = tab_name
 			row.names(BSky_Summary_By_Variable) = c()
+			
+			if(length(groupByColumnObjects) == 0 && long_table == TRUE)
+			{
+				temp_tbl = data.frame(t(BSky_Summary_By_Variable))
+				dimnames(temp_tbl)[[2]] = rep("Factor Levels", dim(temp_tbl)[2])
+				#temp_tbl = temp_tbl[-1,]
+				BSky_Summary_By_Variable = temp_tbl
+			}
 			
 			table_list = c(table_list, list(BSky_Summary_By_Variable))
 			table_list_names = c(table_list_names, "Summary Factor Variable")
