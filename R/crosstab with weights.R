@@ -177,7 +177,14 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 				}
 				else 
 				{
-					layers = col_names[3:(length(col_names)-1)]
+					if(BSkyIsRmarkdownOutputOn() == TRUE)
+					{
+						layers = col_names[3:(length(col_names)-1)]
+					}
+					else 
+					{
+						layers = col_names[3:length(col_names)]
+					}
 				}
 			}
 		}
