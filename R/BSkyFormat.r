@@ -7621,7 +7621,7 @@ BSkyDummyErrorWarningMuncher <- function(...)
 	# Contnue the execution and munch (i.e. do nothing) all error and wanings silently without spitting out 
 }
 
-BSkyFormatPolycor <- function (x, digits = BSkyGetDecimalDigitSetting()) 
+BSkyFormatPolycor <- function (x, digits = BSkyGetDecimalDigitSetting(), tableHeader ="") 
 {
 	table_list = list()
 	table_list_names = c()
@@ -7650,7 +7650,7 @@ BSkyFormatPolycor <- function (x, digits = BSkyGetDecimalDigitSetting())
 						# signif(x$rho, digits), " (", signif(se.rho, 
 						  # digits), ")", sep = "")
 					
-					tableHeader1 = "Polychoric Correlation"
+					tableHeader1 = paste ("Polychoric Correlation: ", tableHeader)
 					col_header1 = c("Estimate Type", "rho", "Std Err")
 					outTable1 = data.frame(est, signif(x$rho, digits), se.rho)
 					names(outTable1) = col_header1
@@ -7896,7 +7896,7 @@ BSkyFormatPolycor <- function (x, digits = BSkyGetDecimalDigitSetting())
 		}
 		else if(class(x) == "numeric")
 		{
-			table_list_names = c(table_list_names, "Polychoric Correlation")
+			table_list_names = c(table_list_names, paste ("Polychoric Correlation: ", tableHeader))
 			table_list = c(table_list, list(data.frame(rho = x)))
 			names(table_list) = table_list_names
 			
