@@ -142,7 +142,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 			#}
 
 					classOfCol =eval(parse(text=paste(  "class(", datasetname, "$",colname, ")")))
-					if(classOfCol =="numeric")
+					if("numeric" %in% classOfCol)
 					{			
 						#cat("\nEdit Numeric cell.")
 						 #cat(paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- as.numeric(",colceldata,")"))
@@ -150,27 +150,40 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 						# for factor: uadatasets$lst[[1]][,2][[2]]<- "Male" or NA
 						# cat("\nTesting2.")
 					}
-					else if(classOfCol =="integer")
+					else if("integer" %in% classOfCol)
 					{			
 						eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.integer(",colceldata,")")))#. <<- to <-
 					}		
-					else if(classOfCol =="character")
+					else if("character" %in% classOfCol)
 					{			
 						eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.character(","colceldata",")")))#. <<- to <-
 					}	
-					else if(classOfCol =="POSIXct" || classOfCol =="POSIXlt" || classOfCol =="Date")
+					else if("POSIXct" %in% classOfCol || "POSIXlt" %in% classOfCol || "Date" %in% classOfCol)
 					{			
 						dtformat=rdateformat
 						#if(classOfCol =="Date")
 						#{
 						#	dtformat='%Y-%m-%d'
 						#}
-						
-						
+
+						dtformat = eval(parse(text=paste('attr(',datasetname,'[[',colIndex,']],"DateFormat")')))
+						if(is.null(dtformat) || dtformat=="")
+							dtformat='%Y-%m-%d'  # we may want to change this
+
 						coltzone = eval(parse(text=paste('attr(',datasetname,'[[',colIndex,']],"tzone")')))
 						if(is.null(coltzone) || coltzone=="")
 							coltzone = Sys.timezone()
-						
+
+						## Check if date is valid and is in the right format
+						validStrDate = BSkyIsDateValid(stringDate=colceldata, dateFormat=dtformat, coltzone=coltzone)
+						if(is.na(validStrDate) || validStrDate == '')
+						{
+							return(invisible())
+						}
+						else
+						{
+							colceldata = validStrDate
+						}
 						#cat("\nEdit Date cell.")
 						 #cat(paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- as.numeric(",colceldata,")"))
 						 
@@ -180,7 +193,6 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 						 ## use following instead of above line
 						 ## if the date column in the UI grid is string and has yyyy-MM-dd HH:mm:ss format
 						 stdt <- strptime(colceldata,format=dtformat, tz=coltzone)
-						 
 						 #cat("\nStrp:")
 						 #print(stdt)
 						 posdt <- as.POSIXct(stdt, tz=coltzone)
@@ -193,7 +205,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 						# for factor: uadatasets$lst[[1]][,2][[2]]<- "Male" or NA
 						# cat("\nTesting2.")
 					}
-					else if(classOfCol =="logical")
+					else if("logical" %in% classOfCol)
 					{
 						if(is.na(colceldata) )
 						{
@@ -911,7 +923,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 #																											
 #############################################################################################################
 
-BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0, DateFormat ="%d/%m/%y",
+BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0, DateFormat ="%y/%m/%d",
     dataSetNameOrIndex)
 {
     BSkyFunctionInit()
@@ -1000,7 +1012,7 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                     }
 					
 					 if (rdatatype == "POSIXct") {
-                       newcol <- eval(parse(text = paste("as.POSIXct(c(rep( c(Sys.time()), nrow(",
+                       newcol <- eval(parse(text = paste("as.POSIXct(c(rep( strptime(c(Sys.time()), format=DateFormat), nrow(",
                         datasetname, "))))", sep = "")))
                     }
                     else  if (rdatatype == "factor"){
@@ -1657,4 +1669,77 @@ BSkyChangeMissings <- function()
 		
 		silent =TRUE		
 	)
+}
+
+
+BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone="")
+{
+	validStrDate = ""
+	isDateValid=FALSE
+	islongDate=FALSE
+	msg = ""
+	if(grepl(":", stringDate) )
+	{
+		islongDate = TRUE
+	} 
+
+	islongFromat=FALSE
+	if(grepl(":", dateFormat) )
+	{
+		islongFromat = TRUE
+	} 
+
+	dtfrmtmsg = "YYYY-MM-DD"
+	if(islongFromat)
+	{
+		dtfrmtmsg = "YYYY-MM-DD HH:MM:SS"
+	}
+	msg = paste("Invalid date entered: Use correct date format ", dtfrmtmsg, sep='')
+
+	if(islongDate && islongFromat) #check if long date matches to long format for valid date
+	{
+		suppressWarnings({
+			stdt <- strptime(stringDate,format=dateFormat, tz=coltzone)
+			posdt <- as.POSIXct(stdt, tz=coltzone)
+			if(!is.na(posdt))
+			{
+				isDateValid = TRUE
+				validStrDate = stringDate
+			}
+		})
+	}
+	if(!islongDate && islongFromat) #cshort date with long format mean user remove time part of the date
+	{
+		suppressWarnings({
+			stdt <- strptime(stringDate,format="%Y-%m-%d", tz=coltzone)
+			posdt <- as.POSIXct(stdt, tz=coltzone)
+			if(!is.na(posdt))
+			{
+				isDateValid = TRUE
+				if(isDateValid) ## date is valid but the user removed the time part so add time 00:00:00
+				{
+					validStrDate = paste(stringDate," 00:00:00", sep='')
+				}				
+			}
+
+		})
+	}	
+	else if (!islongDate && !islongFromat) #short date and short date format. Check valid date
+	{
+		suppressWarnings({
+			stdt <- strptime(stringDate,format=dateFormat, tz=coltzone)
+			posdt <- as.POSIXct(stdt, tz=coltzone)
+			if(!is.na(posdt))
+			{
+				isDateValid = TRUE
+				validStrDate = stringDate
+			} 
+		})
+	}
+
+	if(!isDateValid)
+	{
+		print(msg)
+	}
+	return(validStrDate)
 }
