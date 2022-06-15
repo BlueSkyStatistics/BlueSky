@@ -92,13 +92,14 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 			{
 				bsky.class <- class(get(bsky.rdataname))
 				
-				if(length(bsky.class) > 1)
+				if(length(bsky.class) > 1 && !("design" %in% bsky.class))
 				{
 					#warning("UAreadRObj: .RData file has multiple objects.");
 					
 					objidxs = which(bsky.class == 'tbl_df') #there may be more than one datasets
 					if( length(objidxs) == 0)#19Oct2019
 						objidxs = which(bsky.class == 'data.frame')
+
 					if(length(objidxs) > 1)
 					{
 						#warning("UAreadRObj: .RData file has multiple data.frame(s). Loading the first one only.");
@@ -124,10 +125,14 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 				
 			}
 			# print(bsky.rdataname);
-			if(bsky.class=="tbl_df" || bsky.class=="data.frame")
+			if( "tbl_df" %in% bsky.class || "data.frame" %in% bsky.class ||  "design" %in% bsky.class)
 			{
 				#eval( parse(text=paste( datasetname,' <<- get(bsky.rdataname)' , sep=''   )))
-				if(isDFname)
+				if(isDFname &&  "design" %in% bsky.class)#DoE
+				{
+					eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- (',bsky.rdataname,')' , sep=''   )))
+				}				
+				else if(isDFname)
 				{
 					eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(',bsky.rdataname,')' , sep=''   )))
 				}
