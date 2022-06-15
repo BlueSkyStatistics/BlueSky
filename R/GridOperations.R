@@ -165,11 +165,12 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 						#{
 						#	dtformat='%Y-%m-%d'
 						#}
-
-						dtformat = eval(parse(text=paste('attr(',datasetname,'[[',colIndex,']],"DateFormat")')))
-						if(is.null(dtformat) || dtformat=="")
-							dtformat='%Y-%m-%d'  # we may want to change this
-
+						if(is.na(dtformat) || dtformat=='')
+						{
+							dtformat = eval(parse(text=paste('attr(',datasetname,'[[',colIndex,']],"DateFormat")')))
+							if(is.null(dtformat) || dtformat=="")
+								dtformat='%Y-%m-%d'  # we may want to change this
+						}
 						coltzone = eval(parse(text=paste('attr(',datasetname,'[[',colIndex,']],"tzone")')))
 						if(is.null(coltzone) || coltzone=="")
 							coltzone = Sys.timezone()
@@ -1689,12 +1690,14 @@ BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone
 		islongFromat = TRUE
 	} 
 
-	dtfrmtmsg = "YYYY-MM-DD"
-	if(islongFromat)
-	{
-		dtfrmtmsg = "YYYY-MM-DD HH:MM:SS"
-	}
-	msg = paste("Invalid date entered: Use correct date format ", dtfrmtmsg, sep='')
+	# dtfrmtmsg = "YYYY-MM-DD"
+	# if(islongFromat)
+	# {
+		# dtfrmtmsg = "YYYY-MM-DD HH:MM:SS"
+	# }
+	dtfrmtmsg = dateFormat
+	
+	msg = paste("Error:Invalid date entered: Use correct date format ", dtfrmtmsg, sep='')
 
 	if(islongDate && islongFromat) #check if long date matches to long format for valid date
 	{
