@@ -101,7 +101,10 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 					## 1,2,3 etc. To fix this issue we must first conver the character-numbers ('24') to numbers and then load this in the grid. Now
 					## since numeric col contains actual numbers, they should not be converted to factors.
 					#mtcars[] = lapply(mtcars, function(x) type.convert(as.character(x), as.is = TRUE))
-					eval(parse(text=paste('bskytempx <<- lapply(bskytempx, function(x) type.convert(x, as.is=TRUE))',sep='')))
+					
+					#eval(parse(text=paste('bskytempx <<- lapply(bskytempx, function(x) type.convert(x, as.is=TRUE))',sep='')))
+					##15Jun2022 Line above was converting dates to character which in second eval were turning into factor
+					eval(parse(text=paste('bskytempx <<- lapply(bskytempx, function(x){if(!("POSIXct" %in% class(x)) && !("Date" %in% class(x)) && !("POSIXt" %in% class(x))) type.convert(x, as.is=TRUE) else x})',sep='')))
 					
 					#following line : empty col name replaced by something like C..NA..NA..NA
 					eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (bskytempx, function(y) {if("character" %in% class(y)) y = factor(y) else y} ) )',sep='' )))
