@@ -7621,290 +7621,184 @@ BSkyDummyErrorWarningMuncher <- function(...)
 	# Contnue the execution and munch (i.e. do nothing) all error and wanings silently without spitting out 
 }
 
-BSkyFormatPolycor <- function (x, digits = BSkyGetDecimalDigitSetting(), tableHeader ="") 
+BSkyFormatPolycor <-function (x, digits = BSkyGetDecimalDigitSetting(), tableHeader = "", typeofcorrelation ="")
 {
-	table_list = list()
-	table_list_names = c()
-	
-	if(!is.null(x) && !is.na(x))
-	{
-		if(class(x) == "polycor")
-		{
-			if (x$type == "polychoric") {
-				if (!all(is.na(x$var))) {
-					se <- sqrt(diag(x$var))
-					se.rho <- se[1]
-				}
-				else {
-					se <- NA
-					se.rho <- NA
-				}
-				
-				est <- if (x$ML) 
-					"ML est."
-				else "2-step est."
-				
-				if (!is.na(se.rho)) 
-				{    
-					# cat("\nPolychoric Correlation, ", est, " = ", 
-						# signif(x$rho, digits), " (", signif(se.rho, 
-						  # digits), ")", sep = "")
-					
-					tableHeader1 = paste ("Polychoric Correlation: ", tableHeader)
-					col_header1 = c("Estimate Type", "rho", "Std Err")
-					outTable1 = data.frame(est, signif(x$rho, digits), se.rho)
-					names(outTable1) = col_header1
-					
-					table_list_names = c(table_list_names, tableHeader1)
-					table_list = c(table_list, list(outTable1))
-					names(table_list) = table_list_names
-									
-					#BSkyFormat(outTable1, outputTableRenames = tableHeader1)
-					
-					if (x$df > 0)
-					{
-						# cat("\nTest of bivariate normality: Chisquare = ", 
-						  # signif(x$chisq, digits), ", df = ", x$df, 
-						  # ", p = ", signif(pchisq(x$chisq, x$df, 
-							# lower.tail = FALSE), digits), "\n", 
-						  # sep = "")
-						  
-						tableHeader2 = "Test of bivariate normality"
-						col_header2 = c("Chisquare", "df", "p-value")
-						outTable2 = data.frame(signif(x$chisq, digits), x$df, signif(pchisq(x$chisq, x$df, 
-							lower.tail = FALSE), digits))
-						names(outTable2) = col_header2
-						
-						table_list_names = c(table_list_names, tableHeader2)
-						table_list = c(table_list, list(outTable2))
-						names(table_list) = table_list_names
-					
-						#BSkyFormat(outTable2, outputTableRenames = tableHeader2)
-					}
-					#else cat("\n")
-				}
-				else {
-					# cat("\nPolychoric Correlation, ", est, " = ", 
-						# signif(x$rho, digits), "\n\n")
-						
-					tableHeader1 = "Polychoric Correlation"
-					col_header = c("Estimate Type", "rho")
-					outTable1 = data.frame(est, signif(x$rho, digits))
-					names(outTable1) = col_header
-					
-					table_list_names = c(table_list_names, tableHeader1)
-					table_list = c(table_list, list(outTable1))
-					names(table_list) = table_list_names
-						
-					#BSkyFormat(outTable1, outputTableRenames = tableHeader1)
-				}
-				
-				r <- length(x$row.cuts)
-				c <- length(x$col.cuts)
-				
-				if (r == 0) 
-				{
-					return(invisible(x))
-					return (invisible(NULL))
-				}
-				if (!all(is.na(se))) {
-					row.cuts.se <- se[2:(r + 1)]
-					col.cuts.se <- se[(r + 2):(r + c + 1)]
-				}
-				else {
-					row.cuts.se <- rep(NA, r)
-					col.cuts.se <- rep(NA, c)
-				}
-				rowThresh <- signif(cbind(x$row.cuts, row.cuts.se), digits)
-				if (r > 1) 
-				{
-					#cat("\n  Row Thresholds")
-					row_threshold_header = paste("Row Thresholds")
-				}
-				else 
-				{
-					#cat("\n  Row Threshold")
-					row_threshold_header = paste("Row Threshold")
-				}
-				
-				rownames(rowThresh) <- if (r > 1) 
-					1:r
-				else " "
-				if (all(is.na(rowThresh[, 2]))) 
-				{
-					#print(rowThresh[, 1, drop = FALSE])
-					
-					rowThresh = rowThresh[, 1, drop = FALSE]
-					rownames(rowThresh) = c()
-					colnames(rowThresh) <- c("Threshold")
-					
-					# rowThresh table
-					table_list_names = c(table_list_names, row_threshold_header)
-					table_list = c(table_list, list(rowThresh))
-					names(table_list) = table_list_names
-					
-					#BSkyFormat(rowThresh, outputTableRenames = row_threshold_header)
-				}
-				else 
-				{
-					colnames(rowThresh) <- c("Threshold", "Std.Err.")
-					# cat("\n")
-					# print(rowThresh)
-					
-					# rowThresh table
-					table_list_names = c(table_list_names, row_threshold_header)
-					table_list = c(table_list, list(rowThresh))
-					names(table_list) = table_list_names
-			
-					#BSkyFormat(rowThresh, outputTableRenames = row_threshold_header)
-				}
-				
-				
-				colThresh <- signif(cbind(x$col.cuts, col.cuts.se), digits)
-				if (c > 1) 
-				{
-					#cat("\n\n  Column Thresholds")
-					col_threshold_header = paste("Column Thresholds")
-				}
-				else 
-				{
-					#cat("\n\n  Column Threshold")
-					col_threshold_header = paste("Column Threshold")
-				}
-				
-				rownames(colThresh) <- if (c > 1) 
-					1:c
-				else " "
-				if (all(is.na(colThresh[, 2]))) 
-				{
-					#print(colThresh[, 1, drop = FALSE])
-					
-					colThresh = colThresh[, 1, drop = FALSE]
-					rownames(colThresh) = c()
-					colnames(colThresh) <- c("Threshold")
-					
-					# colThresh table
-					table_list_names = c(table_list_names, col_threshold_header)
-					table_list = c(table_list, list(colThresh))
-					names(table_list) = table_list_names
-					
-					#BSkyFormat(colThresh, outputTableRenames = col_threshold_header)
-				}
-				else 
-				{
-					# colnames(colThresh) <- c("Threshold", "Std.Err.")
-					# cat("\n")
-					# print(colThresh)
-					
-					rownames(colThresh) = c()
-					# colThresh table
-					table_list_names = c(table_list_names, col_threshold_header)
-					table_list = c(table_list, list(colThresh))
-					names(table_list) = table_list_names
-					
-					#BSkyFormat(colThresh, outputTableRenames = col_threshold_header)
-				}
-			}
-			else if (x$type == "polyserial") {
-				if (!all(is.na(x$var))) {
-					se <- sqrt(diag(x$var))
-					se.rho <- se[1]
-				}
-				else {
-					se <- NA
-					se.rho <- NA
-				}
-				est <- if (x$ML) 
-					"ML est."
-				else "2-step est."
-				
-				if (!all(is.na(se))) {
-					# cat("\nPolyserial Correlation, ", est, " = ", 
-						# signif(x$rho, digits), " (", signif(se.rho, 
-						  # digits), ")", sep = "")
-						  
-					tableHeader1 = "Polyserial Correlation"
-					col_header1 = c("Estimate Type", "rho", "Std Err")
-					outTable1 = data.frame(est, signif(x$rho, digits), signif(se.rho, digits))
-					names(outTable1) = col_header1
-					
-					table_list_names = c(table_list_names, tableHeader1)
-					table_list = c(table_list, list(outTable1))
-					names(table_list) = table_list_names
-					
-					#BSkyFormat(outTable1, outputTableRenames = tableHeader1)
-					
-					# cat("\nTest of bivariate normality: Chisquare = ", 
-						# signif(x$chisq, digits), ", df = ", x$df, 
-						# ", p = ", signif(pchisq(x$chisq, x$df, 
-						  # lower.tail = FALSE), digits), "\n\n", 
-						# sep = "")
-					
-					tableHeader2 = "Test of bivariate normality"
-						col_header2 = c("Chisquare", "df", "p-value")
-						outTable2 = data.frame(signif(x$chisq, digits), x$df, signif(pchisq(x$chisq, x$df, 
-							lower.tail = FALSE), digits))
-						names(outTable2) = col_header2
-						
-						table_list_names = c(table_list_names, tableHeader2)
-						table_list = c(table_list, list(outTable2))
-						names(table_list) = table_list_names
-					
-						#BSkyFormat(outTable2, outputTableRenames = tableHeader2)
-					
-				}
-				else {
-					# cat("\nPolyserial Correlation, ", est, " = ", 
-						# signif(x$rho, digits), "\n\n")
-						
-					tableHeader1 = "Polyserial Correlation"
-					col_header = c("Estimate Type", "rho")
-					outTable1 = data.frame(est, signif(x$rho, digits))
-					names(outTable1) = col_header
-					
-					table_list_names = c(table_list_names, tableHeader1)
-					table_list = c(table_list, list(outTable1))
-					names(table_list) = table_list_names
-					
-					#BSkyFormat(outTable1, outputTableRenames = tableHeader1)
-				}
-				
-				if (length(se) > 1) 
-					cuts.se <- se[-1]
-				else cuts.se <- rep(NA, length(x$cuts))
-				
-				thresh <- signif(rbind(x$cuts, cuts.se), digits)
-				
-				colnames(thresh) <- 1:length(x$cuts)
-				rownames(thresh) <- c("Threshold", "Std.Err.")
-				
-				if (all(is.na(thresh[2, ]))) 
-					thresh <- thresh[-2, , drop = FALSE]
-				#print(thresh)
-				
-				table_list_names = c(table_list_names, "Threshold")
-				table_list = c(table_list, list(thresh))
-				names(table_list) = table_list_names
-				
-				#BSkyFormat(thresh, outputTableRenames = "Threshold")
-			}
-			else 
-			{
-				# print(unclass(x))
-				return(invisible(NULL))
-			}
-		}
-		else if(class(x) == "numeric")
-		{
-			table_list_names = c(table_list_names, paste ("Polychoric Correlation: ", tableHeader))
-			table_list = c(table_list, list(data.frame(rho = x)))
-			names(table_list) = table_list_names
-			
-			#BSkyFormat(data.frame(rho = x), outputTableRenames = "Polychoric Correlation")
-		}
-	}
-		
-	return(invisible(table_list))
+    table_list = list()
+    table_list_names = c()
+    if (!is.null(x) && !is.na(x)) {
+        if (class(x) == "polycor") {
+            if (x$type == "polychoric") {
+                if (!all(is.na(x$var))) {
+                  se <- sqrt(diag(x$var))
+                  se.rho <- se[1]
+                }
+                else {
+                  se <- NA
+                  se.rho <- NA
+                }
+                est <- if (x$ML)
+                  "ML est."
+                else "2-step est."
+                if (!is.na(se.rho)) {
+                  tableHeader1 = paste("Polychoric Correlation: ",
+                    tableHeader)
+                  col_header1 = c("Estimate Type", "rho", "Std Err")
+                  outTable1 = data.frame(est, signif(x$rho, digits),
+                    se.rho)
+                  names(outTable1) = col_header1
+                  table_list_names = c(table_list_names, tableHeader1)
+                  table_list = c(table_list, list(outTable1))
+                  names(table_list) = table_list_names
+                  if (x$df > 0) {
+                    tableHeader2 = "Test of bivariate normality"
+                    col_header2 = c("Chisquare", "df", "p-value")
+                    outTable2 = data.frame(signif(x$chisq, digits),
+                      x$df, signif(pchisq(x$chisq, x$df, lower.tail = FALSE),
+                        digits))
+                    names(outTable2) = col_header2
+                    table_list_names = c(table_list_names, tableHeader2)
+                    table_list = c(table_list, list(outTable2))
+                    names(table_list) = table_list_names
+                  }
+                }
+                else {
+                  tableHeader1 = "Polychoric Correlation"
+                  col_header = c("Estimate Type", "rho")
+                  outTable1 = data.frame(est, signif(x$rho, digits))
+                  names(outTable1) = col_header
+                  table_list_names = c(table_list_names, tableHeader1)
+                  table_list = c(table_list, list(outTable1))
+                  names(table_list) = table_list_names
+                }
+                r <- length(x$row.cuts)
+                c <- length(x$col.cuts)
+                if (r == 0) {
+                  return(invisible(x))
+                  return(invisible(NULL))
+                }
+                if (!all(is.na(se))) {
+                  row.cuts.se <- se[2:(r + 1)]
+                  col.cuts.se <- se[(r + 2):(r + c + 1)]
+                }
+                else {
+                  row.cuts.se <- rep(NA, r)
+                  col.cuts.se <- rep(NA, c)
+                }
+                rowThresh <- signif(cbind(x$row.cuts, row.cuts.se),
+                  digits)
+                if (r > 1) {
+                  row_threshold_header = paste("Row Thresholds")
+                }
+                else {
+                  row_threshold_header = paste("Row Threshold")
+                }
+                rownames(rowThresh) <- if (r > 1)
+                  1:r
+                else " "
+                if (all(is.na(rowThresh[, 2]))) {
+                  rowThresh = rowThresh[, 1, drop = FALSE]
+                  rownames(rowThresh) = c()
+                  colnames(rowThresh) <- c("Threshold")
+                  table_list_names = c(table_list_names, row_threshold_header)
+                  table_list = c(table_list, list(rowThresh))
+                  names(table_list) = table_list_names
+                }
+                else {
+                  colnames(rowThresh) <- c("Threshold", "Std.Err.")
+                  table_list_names = c(table_list_names, row_threshold_header)
+                  table_list = c(table_list, list(rowThresh))
+                  names(table_list) = table_list_names
+                }
+                colThresh <- signif(cbind(x$col.cuts, col.cuts.se),
+                  digits)
+                if (c > 1) {
+                  col_threshold_header = paste("Column Thresholds")
+                }
+                else {
+                  col_threshold_header = paste("Column Threshold")
+                }
+                rownames(colThresh) <- if (c > 1)
+                  1:c
+                else " "
+                if (all(is.na(colThresh[, 2]))) {
+                  colThresh = colThresh[, 1, drop = FALSE]
+                  rownames(colThresh) = c()
+                  colnames(colThresh) <- c("Threshold")
+                  table_list_names = c(table_list_names, col_threshold_header)
+                  table_list = c(table_list, list(colThresh))
+                  names(table_list) = table_list_names
+                }
+                else {
+                  rownames(colThresh) = c()
+                  table_list_names = c(table_list_names, col_threshold_header)
+                  table_list = c(table_list, list(colThresh))
+                  names(table_list) = table_list_names
+                }
+            }
+            else if (x$type == "polyserial") {
+                if (!all(is.na(x$var))) {
+                  se <- sqrt(diag(x$var))
+                  se.rho <- se[1]
+                }
+                else {
+                  se <- NA
+                  se.rho <- NA
+                }
+                est <- if (x$ML)
+                  "ML est."
+                else "2-step est."
+                if (!all(is.na(se))) {
+				   tableHeader1 = paste("Polyserial Correlation: ",
+                    tableHeader) 
+                  col_header1 = c("Estimate Type", "rho", "Std Err")
+                  outTable1 = data.frame(est, signif(x$rho, digits),
+                    signif(se.rho, digits))
+                  names(outTable1) = col_header1
+                  table_list_names = c(table_list_names, tableHeader1)
+                  table_list = c(table_list, list(outTable1))
+                  names(table_list) = table_list_names
+                  tableHeader2 = "Test of bivariate normality"
+                  col_header2 = c("Chisquare", "df", "p-value")
+                  outTable2 = data.frame(signif(x$chisq, digits),
+                    x$df, signif(pchisq(x$chisq, x$df, lower.tail = FALSE),
+                      digits))
+                  names(outTable2) = col_header2
+                  table_list_names = c(table_list_names, tableHeader2)
+                  table_list = c(table_list, list(outTable2))
+                  names(table_list) = table_list_names
+                }
+                else {
+				  tableHeader1 = paste("Polyserial Correlation: ",
+                    tableHeader)
+                  col_header = c("Estimate Type", "rho")
+                  outTable1 = data.frame(est, signif(x$rho, digits))
+                  names(outTable1) = col_header
+                  table_list_names = c(table_list_names, tableHeader1)
+                  table_list = c(table_list, list(outTable1))
+                  names(table_list) = table_list_names
+                }
+                if (length(se) > 1)
+                  cuts.se <- se[-1]
+                else cuts.se <- rep(NA, length(x$cuts))
+                thresh <- signif(rbind(x$cuts, cuts.se), digits)
+                colnames(thresh) <- 1:length(x$cuts)
+                rownames(thresh) <- c("Threshold", "Std.Err.")
+                if (all(is.na(thresh[2, ])))
+                  thresh <- thresh[-2, , drop = FALSE]
+                table_list_names = c(table_list_names, "Threshold")
+                table_list = c(table_list, list(thresh))
+                names(table_list) = table_list_names
+            }
+            else {
+                return(invisible(NULL))
+            }
+        }
+        else if (class(x) == "numeric") {
+            table_list_names = c(table_list_names, paste(typeofcorrelation, " : ",
+                tableHeader))
+            table_list = c(table_list, list(data.frame(rho = x)))
+            names(table_list) = table_list_names
+        }
+    }
+    return(invisible(table_list))
 }
-
-
