@@ -73,7 +73,7 @@ DataSetIndex <- BSkyValidateDataset(dataSetNameOrIndex)
 # class 'numeric' na is NA while class 'character'/'factor' na is <NA> in the UI grid																						
 #																											
 #############################################################################################################
-BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataSetNameOrIndex,rdateformat)
+BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataSetNameOrIndex,rdateformat='')
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(dataSetNameOrIndex)
@@ -175,36 +175,40 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 						if(is.null(coltzone) || coltzone=="")
 							coltzone = Sys.timezone()
 
-						## Check if date is valid and is in the right format
-						validStrDate = BSkyIsDateValid(stringDate=colceldata, dateFormat=dtformat, coltzone=coltzone)
-						if(is.na(validStrDate) || validStrDate == '')
+						if(is.na(colceldata))#this is needed to set NA in the date column if user wants to do so
 						{
-							return(invisible())
+							eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"] <- NA")))
 						}
 						else
 						{
-							colceldata = validStrDate
+							## Check if date is valid and is in the right format
+							validStrDate = BSkyIsDateValid(stringDate=colceldata, dateFormat=dtformat, coltzone=coltzone)
+							if(!is.na(validStrDate) && validStrDate != '')
+							{
+								colceldata = validStrDate
+							
+							#cat("\nEdit Date cell.")
+							 #cat(paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- as.numeric(",colceldata,")"))
+							 
+							 ## use following when UIgrid column is of type DateTime.
+							 ## (we may have to match the date format withUIgrid format)
+							 #  stdt <- strptime(colceldata,format='%m/%d/%Y %H:%M:%S')
+							 ## use following instead of above line
+							 ## if the date column in the UI grid is string and has yyyy-MM-dd HH:mm:ss format
+							 stdt <- strptime(colceldata,format=dtformat, tz=coltzone)
+							 #cat("\nStrp:")
+							 #print(stdt)
+							 posdt <- as.POSIXct(stdt, tz=coltzone)
+							 #cat("\nAs POSIXct:")
+							 #print(posdt)
+							#eval(parse(text=paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- ",posdt,"")))
+							eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"] <- posdt")))#. <<- to <-
+							#cat("\nEdit Executed")
+							#eval(parse(text=paste('print(',datasetname,"[",rowindex,",",colIndex,"]")))
+							# for factor: uadatasets$lst[[1]][,2][[2]]<- "Male" or NA
+							# cat("\nTesting2.")
+							}
 						}
-						#cat("\nEdit Date cell.")
-						 #cat(paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- as.numeric(",colceldata,")"))
-						 
-						 ## use following when UIgrid column is of type DateTime.
-						 ## (we may have to match the date format withUIgrid format)
-						 #  stdt <- strptime(colceldata,format='%m/%d/%Y %H:%M:%S')
-						 ## use following instead of above line
-						 ## if the date column in the UI grid is string and has yyyy-MM-dd HH:mm:ss format
-						 stdt <- strptime(colceldata,format=dtformat, tz=coltzone)
-						 #cat("\nStrp:")
-						 #print(stdt)
-						 posdt <- as.POSIXct(stdt, tz=coltzone)
-						 #cat("\nAs POSIXct:")
-						 #print(posdt)
-						#eval(parse(text=paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- ",posdt,"")))
-						eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"] <- posdt")))#. <<- to <-
-						#cat("\nEdit Executed")
-						#eval(parse(text=paste('print(',datasetname,"[",rowindex,",",colIndex,"]")))
-						# for factor: uadatasets$lst[[1]][,2][[2]]<- "Male" or NA
-						# cat("\nTesting2.")
 					}
 					else if("logical" %in% classOfCol)
 					{
@@ -1679,6 +1683,7 @@ BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone
 	isDateValid=FALSE
 	islongDate=FALSE
 	msg = ""
+	
 	if(grepl(":", stringDate) )
 	{
 		islongDate = TRUE
