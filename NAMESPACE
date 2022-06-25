@@ -237,3 +237,5 @@ export( BSkySortDataset)
 export(BSkyFormatPolycor)
 
 export(BSkyIsDateValid)
+
+export(rk.describe.alternative)

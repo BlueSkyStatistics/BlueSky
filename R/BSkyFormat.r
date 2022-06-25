@@ -7662,7 +7662,9 @@ BSkyFormatPolycor <-function (x, digits = BSkyGetDecimalDigitSetting(), tableHea
                   }
                 }
                 else {
-                  tableHeader1 = "Polychoric Correlation"
+                  #tableHeader1 = "Polychoric Correlation"
+				  tableHeader1 = paste("Polychoric Correlation: ",
+                    tableHeader)
                   col_header = c("Estimate Type", "rho")
                   outTable1 = data.frame(est, signif(x$rho, digits))
                   names(outTable1) = col_header
