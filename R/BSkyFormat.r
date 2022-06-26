@@ -6769,8 +6769,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 						# }
 						# else
 						{
-							file.remove(uadatasets.sk$initial_graphics_file_name)
-							first_Graphics_Command_Executed = TRUE
+							#file.remove(uadatasets.sk$initial_graphics_file_name)
+							#first_Graphics_Command_Executed = TRUE
 						}
 						
 						# if(bskyEvalDebug == TRUE)
@@ -6778,11 +6778,21 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 							# BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files - 1), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
 							# uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
 						# }
-						# else
+						
+						if(file.exists(uadatasets.sk$initial_graphics_file_name ))
 						{
+							file.remove(uadatasets.sk$initial_graphics_file_name)
+							first_Graphics_Command_Executed = TRUE
+							
 							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
 							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files - 1
 						}
+						else
+						{
+							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
+						}
+						
 					}
 					else
 					{
