@@ -73,7 +73,7 @@ DataSetIndex <- BSkyValidateDataset(dataSetNameOrIndex)
 # class 'numeric' na is NA while class 'character'/'factor' na is <NA> in the UI grid																						
 #																											
 #############################################################################################################
-BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataSetNameOrIndex,rdateformat='')
+BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataSetNameOrIndex, rdateformat='')
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(dataSetNameOrIndex)
