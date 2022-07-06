@@ -177,6 +177,7 @@ UAsetDataframeSplitProp	<- function(dataSetNameOrIndex, colNames)
 				warning("UAsetDataframeSplitProp: Cannot set Dataframe Split properties. Dataset name not found.")
 			}
 		BSkyFunctionWrapUp()
+		return(invisible())
 }	
 
 
@@ -206,6 +207,7 @@ BSkyRemoveAllSplits<-function(datasetname)
 	}	
 	#cat("\nGetting out of remove all\n")
 	BSkyFunctionWrapUp()
+	return(invisible())
 }
 
 #############################################################################################################
@@ -369,7 +371,8 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 				BSkyErrMsg =paste("UAremoveDataframeSplitProp: Cannot set Dataframe Split properties. Dataset name not found."," Dataset Name:", datasetname)
 				warning("UAremoveDataframeSplitProp: Cannot set Dataframe Split properties. Dataset name not found.")
 			}
-		BSkyFunctionWrapUp()	
+		BSkyFunctionWrapUp()
+		return(invisible())	
 }	
 
 
@@ -486,7 +489,8 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				warning("UAsetColNames: Cannot set col Names. Dataset name not found.")
 			}			
 
-		BSkyFunctionWrapUp()	
+		BSkyFunctionWrapUp()
+		return(invisible())	
 }
 
 
@@ -617,6 +621,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				warning("UAsetColType: Cannot set col type. Dataset name or index not found")
 			}			
 		BSkyFunctionWrapUp()
+		return(invisible())
 }
 
 
@@ -744,6 +749,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 
 
 		BSkyFunctionWrapUp()
+		return(invisible())
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level sort function\n")
 		#return(BSkyReturnStructure()) #
@@ -874,7 +880,8 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				BSkyErrMsg =paste("UAsetColLevels: Cannot set col levels. Dataset name or index not found"," Dataset Name:", datasetname)
 				warning("UAsetColLevels: Cannot set col levels. Dataset name or index not found")
 			}
-		BSkyFunctionWrapUp()	
+		BSkyFunctionWrapUp()
+		return(invisible())	
 }
 
 
@@ -1054,6 +1061,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				warning("UAsetColMissing: Cannot set col Missing. Dataset name or index not found")
 			}
 		BSkyFunctionWrapUp()
+		return(invisible())
 }
 
 
@@ -1232,6 +1240,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 				warning("UAsetColMeasure: Cannot set col Measure. Dataset name or index not found.")
 			}			
 		BSkyFunctionWrapUp()
+		return(invisible())
 }
 
 #############################################################################################################
@@ -1353,6 +1362,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 			}			
 
 		BSkyFunctionWrapUp()
+		return(invisible())
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level sort function\n")
 		#return(BSkyReturnStructure()) #
@@ -1463,6 +1473,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level sort function\n")
 		#return(BSkyReturnStructure()) 
+		return(invisible())
 }
 
 
@@ -1817,7 +1828,8 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				warning("UAsetColProperties:  Cannot set col property. Dataset name or index not found.")
 			}			
 
-		BSkyFunctionWrapUp()	
+		BSkyFunctionWrapUp()
+		return(invisible())	
 }
 
 # excludechars: a vector of values to be excluded when forming the set of levels
@@ -1859,7 +1871,8 @@ BSkyMakeColumnFactor <- function(colNameOrIndex, dataSetNameOrIndex,  excludecha
 		warning("BSkyMakeColumnFactor:  Can't make it factor. Dataset name or index not found.")
 	}			
 
-		BSkyFunctionWrapUp()	
+		BSkyFunctionWrapUp()
+		return(invisible())	
 }
 
 
@@ -1889,6 +1902,7 @@ BSkyMakeMultiColumnFactor <- function(colNames, dataSetNameOrIndex)
 		## all dataset and col validation are done inside following function
 		BSkyMakeColumnFactor(colNames[i], dataSetNameOrIndex)
 	}
+	return(invisible())
 }
 
 BSkyMakeColumnString <- function(colNameOrIndex, dataSetNameOrIndex)
@@ -1929,6 +1943,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 			}			
 
 		BSkyFunctionWrapUp()	
+		return(invisible())
 }
 
 #11Oct2017 To make any column numeric(i.e. double)
@@ -1998,6 +2013,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 			}			
 
 		BSkyFunctionWrapUp()	
+		return(invisible())
 }
 
 
@@ -2039,7 +2055,8 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				warning("BSkyMakeColumnInteger:  Can't make it integer. Dataset name or index not found.")
 			}			
 
-		BSkyFunctionWrapUp()	
+		BSkyFunctionWrapUp()
+		return(invisible())	
 }
 
 ## Get list of all attributes/properties of all cols in the order of the cols in the dataset 
