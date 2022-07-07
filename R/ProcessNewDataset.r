@@ -274,4 +274,5 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 30, defaultCols = 6
         }
     }
 	# cat("Exiting BSkyPutEmptyCellsBack");
+	return(invisible())
 }
