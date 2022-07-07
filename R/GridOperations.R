@@ -1702,7 +1702,7 @@ BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone
 	# }
 	dtfrmtmsg = dateFormat
 	
-	msg = paste("Error:Invalid date entered: Use correct date format ", dtfrmtmsg, sep='')
+	msg = paste("Error:Invalid date entered: Use correct date format ", dtfrmtmsg, " and enter correct date", sep='')
 
 	if(islongDate && islongFromat) #check if long date matches to long format for valid date
 	{
