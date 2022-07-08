@@ -1169,13 +1169,14 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 				#Error : dataSetName not found
 				colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
 				# colIndex <- UAgetIndexOfColInDataSet(DataSetIndex,colName)
-				# cat("\nNew MEasure:")
+				# cat("\nNew Measure:")
 				# print(newMeasure)
 				if(colIndex > 0)
 				{
 					#Added by Aaron 06/25/2020, added string, we are not doing anything for string, added condition to avoid the message UAsetColMeasure: Wrong Measure Value. getting printed
+					## 08Jul2022 Anil: I had to add the "Date" for the same reason(as above).
 					#if(newMeasure == "Scale" || newMeasure == "Nominal" || newMeasure == "Ordinal")
-					if(newMeasure == "Scale" || newMeasure == "Nominal" || newMeasure == "Ordinal" || newMeasure =="String")
+					if(newMeasure == "Scale" || newMeasure == "Nominal" || newMeasure == "Ordinal" || newMeasure =="String" || newMeasure == "Date")
 					{
 						if(newMeasure == "Ordinal")##what if newOrder is empty. From C# always send newOrder
 						{
@@ -1195,9 +1196,10 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 							colclass <- eval(parse(text=paste('class(',datasetname,'[,',colIndex,'])')))
 							#cat("\nCol class ")
 							#cat(colclass)
-							if(colclass != "character")
+							if(!("POSIXct" %in% colclass || "POSIXlt" %in% colclass || "Date" %in% colclass || "character" %in% colclass))
 							{
-							eval(parse(text=paste(datasetname,'[,',colIndex,'] <- as.numeric(',datasetname,'[,',colIndex,'])', sep='')))#. <<- to <-
+								##08Jul2022  we should not be converting the class of the col.
+							#eval(parse(text=paste(datasetname,'[,',colIndex,'] <- as.numeric(',datasetname,'[,',colIndex,'])', sep='')))#. <<- to <-
 							}
 						}
 					}
