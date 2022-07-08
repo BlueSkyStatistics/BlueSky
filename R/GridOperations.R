@@ -290,7 +290,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level edit grid data function\n")
-		return(BSkyReturnStructure())
+		return(invisible(BSkyReturnStructure()))
 }
 
 #Adding a row in data grid
@@ -1099,7 +1099,7 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
         BSkyLocalWarningFlagsReset()
     }
     BSkyFunctionWrapUp()
-    return(BSkyReturnStructure2())
+    return(invisible(BSkyReturnStructure2()))
 }
 
 
@@ -1553,7 +1553,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level change levels function\n")
-		return(BSkyReturnStructure())
+		return(invisible(BSkyReturnStructure()))
 }
 
 
@@ -1637,7 +1637,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level change levels function\n")
-		return(BSkyReturnStructure())
+		return(invisible(BSkyReturnStructure()))
 }
 
 #############################################################################################################
