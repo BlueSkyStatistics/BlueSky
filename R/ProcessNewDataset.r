@@ -113,8 +113,13 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 					#Vectors which are entirely missing values are converted to logical, since NA is primarily logical. 
 					#
 					#require(utils); auto <- type.convert(mtcars)
-					eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,',as.is =', !stringAsFactor,')',sep=''))) 
-					
+
+					## 11Jul2022 fint type.convert below was converting all columns based on the data that col contains. We dont want that.
+					## Sanjay gave me the type.convert with lapply and now we only convert 'character' cols and leave remaing columns as is.
+					#eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,',as.is =', !stringAsFactor,')',sep=''))) 
+					### abc[] = lapply( abc, function(x) {if(is.character(x)) type.convert(as.character(x), as.is = TRUE) else x} )
+					eval(parse(text=paste(datasetname,'[] <<- lapply(',datasetname,', function(x) {if(is.character(x)) utils::type.convert(as.character(x), as.is = TRUE) else x} )',sep='')))
+
 					#08Jun2021 This does not work. some issue with parameter na.strings.
 					#R Err Msg : invalid 'na.strings' argument  in function:  type.convert.default(x[[i]], ...)
 					#eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,', na.strings = ',NAstrings,',as.is =', !stringAsFactor,')',sep=''))) 
@@ -240,7 +245,7 @@ BSkyIsEmptyDataset <- function(datasetName)
 #back empty cells. Note that analysis may add (or remove) cols, so add as much to make final rows=30 and cols=6
 #If for any reason we already have rows=30 and cols=6 after analysis then we should not be adding 
 #any more empty rows(or discuss with team)
-BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 30, defaultCols = 6)
+BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 16)
 {
 
     datasetname <- datasetName
@@ -250,10 +255,12 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 30, defaultCols = 6
         ")", sep = "")))
     addRows = defaultRows - rowcount
     addCols = defaultCols - colcount
-    require(dplyr)
-    eval(parse(text = paste(datasetname, " <<- ", datasetname,
-        " %>%  dplyr::mutate(across(everything(), as.character))",
-        sep = "")))
+
+	##11Jul2022 this mutate code was converting all cols back to character
+    # require(dplyr)
+    # eval(parse(text = paste(datasetname, " <<- ", datasetname,
+    #     " %>%  dplyr::mutate(across(everything(), as.character))",
+    #     sep = "")))
     if (addCols > 0) {
         for (i in 1:addCols) {
             newcol <- rep("", rowcount)
@@ -268,9 +275,13 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 30, defaultCols = 6
         ")", sep = "")))
     if (addRows > 0) {
         for (i in 1:addRows) {
-            newrow <- rep("", colcount)
-            eval(parse(text = paste(datasetname, "[nrow(", datasetname,
-                ")+1, ] <<- newrow", sep = "")))
+			##11Jul2022 this code is not good enough if dataset cols are non-character class.
+            # newrow <- rep("", colcount)
+            # eval(parse(text = paste(datasetname, "[nrow(", datasetname,
+            #     ")+1, ] <<- newrow", sep = "")))
+			##11Jul2022 following call will generate correct class for each col.
+			#require(tibble)
+			eval(parse(text = paste(datasetname,' <<- ',datasetname,' %>% tibble::add_row()', sep='')))
         }
     }
 	# cat("Exiting BSkyPutEmptyCellsBack");
