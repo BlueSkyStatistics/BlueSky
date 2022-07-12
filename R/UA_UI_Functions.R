@@ -132,6 +132,10 @@ eval(parse(text=paste('attr(',datasetname,',"slice") <<- c(FALSE)')))
 
 ### New Attribute for missings  at Dataset Level###
 eval(parse(text=paste('attr(',datasetname,',"misvals") <<- NULL')))
+
+###11Jul2022  New Attribute to know if dataset needs precessing using type.convert or not. Blank dataset that we create will always need precessing ###
+eval(parse(text=paste('attr(',datasetname,',"processDS") <<- TRUE')))
+
 # cat("misval set.\t")
 if(TRUE) ##is.null(missingval) )##no missing values. then set all col to "none"
 {
@@ -459,7 +463,14 @@ BSkyReloadDataset<-function(fullpathfilename,  filetype, sheetname=NULL, csvHead
 
 BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex, processit=TRUE)
 {
-	if(processit)
+	processDS = FALSE   ## do noe process datasets
+	eval(parse(text=paste('attrlist = names(attributes(',dataSetNameOrIndex,'))',sep='')))
+	if("processDS" %in% attrlist )
+	{
+		eval(parse(text=paste('processDS = attributes(',dataSetNameOrIndex,')$processDS',sep='')))
+	}
+	  
+	if(processDS) ## (processit). processit not needed. it was coming from JS while prcessDS is a dataset atribute.
 	{
 		BSkyProcessNewDataset(datasetName=dataSetNameOrIndex, NAstrings = c("NA"), stringAsFactor=TRUE)
 	}
