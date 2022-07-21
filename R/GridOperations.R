@@ -73,7 +73,7 @@ DataSetIndex <- BSkyValidateDataset(dataSetNameOrIndex)
 # class 'numeric' na is NA while class 'character'/'factor' na is <NA> in the UI grid																						
 #																											
 #############################################################################################################
-BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataSetNameOrIndex,rdateformat='')
+BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataSetNameOrIndex, rdateformat='')
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(dataSetNameOrIndex)
@@ -290,7 +290,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level edit grid data function\n")
-		return(BSkyReturnStructure())
+		return(invisible(BSkyReturnStructure()))
 }
 
 #Adding a row in data grid
@@ -1099,7 +1099,7 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
         BSkyLocalWarningFlagsReset()
     }
     BSkyFunctionWrapUp()
-    return(BSkyReturnStructure2())
+    return(invisible(BSkyReturnStructure2()))
 }
 
 
@@ -1553,7 +1553,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level change levels function\n")
-		return(BSkyReturnStructure())
+		return(invisible(BSkyReturnStructure()))
 }
 
 
@@ -1637,7 +1637,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 		BSkyFunctionWrapUp()
 		#print(BSkyReturnStructure())
 		#cat("Returning return structure from this top level change levels function\n")
-		return(BSkyReturnStructure())
+		return(invisible(BSkyReturnStructure()))
 }
 
 #############################################################################################################
@@ -1702,7 +1702,7 @@ BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone
 	# }
 	dtfrmtmsg = dateFormat
 	
-	msg = paste("Error:Invalid date entered: Use correct date format ", dtfrmtmsg, sep='')
+	msg = paste("Error:Invalid date entered: Use correct date format ", dtfrmtmsg, " and enter correct date", sep='')
 
 	if(islongDate && islongFromat) #check if long date matches to long format for valid date
 	{

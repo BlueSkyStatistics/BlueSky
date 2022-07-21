@@ -338,6 +338,12 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid
 	pkgEnv = c()
 	ischar = is.character(bskyDatasetName) 
 	originalDatasetname = bskyDatasetName
+	
+	#for FALSE we can just return from the function.
+	if(!load.dataframe)
+	{
+		return(invisible())
+	}
 	#print(originalDatasetname)
 	#print(class(originalDatasetname))
 	if(ischar)## is argument a character. If not we print error in the sink and exit

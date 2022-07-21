@@ -564,6 +564,7 @@ UAcreateExtraAttributes <- function(dataSetNameOrIndex, filetype, usehaven=TRUE)
 	# return(dataView_Names)
 	# cat("\nReturning From here")
 	BSkyFunctionWrapUp()	
+	return(invisible())
 }
 
 

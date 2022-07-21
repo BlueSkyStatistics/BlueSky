@@ -1019,6 +1019,7 @@ BSkyAttributesRestore <- function(colIndex, bskyattlist, datasetname)
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role	 <- bskyattlist$at9',sep='')))# <<- to <- coz .GlobalEnv
 	#cat("\nRestored Attr..")
 	BSkyFunctionWrapUp()
+	return(invisible())
 }
 
 ##TOP SUB##
@@ -1431,5 +1432,5 @@ ExtractDatasetNameFromGlobal <- function(datasetname)
 				}
 			}
 		}
-		return(datasetname)
+		return(invisible(datasetname))
 }

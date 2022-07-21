@@ -5682,6 +5682,7 @@ BSkyFormatBSkyFunctionParamParsing <- function(functionCallString=c(), paramName
 
 
 #10Dec2021
+#07Jul2022
 BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpos = 0, selectionEndpos = 0, executeSelectOnly = FALSE, currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), ignoreSplitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE, additionalBskyEvalDebug = FALSE, splitCountDisplay = BSkyGetSplitCountDisplaySetting())
 {
 	if(bskyEvalDebug == TRUE)
@@ -5709,6 +5710,25 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 		BSkyFormat(line_breakdown_RcommandString)
 	}
 	
+	if(additionalBskyEvalDebug == TRUE)
+	{
+		cat("\nselectionStartpos ", selectionStartpos, "selectionEndpos ", selectionEndpos, "nchar(RcommandString) ", nchar(RcommandString))
+		
+		if(selectionStartpos <= nchar(RcommandString))
+		{
+			selectionEndpos_temp = selectionEndpos
+			
+			if(selectionStartpos> 0 && (selectionEndpos > nchar(RcommandString) || selectionEndpos == 0 || selectionEndpos < selectionStartpos ))
+			{
+				selectionEndpos_temp = nchar(RcommandString)
+			} 
+			
+			cat("\n R commands (possibly partial display) to be executed: \n")
+			cat(substr(RcommandString, selectionStartpos, selectionEndpos_temp))
+			cat("\n========================\n")
+		}
+	}
+	
 	uadatasets.sk$BSkyEvalErrors = 0
 	# just in case as a safety net any uncleaned callstack leftover from the previous BSkyEvalRcommand run 
 	uadatasets.sk$callStack <- NULL
@@ -5733,7 +5753,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 			selectionEndpos = nchar(RcommandString)
 		}
 		
-		if(length(RcommandString) > 0) # && (numExprParse > -1 || selectionStartpos > 0 || selectionEndpos > 0))
+		if(length(RcommandString) > 0 && selectionStartpos <= nchar(RcommandString)) # && (numExprParse > -1 || selectionStartpos > 0 || selectionEndpos > 0))
 		{	
 			charPosOffsetAdjutment = 0
 			linePosOffsetAdjutment = 1
@@ -6191,8 +6211,18 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 
 #23Dec2021
 #09Jan2022
+#07Jul2022
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
+	if(bskyEvalDebug == TRUE)
+	{
+		print("printing in BSkyEvalRcommandBasic")
+		print(RcommandString)
+		cat("\n==============origRcommands============= \n")
+		print(origRcommands)
+		cat("\n=========================== \n")
+	}
+	
 	parsed_Rcommands = c()
 	parsed_orig_Rcommands = c()
 	
@@ -6224,21 +6254,93 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		echoInline = echoInline$echoInline
 	}
 	
+
+	parsed_Rcommands_by_R_parse = parse(text={RcommandString}, keep.source = TRUE)
 	
-	parsed_Rcommands = parse(text={RcommandString})
-	parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
+	if(bskyEvalDebug == TRUE)
+	{
+		print("printing parsed_Rcommands from parse()")
+		print(parsed_Rcommands_by_R_parse)
+	}
+	
+	eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
+	
+	tryCatch({
+			withCallingHandlers({
+					parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
+			}, warning = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+			}, error = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+	
+	
+	if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+	{		
+		if(bskyEvalDebug == TRUE)
+		{
+			cat("\nParsing Error in tidy_source\n")
+			cat(RcommandString)
+			cat("\n")
+		}
+		
+		parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
+		parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
+	}
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
+		parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
+		
+		cat("\n============== parsed_Rcommands in parse() and tidy_source() ============= \n")
+		print("printing parsed_Rcommands_by_R_parse_srcref from parse()")
+		print(parsed_Rcommands_by_R_parse_srcref)
+		
+		cat("\n++++++++++++++++++++++++++++++++++ \n")
+		
+		print("printing parsed_Rcommands from tidy_source()")
+		print(parsed_Rcommands)
+		
+		cat("\n=========================== \n")
+	}
+	
 	
 	#Rcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)
 	#parsed_Rcommands = (tidy_source(text = Rcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
 	
 	if(length(origRcommands) > 0)
 	{
-		parsed_orig_Rcommands = parse(text={origRcommands})
-		parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
+		parsed_orig_Rcommands_by_R_parse = parse(text={origRcommands}, keep.source = TRUE)
+		
+		if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+		{
+			parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
+			parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
+		}
+		else
+		{
+			parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
+		}
 		
 		#origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
 		#parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
+		
+		if(bskyEvalDebug == TRUE)
+		{
+			parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
+			parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
+			
+			cat("\n============== parsed_orig_Rcommands in parse() and tidy_source() ============= \n")
+			print("printing parsed_orig_Rcommands_by_R_parse_srcref from parse()")
+			print(parsed_orig_Rcommands_by_R_parse_srcref)
+			
+			cat("\n++++++++++++++++++++++++++++++++++ \n")
+			
+			print("printing parsed_orig_Rcommands from tidy_source()")
+			print(parsed_orig_Rcommands)
+			
+			cat("\n=========================== \n")
+		}
 	}
+	
 	
 	if(bskyEvalDebug == TRUE)
 	{
@@ -6331,16 +6433,29 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				
 				if(length(origRcommands) > 0)
 				{
-					#print(parsed_orig_Rcommands[[i]])
-					cat(parsed_orig_Rcommands[[i]])
-					#cat("\n")
-					
+					if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+					{
+						print(parsed_orig_Rcommands_by_R_parse_srcref[[i]])
+					}
+					else
+					{
+						#print(parsed_orig_Rcommands[[i]])
+						cat(parsed_orig_Rcommands[[i]])
+						#cat("\n")
+					}
 				}
 				else
 				{
-					#print(parsed_Rcommands[[i]])
-					cat(parsed_Rcommands[[i]])
-					#cat("\n")
+					if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+					{
+						print(parsed_Rcommands_by_R_parse_srcref[[i]])
+					}
+					else
+					{
+						#print(parsed_Rcommands[[i]])
+						cat(parsed_Rcommands[[i]])
+						#cat("\n")
+					}
 				}
 				
 				if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
@@ -6754,9 +6869,25 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 				if(bskyEvalDebug == TRUE)
 				{
 					cat("\n<br>********* Printing call details within BSkyEvalRcommandBasic - num_graphics_files and uadatasets.sk$last_count_of_bsky_graphics_files ******<br>\n")
+					if(length(origRcommands) > 0)
+					{
+						print(parsed_orig_Rcommands[[i]])
+						#cat(parsed_orig_Rcommands[[i]])
+					}
+					else
+					{
+						print(parsed_Rcommands[[i]])
+						#cat(parsed_Rcommands[[i]])
+					}
+					print(list.files(graphicsDir, pattern="png|svg"))
 					print(num_graphics_files)
+					cat("strating_count_of_bsky_graphics_files\n")
+					print(uadatasets.sk$strating_count_of_bsky_graphics_files)
+					cat("last_count_of_bsky_graphics_files\n")
 					print(uadatasets.sk$last_count_of_bsky_graphics_files)
 					print(num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
+					cat("first_Graphics_Command_Executed\n")
+					print(first_Graphics_Command_Executed)
 				}
 			
 				if(num_graphics_files > uadatasets.sk$last_count_of_bsky_graphics_files)
@@ -6768,17 +6899,6 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 							# BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= 1, isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
 						# }
 						# else
-						{
-							#file.remove(uadatasets.sk$initial_graphics_file_name)
-							#first_Graphics_Command_Executed = TRUE
-						}
-						
-						# if(bskyEvalDebug == TRUE)
-						# {
-							# BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files - 1), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
-							# uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
-						# }
-						
 						if(file.exists(uadatasets.sk$initial_graphics_file_name ))
 						{
 							file.remove(uadatasets.sk$initial_graphics_file_name)
@@ -6792,7 +6912,6 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
 							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
 						}
-						
 					}
 					else
 					{
@@ -6812,6 +6931,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 	}
 	
 	eval(parse(text="rm(bsky_rcommand_execution_an_exception_occured)"), envir=globalenv())
+	
+	eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
 	
 	#return(invisible(RcommandString)) 
 	
