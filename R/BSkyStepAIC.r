@@ -243,7 +243,9 @@ StepwisePrerequisite <- function(modelname, curdatasetname, validateDatasetCheck
 ##Its a clone of function StepwisePrerequisite 
 ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=TRUE, datasetSameCheck=TRUE, NAinVarsCheck=TRUE )
 {
+	modsname=""
 	#get model object's class from modelname
+	
 	modclass = eval(parse(text=paste('class(',modelname,')', collapse='', sep='')))
 	
 	##08Mar2017 if modclass has multiple classes
@@ -289,12 +291,12 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	
 	#Get independent(say modelvars) and dependentvar using the provided model.
 	#Getting dependent and independent var from a model is different for each model class type.
-	if(modclass =='lm' || modclass =='polr' || modclass =='glm')
+	if('lm' %in% modclass || 'polr' %in% modclass || 'glm' %in% modclass)
 	{
 		modelvars <- eval( parse( text=paste( 'unlist(strsplit( as.character(',modelname,'$call[[2]])[3], "[+]" ))', collapse='', sep='') ) )
 		modelvars <- gsub("^\\s+|\\s+$", "", modelvars) #remove extra space from both sides of each var.
 		#modelvars <- eval(parse(text=modelvars))
-		
+		modelvars <- BSkyStripNumberVariableNames(modelvars)
 		#also find dependentvar
 		dependentvar <-  eval( parse(text=paste('as.character(',modelname,'$call$formula[[2]])',sep='')))
 	}
@@ -305,7 +307,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
     modelvars <- getModelIndependentVariables(modelname)
 	}
 	
-	else if(modclass =='NaiveBayes')
+	else if('NaiveBayes' %in% modclass)
 	{
 		#09Mar2017 I found that this model doesn't stores datasetname using which model was generated.
 		#So stepwise fails to  process this model. We may find a workaround like setting datasetname
@@ -318,7 +320,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 		dependentvar <- eval( parse(text=paste(modelname,'$dependentvar',sep='')))
 		}	
 	}
-	else if(modclass =='randomForest')
+	else if('randomForest' %in% modclass)
 	{
 		#09Mar2017 I found that this model doesn't stores datasetname using which model was generated.
 		#So stepwise fails to  process this model. We may find a workaround like setting datasetname
@@ -346,7 +348,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 		#dependentvariable <- eval(parse(text=paste(a1,'[,c("',depvar,'")]', collapse='', sep='') ) )
 		#dependentclass=eval( parse( text=paste('class(',a1,'[,c("',depvar,'")])',sep='') ) )
 	}
-	else if(modclass =='rpart')
+	else if('rpart' %in% modclass)
 	{
 		#09Mar2017 This model also crashed the application when stepwise was run on it.
 		#StackOverflow in C#
@@ -357,7 +359,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 		#also find dependentvar
 		dependentvar <- eval( parse(text=paste('as.character(',modelname,'$call$formula[[2]])',sep='')))
 	}
-	else if(modclass =='ANILmultinom')#08Mar2017 We are not supporting this right now. This is crashing the C# app.
+	else if('multinom' %in% modclass)#08Mar2017 We are not supporting this right now. This is crashing the C# app.
 	{ 
 		## StackOverflow error in C#
 		modelvars <- eval( parse( text=paste( 'unlist(strsplit( as.character(',modelname,'$call[[2]])[3], "[+]" ))', collapse='', sep='') ) )
@@ -381,8 +383,32 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	####### CHECK IF CURRENT DATASET AND THE DATASET USED FOR CREATING THE MODEL ARE SAME OR NOT. THEY MUST BE SAME. ########
 	if(datasetSameCheck && modclass != "train")
 	{
-		modsname = eval( parse(text=paste(modelname,'$call$data',collapse='',sep=''))) 
-		deparseddsname = deparse(modsname)
+		#We set the attribute datasetName only on models of class lm
+		#Models of class glm also list lm in the class	
+		#Note models of glm will also have class lm
+		# if ( "lm" %in% modclass)
+		# {
+			# #We only set this attribute for models of class lm and not models that have class lm and glm
+			# modsname <- eval(parse(text=paste('attr(',modelname,',"datasetName")', sep='')))
+			# # modsname will be null if its a model of type glm
+			# #hence this code will not overwite data unnecessarily for glm
+			# if (!is.null(modsname))
+			# {
+			# eval( parse(text=paste('.GlobalEnv$', modelname,'$call$data', '<-', modsname, collapse='',sep='')))
+			# }
+			# deparseddsname = modsname
+		# }
+		# #This is the case when the attribute is not defined
+		# if (is.null(modsname))
+		# {
+		# modsname = eval( parse(text=paste(modelname,'$call$data',collapse='',sep='')))
+		# deparseddsname = deparse(modsname)			
+			
+		# }
+		
+		modsname = eval( parse(text=paste(modelname,'$call$data',collapse='',sep='')))
+		deparseddsname = deparse(modsname)	
+		
 		##modeldataset = ExtractDatasetNameFromGlobal(deparseddsname)
 		dsmsg=character(0)
 		

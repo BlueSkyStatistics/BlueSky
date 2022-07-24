@@ -26,8 +26,12 @@ predictPrerequisite <-function (modelname, curdatasetname)
     }
     successMsg1 = "SUCCESS: The predictor variables that the model requires for scoring are available in the dataset."
     successMsg2 = ""
-    failureMsg1 = "ERROR: The predictor variables that the model requires for scoring are not available in the dataset. [ "
-    failureMsg2 = " variables are not found ]."
+    #failureMsg1 = "ERROR: The predictor variables that the model requires for scoring are not available in the dataset. [ "
+    #failureMsg2 = " variables are not found ]."
+	
+	failureMsg1 = "ERROR: The predictor variables that the model requires for scoring are not available in the current dataset. \nOne or more of the variables [ "
+    failureMsg2 = "  ] are not found."
+	
     modelselmsg = paste0("\n -Currently selected model:  ", modelname, 
         sep = "")
     modelclasmsg = paste0("\n -Model Class:  ", modclass, sep = "")
@@ -97,8 +101,10 @@ predictPrerequisiteCP <-function (modelname, curdatasetname)
     }
     successMsg1 = "SUCCESS: The predictor variables that the model requires for scoring are available in the dataset."
     successMsg2 = ""
-    failureMsg1 = "ERROR: The predictor variables that the model requires for scoring are not available in the dataset. [ "
-    failureMsg2 = " variables are not found ]."
+	
+	failureMsg1 = "ERROR: The predictor variables that the model requires for scoring are not available in the current dataset. \nOne or more of the variables [ "
+    failureMsg2 = "  ] are not found."
+	
     modelselmsg = paste0("\n -Currently selected model:  ", modelname, 
         sep = "")
     modelclasmsg = paste0("\n -Model Class:  ", modclass, sep = "")

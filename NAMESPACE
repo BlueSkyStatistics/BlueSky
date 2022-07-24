@@ -241,3 +241,4 @@ export(BSkyIsDateValid)
 export(rk.describe.alternative)
 
 export(BSkyprint.dist)
+export(BSkyStripNumberVariableNames)

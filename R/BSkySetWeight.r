@@ -28,7 +28,7 @@ BSkySetWeight <- function( weights, data, newdata)
 	}
 	else
 	{
-		errorMsg1 =paste("ERROR: There are missing values (NAs) in the weighted variable ", weights, "\n please corect this and rerun. See Variables->Missing Values for options for handling missing values", sep="", collapse="")
+		errorMsg1 =paste("ERROR: There are missing values (NAs) in the weighted variable ", weights, "\n please correct this and rerun. See Variables->Missing Values for options for handling missing values", sep="", collapse="")
 		cat(errorMsg1)
 		return(FALSE)
 	}
