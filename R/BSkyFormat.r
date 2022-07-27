@@ -2752,13 +2752,14 @@ BSkyWriteKableHtmlOutput <- function(fileName, fileOpenMode = "a", bSkyDebug = 1
 }
 
 #21May2021. 
+#27Jul2022
 BSkyGetPvalueDisplaySetting <- function()
 {
 	if(!exists("pValueDisplayColumnDataAlignment", env=uadatasets.sk))
 	{
 		if(!exists("showActualPValueInOutput", env=uadatasets.sk))
 		{
-			uadatasets.sk$showActualPValueInOutput = FALSE
+			uadatasets.sk$showActualPValueInOutput = TRUE
 		}
 		uadatasets.sk$pvalueDropAsterisk = FALSE
 		uadatasets.sk$pValueDisplayColumnHeaderAlignment = "c"
