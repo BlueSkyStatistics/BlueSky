@@ -1,3 +1,9 @@
+# The mcnemar test is run for a 2*2 matrix of counts. If a 2*2 matrix is not generated, extensions of the traditional Mcnemars test are used
+
+# Anova table is not generated as there are no predictors. 
+
+
+
 ############################################################
 #Documentation of how drop.unused.levels in crosstable works
 ############################################################
@@ -1146,7 +1152,8 @@ newcreateglobalcrosstab<-function(xtab.dim.orig, crosstab.2D.return.obj,expected
 	{
 		if (is.null(uatablestats$fisher.ts$p.value))uadatasets$retstructure[[2]]$datatable=rbind(uadatasets$retstructure[[2]]$datatable, c( NA,NA,NA,NA,NA,NA))
 		else
-		uadatasets$retstructure[[2]]$datatable=rbind(uadatasets$retstructure[[2]]$datatable, c( NA, NA, uatablestats$fisher.ts$p.value,uatablestats$fisher.ts$estimate,uatablestats$fisher.ts$conf.int[1],uatablestats$fisher.ts$conf.int[2] ))
+		#uadatasets$retstructure[[2]]$datatable=rbind(uadatasets$retstructure[[2]]$datatable, c( NA, NA, uatablestats$fisher.ts$p.value,uatablestats$fisher.ts$estimate,uatablestats$fisher.ts$conf.int[1],uatablestats$fisher.ts$conf.int[2] ))
+		uadatasets$retstructure[[2]]$datatable=rbind(uadatasets$retstructure[[2]]$datatable, c( NA, NA, uatablestats$fisher.ts$p.value,NA,NA,NA ))
 		#uadatasets$retstructure[[2]]$datatable=rbind(uadatasets$retstructure[[2]]$datatable, c( NA,NA,NA,NA,NA,NA))
 	}
 	
@@ -1782,6 +1789,8 @@ first.time=1
 				return(ua.CT)
 			}
 			noNonEmptyTables=noNonEmptyTables+1
+			numberOfRows =nrow(uaretstructure$uatforstats)
+				numberOfCols =ncol(uaretstructure$uatforstats)
 				if (any(dim(uaretstructure$uatforstats) < 2)) 
 				{
 					#The original code is below
@@ -1805,34 +1814,54 @@ first.time=1
 						expected=FALSE
 					}
 					prop.chisq <- chisq <-  fisher <- mcnemar<-asresid <-resid<-sresid<- FALSE
-				}
-				if (any(dim(uaretstructure$uatforstats) != 2))
+				} else if (numberOfRows != numberOfCols)
+				#If its not a square matrix you cannot run Mcnemar's test
 				{
-					if (orimcnemar)
-					{
+				if (orimcnemar)
+				{
 						#BSkyfootermsg =sprintf("Mcnemar test cannot be run as %s and %s are constants",names(dimnames(t))[1],names(dimnames(t))[2])
 						#BSkyfootermsg =paste("Mcnemar test cannot be run as %s and %s are constants",)
 						#BSkyfootermsg ="McNemar test cannot be run as row variable and column variables don't create a 2x2 table";
 						
 						if (layerinfo =="")
-						BSkyfootermsg <-"McNemar test cannot be run as row variables and column variables don't create a 2x2 table"
+						BSkyfootermsg <-"McNemar test cannot be run as row variables and column variables don't create a square table"
 						else
-						BSkyfootermsg <-paste ("McNemar test cannot be run as row variables and column variables don't create a 2x2 table for the following values in the layer variables:-", paste (layerinfo, collapse=","))
-						uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
+						BSkyfootermsg <-paste ("McNemar test cannot be run as row variables and column variables don't create a square table for the following values in the layer variables:-", paste (layerinfo, collapse=","))
+						uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))			
 					}
-					if (orifisher)
-					{
-						# BSkyfootermsg =sprintf("Mcnemar test cannot be run as %s and %s are constants",names(dimnames(t))[1],names(dimnames(t))[2])
-						#BSkyfootermsg ="Fisher test cannot be run as row variable  and column variable  don't create a 2x2 table";
+					mcnemar<-FALSE
+				}
+				
+				#Added ny Aaron 08/10/2022
+				##The old code is commented below
+				
+				# if (any(dim(uaretstructure$uatforstats) != 2))
+				# {
+					# if (orimcnemar)
+					# {
+						# #BSkyfootermsg =sprintf("Mcnemar test cannot be run as %s and %s are constants",names(dimnames(t))[1],names(dimnames(t))[2])
+						# #BSkyfootermsg =paste("Mcnemar test cannot be run as %s and %s are constants",)
+						# #BSkyfootermsg ="McNemar test cannot be run as row variable and column variables don't create a 2x2 table";
 						
-						if (layerinfo=="")
-						BSkyfootermsg <-"Fisher test cannot be run as row variables and column variables don't create a 2x2 table"
-						else
-						BSkyfootermsg <-paste ("Fisher test cannot be run as row variables and column variables don't create a 2x2 table for the following values in the layer variables:-", paste (layerinfo, collapse=","))
-						uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
-					}
-					fisher <- mcnemar<-FALSE
-				}	
+						# if (layerinfo =="")
+						# BSkyfootermsg <-"McNemar test cannot be run as row variables and column variables don't create a 2x2 table"
+						# else
+						# BSkyfootermsg <-paste ("McNemar test cannot be run as row variables and column variables don't create a 2x2 table for the following values in the layer variables:-", paste (layerinfo, collapse=","))
+						# uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
+					# }
+					# if (orifisher)
+					# {
+						# # BSkyfootermsg =sprintf("Mcnemar test cannot be run as %s and %s are constants",names(dimnames(t))[1],names(dimnames(t))[2])
+						# #BSkyfootermsg ="Fisher test cannot be run as row variable  and column variable  don't create a 2x2 table";
+						
+						# if (layerinfo=="")
+						# BSkyfootermsg <-"Fisher test cannot be run as row variables and column variables don't create a 2x2 table"
+						# else
+						# BSkyfootermsg <-paste ("Fisher test cannot be run as row variables and column variables don't create a 2x2 table for the following values in the layer variables:-", paste (layerinfo, collapse=","))
+						# uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
+					# }
+					# fisher <- mcnemar<-FALSE
+				# }	
 				
 				
 			
@@ -1892,16 +1921,18 @@ first.time=1
 
 			if (fisher) {
 						ua.FTt <- fisher.test(uaretstructure$uatforstats, alternative = "two.sided")
-						 if (all(dim(uaretstructure$uatforstats) == 2)) {
+						#Added by Aaron 08/11/2022
+						 #if (all(dim(uaretstructure$uatforstats) == 2)) {
 								ua.FTl <- fisher.test(uaretstructure$uatforstats, alternative = "less")
 								ua.FTg <- fisher.test(uaretstructure$uatforstats, alternative = "greater")
-				}
+				#}
 					}
 
 			if (mcnemar) {
 				#Commented by Aaron 10/21/2018
 				#ua.McN <- mcnemar.test(uaretstructure$uatforstats, correct = FALSE)
-				 if (all(dim(uaretstructure$uatforstats) == 2)) 
+				#Commented by Aaron 08/11/2022
+				 #if (all(dim(uaretstructure$uatforstats) == 2)) 
 							ua.McNc <- mcnemar.test(uaretstructure$uatforstats, correct = TRUE)
 					}
 
@@ -2040,36 +2071,49 @@ first.time=1
 										}
 			
 									}
-									
-							if (fisher) 
-									 ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = ua.FTl, fisher.gt = ua.FTg))
-								if (mcnemar)
-									ua.CT <- c(ua.CT, list(mcnemar = ua.McNc))
+							
+					
+							#Commented by Aaron 08/11/2022
+							#if (fisher) 
+							#		 ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = ua.FTl, fisher.gt = ua.FTg))
+							#	if (mcnemar)
+							#		ua.CT <- c(ua.CT, list(mcnemar = ua.McNc))
 									#ua.CT <- c(ua.CT, list(mcnemar = ua.McN, mcnemar.corr = ua.McNc))
 						}
 						else {
 							 
+							#Added by Aaron 08/11/2022
+							if (fisher) 
+								 ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = ua.FTl, fisher.gt = ua.FTg))
+							#Added by Aaron 08/11/2022 
+							if (mcnemar)
+									ua.CT <- c(ua.CT, list(mcnemar = ua.McNc))
 							
 							 if (chisq) 
-									ua.CT <- c(ua.CT, list(chisq = ua.CST))
+									ua.CT <- c(ua.CT, list(chisq = ua.CST, OR = NA, lower.OR =NA, upper.OR =NA))
 								#We ran a fisher test only if all Dimensions =2
-								if (fisher)
-								{
-									if (layerinfo=="") warning("Fisher test cannot be run as a 2x2 table is not generated")
-									else
-									warning(paste("Fisher test cannot be run as a 2x2 table is not generated for the following values in the layer variables:-", paste (layerinfo, collapse=", ")))
-								}
+								
+								## 08/11/2022
+								## Commented code below as fisher is run
+								#if (fisher)
+								#{
+								#	if (layerinfo=="") warning("Fisher test cannot be run as a 2x2 table is not generated")
+								#	else
+								#	warning(paste("Fisher test cannot be run as a 2x2 table is not generated for the following values in the layer variables:-", paste (layerinfo, collapse=", ")))
+								#}
 								#	ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt))
 								#Commented by Aaron 10/21/2018
 								#McNemar does not work under the condition that its not a 2 by 2 table
-								if (mcnemar) 
-								{
-								if (layerinfo=="") warning("McNemar test cannot be run, McNemar's test requires a 2x2 table ")
 								
-								else
-									warning(paste("McNemar test cannot be run as a 2x2 table is not generated for the following values in the layer variables:-", paste (layerinfo, collapse=", ")))
+								#Aaron commented this 08/11/2022
+								#if (mcnemar) 
+								#{
+								#if (layerinfo=="") warning("McNemar test cannot be run, McNemar's test requires a 2x2 table ")
 								
-								}
+								#else
+								#	warning(paste("McNemar test cannot be run as a 2x2 table is not generated for the following values in the layer variables:-", paste (layerinfo, collapse=", ")))
+								
+								#}
 								#ua.CT <- c(ua.CT, list(mcnemar = ua.McN))
 									
 						}
