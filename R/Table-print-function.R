@@ -4045,7 +4045,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	stripped_data = data
 	statFunctionList = stats
 	
-	if(trimws(additionalStats) == "") additionalStats = c()
+	if(length(additionalStats) > 0 && trimws(additionalStats) == "") additionalStats = c()
 	
 	if(!is.null(data))
 	{

@@ -396,6 +396,8 @@ UAloadSPSSinDataFrame.haven <- function(SPSSfileName, datasetname, replace=FALSE
 			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
 			for(i in 1:colcount)
 			{
+				eval(parse(text=paste('colnames(','.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+
 				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']',sep='')))
 				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')',sep='')))
 

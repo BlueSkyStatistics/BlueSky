@@ -66,6 +66,9 @@ BSkyReadWithRio <- function(dataFilename, datasetname, replace=FALSE, encoding=N
 			colcount = eval(parse(text=paste('ncol(',datasetname,')')))
 			for(i in 1:colcount)
 			{
+				##special char in col name are converted
+				eval(parse(text=paste('colnames(','.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+
 				coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
 				colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
 

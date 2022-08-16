@@ -959,12 +959,12 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
             if (rdatatype == "character") {
                 pval <- list(newcolname, rdatatype, newcolname,
                   "", "none", "Left", "String", FALSE, 4, 0,
-                  8, "Input")
+                  8, "Input", "")
             }
             else if (rdatatype == "double") {
                 pval <- list(newcolname, rdatatype, newcolname,
                   "", "none", "Left", "Scale", FALSE, 4, 0, 8,
-                  "Input")
+                  "Input", "")
             }
 			 else if (rdatatype == "POSIXct") {
                 pval <- list(newcolname, rdatatype, newcolname,
@@ -975,14 +975,14 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
 			{
 			pval <- list(newcolname, rdatatype, newcolname,
 							  "", "none", "Left", "Nominal", FALSE, 4, 0, 8,
-							  "Input")
+							  "Input", "")
 			}
 			#Added by Aaron 06/25/2020 passed Ordinal below
 			else if (rdatatype == "ordered")
 			{
 			pval <- list(newcolname, rdatatype, newcolname,
 							  "", "none", "Left", "Ordinal", FALSE, 4, 0, 8,
-							  "Input")
+							  "Input", "")
 			}
             rowlist <- ""
             datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
@@ -1003,6 +1003,7 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                   vlbls <- eval(parse(text = paste("c(", newcolname,
                     " = newcolname)")))
                   BkupObj <- BSkyDatasetLevelAttributeBackup(datasetname)
+				eval(parse(text=paste('bkupattr <- attributes(',datasetname,')', sep='')))
  ##Added by Aaron 06/23/2020
  #newcolindex is passed to the function and indicated the position to insert
                   if ((newcolindex > 0) || (newcolindex <= cols)) {
@@ -1059,11 +1060,15 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                         strasfact, ")[, c(1:(", n, "-1), (",
                         max, "+1), ", n, ":", max, " )]", sep = "")))
                     }
+
+					eval(parse(text=paste('attributes(',datasetname,') = bkupattr', sep='')))
+					
                     eval(parse(text = paste("names(", datasetname,
                       ") <- c(newcolnames)", sep = "")))
                   }
                   i = 1
                   for (prop in props) {
+					print(prop)
                     UAsetColProperties(dataSetNameOrIndex = datasetname,
                       colNameOrIndex = newcolname, propertyName = prop,
                       propertyValue = pval[[i]], mistype = "none",
@@ -1078,6 +1083,8 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                     ")", sep = "")))
                   BSkyDatasetLevelAttributeRestore(datasetname,
                     BkupObj)
+
+					#eval(parse(text=paste('attributes(',datasetname,') = bkupobj2', sep='')))
                 }
                 else {
                   BSkyErrMsg = paste("BSkyAddVarRow: Col with that name already exists...",
@@ -1126,6 +1133,9 @@ BSkyDatasetLevelAttributeBackup <- function(datasetname)
 			#cat("\nmisvals stored.\t")
 			retobj$maxfactor <- eval(parse(text=paste('attr(',datasetname,',"maxfactor")')))
 			#cat("\nmaxfactor stored.\t")
+
+			### design class related attributes ###
+
 			return(retobj)
 }
 
