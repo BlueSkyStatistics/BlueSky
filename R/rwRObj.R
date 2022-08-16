@@ -141,6 +141,12 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 					eval( parse(text=paste( '.GlobalEnv$',datasetname,' <- as.data.frame(bsky.rdataname)' , sep=''   )))
 				}
 
+				##special char in col names are converted 
+				colcount <- eval(parse(text=paste('length(names(.GlobalEnv$',datasetname,'))', sep='' ))) #colcount = length(names(datasetname))
+				for( i in 1:colcount)
+				{
+					eval(parse(text=paste('names(','.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+				}
 				uadatasets$name <- c(uadatasets$name, datasetname)
 
 				#Creating extra attributes at column level
