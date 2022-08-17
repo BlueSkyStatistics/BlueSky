@@ -85,6 +85,7 @@ ReplaceSplChrsAndPrefixXForDigitInBegining <- function(anystring)
 	BSkyWarnMsg = paste("ReplaceSplChrsAndDigitInBegining: Warning  replace special characters : ",sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 
+	originstr = anystring #for comparison
 	logflag=FALSE
 	require(stringr) # for str_replace_all()
 	require(gdata) #for startsWith()
@@ -125,7 +126,13 @@ ReplaceSplChrsAndPrefixXForDigitInBegining <- function(anystring)
 		print(anystring)
 		cat('\n___________________________________________________________________')
 	}
+	if(anystring!=originstr)
+	{
+		message = paste("NOTE: The variable name ",originstr, " has one or more special characters that have been replaced by _")
+		cat(message)
+	}
 	BSkyFunctionWrapUp()
+	
 	invisible(anystring)
 }
 
