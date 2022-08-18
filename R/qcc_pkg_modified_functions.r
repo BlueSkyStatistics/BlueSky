@@ -308,11 +308,13 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
 test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test2 = TRUE, k.run.same.side = 9, 
                                         test3 = FALSE, k.run.increase.decrease = 6, test4 = FALSE, k.run.alternating = 14,
 										test5 = FALSE, k.plusone.run.beyond.2dev = 2, test6 = FALSE, k.plusone.run.beyond.1dev = 4, 
-										test7 = FALSE, k.run.within.1dev = 15, test8 = FALSE, k.run.beyond.1dev = 8, either.side = TRUE)
+										test7 = FALSE, k.run.within.1dev = 15, test8 = FALSE, k.run.beyond.1dev = 8, either.side = TRUE, 
+										print = TRUE, digits = 4, debug = FALSE)
 {
-		if ((missing(object)) | (!inherits(object, "qcc"))) 
-			stop("an object of class `qcc' is required")
+		# if ((missing(object)) | (!inherits(object, "qcc"))) 
+			# stop("an object of class `qcc' is required")
 			
+		
 		type <- object$type
 		sizes <- object$sizes
 		std.dev <- object$std.dev
@@ -321,7 +323,9 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 		newstats <- object$newstats
 		statistics <- c(stats, newstats)
 		
-		violators = violating.runs.indices(object, beyond.kdev.one.point = one.point.k.stdv, run.length = k.run.same.side, 
+		violators = violating.runs.indices(object, test1=test1, test2= test2, test3=test3, test4= test4,
+												   test5=test5, test6= test6, test7=test7, test8= test8,
+												   beyond.kdev.one.point = one.point.k.stdv, run.length = k.run.same.side, 
 												   increase.decrease.run.length = k.run.increase.decrease,
 		                                           alternating.run.length = k.run.alternating, 
 												   beyond.plusone.2dev.run.length = k.plusone.run.beyond.2dev, 
@@ -329,235 +333,305 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 												   within.1dev.run.length = k.run.within.1dev, beyond.1dev.run.length = k.run.beyond.1dev,
 												   either.side = either.side)
 		
-		BSkyFormat("\nSelected tests performed for special causes in control charts")
+		selcted_tests_choices = c("Test 1", "Test 2", "Test 3", "Test 4", "Test 5", "Test 6", "Test 7", "Test 8")
+		selcted_tests = selcted_tests_choices[c(test1, test2, test3, test4, test5, test6, test7, test8)]
+		selected_test_str = paste(selcted_tests, collapse = ', ')
 		
-		###################
-		
-		if(test1)
+		if(print == TRUE)
 		{
-			BSkyFormat(paste("Test 1: One point more than", one.point.k.stdv, "σ from center line"))
-			if(length(violators$beyond.kdev.one.point.index) == 1)
+			if(length(selcted_tests) > 0)
 			{
-			  cat("\nonly sample", dimnames(violators$beyond.kdev.one.point.index)[[2]], ">",one.point.k.stdv,"standard deviation from the center line\n")
-			  BSkyFormat(violators$beyond.kdev.one.point.index)
+				BSkyFormat(paste("\nDetails for the selected tests (", selected_test_str ,") performed for special causes in control charts"))
 			}
-			else if(length(violators$beyond.kdev.one.point.index) == 0)
+			
+			###################
+			
+			if(test1)
 			{
-				cat("\nno sample found >",one.point.k.stdv,"standard deviation from the center line\n")
+				BSkyFormat(paste("Test 1: One point more than", one.point.k.stdv, "σ from center line"))
+				if(length(violators$beyond.kdev.one.point.index) == 1)
+				{
+				  cat("\nonly sample", dimnames(violators$beyond.kdev.one.point.index)[[2]], ">",one.point.k.stdv,"standard deviation from the center line\n")
+				  BSkyFormat(violators$beyond.kdev.one.point.index, decimalDigitsRounding = digits)
+				}
+				else if(length(violators$beyond.kdev.one.point.index) == 0)
+				{
+					cat("\nno sample found >",one.point.k.stdv,"standard deviation from the center line\n")
+				}
+				else
+				{
+					cat("\ninfo only: more than one sample found (", dimnames(violators$beyond.kdev.one.point.index)[[2]], ") >",one.point.k.stdv,"standard deviation from the center line\n")
+					BSkyFormat(violators$beyond.kdev.one.point.index, decimalDigitsRounding = digits)
+				}
+			}
+			
+			##################
+			
+			if(test2)
+			{
+				BSkyFormat(paste("Test 2:", k.run.same.side, "points in a row on the same side of the center line"))
+				if(length(violators$run.above.indices) > 0)
+				{
+					cat("\n",k.run.same.side, "points in a row above the center line - violating samples (", dimnames(violators$run.above.indices)[[2]], ")\n")
+					BSkyFormat(violators$run.above.indices, decimalDigitsRounding = digits)
+				}
+				
+				if(length(violators$run.below.indices) > 0)
+				{
+					cat("\n",k.run.same.side, "points in a row below the center line - violating samples (", dimnames(violators$run.below.indices)[[2]], ")\n")
+					BSkyFormat(violators$run.below.indices, decimalDigitsRounding = digits)
+				}
+				
+				if(length(violators$run.below.indices) == 0 && length(violators$run.below.indices) == 0)
+				{
+					cat("\n",k.run.same.side, "points in a row above or below the center line - no viaolating sample found\n")
+				}
+			}
+			 
+			
+			###############
+			
+			if(test3)
+			{
+				BSkyFormat(paste("Test 3:", k.run.increase.decrease, "points in a row, all increasing or all decreasing"))
+				if(length(violators$increase.decrease.run.indices) > 0)
+				{
+					cat("\n",k.run.increase.decrease, "points in a row, increasing or decreasing - violating samples (", dimnames(violators$increase.decrease.run.indices)[[2]], ")\n")
+					BSkyFormat(violators$increase.decrease.run.indices, decimalDigitsRounding = digits)
+				}
+				else
+				{
+					cat("\n",k.run.increase.decrease, "points in a row, increasing or decreasing - no violating sample found\n")
+				}
+			}
+			
+			############
+			
+			if(test4)
+			{
+				BSkyFormat(paste("Test 4:", k.run.alternating, "points in a row, alternating up and down"))
+				if(length(violators$alternate.run.indices) > 0)
+				{
+					cat("\n",k.run.alternating, "points in a row, alternating up and down - violating samples (", dimnames(violators$alternate.run.indices)[[2]], ")\n")
+					BSkyFormat(violators$alternate.run.indices, decimalDigitsRounding = digits) #, outputTableRenames = c(rep("",length(violators$alternate.run.indices))))
+				}
+				else
+				{
+					cat("\n",k.run.alternating, "points in a row, alternating up and down - no viaolating sample found\n")
+				}
+			}
+			
+			##################
+			
+			if(test5)
+			{
+				BSkyFormat(paste("Test 5:", k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points more than 2σ from the center line (same side)"))
+				if(length(violators$beyond.plusone.2dev.above.indices) > 0)
+				{
+					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.plusone.2dev.above.indices)[[2]], ")\n")
+					BSkyFormat(violators$beyond.plusone.2dev.above.indices, decimalDigitsRounding = digits)
+				}
+				
+				if(length(violators$beyond.plusone.2dev.below.indices) > 0)
+				{
+					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation below the center line  - violating samples (", dimnames(violators$beyond.plusone.2dev.below.indices)[[2]], ")\n")
+					BSkyFormat(violators$beyond.plusone.2dev.below.indices, decimalDigitsRounding = digits)
+				}
+				
+				if(length(violators$beyond.plusone.2dev.above.indices) == 0 && length(violators$beyond.plusone.2dev.below.indices) == 0)
+				{
+					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation above or below the center line  - no viaolating sample found\n")
+				}
+			}
+			
+			##################
+			
+			if(test6)
+			{
+				BSkyFormat(paste("Test 6:", k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points more than 1σ from the center line (same side)"))
+				if(length(violators$beyond.plusone.1dev.above.indices) > 0)
+				{
+					cat("\n",k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points > 1 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.plusone.1dev.above.indices)[[2]], ")\n")
+					BSkyFormat(violators$beyond.plusone.1dev.above.indices, decimalDigitsRounding = digits)
+				}
+				
+				if(length(violators$beyond.plusone.2dev.below.indices) > 0)
+				{
+					cat("\n",k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points > 1 standard deviation below the center line  - violating samples (", dimnames(violators$beyond.plusone.1dev.below.indices)[[2]], ")\n")
+					BSkyFormat(violators$beyond.plusone.1dev.below.indices, decimalDigitsRounding = digits)
+				}
+				
+				if(length(violators$beyond.plusone.1dev.above.indices) == 0 && length(violators$beyond.plusone.1dev.below.indices) == 0)
+				{
+					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 1 standard deviation above or below the center line  - no viaolating sample found\n")
+				}
+			}
+			
+			################## 
+			
+			if(test7)
+			{
+				if(either.side == TRUE)
+				{
+					BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1σ of center line (either side)"))
+					if(length(violators$within.1dev.above.indices) > 0)
+					{
+						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation on either side of the center line  - violating samples (", dimnames(violators$within.1dev.above.indices)[[2]], ")\n")
+						BSkyFormat(violators$within.1dev.above.indices, decimalDigitsRounding = digits)
+					}
+					
+					# if(length(violators$within.1dev.below.indices) > 0)
+					# {
+						# cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation below the center line  - violating samples (", dimnames(violators$within.1dev.below.indices)[[2]], ")\n")
+						# BSkyFormat(violators$within.1dev.below.indices)
+					# }
+					
+					if(length(violators$within.1dev.above.indices) == 0 && length(violators$within.1dev.below.indices) == 0)
+					{
+						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation above or below the center line  - no viaolating sample found\n")
+					}
+				}
+				else
+				{
+					BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1σ of center line (on the same side)"))
+					if(length(violators$within.1dev.above.indices) > 0)
+					{
+						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation above the center line  - violating samples (", dimnames(violators$within.1dev.above.indices)[[2]], ")\n")
+						BSkyFormat(violators$within.1dev.above.indices, decimalDigitsRounding = digits)
+					}
+					
+					if(length(violators$within.1dev.below.indices) > 0)
+					{
+						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation below the center line  - violating samples (", dimnames(violators$within.1dev.below.indices)[[2]], ")\n")
+						BSkyFormat(violators$within.1dev.below.indices, decimalDigitsRounding = digits)
+					}
+					
+					if(length(violators$within.1dev.above.indices) == 0 && length(violators$within.1dev.below.indices) == 0)
+					{
+						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation on either side of the center line  - no viaolating sample found\n")
+					}
+				}
+			}
+				
+			###################
+			
+			if(test8)
+			{
+				if(either.side == TRUE)
+				{
+					BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1σ from center line (either side)"))
+					if(length(violators$beyond.1dev.above.indices) > 0)
+					{
+						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation on either side of the center line  - violating samples (", dimnames(violators$beyond.1dev.above.indices)[[2]], ")\n")
+						BSkyFormat(violators$beyond.1dev.above.indices, decimalDigitsRounding = digits)
+					}
+					
+					# if(length(violators$beyond.1dev.below.indices) > 0)
+					# {
+						# cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation below the center line  - violating samples (", BSkyFormat(violators$beyond.1dev.below.indices)[[2]], ")\n")
+						# BSkyFormat(violators$beyond.1dev.below.indices)
+					# }
+					
+					if(length(violators$beyond.1dev.above.indices) == 0 && length(violators$beyond.1dev.below.indices) == 0)
+					{
+						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation on either side of the center line  - no viaolating sample found\n")
+					}
+				}
+				else
+				{
+					BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1σ from center line (on the same side)"))
+					if(length(violators$beyond.1dev.above.indices) > 0)
+					{
+						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.1dev.above.indices)[[2]], ")\n")
+						BSkyFormat(violators$beyond.1dev.above.indices, decimalDigitsRounding = digits)
+					}
+					
+					if(length(violators$beyond.1dev.below.indices) > 0)
+					{
+						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation below the center line  - violating samples (", BSkyFormat(violators$beyond.1dev.below.indices)[[2]], ")\n")
+						BSkyFormat(violators$beyond.1dev.below.indices, decimalDigitsRounding = digits)
+					}
+					
+					if(length(violators$beyond.1dev.above.indices) == 0 && length(violators$beyond.1dev.below.indices) == 0)
+					{
+						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation above or below the center line  - no viaolating sample found\n")
+					}
+				}
+			}
+		}
+	
+	
+		##############################################################################################
+		# preparing the indices for plot.qcc() to color orange (violating.runs) or red (beyond limits)
+		##############################################################################################
+		
+		statistics <- c(object$statistics, object$newstats)
+		beyond_limits <- as.numeric(names(statistics)[sort(beyond.limits(object, limits = object$limits))])
+		# BSkyFormat(beyond_limits)
+		# BSkyFormat(which(names(statistics) %in%beyond_limits))
+		
+		bl <- sort(beyond.limits(object, limits = object$limits))
+		#BSkyFormat(bl)
+		
+		# BSkyFormat(as.numeric(violators$combined_violation_indices))
+		# BSkyFormat(which(names(statistics) %in% violators$combined_violation_indices))
+		
+		vr_named_indices = sort(setdiff(as.numeric(violators$combined_violation_indices), beyond_limits))
+		vr <- sort(setdiff(as.numeric(which(names(statistics) %in% violators$combined_violation_indices)), bl))
+		
+		violations = list(beyond.limits = bl, beyond.limits.named.indices = beyond_limits, 
+							violating.runs = vr, 
+							violating.runs.named.indices = violators$combined_violation_indices)
+		
+		if(print == FALSE)
+		{
+			if(length(selcted_tests) > 0)
+			{
+				BSkyFormat(paste("Summary for the selected tests (", selected_test_str ,") performed for special causes in control charts"))
+			}
+			
+			if(length(beyond_limits) > 0)
+			{
+				cat("\nBeyond", object$nsigmas, "σ limits - violating samples (", beyond_limits, ")\n")
 			}
 			else
 			{
-				cat("\ninfo only: more than one sample found (", dimnames(violators$beyond.kdev.one.point.index)[[2]], ") >",one.point.k.stdv,"standard deviation from the center line\n")
-				BSkyFormat(violators$beyond.kdev.one.point.index)
-			}
-		}
-		
-		##################
-		
-		if(test2)
-		{
-			BSkyFormat(paste("Test 2:", k.run.same.side, "points in a row on the same side of the center line"))
-			if(length(violators$run.above.indices) > 0)
-			{
-				cat("\n",k.run.same.side, "points in a row above the center line - violating samples (", dimnames(violators$run.above.indices)[[2]], ")\n")
-				BSkyFormat(violators$run.above.indices)
+				cat("\nBeyond", object$nsigmas, "σ limits - no violating sample found\n")
 			}
 			
-			if(length(violators$run.below.indices) > 0)
+			if(length(selcted_tests) > 0)
 			{
-				cat("\n",k.run.same.side, "points in a row below the center line - violating samples (", dimnames(violators$run.below.indices)[[2]], ")\n")
-				BSkyFormat(violators$run.below.indices)
+				if(length(violators$combined_violation_indices) > 0)
+				{
+					cat("\nCombind sample indices from all special cause tests performed - violating samples (", violators$combined_violation_indices, ")\n")
+				}
+				else
+				{
+					cat("\nCombind sample indices from all special cause tests performed - no violating sample found\n")
+				}
 			}
 			
-			if(length(violators$run.below.indices) == 0 && length(violators$run.below.indices) == 0)
+			if(debug == TRUE)
 			{
-				cat("\n",k.run.same.side, "points in a row above or below the center line - no viaolating sample found\n")
+				cat("\n====for debug only====\n")
+				print(violations)
 			}
 		}
-		 
-		
-		###############
-		
-		if(test3)
-		{
-			BSkyFormat(paste("Test 3:", k.run.increase.decrease, "points in a row, all increasing or all decreasing"))
-			if(length(violators$increase.decrease.run.indices) > 0)
-			{
-				cat("\n",k.run.increase.decrease, "points in a row, increasing or decreasing - violating samples (", dimnames(violators$increase.decrease.run.indices)[[2]], ")\n")
-				BSkyFormat(violators$increase.decrease.run.indices)
-			}
-			else
-			{
-				cat("\n",k.run.increase.decrease, "points in a row, increasing or decreasing - no violating sample found\n")
-			}
-		}
-		
-		############
-		
-		if(test4)
-		{
-			BSkyFormat(paste("Test 4:", k.run.alternating, "points in a row, alternating up and down"))
-			if(length(violators$alternate.run.indices) > 0)
-			{
-				cat("\n",k.run.alternating, "points in a row, alternating up and down - violating samples are\n")
-				BSkyFormat(violators$alternate.run.indices, outputTableRenames = c(rep("",length(violators$alternate.run.indices))))
-			}
-			else
-			{
-				cat("\n",k.run.alternating, "points in a row, alternating up and down - no viaolating sample found\n")
-			}
-		}
-		
-		##################
-		
-		if(test5)
-		{
-			BSkyFormat(paste("Test 5:", k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points more than 2σ from the center line (same side)"))
-			if(length(violators$beyond.plusone.2dev.above.indices) > 0)
-			{
-				cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.plusone.2dev.above.indices)[[2]], ")\n")
-				BSkyFormat(violators$beyond.plusone.2dev.above.indices)
-			}
-			
-			if(length(violators$beyond.plusone.2dev.below.indices) > 0)
-			{
-				cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation below the center line  - violating samples (", dimnames(violators$beyond.plusone.2dev.below.indices)[[2]], ")\n")
-				BSkyFormat(violators$beyond.plusone.2dev.below.indices)
-			}
-			
-			if(length(violators$beyond.plusone.2dev.above.indices) == 0 && length(violators$beyond.plusone.2dev.below.indices) == 0)
-			{
-				cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation above or below the center line  - no viaolating sample found\n")
-			}
-		}
-		
-		##################
-		
-		if(test6)
-		{
-			BSkyFormat(paste("Test 6:", k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points more than 1σ from the center line (same side)"))
-			if(length(violators$beyond.plusone.1dev.above.indices) > 0)
-			{
-				cat("\n",k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points > 1 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.plusone.1dev.above.indices)[[2]], ")\n")
-				BSkyFormat(violators$beyond.plusone.1dev.above.indices)
-			}
-			
-			if(length(violators$beyond.plusone.2dev.below.indices) > 0)
-			{
-				cat("\n",k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points > 1 standard deviation below the center line  - violating samples (", dimnames(violators$beyond.plusone.1dev.below.indices)[[2]], ")\n")
-				BSkyFormat(violators$beyond.plusone.1dev.below.indices)
-			}
-			
-			if(length(violators$beyond.plusone.1dev.above.indices) == 0 && length(violators$beyond.plusone.1dev.below.indices) == 0)
-			{
-				cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 1 standard deviation above or below the center line  - no viaolating sample found\n")
-			}
-		}
-		
-		################## 
-		
-		if(test7)
-		{
-			if(either.side == TRUE)
-			{
-				BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1σ of center line (either side)"))
-				if(length(violators$within.1dev.above.indices) > 0)
-				{
-					cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation on either side of the center line  - violating samples (", dimnames(violators$within.1dev.above.indices)[[2]], ")\n")
-					BSkyFormat(violators$within.1dev.above.indices)
-				}
-				
-				# if(length(violators$within.1dev.below.indices) > 0)
-				# {
-					# cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation below the center line  - violating samples (", dimnames(violators$within.1dev.below.indices)[[2]], ")\n")
-					# BSkyFormat(violators$within.1dev.below.indices)
-				# }
-				
-				if(length(violators$within.1dev.above.indices) == 0 && length(violators$within.1dev.below.indices) == 0)
-				{
-					cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation above or below the center line  - no viaolating sample found\n")
-				}
-			}
-			else
-			{
-				BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1σ of center line (on the same side)"))
-				if(length(violators$within.1dev.above.indices) > 0)
-				{
-					cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation above the center line  - violating samples (", dimnames(violators$within.1dev.above.indices)[[2]], ")\n")
-					BSkyFormat(violators$within.1dev.above.indices)
-				}
-				
-				if(length(violators$within.1dev.below.indices) > 0)
-				{
-					cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation below the center line  - violating samples (", dimnames(violators$within.1dev.below.indices)[[2]], ")\n")
-					BSkyFormat(violators$within.1dev.below.indices)
-				}
-				
-				if(length(violators$within.1dev.above.indices) == 0 && length(violators$within.1dev.below.indices) == 0)
-				{
-					cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation on either side of the center line  - no viaolating sample found\n")
-				}
-			}
-		}
-			
-		###################
-		
-		if(test8)
-		{
-			if(either.side == TRUE)
-			{
-				BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1σ from center line (either side)"))
-				if(length(violators$beyond.1dev.above.indices) > 0)
-				{
-					cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation on either side of the center line  - violating samples (", dimnames(violators$beyond.1dev.above.indices)[[2]], ")\n")
-					BSkyFormat(violators$beyond.1dev.above.indices)
-				}
-				
-				# if(length(violators$beyond.1dev.below.indices) > 0)
-				# {
-					# cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation below the center line  - violating samples (", BSkyFormat(violators$beyond.1dev.below.indices)[[2]], ")\n")
-					# BSkyFormat(violators$beyond.1dev.below.indices)
-				# }
-				
-				if(length(violators$beyond.1dev.above.indices) == 0 && length(violators$beyond.1dev.below.indices) == 0)
-				{
-					cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation on either side of the center line  - no viaolating sample found\n")
-				}
-			}
-			else
-			{
-				BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1σ from center line (on the same side)"))
-				if(length(violators$beyond.1dev.above.indices) > 0)
-				{
-					cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.1dev.above.indices)[[2]], ")\n")
-					BSkyFormat(violators$beyond.1dev.above.indices)
-				}
-				
-				if(length(violators$beyond.1dev.below.indices) > 0)
-				{
-					cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation below the center line  - violating samples (", BSkyFormat(violators$beyond.1dev.below.indices)[[2]], ")\n")
-					BSkyFormat(violators$beyond.1dev.below.indices)
-				}
-				
-				if(length(violators$beyond.1dev.above.indices) == 0 && length(violators$beyond.1dev.below.indices) == 0)
-				{
-					cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation above or below the center line  - no viaolating sample found\n")
-				}
-			}
-		}
-			
-	return(invisible())
+
+	return(invisible(violations))
 }
 
 
-violating.runs.indices <- function (object, beyond.kdev.one.point = 3, run.length = 9, increase.decrease.run.length = 6, 
-									alternating.run.length = 14, beyond.plusone.2dev.run.length = 2, beyond.plusone.1dev.run.length = 4,
-									within.1dev.run.length = 15, beyond.1dev.run.length = 8, either.side = TRUE)
+violating.runs.indices <- function (object, test1 = TRUE, beyond.kdev.one.point = 3, test2 = TRUE, run.length = 9, 
+									test3 = TRUE, increase.decrease.run.length = 6, test4 = TRUE, alternating.run.length = 14, 
+									test5 = TRUE, beyond.plusone.2dev.run.length = 2, test6 = TRUE, beyond.plusone.1dev.run.length = 4,
+									test7 = TRUE, within.1dev.run.length = 15, test8 = TRUE, beyond.1dev.run.length = 8, either.side = TRUE)
 {
     
-	if ((missing(object)) | (!inherits(object, "qcc"))) 
-			stop("an object of class `qcc' is required")
-			
+	# if ((missing(object)) | (!inherits(object, "qcc"))) 
+			# stop("an object of class `qcc' is required")
+	
+	combined_violation_indices = c()
 	violators <- list()
 	
 	type = object$type
@@ -569,381 +643,523 @@ violating.runs.indices <- function (object, beyond.kdev.one.point = 3, run.lengt
 	# Test 1: One point more than 3σ from center line
 	################################################################################################
 
-	conf = beyond.kdev.one.point
-	limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
-					sizes = object$sizes, conf = conf))
-	lcl <- limits[, 1]
-	ucl <- limits[, 2]
-	index.above.ucl <- seq(along = statistics)[statistics > ucl]
-	index.below.lcl <- seq(along = statistics)[statistics < lcl]
-	#violators$beyond.kdev.one.point.index = names(statistics)[c(index.above.ucl,index.below.lcl)]
-	violators$beyond.kdev.one.point.index = matrix(statistics[c(index.above.ucl,index.below.lcl)], nrow =1)
-	dimnames(violators$beyond.kdev.one.point.index)[[2]] = names(statistics)[c(index.above.ucl,index.below.lcl)]
-	dimnames(violators$beyond.kdev.one.point.index)[[1]] = "sample value"
+	if(test1)
+	{
+		conf = beyond.kdev.one.point
+		limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
+						sizes = object$sizes, conf = conf))
+		lcl <- limits[, 1]
+		ucl <- limits[, 2]
+		index.above.ucl <- seq(along = statistics)[statistics > ucl]
+		index.below.lcl <- seq(along = statistics)[statistics < lcl]
+		#violators$beyond.kdev.one.point.index = names(statistics)[c(index.above.ucl,index.below.lcl)]
+		
+		above_below_indices = sort(c(index.above.ucl,index.below.lcl))
+		
+		if(length(above_below_indices) == 1)
+		{
+			combined_violation_indices = c(combined_violation_indices, names(statistics)[c(index.above.ucl,index.below.lcl)])
+		}
+		
+		# violators$beyond.kdev.one.point.index = matrix(statistics[c(index.above.ucl,index.below.lcl)], nrow =1)
+		# dimnames(violators$beyond.kdev.one.point.index)[[2]] = names(statistics)[c(index.above.ucl,index.below.lcl)]
+		# dimnames(violators$beyond.kdev.one.point.index)[[1]] = "sample value"
+		
+		
+		
+		violators$beyond.kdev.one.point.index = matrix(statistics[above_below_indices], nrow =1)
+		dimnames(violators$beyond.kdev.one.point.index)[[2]] = names(statistics)[above_below_indices]
+		dimnames(violators$beyond.kdev.one.point.index)[[1]] = "sample value"
+	}
 	
 	
 	# Test 2: Nine points in a row on the same side of the center line
     ################################################################################################
 
-    diffs <- statistics - center
-    diffs[diffs > 0] <- 1
-    diffs[diffs < 0] <- -1
-    runs <- rle(diffs)
-	
-    vruns <- rep(runs$lengths >= run.length, runs$lengths)
-    vruns.above <- (vruns & (diffs > 0))
-    vruns.below <- (vruns & (diffs < 0))
-    rvruns.above <- rle(vruns.above)
-    rvruns.below <- rle(vruns.below)
-	
-    vbeg.above <- cumsum(rvruns.above$lengths)[rvruns.above$values] -
-        (rvruns.above$lengths - run.length)[rvruns.above$values]
-    vend.above <- cumsum(rvruns.above$lengths)[rvruns.above$values]
-	
-    vbeg.below <- cumsum(rvruns.below$lengths)[rvruns.below$values] -
-        (rvruns.below$lengths - run.length)[rvruns.below$values]
-    vend.below <- cumsum(rvruns.below$lengths)[rvruns.below$values]
-	
-    
-	run.above.indices = numeric()
-	run.below.indices = numeric()
-	violators$run.above.indices = numeric()
-	violators$run.below.indices = numeric()
-	
-    if (length(vbeg.above)) 
+	if(test2)
 	{
-        for (i in 1:length(vbeg.above)) run.above.indices <- c(run.above.indices,
-            vbeg.above[i]:vend.above[i])
-    }
-	
-    if (length(vbeg.below)) 
-	{
-        for (i in 1:length(vbeg.below)) run.below.indices <- c(run.below.indices,
-            vbeg.below[i]:vend.below[i])
-    }
-	
-	#violators$run.above.indices = as.numeric(names(statistics)[violators$run.above.indices])
-	#violators$run.below.indices = as.numeric(names(statistics)[violators$run.below.indices])
-	
-	violators$run.above.indices = matrix(statistics[run.above.indices], nrow = 1)
-	dimnames(violators$run.above.indices)[[2]] = names(statistics)[run.above.indices]
-	dimnames(violators$run.above.indices)[[1]] = "sample value (above)"
-	
-	violators$run.below.indices = matrix(statistics[run.below.indices], nrow = 1)
-	dimnames(violators$run.below.indices)[[2]] = names(statistics)[run.below.indices]
-	dimnames(violators$run.below.indices)[[1]] = "sample value (below)"
+		diffs <- statistics - center
+		diffs[diffs > 0] <- 1
+		diffs[diffs < 0] <- -1
+		runs <- rle(diffs)
+		
+		vruns <- rep(runs$lengths >= run.length, runs$lengths)
+		vruns.above <- (vruns & (diffs > 0))
+		vruns.below <- (vruns & (diffs < 0))
+		rvruns.above <- rle(vruns.above)
+		rvruns.below <- rle(vruns.below)
+		
+		vbeg.above <- cumsum(rvruns.above$lengths)[rvruns.above$values] -
+			(rvruns.above$lengths - run.length)[rvruns.above$values]
+		vend.above <- cumsum(rvruns.above$lengths)[rvruns.above$values]
+		
+		vbeg.below <- cumsum(rvruns.below$lengths)[rvruns.below$values] -
+			(rvruns.below$lengths - run.length)[rvruns.below$values]
+		vend.below <- cumsum(rvruns.below$lengths)[rvruns.below$values]
+		
+		
+		run.above.indices = numeric()
+		run.below.indices = numeric()
+		violators$run.above.indices = numeric()
+		violators$run.below.indices = numeric()
+		
+		if (length(vbeg.above)) 
+		{
+			for (i in 1:length(vbeg.above)) run.above.indices <- c(run.above.indices,
+				vbeg.above[i]:vend.above[i])
+		}
+		
+		if (length(vbeg.below)) 
+		{
+			for (i in 1:length(vbeg.below)) run.below.indices <- c(run.below.indices,
+				vbeg.below[i]:vend.below[i])
+		}
+		
+		#violators$run.above.indices = as.numeric(names(statistics)[violators$run.above.indices])
+		#violators$run.below.indices = as.numeric(names(statistics)[violators$run.below.indices])
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[run.above.indices])
+		
+		violators$run.above.indices = matrix(statistics[run.above.indices], nrow = 1)
+		dimnames(violators$run.above.indices)[[2]] = names(statistics)[run.above.indices]
+		dimnames(violators$run.above.indices)[[1]] = "sample value (above)"
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[run.below.indices])
+		
+		violators$run.below.indices = matrix(statistics[run.below.indices], nrow = 1)
+		dimnames(violators$run.below.indices)[[2]] = names(statistics)[run.below.indices]
+		dimnames(violators$run.below.indices)[[1]] = "sample value (below)"
+	}
 	
 	
 	# Test 3: Six points in a row, all increasing or all decreasing
 	################################################################################################
-	start.point.padded.statistics = c(0, statistics)
-	diffs = diff(start.point.padded.statistics)
-	diffs[(diffs > 0 | diffs == 0)]<- 1
-	diffs[diffs < 0] <- -1
-	runs <- rle(diffs)
-	increase.decrease.runs <- rep(runs$lengths >= increase.decrease.run.length, runs$lengths)
 	
-	#violators$increase.decrease.run.indices = as.numeric(names(statistics)[c(increase.decrease.runs)])
-	violators$increase.decrease.run.indices = matrix(statistics[increase.decrease.runs], nrow = 1)
-	dimnames(violators$increase.decrease.run.indices)[[2]] = names(statistics)[increase.decrease.runs]
-	dimnames(violators$increase.decrease.run.indices)[[1]] = "sample value"
+	if(test3)
+	{
+		start.point.padded.statistics = c(0, statistics)
+		diffs = diff(start.point.padded.statistics)
+		diffs[(diffs > 0 | diffs == 0)]<- 1
+		diffs[diffs < 0] <- -1
+		runs <- rle(diffs)
+		
+		#increase.decrease.runs <- rep(runs$lengths >= (increase.decrease.run.length-1), runs$lengths)
+		
+		increase.decrease.runs = logical()
+		
+		if(length(runs$lengths) > 0)
+		{
+			for(x in 1:length(runs$lengths))
+			{
+				if(runs$lengths[x] >= (increase.decrease.run.length-1))
+				{
+					increase.decrease.runs = c(increase.decrease.runs, c(rep(FALSE, (increase.decrease.run.length-2))))
+					increase.decrease.runs = c(increase.decrease.runs, c(rep(TRUE, (runs$lengths[x] - (increase.decrease.run.length-2)))))
+				}
+				else 
+				{
+					increase.decrease.runs = c(increase.decrease.runs, rep(FALSE, runs$lengths[x]))
+				}
+			}
+		}
+		
+		
+		#violators$increase.decrease.run.indices = as.numeric(names(statistics)[c(increase.decrease.runs)])
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[increase.decrease.runs])
+		
+		violators$increase.decrease.run.indices = matrix(statistics[increase.decrease.runs], nrow = 1)
+		dimnames(violators$increase.decrease.run.indices)[[2]] = names(statistics)[increase.decrease.runs]
+		dimnames(violators$increase.decrease.run.indices)[[1]] = "sample value"
+	}
 
 
 	# Test 4: Fourteen points in a row, alternating up and down
 	#########################################################################################################
 	
-	start.point.padded.statistics = c(0, statistics)
-	diffs = diff(start.point.padded.statistics)
-	diffs[(diffs > 0 | diffs == 0)]<- 1
-	diffs[diffs < 0] <- -1
-	runs <- rle(diffs)
-	alternating.runs <- rep(runs$lengths >= 2, runs$lengths)
-	names(alternating.runs) = names(statistics)
-	alternating.runs.count = rle(alternating.runs)
-	names(alternating.runs.count$lengths) = cumsum(alternating.runs.count$lengths)
-	v.alternating.runs = alternating.runs.count$length[alternating.runs.count$length > alternating.run.length & alternating.runs.count$values == FALSE]
-	
-	violators$alternate.run.indices = list()
-	
-	if(length(v.alternating.runs))
+	if(test4)
 	{
-		for(i in 1: length(v.alternating.runs))
+		start.point.padded.statistics = c(statistics, (statistics[length(statistics)]+1) )
+		diffs = diff(start.point.padded.statistics)
+		diffs[(diffs > 0 | diffs == 0)]<- 1
+		diffs[diffs < 0] <- -1
+		runs <- rle(diffs)
+		
+		#alternating.runs1 <- rep(runs$lengths >= 2, runs$lengths)
+		
+		alternating.runs = logical()
+		
+		if(length(runs$lengths) > 0)
 		{
-			from.index = as.numeric(names(v.alternating.runs)[i]) - v.alternating.runs[i]
-			
-			if(from.index == 0) from.index = 1
-			
-			to.index = as.numeric(names(v.alternating.runs)[i])
-			
-			#violators$alternate.run.indices = c(violators$alternate.run.indices, list(as.numeric(names(statistics)[from.index:to.index])))
-			indices_matrix = matrix(statistics[from.index:to.index], nrow = 1)
-			dimnames(indices_matrix)[[2]] = names(statistics)[from.index:to.index]
-			dimnames(indices_matrix)[[1]] = "sample value"
-			violators$alternate.run.indices = c(violators$alternate.run.indices, list(indices_matrix))
+			for(x in 1:length(runs$lengths))
+			{
+				if(runs$lengths[x] >= 2)
+				{
+					alternating.runs = c(alternating.runs, FALSE)
+					alternating.runs = c(alternating.runs, c(rep(TRUE, (runs$lengths[x] - 1))))
+				}
+				else 
+				{
+					alternating.runs = c(alternating.runs, rep(FALSE, runs$lengths[x]))
+				}
+			}
 		}
+		
+		names(alternating.runs) = names(statistics)
+		
+		#BSkyFormat(rbind(alternating.runs,alternating.runs1))
+		
+		violators$alternate.run.indices = numeric()
+		alternate.run.indices = numeric()
+		
+		for(i in 1:length(alternating.runs))
+		{
+			if((i+ (alternating.run.length -2)) <= length(alternating.runs))
+			{
+				run.broken = FALSE
+				
+				for(j in i:(i+ (alternating.run.length -2)))
+				{
+					if(alternating.runs[j] == TRUE)
+					{
+						run.broken = TRUE
+					}
+				}
+				
+				if(run.broken == FALSE)
+				{
+					alternate.run.indices = c(alternate.run.indices, (i+ (alternating.run.length -1)))
+				}
+			}
+		}
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[alternate.run.indices])
+		
+		violators$alternate.run.indices = matrix(statistics[alternate.run.indices], nrow = 1)
+		dimnames(violators$alternate.run.indices)[[2]] = names(statistics)[alternate.run.indices]
+		dimnames(violators$alternate.run.indices)[[1]] = "sample value"
+		
+		
+		# alternating.runs.count = rle(alternating.runs)
+		# names(alternating.runs.count$lengths) = cumsum(alternating.runs.count$lengths)
+		# v.alternating.runs = alternating.runs.count$length[(alternating.runs.count$length > (alternating.run.length)) & alternating.runs.count$values == FALSE]
+		
+		# violators$alternate.run.indices = list()
+		
+		# if(length(v.alternating.runs))
+		# {
+			# for(i in 1: length(v.alternating.runs))
+			# {
+				# from.index = as.numeric(names(v.alternating.runs)[i]) - v.alternating.runs[i]
+				
+				# if(from.index == 0) from.index = 1
+				
+				# to.index = as.numeric(names(v.alternating.runs)[i])
+				
+				# #violators$alternate.run.indices = c(violators$alternate.run.indices, list(as.numeric(names(statistics)[from.index:to.index])))
+				
+				# combined_violation_indices = c(combined_violation_indices, names(statistics)[from.index:to.index])
+				
+				# indices_matrix = matrix(statistics[from.index:to.index], nrow = 1)
+				# dimnames(indices_matrix)[[2]] = names(statistics)[from.index:to.index]
+				# dimnames(indices_matrix)[[1]] = "sample value"
+				# violators$alternate.run.indices = c(violators$alternate.run.indices, list(indices_matrix))
+			# }
+		# }
 	}
 
 	# Test 5: Two out of three points more than 2σ from the center line (same side)
 	################################################################################################
 	
-	conf = 2
-	limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
-					sizes = object$sizes, conf = conf))
-	lcl <- limits[, 1]
-	ucl <- limits[, 2]
-	
-	diffs <- statistics - center
-	diffs[diffs > 0 & statistics > ucl ] <- 1
-	diffs[diffs > 0 & statistics <= ucl ] <- 9
-	diffs[diffs < 0 & statistics < lcl ] <- -1
-	diffs[diffs < 0 & statistics >= lcl ] <- -9
-	
-	names(diffs) = names(statistics)
-	
-	plusone.2dev.above.indices = numeric()
-	plusone.2dev.below.indices = numeric()
-	violators$beyond.plusone.2dev.above.indices = numeric()
-	violators$beyond.plusone.2dev.below.indices = numeric()
-	
-	num.stat.points = length(diffs)
-	
-	for(i in 1:num.stat.points)
+	if(test5)
 	{
-		if((i+ beyond.plusone.2dev.run.length) <= num.stat.points)
-		{
-			beyond.plusone.2dev.above.indices = which(diffs[i:(i+beyond.plusone.2dev.run.length)] == 1)
-			beyond.plusone.2dev.below.indices = which(diffs[i:(i+beyond.plusone.2dev.run.length)] == -1)
-			
-			if(length(beyond.plusone.2dev.above.indices) >= beyond.plusone.2dev.run.length)
-			{
-				plusone.2dev.above.indices = c(plusone.2dev.above.indices, names(diffs[i:(i+beyond.plusone.2dev.run.length)])[beyond.plusone.2dev.above.indices])
-			}
-			
-			if(length(beyond.plusone.2dev.below.indices) >= beyond.plusone.2dev.run.length)
-			{
-				plusone.2dev.below.indices = c(plusone.2dev.below.indices, beyond.plusone.2dev.below.indices)
-			}
-		}
-	}
-
-	plusone.2dev.above.indices = unique(plusone.2dev.above.indices)
-	plusone.2dev.below.indices = unique(plusone.2dev.below.indices)
-	
-	violators$beyond.plusone.2dev.above.indices = matrix(statistics[plusone.2dev.above.indices], nrow = 1)
-	dimnames(violators$beyond.plusone.2dev.above.indices)[[2]] = plusone.2dev.above.indices
-	dimnames(violators$beyond.plusone.2dev.above.indices)[[1]] = "sample value"
-	
-	violators$beyond.plusone.2dev.below.indices = matrix(statistics[plusone.2dev.below.indices], nrow = 1)
-	dimnames(violators$beyond.plusone.2dev.below.indices)[[2]] = plusone.2dev.below.indices
-	dimnames(violators$beyond.plusone.2dev.below.indices)[[1]] = "sample value"
-	
-
-	# Test 6: Four out of five points more than 1σ from center line (same side)
-	#########################################################################################################
-	
-	conf = 1
-	limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
-					sizes = object$sizes, conf = conf))
-	lcl <- limits[, 1]
-	ucl <- limits[, 2]
-	
-	diffs <- statistics - center
-	diffs[diffs > 0 & statistics > ucl ] <- 1
-	diffs[diffs > 0 & statistics <= ucl ] <- 9
-	diffs[diffs < 0 & statistics < lcl ] <- -1
-	diffs[diffs < 0 & statistics >= lcl ] <- -9
-	
-	names(diffs) = names(statistics)
-	
-	plusone.1dev.above.indices = numeric()
-	plusone.1dev.below.indices = numeric()
-	
-	violators$beyond.plusone.1dev.above.indices = numeric()
-	violators$beyond.plusone.1dev.below.indices = numeric()
-	
-	num.stat.points = length(diffs)
-	
-	for(i in 1:num.stat.points)
-	{
-		if((i+ beyond.plusone.1dev.run.length) <= num.stat.points)
-		{
-			beyond.plusone.1dev.above.indices = which(diffs[i:(i+beyond.plusone.1dev.run.length)] == 1)
-			beyond.plusone.1dev.below.indices = which(diffs[i:(i+beyond.plusone.1dev.run.length)] == -1)
-			
-			if(length(beyond.plusone.1dev.above.indices) >= beyond.plusone.1dev.run.length)
-			{
-				plusone.1dev.above.indices = c(plusone.1dev.above.indices, names(diffs[i:(i+beyond.plusone.1dev.run.length)])[beyond.plusone.1dev.above.indices])
-			}
-			
-			if(length(beyond.plusone.2dev.below.indices) >= beyond.plusone.2dev.run.length)
-			{
-				plusone.1dev.below.indices = c(plusone.1dev.below.indices, beyond.plusone.1dev.below.indices)
-			}
-		}
-	}
-
-	#violators$beyond.plusone.1dev.above.indices = unique(violators$beyond.plusone.1dev.above.indices)
-	#violators$beyond.plusone.1dev.below.indices = unique(violators$beyond.plusone.1dev.below.indices)
-	
-	plusone.1dev.above.indices = unique(plusone.1dev.above.indices)
-	plusone.1dev.below.indices = unique(plusone.1dev.below.indices)
-	
-	violators$beyond.plusone.1dev.above.indices = matrix(statistics[plusone.1dev.above.indices], nrow = 1)
-	dimnames(violators$beyond.plusone.1dev.above.indices)[[2]] = plusone.1dev.above.indices
-	dimnames(violators$beyond.plusone.1dev.above.indices)[[1]] = "sample value"
-	
-	violators$beyond.plusone.1dev.below.indices = matrix(statistics[plusone.1dev.below.indices], nrow = 1)
-	dimnames(violators$beyond.plusone.1dev.below.indices)[[2]] = plusone.1dev.below.indices
-	dimnames(violators$beyond.plusone.1dev.below.indices)[[1]] = "sample value"
-	
-	
-	# Test 7: Fifteen points in a row within 1σ of center line (either side)
-	##################################################################################################
-	conf = 1
-	limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
-					sizes = object$sizes, conf = conf))
-	lcl <- limits[, 1]
-	ucl <- limits[, 2]
-	
-	if(either.side == TRUE)
-	{
-		diffs <- statistics - center
-		diffs[statistics <= ucl & statistics >= lcl] <- 1
-		diffs[diffs > 0 & statistics > ucl ] <- 9
-		diffs[diffs < 0 & statistics < lcl ] <- -9
-	}
-	else
-	{
-		diffs <- statistics - center
-		diffs[diffs > 0 & statistics <= ucl ] <- 1
-		diffs[diffs > 0 & statistics > ucl ] <- 9
-		diffs[diffs < 0 & statistics >= lcl ] <- -1
-		diffs[diffs < 0 & statistics < lcl ] <- -9
-	}
-
-	runs <- rle(diffs)
+		conf = 2
+		limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
+						sizes = object$sizes, conf = conf))
+		lcl <- limits[, 1]
+		ucl <- limits[, 2]
 		
-	vruns <- rep((runs$lengths >= within.1dev.run.length & abs(runs$values) != 9), runs$lengths)
-	vruns.above <- (vruns & (diffs > 0 & diffs != 9))
-	vruns.below <- (vruns & (diffs < 0 & diffs != -9))
-	rvruns.above <- rle(vruns.above)
-	rvruns.below <- rle(vruns.below)
-	
-	vbeg.above <- cumsum(rvruns.above$lengths)[rvruns.above$values] -
-			(rvruns.above$lengths - within.1dev.run.length)[rvruns.above$values]
-	vend.above <- cumsum(rvruns.above$lengths)[rvruns.above$values]
-	vbeg.below <- cumsum(rvruns.below$lengths)[rvruns.below$values] -
-			(rvruns.below$lengths - within.1dev.run.length)[rvruns.below$values]
-	vend.below <- cumsum(rvruns.below$lengths)[rvruns.below$values]
-		
-	within.1dev.above.indices = numeric()
-	within.1dev.below.indices = numeric()
-	
-	violators$within.1dev.above.indices = numeric()
-	violators$within.1dev.below.indices = numeric()
-		
-	if (length(vbeg.above)) 
-	{
-			for (i in 1:length(vbeg.above)) within.1dev.above.indices <- c(within.1dev.above.indices,
-				vbeg.above[i]:vend.above[i])
-	}
-	
-	if (length(vbeg.below)) 
-	{
-			for (i in 1:length(vbeg.below)) within.1dev.below.indices <- c(within.1dev.below.indices,
-				vbeg.below[i]:vend.below[i])
-	}
-		
-	#violators$within.1dev.above.indices = as.numeric(names(statistics)[violators$within.1dev.above.indices])
-	#violators$within.1dev.below.indices = as.numeric(names(statistics)[violators$within.1dev.below.indices])
-	
-	violators$within.1dev.above.indices = matrix(statistics[within.1dev.above.indices], nrow = 1)
-	dimnames(violators$within.1dev.above.indices)[[2]] = names(statistics)[within.1dev.above.indices]
-	dimnames(violators$within.1dev.above.indices)[[1]] = "sample value"
-	
-	# print(within.1dev.above.indices)
-	# print(violators$within.1dev.above.indices)
-	# print(dim(violators$within.1dev.above.indices))
-	
-	violators$within.1dev.below.indices = matrix(statistics[plusone.1dev.below.indices], nrow = 1)
-	dimnames(violators$within.1dev.below.indices)[[2]] = names(statistics)[within.1dev.below.indices]
-	dimnames(violators$within.1dev.below.indices)[[1]] = "sample value"
-		
-	
-	# Test 8: Eight points in a row more than 1σ from center line (either side)
-	################################################################################################
-	
-	conf = 1
-	limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
-					sizes = object$sizes, conf = conf))
-	
-	
-	lcl <- limits[, 1]
-	ucl <- limits[, 2]
-	
-	if(either.side == TRUE)
-	{
-		diffs <- statistics - center
-		diffs[statistics > ucl | statistics < lcl] <- 1
-		diffs[diffs > 0 & statistics <= ucl ] <- 9
-		diffs[diffs < 0 & statistics >= lcl ] <- -9
-	}
-	else
-	{
 		diffs <- statistics - center
 		diffs[diffs > 0 & statistics > ucl ] <- 1
 		diffs[diffs > 0 & statistics <= ucl ] <- 9
 		diffs[diffs < 0 & statistics < lcl ] <- -1
 		diffs[diffs < 0 & statistics >= lcl ] <- -9
-	}
+		
+		names(diffs) = names(statistics)
+		
+		plusone.2dev.above.indices = numeric()
+		plusone.2dev.below.indices = numeric()
+		violators$beyond.plusone.2dev.above.indices = numeric()
+		violators$beyond.plusone.2dev.below.indices = numeric()
+		
+		num.stat.points = length(diffs)
+		
+		for(i in 1:num.stat.points)
+		{
+			if((i+ beyond.plusone.2dev.run.length) <= num.stat.points)
+			{
+				beyond.plusone.2dev.above.indices = which(diffs[i:(i+beyond.plusone.2dev.run.length)] == 1)
+				beyond.plusone.2dev.below.indices = which(diffs[i:(i+beyond.plusone.2dev.run.length)] == -1)
+				
+				if(length(beyond.plusone.2dev.above.indices) >= beyond.plusone.2dev.run.length)
+				{
+					plusone.2dev.above.indices = c(plusone.2dev.above.indices, names(diffs[i:(i+beyond.plusone.2dev.run.length)])[beyond.plusone.2dev.above.indices])
+				}
+				
+				if(length(beyond.plusone.2dev.below.indices) >= beyond.plusone.2dev.run.length)
+				{
+					plusone.2dev.below.indices = c(plusone.2dev.below.indices, beyond.plusone.2dev.below.indices)
+				}
+			}
+		}
 
-	runs <- rle(diffs)
+		plusone.2dev.above.indices = unique(plusone.2dev.above.indices)
+		plusone.2dev.below.indices = unique(plusone.2dev.below.indices)
+		
+		combined_violation_indices = c(combined_violation_indices, plusone.2dev.above.indices)
+		
+		violators$beyond.plusone.2dev.above.indices = matrix(statistics[plusone.2dev.above.indices], nrow = 1)
+		dimnames(violators$beyond.plusone.2dev.above.indices)[[2]] = plusone.2dev.above.indices
+		dimnames(violators$beyond.plusone.2dev.above.indices)[[1]] = "sample value"
+		
+		combined_violation_indices = c(combined_violation_indices, plusone.2dev.below.indices)
+		
+		violators$beyond.plusone.2dev.below.indices = matrix(statistics[plusone.2dev.below.indices], nrow = 1)
+		dimnames(violators$beyond.plusone.2dev.below.indices)[[2]] = plusone.2dev.below.indices
+		dimnames(violators$beyond.plusone.2dev.below.indices)[[1]] = "sample value"
+	}
+		
+
+	# Test 6: Four out of five points more than 1σ from center line (same side)
+	#########################################################################################################
 	
-	vruns <- rep((runs$lengths >= beyond.1dev.run.length & abs(runs$values) != 9), runs$lengths)
-    vruns.above <- (vruns & (diffs > 0 & diffs != 9))
-	vruns.below <- (vruns & (diffs < 0 & diffs != -9))
-    rvruns.above <- rle(vruns.above)
-    rvruns.below <- rle(vruns.below)
-    vbeg.above <- cumsum(rvruns.above$lengths)[rvruns.above$values] -
-        (rvruns.above$lengths - beyond.1dev.run.length)[rvruns.above$values]
-    vend.above <- cumsum(rvruns.above$lengths)[rvruns.above$values]
-    vbeg.below <- cumsum(rvruns.below$lengths)[rvruns.below$values] -
-        (rvruns.below$lengths - beyond.1dev.run.length)[rvruns.below$values]
-    vend.below <- cumsum(rvruns.below$lengths)[rvruns.below$values]
-	
-	beyond.1dev.above.indices = numeric()
-	beyond.1dev.below.indices = numeric()
-	
-	violators$beyond.1dev.above.indices = numeric()
-	violators$beyond.1dev.below.indices = numeric()
-	
-    if (length(vbeg.above)) 
+	if(test6)
 	{
-        for (i in 1:length(vbeg.above)) beyond.1dev.above.indices <- c(beyond.1dev.above.indices,
-            vbeg.above[i]:vend.above[i])
-    }
+		conf = 1
+		limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
+						sizes = object$sizes, conf = conf))
+		lcl <- limits[, 1]
+		ucl <- limits[, 2]
+		
+		diffs <- statistics - center
+		diffs[diffs > 0 & statistics > ucl ] <- 1
+		diffs[diffs > 0 & statistics <= ucl ] <- 9
+		diffs[diffs < 0 & statistics < lcl ] <- -1
+		diffs[diffs < 0 & statistics >= lcl ] <- -9
+		
+		names(diffs) = names(statistics)
+		
+		plusone.1dev.above.indices = numeric()
+		plusone.1dev.below.indices = numeric()
+		
+		violators$beyond.plusone.1dev.above.indices = numeric()
+		violators$beyond.plusone.1dev.below.indices = numeric()
+		
+		num.stat.points = length(diffs)
+		
+		for(i in 1:num.stat.points)
+		{
+			if((i+ beyond.plusone.1dev.run.length) <= num.stat.points)
+			{
+				beyond.plusone.1dev.above.indices = which(diffs[i:(i+beyond.plusone.1dev.run.length)] == 1)
+				beyond.plusone.1dev.below.indices = which(diffs[i:(i+beyond.plusone.1dev.run.length)] == -1)
+				
+				if(length(beyond.plusone.1dev.above.indices) >= beyond.plusone.1dev.run.length)
+				{
+					plusone.1dev.above.indices = c(plusone.1dev.above.indices, names(diffs[i:(i+beyond.plusone.1dev.run.length)])[beyond.plusone.1dev.above.indices])
+				}
+				
+				if(length(beyond.plusone.1dev.below.indices) >= beyond.plusone.1dev.run.length)
+				{
+					plusone.1dev.below.indices = c(plusone.1dev.below.indices, beyond.plusone.1dev.below.indices)
+				}
+			}
+		}
+
+		#violators$beyond.plusone.1dev.above.indices = unique(violators$beyond.plusone.1dev.above.indices)
+		#violators$beyond.plusone.1dev.below.indices = unique(violators$beyond.plusone.1dev.below.indices)
+		
+		plusone.1dev.above.indices = unique(plusone.1dev.above.indices)
+		plusone.1dev.below.indices = unique(plusone.1dev.below.indices)
+		
+		combined_violation_indices = c(combined_violation_indices, plusone.1dev.above.indices)
+		
+		violators$beyond.plusone.1dev.above.indices = matrix(statistics[plusone.1dev.above.indices], nrow = 1)
+		dimnames(violators$beyond.plusone.1dev.above.indices)[[2]] = plusone.1dev.above.indices
+		dimnames(violators$beyond.plusone.1dev.above.indices)[[1]] = "sample value"
+		
+		combined_violation_indices = c(combined_violation_indices, plusone.1dev.below.indices)
+		
+		violators$beyond.plusone.1dev.below.indices = matrix(statistics[plusone.1dev.below.indices], nrow = 1)
+		dimnames(violators$beyond.plusone.1dev.below.indices)[[2]] = plusone.1dev.below.indices
+		dimnames(violators$beyond.plusone.1dev.below.indices)[[1]] = "sample value"
+	}
+		
 	
-    if (length(vbeg.below)) 
+	# Test 7: Fifteen points in a row within 1σ of center line (either side)
+	##################################################################################################
+	
+	if(test7)
 	{
-        for (i in 1:length(vbeg.below)) beyond.1dev.below.indices <- c(beyond.1dev.below.indices,
-            vbeg.below[i]:vend.below[i])
-    }
+		conf = 1
+		limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
+						sizes = object$sizes, conf = conf))
+		lcl <- limits[, 1]
+		ucl <- limits[, 2]
+		
+		if(either.side == TRUE)
+		{
+			diffs <- statistics - center
+			diffs[statistics <= ucl & statistics >= lcl] <- 1
+			diffs[diffs > 0 & statistics > ucl ] <- 9
+			diffs[diffs < 0 & statistics < lcl ] <- -9
+		}
+		else
+		{
+			diffs <- statistics - center
+			diffs[diffs > 0 & statistics <= ucl ] <- 1
+			diffs[diffs > 0 & statistics > ucl ] <- 9
+			diffs[diffs < 0 & statistics >= lcl ] <- -1
+			diffs[diffs < 0 & statistics < lcl ] <- -9
+		}
+
+		runs <- rle(diffs)
+			
+		vruns <- rep((runs$lengths >= within.1dev.run.length & abs(runs$values) != 9), runs$lengths)
+		vruns.above <- (vruns & (diffs > 0 & diffs != 9))
+		vruns.below <- (vruns & (diffs < 0 & diffs != -9))
+		rvruns.above <- rle(vruns.above)
+		rvruns.below <- rle(vruns.below)
+		
+		vbeg.above <- cumsum(rvruns.above$lengths)[rvruns.above$values] -
+				(rvruns.above$lengths - within.1dev.run.length)[rvruns.above$values]
+		vend.above <- cumsum(rvruns.above$lengths)[rvruns.above$values]
+		vbeg.below <- cumsum(rvruns.below$lengths)[rvruns.below$values] -
+				(rvruns.below$lengths - within.1dev.run.length)[rvruns.below$values]
+		vend.below <- cumsum(rvruns.below$lengths)[rvruns.below$values]
+			
+		within.1dev.above.indices = numeric()
+		within.1dev.below.indices = numeric()
+		
+		violators$within.1dev.above.indices = numeric()
+		violators$within.1dev.below.indices = numeric()
+			
+		if (length(vbeg.above)) 
+		{
+				for (i in 1:length(vbeg.above)) within.1dev.above.indices <- c(within.1dev.above.indices,
+					vbeg.above[i]:vend.above[i])
+		}
+		
+		if (length(vbeg.below)) 
+		{
+				for (i in 1:length(vbeg.below)) within.1dev.below.indices <- c(within.1dev.below.indices,
+					vbeg.below[i]:vend.below[i])
+		}
+			
+		#violators$within.1dev.above.indices = as.numeric(names(statistics)[violators$within.1dev.above.indices])
+		#violators$within.1dev.below.indices = as.numeric(names(statistics)[violators$within.1dev.below.indices])
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[within.1dev.above.indices])
+		
+		violators$within.1dev.above.indices = matrix(statistics[within.1dev.above.indices], nrow = 1)
+		dimnames(violators$within.1dev.above.indices)[[2]] = names(statistics)[within.1dev.above.indices]
+		dimnames(violators$within.1dev.above.indices)[[1]] = "sample value"
+		
+		# print(within.1dev.above.indices)
+		# print(violators$within.1dev.above.indices)
+		# print(dim(violators$within.1dev.above.indices))
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[within.1dev.below.indices])
+		
+		violators$within.1dev.below.indices = matrix(statistics[within.1dev.below.indices], nrow = 1)
+		dimnames(violators$within.1dev.below.indices)[[2]] = names(statistics)[within.1dev.below.indices]
+		dimnames(violators$within.1dev.below.indices)[[1]] = "sample value"
+	}
+		
 	
-	#violators$beyond.1dev.above.indices = as.numeric(names(statistics)[violators$beyond.1dev.above.indices])
-	#violators$beyond.1dev.below.indices = as.numeric(names(statistics)[violators$beyond.1dev.below.indices])
+	# Test 8: Eight points in a row more than 1σ from center line (either side)
+	################################################################################################
 	
-	violators$beyond.1dev.above.indices = matrix(statistics[beyond.1dev.above.indices], nrow = 1)
-	dimnames(violators$beyond.1dev.above.indices)[[2]] = names(statistics)[beyond.1dev.above.indices]
-	dimnames(violators$beyond.1dev.above.indices)[[1]] = "sample value"
-	
-	violators$beyond.1dev.below.indices = matrix(statistics[plusone.1dev.below.indices], nrow = 1)
-	dimnames(violators$beyond.1dev.below.indices)[[2]] = names(statistics)[beyond.1dev.below.indices]
-	dimnames(violators$beyond.1dev.below.indices)[[1]] = "sample value"
-	
+	if(test8)
+	{
+		conf = 1
+		limits <- do.call(limits.func, list(center = object$center, std.dev = object$std.dev, 
+						sizes = object$sizes, conf = conf))
+		
+		
+		lcl <- limits[, 1]
+		ucl <- limits[, 2]
+		
+		if(either.side == TRUE)
+		{
+			diffs <- statistics - center
+			diffs[statistics > ucl | statistics < lcl] <- 1
+			diffs[diffs > 0 & statistics <= ucl ] <- 9
+			diffs[diffs < 0 & statistics >= lcl ] <- -9
+		}
+		else
+		{
+			diffs <- statistics - center
+			diffs[diffs > 0 & statistics > ucl ] <- 1
+			diffs[diffs > 0 & statistics <= ucl ] <- 9
+			diffs[diffs < 0 & statistics < lcl ] <- -1
+			diffs[diffs < 0 & statistics >= lcl ] <- -9
+		}
+
+		runs <- rle(diffs)
+		
+		vruns <- rep((runs$lengths >= beyond.1dev.run.length & abs(runs$values) != 9), runs$lengths)
+		vruns.above <- (vruns & (diffs > 0 & diffs != 9))
+		vruns.below <- (vruns & (diffs < 0 & diffs != -9))
+		rvruns.above <- rle(vruns.above)
+		rvruns.below <- rle(vruns.below)
+		vbeg.above <- cumsum(rvruns.above$lengths)[rvruns.above$values] -
+			(rvruns.above$lengths - beyond.1dev.run.length)[rvruns.above$values]
+		vend.above <- cumsum(rvruns.above$lengths)[rvruns.above$values]
+		vbeg.below <- cumsum(rvruns.below$lengths)[rvruns.below$values] -
+			(rvruns.below$lengths - beyond.1dev.run.length)[rvruns.below$values]
+		vend.below <- cumsum(rvruns.below$lengths)[rvruns.below$values]
+		
+		beyond.1dev.above.indices = numeric()
+		beyond.1dev.below.indices = numeric()
+		
+		violators$beyond.1dev.above.indices = numeric()
+		violators$beyond.1dev.below.indices = numeric()
+		
+		if (length(vbeg.above)) 
+		{
+			for (i in 1:length(vbeg.above)) beyond.1dev.above.indices <- c(beyond.1dev.above.indices,
+				vbeg.above[i]:vend.above[i])
+		}
+		
+		if (length(vbeg.below)) 
+		{
+			for (i in 1:length(vbeg.below)) beyond.1dev.below.indices <- c(beyond.1dev.below.indices,
+				vbeg.below[i]:vend.below[i])
+		}
+		
+		#violators$beyond.1dev.above.indices = as.numeric(names(statistics)[violators$beyond.1dev.above.indices])
+		#violators$beyond.1dev.below.indices = as.numeric(names(statistics)[violators$beyond.1dev.below.indices])
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[beyond.1dev.above.indices])
+		
+		violators$beyond.1dev.above.indices = matrix(statistics[beyond.1dev.above.indices], nrow = 1)
+		dimnames(violators$beyond.1dev.above.indices)[[2]] = names(statistics)[beyond.1dev.above.indices]
+		dimnames(violators$beyond.1dev.above.indices)[[1]] = "sample value"
+		
+		combined_violation_indices = c(combined_violation_indices, names(statistics)[beyond.1dev.below.indices])
+		
+		violators$beyond.1dev.below.indices = matrix(statistics[beyond.1dev.below.indices], nrow = 1)
+		dimnames(violators$beyond.1dev.below.indices)[[2]] = names(statistics)[beyond.1dev.below.indices]
+		dimnames(violators$beyond.1dev.below.indices)[[1]] = "sample value"
+	}
+		
 	
 	#########################################################################################################
 	
+	violators$combined_violation_indices = sort(as.numeric(unique(combined_violation_indices)))
 	
     return(invisible(violators))
 }
+
 
