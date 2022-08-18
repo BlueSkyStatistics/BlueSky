@@ -384,7 +384,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 				
 				if(length(violators$run.below.indices) == 0 && length(violators$run.below.indices) == 0)
 				{
-					cat("\n",k.run.same.side, "points in a row above or below the center line - no viaolating sample found\n")
+					cat("\n",k.run.same.side, "points in a row above or below the center line - no violating sample found\n")
 				}
 			}
 			 
@@ -417,7 +417,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 				}
 				else
 				{
-					cat("\n",k.run.alternating, "points in a row, alternating up and down - no viaolating sample found\n")
+					cat("\n",k.run.alternating, "points in a row, alternating up and down - no violating sample found\n")
 				}
 			}
 			
@@ -440,7 +440,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 				
 				if(length(violators$beyond.plusone.2dev.above.indices) == 0 && length(violators$beyond.plusone.2dev.below.indices) == 0)
 				{
-					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation above or below the center line  - no viaolating sample found\n")
+					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation above or below the center line  - no violating sample found\n")
 				}
 			}
 			
@@ -463,7 +463,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 				
 				if(length(violators$beyond.plusone.1dev.above.indices) == 0 && length(violators$beyond.plusone.1dev.below.indices) == 0)
 				{
-					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 1 standard deviation above or below the center line  - no viaolating sample found\n")
+					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 1 standard deviation above or below the center line  - no violating sample found\n")
 				}
 			}
 			
@@ -488,7 +488,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 					
 					if(length(violators$within.1dev.above.indices) == 0 && length(violators$within.1dev.below.indices) == 0)
 					{
-						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation above or below the center line  - no viaolating sample found\n")
+						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation above or below the center line  - no violating sample found\n")
 					}
 				}
 				else
@@ -508,7 +508,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 					
 					if(length(violators$within.1dev.above.indices) == 0 && length(violators$within.1dev.below.indices) == 0)
 					{
-						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation on either side of the center line  - no viaolating sample found\n")
+						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation on either side of the center line  - no violating sample found\n")
 					}
 				}
 			}
@@ -534,7 +534,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 					
 					if(length(violators$beyond.1dev.above.indices) == 0 && length(violators$beyond.1dev.below.indices) == 0)
 					{
-						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation on either side of the center line  - no viaolating sample found\n")
+						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation on either side of the center line  - no violating sample found\n")
 					}
 				}
 				else
@@ -554,7 +554,7 @@ test.special.causes <- function(object, test1 = TRUE, one.point.k.stdv = 3, test
 					
 					if(length(violators$beyond.1dev.above.indices) == 0 && length(violators$beyond.1dev.below.indices) == 0)
 					{
-						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation above or below the center line  - no viaolating sample found\n")
+						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation above or below the center line  - no violating sample found\n")
 					}
 				}
 			}
