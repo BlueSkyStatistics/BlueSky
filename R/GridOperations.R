@@ -1002,8 +1002,10 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                   cols <- oldcolscount + 1
                   vlbls <- eval(parse(text = paste("c(", newcolname,
                     " = newcolname)")))
-                  BkupObj <- BSkyDatasetLevelAttributeBackup(datasetname)
-				eval(parse(text=paste('bkupattr <- attributes(',datasetname,')', sep='')))
+                  ##-#-##BkupObj <- BSkyDatasetLevelAttributeBackup(datasetname)
+				eval(parse(text=paste('dsallattr <- attributes(',datasetname,')', sep='')))#fix for design
+				#except names and row.names backup all attributes. Because names and row.name will get modified.
+				eval(parse(text=paste('bkupattr <- dsallattr[!(names(dsallattr) %in% c("names", "row.names"))]',sep='')))#fix for design
  ##Added by Aaron 06/23/2020
  #newcolindex is passed to the function and indicated the position to insert
                   if ((newcolindex > 0) || (newcolindex <= cols)) {
@@ -1061,10 +1063,10 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                         max, "+1), ", n, ":", max, " )]", sep = "")))
                     }
 
-					eval(parse(text=paste('attributes(',datasetname,') = bkupattr', sep='')))
+					#eval(parse(text=paste('attributes(',datasetname,') = bkupattr', sep='')))# this is not req as 
+					#we have new restore just before 'else' below
 					
-                    eval(parse(text = paste("names(", datasetname,
-                      ") <- c(newcolnames)", sep = "")))
+                    eval(parse(text = paste("names(", datasetname,") <- c(newcolnames)", sep = "")))
                   }
                   i = 1
                   for (prop in props) {
@@ -1081,10 +1083,8 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                     ",\"misvals\") <- c(attr(", datasetname,
                     ",\"misvals\")[1:", (cols - 1), "], ", newcolmisatt,
                     ")", sep = "")))
-                  BSkyDatasetLevelAttributeRestore(datasetname,
-                    BkupObj)
-
-					#eval(parse(text=paste('attributes(',datasetname,') = bkupobj2', sep='')))
+                  ##-#-##BSkyDatasetLevelAttributeRestore(datasetname, BkupObj)
+				eval(parse(text=paste('attributes(',datasetname,') = c(attributes(',datasetname,'), bkupattr)', sep='')))#fix for design
                 }
                 else {
                   BSkyErrMsg = paste("BSkyAddVarRow: Col with that name already exists...",
