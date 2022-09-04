@@ -126,9 +126,6 @@ BSkyHierClus<-function (varsToCluster, method, noOfClusters, distance, plotDendo
         collapse = ", ")
     class(retresults)
     clusterNames = generateClusterNames(noOfClusters)
-    mdat <- matrix(c(retresults[1], retresults[2]), nrow = 1,
-        ncol = noOfClusters, byrow = FALSE, dimnames = list(c(""),
-            clusterNames))
     mdat <- matrix(retresults, nrow = 1, ncol = noOfClusters,
         byrow = FALSE, dimnames = list(c(""), clusterNames))
     res2 = by(BSkyModMatrix, as.factor(cutree(BSkyHClust, k = noOfClusters)),

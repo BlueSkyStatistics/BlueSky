@@ -2389,12 +2389,24 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 				{
 					if (nlevels(dependentvariable) ==2)
 					{
+						#Added 09/03/2022
+						# This is in the rare case when I am building a binomial logistic model and the dependent variable is integer
+						#open the titanic dataset in the neuralnet folder in the install directory
+						#in this case, as the dependent is numeric, we cannot allow the user to select the reference level
+						indexofMatch =base::which(levels(dependentvariable) ==levelOfInterest)
 						
-						if (base::which(levels(dependentvariable) ==levelOfInterest) ==1)
+						if (length(indexofMatch) ==0)
 						{
 							levelOfInterest ="1st"
-						} else{
-						levelOfInterest ="2nd"
+						}
+						else
+						{
+							if (base::which(levels(dependentvariable) ==levelOfInterest) ==1)
+							{
+								levelOfInterest ="1st"
+							} else{
+							levelOfInterest ="2nd"
+							}
 						}
 						if ( levelOfInterest == "2nd")
 						{
@@ -2485,11 +2497,24 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 					# BSkyFormat(bskyconfmatrix$table, singleTableOutputHeader = paste("Confusion Matrix, positive level: ", positive, sep="",collapse="") )
 					
 
-					if (base::which(levels(dependentvariable) ==levelOfInterest) ==1)
+					#Added 09/03/2022
+						# This is in the rare case when I am building a binomial logistic model and the dependent variable is integer
+						#open the titanic dataset in the neuralnet folder in the install directory
+						#in this case, as the dependent is numeric, we cannot allow the user to select the reference level
+						indexofMatch =base::which(levels(dependentvariable) ==levelOfInterest)
+						
+						if (length(indexofMatch) ==0)
 						{
 							levelOfInterest ="1st"
-						} else{
-						levelOfInterest ="2nd"
+						}
+						else
+						{
+							if (base::which(levels(dependentvariable) ==levelOfInterest) ==1)
+							{
+								levelOfInterest ="1st"
+							} else{
+							levelOfInterest ="2nd"
+							}
 						}
 					
 					if ( levelOfInterest == "2nd")
