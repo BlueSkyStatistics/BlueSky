@@ -243,4 +243,6 @@ export(rk.describe.alternative)
 export(BSkyprint.dist)
 export(BSkyStripNumberVariableNames)
 export(BSkybinVariable)
-export(process.capability.enhanced, test.special.causes, violating.runs.indices)
+export(process.capability.enhanced, BSkySetSixSigmaTestOptions, BSkyGetSixSigmaTestOptions, BSkyGetSixSigmaTestsToPerform,
+BSkyResetSixSigmaTestOptionDefaults, get.print.violation.indices, test.special.causes, violating.runs.indices, plot.qcc.spc.phases,
+print.qcc.spc.phases, compute.qcc.statistics)
