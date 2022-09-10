@@ -569,11 +569,11 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			{
 				if(length(violators$combined_violation_indices) > 0)
 				{
-					BSkyFormat(paste("Combind sample indices from all special cause tests performed - violating samples (", paste(violators$combined_violation_indices, collapse=', '), ")"))
+					BSkyFormat(paste("Combined sample indices from all special cause tests performed - violating samples (", paste(violators$combined_violation_indices, collapse=', '), ")"))
 				}
 				else
 				{
-					BSkyFormat(paste("Combind sample indices from all special cause tests performed - no violating sample found"))
+					BSkyFormat(paste("Combined sample indices from all special cause tests performed - no violating sample found"))
 				}
 			}
 			
@@ -958,17 +958,22 @@ violating.runs.indices <- function (object,
 		violators$increase.decrease.runs = numeric()
 		increase.decrease.run.indices = numeric()
 		
-		for(i in 1:(length(increase.decrease.runs)-(increase.decrease.run.length -2)))
-		{
-			runs <- rle(increase.decrease.runs[i:(i+ (increase.decrease.run.length -2))])
-			
-			if(all(runs$lengths >= (increase.decrease.run.length -1)))
-			{
-				increase.decrease.run.indices = c(increase.decrease.run.indices, (i+ (increase.decrease.run.length -1)))
-			}
-		}
+		num.stat.points = length(diffs)
 		
-		increase.decrease.run.indices = increase.decrease.run.indices[increase.decrease.run.indices <= length(increase.decrease.runs)]
+		if(num.stat.points >= increase.decrease.run.length)
+		{
+			for(i in 1:(length(increase.decrease.runs)-(increase.decrease.run.length -2)))
+			{
+				runs <- rle(increase.decrease.runs[i:(i+ (increase.decrease.run.length -2))])
+				
+				if(all(runs$lengths >= (increase.decrease.run.length -1)))
+				{
+					increase.decrease.run.indices = c(increase.decrease.run.indices, (i+ (increase.decrease.run.length -1)))
+				}
+			}
+		
+			increase.decrease.run.indices = increase.decrease.run.indices[increase.decrease.run.indices <= length(increase.decrease.runs)]
+		}
 		
 		# BSkyFormat(increase.decrease.run.indices)
 		# BSkyFormat(names(statistics)[increase.decrease.run.indices])
@@ -1007,13 +1012,18 @@ violating.runs.indices <- function (object,
 		violators$alternate.run.indices = numeric()
 		alternate.run.indices = numeric()
 		
-		for(i in 1:(length(alternating.runs)-(alternating.run.length -2)))
+		num.stat.points = length(diffs)
+		
+		if(num.stat.points >= alternating.run.length)
 		{
-			runs <- rle(alternating.runs[i:(i+ (alternating.run.length -2))])
-			
-			if(all(runs$lengths == 1))
+			for(i in 1:(length(alternating.runs)-(alternating.run.length -2)))
 			{
-					alternate.run.indices = c(alternate.run.indices, (i+ (alternating.run.length -1)))
+				runs <- rle(alternating.runs[i:(i+ (alternating.run.length -2))])
+				
+				if(all(runs$lengths == 1))
+				{
+						alternate.run.indices = c(alternate.run.indices, (i+ (alternating.run.length -1)))
+				}
 			}
 		}
 		
