@@ -128,7 +128,7 @@ ReplaceSplChrsAndPrefixXForDigitInBegining <- function(anystring)
 	}
 	if(anystring!=originstr)
 	{
-		message = paste("NOTE: The variable name ",originstr, " has one or more special characters that have been replaced by _")
+		message = paste("NOTE: The variable name ",originstr, " has one or more special characters that have been replaced by _ ")
 		cat(message)
 	}
 	BSkyFunctionWrapUp()
