@@ -7,8 +7,8 @@ The BlueSky package contains all of the functions that are unique to BlueSky Sta
 To install the BlueSky package, use the following steps:
 
 ```{r}
-install.packages("devtools")
-devtools::install_github("BlueSkyStatistics/BlueSky")
+install.packages("remotes")
+remotes::install_github("BlueSkyStatistics/BlueSky")
 ```
 
 # Installation in BlueSky Statistics
@@ -17,8 +17,8 @@ The BlueSky R package is installed automatically with the BlueSky Statistics app
 
 ```{r}
 # Are you sure you want to do this?
-install.packages("devtools")
-devtools::install_github("BlueSkyStatistics/BlueSky", repos = "https://cloud.r-project.org/", upgrade="always")
+install.packages("remotes")
+remotes::install_github("BlueSkyStatistics/BlueSky", repos = "https://cloud.r-project.org/", upgrade="always")
 ```
 
 # Usage
