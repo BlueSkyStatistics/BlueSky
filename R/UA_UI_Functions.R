@@ -279,7 +279,7 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 					sepChar='\v' #vertical tab should never be found as a separator in user data file.
 				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar)			
 			}
-			else if(filetype == "CSV"){
+			else if(filetype == "CSV" || filetype == "TXT"){
 
 				success = UAreadCSV(fullpathfilename, datasetname, Header=csvHeader, replace=replace_ds, character.to.factor=character.to.factor, sepCh=sepChar, deciCh=deciChar)
 			}
@@ -299,9 +299,6 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			else if(filetype=="DAT"){
 				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
 			}					
-			else  if(filetype == "TXT"){
-				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
-			}
 			else if(filetype == "PSV" || filetype == "TSV" || filetype == "CSVY" || filetype == "ZSAV" || filetype == "XPT" ||
 			filetype == "POR" || filetype == "RDS" || filetype == "REC" || filetype == "MTP" || filetype == "SYD" || filetype == "ARFF" || 
 			filetype == "DIF" || filetype == "FWF" || filetype == "GZ" || filetype == "PARQUET" || filetype == "WF1" || filetype == "FEATHER" ||
