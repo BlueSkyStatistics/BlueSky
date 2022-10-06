@@ -240,8 +240,10 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 			onlyfilename = stringr::str_replace(onlyfilenamewithextension, regex(extnPattern, ignore_case = TRUE), "")
 			
 			#remove spaces or specialchars in filename, else eval/parse below will not work.
-			onlyfilename =str_replace_all(onlyfilename, "[^[:alnum:]]", "")
-			
+			onlyfilename =str_replace_all(onlyfilename, "[^([:alnum:]_)]", "") ##"^([[:alnum:]])+([_])"
+			# print(onlyfilename)
+			# print("=-=-")
+			# print(datasetname)
 			if(onlyfilename != datasetname)# if they re not exactly the same name (case sensitive)
 			{
 				####01Feb2021 Following 2 eval-pasrse modified. 
