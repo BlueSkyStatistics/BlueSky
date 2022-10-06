@@ -70,7 +70,10 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
 		
-		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		row_count = eval(parse(text=paste('nrow(.GlobalEnv$', datasetname,')', sep='')))
+		col_count = eval(parse(text=paste('ncol(.GlobalEnv$', datasetname,')', sep='')))
+
+		if(bsky_opencommand_execution_an_exception_occured == FALSE &&  (row_count > 0 && col_count > 0)  )## Success
 		{
 			success = 0
 			## maybe return 0 for success
