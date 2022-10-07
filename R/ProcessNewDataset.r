@@ -25,7 +25,8 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 	BSkyErrMsg = paste("BSkyProcessNewDataset: Error in Loading empty dataset : ", "DataSetName :", datasetName," ", sep="")
 	BSkyWarnMsg = paste("BSkyProcessNewDataset: Warning in Loading empty dataset : ", "DataSetName :", datasetName," ", sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	datasetname <- datasetName
+	# datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- paste('.GlobalEnv$',datasetName, sep='')
 	tryCatch(
 		{
 		withCallingHandlers(
@@ -93,18 +94,18 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 						lastcellrowidx = max(allidxnotNA %% r)
 					}
 
-					#get current col names. This will be only used if tehre is just one column
-					eval(parse(text=paste('colnames = names(',datasetname,')[1]',sep='')))
-					
+					#get current col names. This will be only used if there is just one column
+					Colnames = eval(parse(text=paste('colnames(',datasetname,')[1]',sep=''))) # saving one col name only
+					#cat(Colnames)
 					#remove empty rows and empty col beyond the 'last cell'.
-					eval(parse(text=paste(datasetname, '<<- as.data.frame(', datasetname,'[1:lastcellrowidx, 1:lastcellcolidx])',sep='')))
-					
+					eval(parse(text=paste(datasetname, '<- as.data.frame(', datasetname,'[1:',lastcellrowidx,', 1:',lastcellcolidx,'])',sep='')))
+
 					#if there is just one colum then the name of the col will be var1. We always create dataset from top left cell.
 					if(lastcellcolidx == 1)
 					{
-						eval(parse(text=paste('names(',datasetname,')=colnames',sep='')))
+						# print(eval(parse(text=paste('colnames(',datasetname,')'))))
+						eval(parse(text=paste('colnames(',datasetname,') <- Colnames',sep=''))) # restoring one col name only
 					}
-
 
 					#Converting character col type to appropriate data type
 					#Given a character vector, it attempts to convert it to logical, integer, numeric or complex, and failing 
@@ -118,7 +119,7 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 					## Sanjay gave me the type.convert with lapply and now we only convert 'character' cols and leave remaing columns as is.
 					#eval(parse(text=paste(datasetname, '<<- utils::type.convert(x=', datasetname,',as.is =', !stringAsFactor,')',sep=''))) 
 					### abc[] = lapply( abc, function(x) {if(is.character(x)) type.convert(as.character(x), as.is = TRUE) else x} )
-					eval(parse(text=paste(datasetname,'[] <<- lapply(',datasetname,', function(x) {if(is.character(x)) utils::type.convert(as.character(x), as.is = TRUE) else x} )',sep='')))
+					eval(parse(text=paste(datasetname,'[] <- lapply(',datasetname,', function(x) {if(is.character(x)) utils::type.convert(as.character(x), as.is = TRUE) else x} )',sep='')))
 
 					#08Jun2021 This does not work. some issue with parameter na.strings.
 					#R Err Msg : invalid 'na.strings' argument  in function:  type.convert.default(x[[i]], ...)
@@ -144,14 +145,14 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 						for(i in 1:colcount)
 						{
 							coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
-							
+
 							## if col class is factor it may have a blank level because of the blank cell in between (in the grid). This blank level must be dropped.
 							colclass = eval(parse(text=paste('class(',datasetname,'$',coluname,')')))
 							#cat("col class:")
 							#print(colclass)
 							if("factor" %in% colclass)
 							{
-								eval(parse(text=paste(datasetname,'$',coluname,' <<- factor(x=',datasetname,'$',coluname,',  exclude = excludechars)', sep='')))
+								eval(parse(text=paste(datasetname,'$',coluname,' <- factor(x=',datasetname,'$',coluname,',  exclude = excludechars)', sep='')))
 								#eval(parse(text=paste('print(levels(',datasetname,'$',coluname,'))',sep='')))
 							}				
 							
@@ -159,14 +160,14 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 							colmisatt <- eval(parse(text=paste(coluname,'<-list(',coluname,'=list(type="none", value=""))')))
 							# print(colmisatt)
 							if(i>1)
-								eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(attr(',datasetname,',"misvals"), ',colmisatt,')')))
+								eval(parse(text=paste('attr(',datasetname,',"misvals") <- c(attr(',datasetname,',"misvals"), ',colmisatt,')')))
 							else
-								eval(parse(text=paste('attr(',datasetname,',"misvals") <<- c(',colmisatt,')')))
+								eval(parse(text=paste('attr(',datasetname,',"misvals") <- c(',colmisatt,')')))
 							# cat("done!@")
 						}
 
 						#cat("\nCreating Extra attributes for new DS. ")
-						eval(parse(text=paste('attr(',datasetname,',"maxfactor") <<-', bskymaxfactors)))
+						eval(parse(text=paste('attr(',datasetname,',"maxfactor") <-', bskymaxfactors)))
 						UAcreateExtraAttributes(datasetname, "RDATA")
 				}
 			}
