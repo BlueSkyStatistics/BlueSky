@@ -916,8 +916,8 @@ while (i <=len)
 				uadatasets$retstructure[[2]]$datatable[j,2] <-uatemp$parameter
 				uadatasets$retstructure[[2]]$datatable[j,3] <-uatemp$p.value
 				uadatasets$retstructure[[2]]$datatable[j,4]<-uatemp$estimate -valuetocompare
-				uadatasets$retstructure[[2]]$datatable[j,5] <-uatemp$conf.int[1]
-				uadatasets$retstructure[[2]]$datatable[j,6] <-uatemp$conf.int[2]
+				uadatasets$retstructure[[2]]$datatable[j,5] <-uatemp$conf.int[1] -valuetocompare
+				uadatasets$retstructure[[2]]$datatable[j,6] <-uatemp$conf.int[2] -valuetocompare
 				j<-j+1
 			}
 			uadatasets$errorfn=0

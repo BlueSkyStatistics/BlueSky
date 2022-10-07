@@ -605,8 +605,11 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
                       5] <- uatemp$p.value
                     uadatasets$retstructure[[2]]$datatable[j, 
                       6] <- uatemp$estimate[1] - uatemp$estimate[2]
-                    uadatasets$retstructure[[2]]$datatable[j, 
-                      7] = stdErrDiff[i]
+                    #Aaron 10/07/2022
+					#uadatasets$retstructure[[2]]$datatable[j, 
+                    #  7] = stdErrDiff[i]
+					uadatasets$retstructure[[2]]$datatable[j, 
+                      7] = uatemp$stderr
                     uadatasets$retstructure[[2]]$datatable[j, 
                       8] <- uatemp$conf.int[1]
                     uadatasets$retstructure[[2]]$datatable[j, 
