@@ -34,7 +34,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sas(file=\'',SASfilename,'\'))',sep='')
 		}
 		else{
-			corecommand = paste('read_sas(data_file=\'',SASfilename,'\', encoding=\'',encoding,'\')', sep='')
+			corecommand = paste('haven::read_sas(data_file=\'',SASfilename,'\', encoding=\'',encoding,'\')', sep='')
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sas(file=\'',SASfilename,'\', encoding=\'',encoding,'\'))',sep='')
 		}
 		opendatafilecmd = paste('x <- as.data.frame( ',corecommand,')', sep='')

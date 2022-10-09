@@ -33,7 +33,7 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE, encoding=NU
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_dta(file=\'',stataFilename,'\'))',sep='')
 		}
 		else{
-			corecommand = paste('read_dta(file=\'',stataFilename,'\', encoding=\'',encoding,'\')', sep='')
+			corecommand = paste('haven::read_dta(file=\'',stataFilename,'\', encoding=\'',encoding,'\')', sep='')
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_dta(file=\'',stataFilename,'\', encoding=\'',encoding,'\'))',sep='')
 		}
 		opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')', sep='')
