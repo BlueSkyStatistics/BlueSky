@@ -240,7 +240,7 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 			onlyfilename = stringr::str_replace(onlyfilenamewithextension, regex(extnPattern, ignore_case = TRUE), "")
 			
 			#remove spaces or specialchars in filename, else eval/parse below will not work.
-			onlyfilename =str_replace_all(onlyfilename, "[^([:alnum:]_)]", "") ##"^([[:alnum:]])+([_])"
+			onlyfilename =str_replace_all(onlyfilename, "[^([:alnum:]_.)]", "") ##"^([[:alnum:]])+([_])"
 			# print(onlyfilename)
 			# print("=-=-")
 			# print(datasetname)
