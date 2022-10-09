@@ -17,8 +17,8 @@ BSkyVersion<-function()
 
 
 bskyver= "Version: 8.66"
-bskydate="Date: 2022-09-27"
-bskytime="03:11PM"
+bskydate="Date: 2022-10-07"
+bskytime="09:00PM"
 
 
 
