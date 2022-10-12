@@ -74,7 +74,7 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 		}
 		else ## Failure
 		{
-			cat("\nError opening file:\n") 
+			cat("\nError: Can't open file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -312,7 +312,7 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n")
+			cat("\nError: Can't save file\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
 			## maybe return -1 for failure

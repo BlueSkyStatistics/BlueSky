@@ -59,7 +59,7 @@ BSkyLoadDATinDataFrame <- function(DATfilename, datasetname, replace=FALSE, Head
 		}
 		else ## Failure
 		{
-			cat("\nError opening file:\n") 
+			cat("\nError: Can't open file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 

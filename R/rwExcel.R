@@ -129,7 +129,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		}
 		else ## Failure
 		{
-			cat("\nError opening file:\n") 
+			cat("\nError: Can't open file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -294,7 +294,7 @@ UAwriteExcel <- function(excelfilename, dataSetNameOrIndex, sheetname, row.names
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n") 
+			cat("\nError: Can't save file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -323,24 +323,34 @@ GetTableList <- function(excelfilename, xlsx=FALSE)
 	BSkyErrMsg = paste("GetTableList: Error reading table list : ",sep="")
 	BSkyWarnMsg = paste("GetTableList: Warning reading table list : ",sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-
-					# library(RODBC)
-					# channel<-NULL
-					# if(xlsx)
-					# {
-						# channel <- odbcConnectExcel2007(excelfilename, readOnly=FALSE)
-					# }
-					# else
-					# {
-						# channel <- odbcConnectExcel(excelfilename, readOnly=FALSE)
-					# }
-					# tablelist <- sqlTables(channel)
-					# odbcCloseAll()
-					tablelist <- excel_sheets(excelfilename)
-				
-			BSkyFunctionWrapUp()
-			# invisible(tablelist$TABLE_NAME)
-			invisible(tablelist)
+	# success=-1
+	# tablelist = NULL
+					
+	#reset global error-warning flag
+	# eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())	
+	
+	#trying to open the datafile
+	# tryCatch({		
+		# withCallingHandlers({					
+				tablelist <- excel_sheets(excelfilename)
+		# }, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+	# }, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)	
+	
+	# if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+	# {
+		# success = 0
+		# cat("\nSuccessfully fetched sheets list:\n") 
+		# print(corecommand) #no need to print this
+	# }
+	# else ## Failure
+	# {
+		# cat("\nError: Can't fetch worksheets\n") 
+		# print(corecommand)
+		# success = -1;
+	# }				
+	BSkyFunctionWrapUp()
+	# invisible(tablelist$TABLE_NAME)
+	invisible(tablelist)
 }
 
 

@@ -53,7 +53,7 @@ BSkyReadWithRio <- function(dataFilename, datasetname, replace=FALSE, encoding=N
 		else ## Failure
 		{
 			print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
-			cat("\nError opening file:\n") 
+			cat("\nError: Can't open file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -127,7 +127,7 @@ BSkyWriteWithRio <- function(dataFilename,dataSetNameOrIndex) ##  index of datas
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n") 
+			cat("\nError: Can't save file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -172,7 +172,7 @@ BSkyConvertFileFormat <- function(sourceFile, targetFile)
 	}
 	else ## Failure
 	{
-		cat("\nError saving file:\n") 
+		cat("\nError: Can't save file\n") 
 		# cat("\n\nCommand executed:\n")
 		print(corecommand)
 		## gracefully report error to the app layer about the issue so it does not keep waiting. 

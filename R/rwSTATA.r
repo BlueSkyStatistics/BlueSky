@@ -57,7 +57,7 @@ BSkyReadStata <- function(stataFilename, datasetname, replace=FALSE, encoding=NU
 		else ## Failure
 		{
 			print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
-			cat("\nError opening file:\n") 
+			cat("\nError: Can't open file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -131,7 +131,7 @@ BSkyWriteStata <- function(stataFilename,dataSetNameOrIndex) ##  index of datase
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n") 
+			cat("\nError: Can't save file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 

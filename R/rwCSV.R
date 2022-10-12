@@ -82,7 +82,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		}
 		else ## Failure
 		{
-			cat("\nError opening file:\n")
+			cat("\nError: Can't open file\n")
 			cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -286,7 +286,7 @@ UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n") 
+			cat("\nError: Can't save file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
