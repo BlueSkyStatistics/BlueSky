@@ -297,7 +297,8 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 				success = eval(parse(text=paste('UAreadRObj(RObjfileName="',fullpathfilename,'", datasetname="',datasetname,'", replace=TRUE)',sep='')))
 			}			
 			else if(filetype=="DAT"){
-				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
+				# success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
+				success = UAreadCSV(fullpathfilename, datasetname, Header=csvHeader, replace=replace_ds, character.to.factor=character.to.factor, sepCh=sepChar, deciCh=deciChar)				
 			}					
 			else if(filetype == "PSV" || filetype == "TSV" || filetype == "CSVY" || filetype == "ZSAV" || filetype == "XPT" ||
 			filetype == "POR" || filetype == "RDS" || filetype == "REC" || filetype == "MTP" || filetype == "SYD" || filetype == "ARFF" || 
@@ -572,7 +573,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			else if(filetype == "XLSX"){
 				success = UAwriteExcel(fullpathfilename, dataSetNameOrIndex, newWorksheetName, row.names = Rownames, col.names = Colnames, xlsx=TRUE)
 			}			
-			else if(filetype == "CSV"){
+			else if(filetype == "CSV" || filetype == "TXT"){
 				success = UAwriteCSV(fullpathfilename, dataSetNameOrIndex)
 			}
 			else if(filetype == "DBF"){
@@ -588,9 +589,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			filetype == "YML" || filetype == "PZFX"){
 				success = BSkyWriteWithRio(fullpathfilename, dataSetNameOrIndex) 
 			}			
-			else  if(filetype == "TXT"){
-			}
-		
+	
 		},
 		
 		warning = UAwarnHandlerFn
