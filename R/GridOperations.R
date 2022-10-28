@@ -639,6 +639,8 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 					
 					#classOfCol =eval(parse(text=paste(datasetname, "$",cn)))
 					classOfCol =eval(parse(text=paste(  "class(", datasetname, "$",cn, ")")))
+					#cat("--Class col\n")
+					#cat(classOfCol)
 					if(classOfCol =="numeric")
 					{
 						#cat("--Numeric col\n")
@@ -654,6 +656,7 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 						}
 						else
 						{
+							#cat("\nMaking it NA")
 							eval( parse(text= paste(cn, "<- NA")) )
 						}
 					}
@@ -715,10 +718,13 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 						}					
 					}
 			
+					#cat("\nCN\t: ")
+					#print(cn)
+					#print(eval(parse(text=paste(cn))) )
 				rowlist <- c(rowlist, cn)
 				idx = idx + 1
 			} #End of for
-			#cat("\nRowList: ")
+		#cat("\nRowList: ")
 		#print(rowlist)
 		pre <- "data.frame("
 		mid <- ""
@@ -958,17 +964,17 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
 				#Added by Aaron 06/25/2020 passed string below
             if (rdatatype == "character") {
                 pval <- list(newcolname, rdatatype, newcolname,
-                  "", "none", "Left", "String", FALSE, 4, 0,
+                  NULL, "none", "Left", "String", FALSE, 4, 0,
                   8, "Input", "")
             }
             else if (rdatatype == "double") {
                 pval <- list(newcolname, rdatatype, newcolname,
-                  "", "none", "Left", "Scale", FALSE, 4, 0, 8,
+                  NULL, "none", "Left", "Scale", FALSE, 4, 0, 8,
                   "Input", "")
             }
 			 else if (rdatatype == "POSIXct") {
                 pval <- list(newcolname, rdatatype, newcolname,
-                  "", "none", "Left", "Date", FALSE, 4, 0, 8,
+                  NULL, "none", "Left", "Date", FALSE, 4, 0, 8,
                   "Input", DateFormat)
             }
 			else if (rdatatype == "factor")
