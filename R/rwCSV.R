@@ -70,7 +70,10 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
 		
-		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		row_count = eval(parse(text=paste('nrow(.GlobalEnv$', datasetname,')', sep='')))
+		col_count = eval(parse(text=paste('ncol(.GlobalEnv$', datasetname,')', sep='')))
+
+		if(bsky_opencommand_execution_an_exception_occured == FALSE &&  (row_count > 0 && col_count > 0)  )## Success
 		{
 			success = 0
 			## maybe return 0 for success
@@ -79,7 +82,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		}
 		else ## Failure
 		{
-			cat("\nError opening file:\n")
+			cat("\nError: Can't open file\n")
 			cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -283,7 +286,7 @@ UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n") 
+			cat("\nError: Can't save file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 

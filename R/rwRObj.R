@@ -74,7 +74,7 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 		}
 		else ## Failure
 		{
-			cat("\nError opening file:\n") 
+			cat("\nError: Can't open file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -240,8 +240,10 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 			onlyfilename = stringr::str_replace(onlyfilenamewithextension, regex(extnPattern, ignore_case = TRUE), "")
 			
 			#remove spaces or specialchars in filename, else eval/parse below will not work.
-			onlyfilename =str_replace_all(onlyfilename, "[^[:alnum:]]", "")
-			
+			onlyfilename =str_replace_all(onlyfilename, "[^([:alnum:]_.)]", "") ##"^([[:alnum:]])+([_])"
+			# print(onlyfilename)
+			# print("=-=-")
+			# print(datasetname)
 			if(onlyfilename != datasetname)# if they re not exactly the same name (case sensitive)
 			{
 				####01Feb2021 Following 2 eval-pasrse modified. 
@@ -310,7 +312,7 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n")
+			cat("\nError: Can't save file\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
 			## maybe return -1 for failure

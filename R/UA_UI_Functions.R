@@ -297,7 +297,8 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 				success = eval(parse(text=paste('UAreadRObj(RObjfileName="',fullpathfilename,'", datasetname="',datasetname,'", replace=TRUE)',sep='')))
 			}			
 			else if(filetype=="DAT"){
-				success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
+				# success = BSkyLoadDATinDataFrame(fullpathfilename, datasetname, replace=replace_ds, Header=csvHeader, sepCh=sepChar, deciCh=deciChar) 
+				success = UAreadCSV(fullpathfilename, datasetname, Header=csvHeader, replace=replace_ds, character.to.factor=character.to.factor, sepCh=sepChar, deciCh=deciChar)				
 			}					
 			else if(filetype == "PSV" || filetype == "TSV" || filetype == "CSVY" || filetype == "ZSAV" || filetype == "XPT" ||
 			filetype == "POR" || filetype == "RDS" || filetype == "REC" || filetype == "MTP" || filetype == "SYD" || filetype == "ARFF" || 
@@ -361,7 +362,7 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 		
 		# if maxFactor = -1 then we do not convert factor col to character
 		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
-		if(success == 0 && maxFactor > 0) ## if file opened successfully
+		if(success == 0 && maxFactor > 0 && !(filetype == "RDATA" || filetype == "RDA")) ## if file opened successfully
 		{
 			colcount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')')))
 			for(i in 1:colcount)
@@ -550,7 +551,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 	BSkyErrMsg = paste("BSkysaveDataset: Error in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
 	BSkyWarnMsg = paste("BSkysaveDataset: Warning in Saving dataset : ", "DataSetName :", dataSetNameOrIndex," ", "Filename :", paste(fullpathfilename, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
-	success=0
+	success=-1
 	tryCatch(
 		{
 		withCallingHandlers(
@@ -572,7 +573,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			else if(filetype == "XLSX"){
 				success = UAwriteExcel(fullpathfilename, dataSetNameOrIndex, newWorksheetName, row.names = Rownames, col.names = Colnames, xlsx=TRUE)
 			}			
-			else if(filetype == "CSV"){
+			else if(filetype == "CSV" || filetype == "TXT"){
 				success = UAwriteCSV(fullpathfilename, dataSetNameOrIndex)
 			}
 			else if(filetype == "DBF"){
@@ -588,9 +589,7 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 			filetype == "YML" || filetype == "PZFX"){
 				success = BSkyWriteWithRio(fullpathfilename, dataSetNameOrIndex) 
 			}			
-			else  if(filetype == "TXT"){
-			}
-		
+	
 		},
 		
 		warning = UAwarnHandlerFn

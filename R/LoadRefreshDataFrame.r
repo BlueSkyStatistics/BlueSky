@@ -604,7 +604,17 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid
 
 		# if maxFactor = -1 then we do not convert factor col to character
 		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
-		if(maxFactor > 0)
+		
+		## 09Oct2022 
+		## we do not put maaxFactor limit to RDATA and RDA files while opening the file. 
+		## Here we are mostly dealing with memory dataset. 
+		## Say I loaded a RDATA file with a col having factor levels more the the maxFactor setting
+		## because we do not restrict RData we load that col as factor (and not make it char)
+		## now user made a copy of this dataset (in R Editor) and loadRefresh' this memory dataset
+		## will load and the factor col turns to character because of the following code. User may get
+		## confused why the factor to character conversion happened. 
+		## So we should comment the code below (or make that IF FALSE)
+		if(FALSE) ## (maxFactor > 0 ) ##
 		{
 			# columns having more than 30 factors are converted back to character
 			colcount = eval(parse(text=paste('ncol(',bskyDatasetName,')')))

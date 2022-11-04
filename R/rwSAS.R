@@ -34,7 +34,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sas(file=\'',SASfilename,'\'))',sep='')
 		}
 		else{
-			corecommand = paste('read_sas(data_file=\'',SASfilename,'\', encoding=\'',encoding,'\')', sep='')
+			corecommand = paste('haven::read_sas(data_file=\'',SASfilename,'\', encoding=\'',encoding,'\')', sep='')
 			# opendatafilecmd = paste('.GlobalEnv$',datasetname,' <- as.data.frame( read_sas(file=\'',SASfilename,'\', encoding=\'',encoding,'\'))',sep='')
 		}
 		opendatafilecmd = paste('x <- as.data.frame( ',corecommand,')', sep='')
@@ -59,7 +59,7 @@ BSkyLoadSASinDataFrame <- function(SASfilename, datasetname, replace=FALSE, enco
 		else ## Failure
 		{
 			print(paste('Current system encoding: cp',l10n_info()$codepage,sep=''))
-			cat("\nError opening file:\n") 
+			cat("\nError: Can't open file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
@@ -139,7 +139,7 @@ BSkyWriteSas <- function(sasFilename,dataSetNameOrIndex) ##  index of dataset an
 		}
 		else ## Failure
 		{
-			cat("\nError saving file:\n") 
+			cat("\nError: Can't save file\n") 
 			# cat("\n\nCommand executed:\n")
 			print(corecommand)
 			## gracefully report error to the app layer about the issue so it does not keep waiting. 
