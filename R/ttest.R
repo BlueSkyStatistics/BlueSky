@@ -1206,7 +1206,7 @@ for (i in 1:len)
 			#print(uadatasets$retstructure[[1]]$datatable[i,3])
 			#cat("\n uaonesmdesc4")
 			#we could optimize the std error to use the std dev above
-			uadatasets$retstructure[[1]]$datatable[i,4]=sqrt((var(eval(uadatasets$temppairs[i]),na.rm="TRUE")/uadatasets$retstructure[[1]]$datatable[i,2]))
+			uadatasets$retstructure[[1]]$datatable[i,4]=sqrt((var(eval(uadatasets$temppairs[i]),na.rm="TRUE")/uadatasets$retstructure[[1]]$datatable[i,1]))
 			#cat("\n uaonesmdesc4")
 		}
 	}

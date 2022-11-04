@@ -19,7 +19,7 @@
 #' BSky_One_Simple_T_Test = BSkyIndSmTTest(varNamesOrVarGlobalIndices =c('Sales','Expenses'),group=c('Deptt'),conf.level=0.95, alternative="less", datasetNameOrDatasetGlobalIndex ='Dataset')
 BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group = NULL, conf.level = 0.95, alternative="two.sided",
     datasetNameOrDatasetGlobalIndex = NULL, missing = 0, bSkyHandleSplit = TRUE, excludeEnvPrefix = FALSE,
-    cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE, debug=FALSE) 
+    cohens_d=FALSE, cohensd_correction=FALSE, hedges_g =FALSE, hedgesg_correction=FALSE, glass_d=FALSE, glassd_correction=FALSE,center ="mean", debug=FALSE) 
 {
     BSkyFunctionInit()
 	
@@ -201,7 +201,7 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
                   groupindex = BSkygetIndexesOfCols(group, bSkyGlobalDataSliceIndexToWorkOn)
                   uatemp = uaindsm(bSkyVarnamesIndex, groupindex, 
                     conf.level,alternative, index = bSkyGlobalDataSliceIndexToWorkOn, 
-                    missing,cohens_d=cohens_d, cohensd_correction=cohensd_correction,hedges_g =hedges_g, hedgesg_correction=hedgesg_correction,glass_d=glass_d, glassd_correction=glassd_correction)
+                    missing,cohens_d=cohens_d, cohensd_correction=cohensd_correction,hedges_g =hedges_g, hedgesg_correction=hedgesg_correction,glass_d=glass_d, glassd_correction=glassd_correction, center= center)
                   BSkyBuildReturnTableStructure(bSkyVarnames, 
                     bSkyDatasetname, OutputDataTableListIfPassed = NA)
                 }
@@ -213,7 +213,7 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
                 groupindex = BSkygetIndexesOfCols(group, bSkyGlobalDataSliceIndexToWorkOn)
                 uatemp = uaindsm(bSkyVariableColumnIndicesOnDataSlice, 
                   groupindex, conf.level,alternative, index = bSkyGlobalDataSliceIndexToWorkOn, 
-                  missing,cohens_d=cohens_d, cohensd_correction=cohensd_correction,hedges_g =hedges_g, hedgesg_correction=hedgesg_correction,glass_d=glass_d, glassd_correction=glassd_correction)
+                  missing,cohens_d=cohens_d, cohensd_correction=cohensd_correction,hedges_g =hedges_g, hedgesg_correction=hedgesg_correction,glass_d=glass_d, glassd_correction=glassd_correction, center = center)
                 BSkyBuildReturnTableStructure(bSkyVarnames, bSkyDatasetname, 
                   OutputDataTableListIfPassed = NA)
             }
@@ -261,7 +261,7 @@ BSkyIndSmTTest <-function (data = NULL, varNamesOrVarGlobalIndices = NULL, group
 bskystderr <- function(x) sqrt(var(x,na.rm=TRUE)/length(na.omit(x)))
 	
 	
-uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, missing,cohens_d=FALSE, cohensd_correction=FALSE,hedges_g =FALSE, hedgesg_correction=FALSE,glass_d=FALSE, glassd_correction=FALSE) 
+uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, missing,cohens_d=FALSE, cohensd_correction=FALSE,hedges_g =FALSE, hedgesg_correction=FALSE,glass_d=FALSE, glassd_correction=FALSE, center="mean") 
 {
     BSkyFunctionInit()
     BSkyErrMsg = "Error in Independent Sample T.test"
@@ -307,7 +307,7 @@ uaindsm <- function (uavarindex, groupindex, conf.level,alternative, index, miss
     uamat = uaindsmttest(cindex, uavarindex, groupindex, noofvars, 
         alternative, conf.level, FALSE, index, uadesc[[2]])
     ualevene = ualevene.test(cindex, uavarindex, groupindex, 
-        noofvars, index)
+        noofvars, index, center)
     while (m <= noofrows) {
         uamat[[1]][m, 1:2] = ualevene[[1]][n, 1:2]
         m = m + 2
@@ -660,7 +660,7 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
 
 
 
-ualevene.test <-function(cindex,uavarindex,groupindex,noofvars, index)
+ualevene.test <-function(cindex,uavarindex,groupindex,noofvars, index, center ="mean")
 {
 	i=1
 	p=1
@@ -683,7 +683,7 @@ ualevene.test <-function(cindex,uavarindex,groupindex,noofvars, index)
 			#ON RUNNING A ONE SAMPLE T.TEST ON A SINGLE VARIABLE. WE ALWAYS RETURN THE ERROR FIRST EVEN THOUGH THE WARNING OCCURED FIRST
 			withCallingHandlers(
 				{
-				uatemp <-levenemod.test(eval(uadatasets$temppairs[p]),eval(uadatasets$temppairs[p+1]))
+				uatemp <-levenemod.test(eval(uadatasets$temppairs[p]),eval(uadatasets$temppairs[p+1]), location = center)
 				},
 			warning = function(ex) 
 				{
