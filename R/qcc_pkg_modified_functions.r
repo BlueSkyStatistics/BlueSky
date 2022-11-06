@@ -1384,7 +1384,7 @@ violating.runs.indices <- function (object,
 		
 plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(), newdata.name = c(), newsizes = c(), 
 								phases.data.list = list(), phase.names = c(), 
-								type = "xbar",  
+								type = "xbar", chart.title.name = c(), xlab = c(), ylab = c(),
                                 nsigmas = 3, confidence.level= NA, std.dev = NA, 
 								additional.sigma.lines = c(), spec.limits = list(lsl=c(), usl= c()),
 								digits =2, 
@@ -1396,6 +1396,17 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 
 	if (missing(data)) 
         stop("data is required")
+	
+	orig_type = type[1]
+	if(type[1] == 'MR')
+	{
+		type[1] = 'R'
+	}
+	
+	if(length(chart.title.name) == 0)
+	{
+		chart.title.name = type[1]
+	}
 		
 	if (!(type[1] %in% c("xbar", "R", "S", "xbar.one", "p", "np", "c", "u"))) 
         stop("Chart type allowed - xbar, R, S, xbar.one, p, np, c, u")
@@ -1422,9 +1433,44 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	
 	zero.or.one.phase = TRUE
 	
+	if(class(data)[1] %in% c("matrix", "data.frame"))
+	{
+		max_rows = dim(data)[1]
+	}	
+	else
+	{
+		max_rows = length(data)
+	}
+	
+	if(length(newdata) > 0)
+	{
+		if(orig_type == 'MR' && length(newdata) > 1)
+		{
+			newdata = newdata[1:(length(newdata) - 1)]
+		}
+			
+		newdata = newdata[newdata <= max_rows]
+			
+		if(length(newsizes) > 0 && length(newsizes) > length(newdata))
+		{
+			newsizes = newsizes[1: length(newdata)]
+		}
+	}
+	
 	if(length(phases.data.list) > 0)
 	{
 		phases.data.list = phases.data.list[!unlist(lapply(phases.data.list,is.null))]
+		
+		if(orig_type == 'MR' && length(phases.data.list) > 0)
+		{
+			#phases.data.list = lapply(phases.data.list,function(x){x[length(x)]= x[length(x)] - 1; x})
+			phases.data.list = lapply(phases.data.list,function(x){if(length(x) > 1){x[1:(length(x)-1)]}else x})
+			#phases.data.list = lapply(phases.data.list,function(x){if(max(x) < max_rows) {x[1:(length(x)-1)]} else x})
+		}
+		
+		phases.data.list = lapply(phases.data.list,function(x){x[x <= max_rows]})
+		
+		#print(phases.data.list)
 		 
 		if(length(phases.data.list) > 1)
 		{
@@ -1517,22 +1563,36 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	{
 		if(length(newdata) == 0)
 		{
-			main.title <- paste(type[1], "Chart\nfor", data.name, "( sample size of", all.sizes[1],")")
+			if(chart.title.name == 'MR')
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name)
+			}
+			else
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name, "( sample size of", all.sizes[1],")")
+			}
 		}
 		else
 		{
-			main.title <- paste(type[1], "Chart\nfor", data.name, "with new data( sample size of", all.sizes[1],")")
+			if(chart.title.name == 'MR')
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name, "with new data")
+			}
+			else
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name, "with new data ( sample size of", all.sizes[1],")")
+			}
 		}
 	}
 	else
 	{
 		if(length(newdata) == 0)
 		{
-			main.title <- paste(type[1], "Chart\nfor", data.name, "( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
+			main.title <- paste(chart.title.name, "Chart\nfor", data.name, "( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
 		}
 		else
 		{
-			main.title <- paste(type[1], "Chart\nfor", data.name, "with new data( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
+			main.title <- paste(chart.title.name, "Chart\nfor", data.name, "with new data( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
 		}
 	}
 	
@@ -1637,10 +1697,20 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	all.indices = 1:length(all.samples)
 	names(all.indices) = c(all.samples.names, newdata)
 	
+	if(length(xlab) == 0)
+	{
+		xlab = "Group"
+	}
+	
+	if(length(ylab) == 0)
+	{
+		ylab = "Group summary statistics"
+	}
+	
     plot(all.indices, all.statistics, type = "n", 
 		ylim = ylim.range, 
-		ylab = "Group summary statistics", 
-		xlab = "Group", axes = FALSE)
+		ylab = ylab, 
+		xlab = xlab, axes = FALSE)
 		
     rect(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[4], col = qcc.options("bg.figure")) # qcc.options("bg.figure") is white
 	
@@ -2221,7 +2291,8 @@ print.qcc.spc.phases <- function (qcc.spc.phases.obects = list(), qcc.objects = 
 									print.qcc.object.summary = FALSE,
 									digits = 2, 
 									phase.names = c(),
-									stat.table.name = "Summary Stats")
+									stat.table.name = "Summary Stats",
+									chart.title.name = c())
 {
 
 	zero.or.one.phase = FALSE
@@ -2242,7 +2313,14 @@ print.qcc.spc.phases <- function (qcc.spc.phases.obects = list(), qcc.objects = 
 		
 		if(length(qcc.spc.phases.obects$qcc.objects) > 0)
 		{
-			stat.table.name = paste(stat.table.name, "for", qcc.spc.phases.obects$qcc.objects[[1]]$type, "chart")
+			if(length(chart.title.name) == 0)
+			{
+				stat.table.name = paste(stat.table.name, "for", qcc.spc.phases.obects$qcc.objects[[1]]$type, "chart")
+			}
+			else
+			{
+				stat.table.name = paste(stat.table.name, "for", chart.title.name, "chart")
+			}
 		}
 		
 		BSkyFormat(qcc.spc.phases.obects$summary.table, decimalDigitsRounding = digits, outputTableRenames = stat.table.name)
