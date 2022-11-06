@@ -15,47 +15,63 @@ BSkyPartialCorrelationsErrWarnHandler <- function(m)
 	
 }
 
-BSkyPartialSemiCorrelations <- function( vars, constants, type, data)
+BSkyPartialSemiCorrelations <-
+function (vars, constants, type, data)
 {
-  results=NULL
-  uadatasets.sk$partialCorrelations$index =NULL
-  uadatasets.sk$partialCorrelations$messages =NULL
-  results = matrix(rep (NA, length(vars)*3*(length (vars)+3) ),nrow=length (vars)*3, ncol = length (vars)+3 )
-	results = data.frame(results)
-  results[1,1] = paste(vars, collapse=',')
-  results[,2] = rep(c("Estimate", "p.value", "Test statistic"), length(vars))
-	names(results) = c("Control Variables", "","", vars)
-  rownumber=1
-  if(type == 'partial')
-  {
-	typestring = "pcor.test("
-  }
-  else
-  {
-	typestring = "spcor.test("
-  }
-  for( i in 1:length(vars))
-  {
-    for( j in 1:length(vars))
-    {
-      uadatasets.sk$partialCorrelations$index= c(rownumber, j)
-  		    
-      tryCatch({
-			withCallingHandlers({
-					temp <-eval(parse(text =paste(typestring, data, "$", vars[i],"," ,data, "$", vars[j],",", data, "[,", deparse(constants), "])", sep="")))
-			}, warning = BSkyPartialCorrelationsErrWarnHandler, silent = TRUE)
-			},error = BSkyPartialCorrelationsErrWarnHandler, silent = TRUE)
-      
-			 results[rownumber, j] = temp$estimate
-      	results[rownumber+1, j] = temp$p.value
-      	results[rownumber+2, j] = temp$statistic
-      rownumber =rownumber+3
-      
+    temp=NULL
+	typestring=""
+   results = NULL
+    uadatasets.sk$partialCorrelations$index = NULL
+    uadatasets.sk$partialCorrelations$messages = NULL
+    results = matrix(rep(NA, length(vars) * 3 * (length(vars) +
+        3)), nrow = length(vars) * 3, ncol = length(vars) + 3)
+    results = data.frame(results)
+    results[1, 1] = paste(vars, collapse = ",")
+    results[, 2] = rep(c("Estimate", "p.value", "Test statistic"),
+        length(vars))
+    names(results) = c("Control Variables", "", "", vars)
+    rownumber = 1
+    if (type == "partial") {
+        typestring = "pcor.test("
+    } else {
+        typestring = "spcor.test("
     }
-  }
-  for (k in 1: length(uadatasets.sk$partialCorrelations$messages))
-  {
-  	attr(results, paste("BSkyFootnote_BSkyfooter", k, sep="")) = uadatasets.sk$partialCorrelations$messages[k] 
-  }
-  invisible(results)
+  i=1
+  j=1
+  k=1
+  for (i in 1:length(vars)) {
+   
+        for (j in 1:length(vars)) {
+            uadatasets.sk$partialCorrelations$index = c(rownumber,
+                j)
+          if ( i != j)
+            {
+              tryCatch({
+                  withCallingHandlers({
+                    temp <- eval(parse(text = paste(typestring,
+                      data, "$", vars[i], ",", data, "$", vars[j],
+                      ",", data, "[,", deparse(constants), "])",
+                      sep = "")))
+                  }, warning = BSkyPartialCorrelationsErrWarnHandler,
+                    silent = TRUE)
+              }, error = BSkyPartialCorrelationsErrWarnHandler,
+                  silent = TRUE)
+            } else {
+              temp$estimate =1
+              temp$p.value =NA
+              temp$statistic =NA
+             
+            }
+            results[rownumber, 3] = vars[i]
+            results[rownumber, j+3] = temp$estimate
+            results[rownumber + 1, j+3] = temp$p.value
+            results[rownumber + 2, j+3] = temp$statistic
+            #rownumber = rownumber + 3
+        }
+    rownumber = rownumber+ 3
+    }
+    for (k in 1:length(uadatasets.sk$partialCorrelations$messages)) {
+        attr(results, paste("BSkyFootnote_BSkyfooter", k, sep = "")) = uadatasets.sk$partialCorrelations$messages[k]
+    }
+    invisible(results)
 }
