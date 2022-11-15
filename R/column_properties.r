@@ -1984,7 +1984,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 						
 						#30May2022 First we convert factor to character and then type.convert() should convert the column to the correct type based on the data
 						# if the data in col is like ("High","med","low") it will remain character if the data is ("12","23","34") then it changes to (12,23,34)
-						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- type.convert(as.character(',datasetname,'$',colNameOrIndex,'),as.is=TRUE)', sep='')))
+						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- type.convert(stringr::str_trim(as.character(',datasetname,'$',colNameOrIndex,'), side="both"),as.is=TRUE)', sep='')))
 						
 						##This may be used in future.
 						##check if col is a character col ("Male","Female"). You can convert these levels to numeric levels (1,2)
