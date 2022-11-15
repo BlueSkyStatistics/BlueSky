@@ -61,7 +61,9 @@ BSkyFrequency <- function (data = NULL, vars = NULL)
 	
 	#print(BSky_Variable_List)
 		
-    BSky_Summary_By_Variable <- ftable(summary(data[names(BSky_Variable_List)]))
+    BSky_Summary_By_Variable = ftable(summary(data[names(BSky_Variable_List)]))
+	BSky_Summary_By_Variable = as.data.frame(as.matrix(BSky_Summary_By_Variable))
+	rownames(BSky_Summary_By_Variable) = c()
 	
     #BSkyFormat(BSky_Dataset_Overview, singleTableOutputHeader = c("Dataset Overview"))
 	table_list = list(BSky_Dataset_Overview)
