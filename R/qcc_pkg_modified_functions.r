@@ -1384,7 +1384,7 @@ violating.runs.indices <- function (object,
 		
 plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(), newdata.name = c(), newsizes = c(), 
 								phases.data.list = list(), phase.names = c(), 
-								type = "xbar", chart.title.name = c(), xlab = c(), ylab = c(),
+								type = "xbar", chart.title.name = c(), size.title = c(), xlab = c(), ylab = c(),
                                 nsigmas = 3, confidence.level= NA, std.dev = NA, 
 								additional.sigma.lines = c(), spec.limits = list(lsl=c(), usl= c()),
 								digits =2, 
@@ -1563,7 +1563,8 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	{
 		if(length(newdata) == 0)
 		{
-			if(chart.title.name == 'MR')
+			#if(chart.title.name == 'MR') 
+			if(length(size.title) > 0 && trimws(size.title) == "")
 			{
 				main.title <- paste(chart.title.name, "Chart\nfor", data.name)
 			}
@@ -1574,7 +1575,8 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 		}
 		else
 		{
-			if(chart.title.name == 'MR')
+			#if(chart.title.name == 'MR')
+			if(length(size.title) > 0 && trimws(size.title) == "")
 			{
 				main.title <- paste(chart.title.name, "Chart\nfor", data.name, "with new data")
 			}
@@ -1588,11 +1590,25 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	{
 		if(length(newdata) == 0)
 		{
-			main.title <- paste(chart.title.name, "Chart\nfor", data.name, "( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
+			if(length(size.title) > 0 && trimws(size.title) == "")
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name)
+			}
+			else
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name, "( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
+			}
 		}
 		else
 		{
-			main.title <- paste(chart.title.name, "Chart\nfor", data.name, "with new data( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
+			if(length(size.title) > 0 && trimws(size.title) == "")
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name, "with new data")
+			}
+			else
+			{
+				main.title <- paste(chart.title.name, "Chart\nfor", data.name, "with new data( variable sample sizes between", min(all.sizes),"and", max(all.sizes), ")")
+			}
 		}
 	}
 	
