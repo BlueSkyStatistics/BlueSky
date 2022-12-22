@@ -263,10 +263,10 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 				success = BSkyReadStata(fullpathfilename, datasetname, replace=replace_ds) 
 			}			
 			else if(filetype == "XLS"){
-				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=FALSE, character.to.factor=character.to.factor)
+				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=FALSE, character.to.factor=character.to.factor, colNames=csvHeader)
 			}
 			else if(filetype == "XLSX"){
-				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=TRUE, character.to.factor=character.to.factor)
+				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=TRUE, character.to.factor=character.to.factor, colNames=csvHeader)
 			}			
 			else if(isBasketData && (filetype == "CSV" || filetype == "DAT" || filetype == "TXT") ) #if its mkt basket data in a flat file having extension csv, txt or data
 			{
