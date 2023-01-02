@@ -1899,7 +1899,7 @@ BSkyMakeColumnFactor <- function(colNameOrIndex, dataSetNameOrIndex,  excludecha
 		{
 				bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
 				# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
-				eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars)', sep='')))
+				eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars, ordered = FALSE)', sep='')))
 				# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
 				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
 		}
