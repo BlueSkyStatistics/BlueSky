@@ -2070,7 +2070,14 @@ first.time=1
 											ua.CT <- c(ua.CT, list(chisq = ua.CST, OR = NA, lower.OR =NA, upper.OR =NA ))
 										}
 			
-									}
+								}
+						  
+						  if (fisher) 
+						    ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = ua.FTl, fisher.gt = ua.FTg))
+						  #Added by Aaron 08/11/2022 
+						  if (mcnemar)
+						    ua.CT <- c(ua.CT, list(mcnemar = ua.McNc))
+						  
 							
 					
 							#Commented by Aaron 08/11/2022
