@@ -1814,7 +1814,8 @@ first.time=1
 						expected=FALSE
 					}
 					prop.chisq <- chisq <-  fisher <- mcnemar<-asresid <-resid<-sresid<- FALSE
-				} else if (numberOfRows != numberOfCols)
+				} 
+				else if (numberOfRows != numberOfCols)
 				#If its not a square matrix you cannot run Mcnemar's test
 				{
 				if (orimcnemar)
@@ -1822,15 +1823,16 @@ first.time=1
 						#BSkyfootermsg =sprintf("Mcnemar test cannot be run as %s and %s are constants",names(dimnames(t))[1],names(dimnames(t))[2])
 						#BSkyfootermsg =paste("Mcnemar test cannot be run as %s and %s are constants",)
 						#BSkyfootermsg ="McNemar test cannot be run as row variable and column variables don't create a 2x2 table";
-						
-						if (layerinfo =="")
+
+						if (length(layerinfo) ==0)
 						BSkyfootermsg <-"McNemar test cannot be run as row variables and column variables don't create a square table"
 						else
 						BSkyfootermsg <-paste ("McNemar test cannot be run as row variables and column variables don't create a square table for the following values in the layer variables:-", paste (layerinfo, collapse=","))
-						uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))			
+						uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
 					}
 					mcnemar<-FALSE
 				}
+				
 				
 				#Added ny Aaron 08/10/2022
 				##The old code is commented below
