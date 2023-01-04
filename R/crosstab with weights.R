@@ -1,4 +1,4 @@
-# The mcnemar test is run for a 2*2 matrix of counts. If a 2*2 matrix is not generated, extensions of the traditional Mcnemars test are used
+  # The mcnemar test is run for a 2*2 matrix of counts. If a 2*2 matrix is not generated, extensions of the traditional Mcnemars test are used
 
 # Anova table is not generated as there are no predictors. 
 
