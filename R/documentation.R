@@ -85,6 +85,28 @@
 
 
 #CROSS TAB tables
+
+# BEFORE YOU PROCESS THE METADATA AND DATA TABLES ASSOCIATED WITH THE CROSSTAB YOU NEED TO KNOW THE INFORMATION BELOW 
+#Before you process my data and meta-data tables you(Sanjays program)  need to know the following
+#	The row and column variables
+#	The options selected
+#	The number of levels in the row and column variables
+#	From  1to 3, you must be able to compute the number of rows you expect when you cross all levels of the row level with all levels of the column variable (WE CALL THIS A TUPLE)
+#	So if store has 5 levels and you have selected the following below, you will expect 21 rows (PER TUPLE), including the total. This is computed as follows, 4 rows (count , residual, standard residual, adjusted residual ) *5 (store1, #	stoe2, store3, store4, store5)=20+1 (total)
+# 	chisq=TRUE,
+# 	mcnemar=TRUE,
+#  	fisher=FALSE,
+#                        prop.r=FALSE,
+#                        prop.c=FALSE,
+#                        resid=TRUE,
+#                        sresid=TRUE,
+#                       asresid=TRUE,
+#                        expected=FALSE,
+#	Only when you know the above can you make sense of the 2 meta-data table
+#	There is some other complexity, if one of the column levels are all 0's, you need to omit that column, I tell you the column levels in the $tables[[1]]$columnNames
+#	Note that we always suppress all rows with 0 counts and the corresponding stats associated with these rows e.g. residuals, standard residual, adjusted residual. That information is in meta-data table2
+#
+#	Metadata table one has no value
 #For crosstab tables for every data table there are 3 metadata tables
 #The first metadata table contains an entry for every potential row in the sub-table generated for a non-empty layer tuple (A 
 # non empty tuple is a tuple of the layers where all counts are not zero or one or more of the levels in a layer 

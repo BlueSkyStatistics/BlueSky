@@ -107,8 +107,8 @@
 #' asresid=FALSE)
 #' BSkyFormat(BSky_Multiway_Cross_Tab)
 BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3, max.width = 5, expected=FALSE, prop.r=FALSE, prop.c=FALSE,
-           prop.t=FALSE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
-           resid=FALSE, sresid=FALSE, asresid=FALSE,
+           prop.t=FALSE, prop.chisq=FALSE, chisq = FALSE, chisqCorrect=FALSE, chisqSimulate =FALSE, chisqNoOfSimulations =0,fisher=FALSE, fisherCorrect=FALSE, fisherSimulate =FALSE, fisherNoOfSimulations =0, fisherAlternate ="two.sided",mcnemar=FALSE,
+           mcnemarCorrect=FALSE, resid=FALSE, sresid=FALSE, asresid=FALSE,
            missing.include=TRUE, dnn = NULL, datasetname = NULL, bSkyHandleSplit = TRUE, long_table = FALSE, debug=FALSE)
            
 {
@@ -117,6 +117,7 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 	# This is to gather the call parameters passed. This is needed within
 	# warning and error handler to log the calling details in logfile
 	BSkyFunctionInit()
+  uadatasets.sk$footnoteNumber =0
 	
 	orig_datasetname = datasetname  
 	
@@ -389,7 +390,8 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 								#warning("yahoo")
 								#warning("Forced warning msg")														
     							BSkyColLevels=uaCrossTablegen(uaorilevels,x,y,weight,layers,digits, max.width, expected, prop.r, prop.c,
-									prop.t, prop.chisq, chisq, fisher, mcnemar,resid, sresid, asresid,missing.include
+									prop.t, prop.chisq, chisq , chisqCorrect, chisqSimulate , chisqNoOfSimulations ,fisher, fisherCorrect, fisherSimulate, fisherNoOfSimulations, fisherAlternate, mcnemar,
+									mcnemarCorrect,resid, sresid, asresid,missing.include
 									, dnn,index=bSkyGlobalDataSliceIndexToWorkOn)
 									
 									# Incrementally build the return structure for each iteration (i.e. based on dataset split)
@@ -431,10 +433,8 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 								#uaonesample(bSkyVariableColumnIndicesOnDataset, mu,conf.level,bSkyGlobalDatasetIndexToWorkOn, missing)
 							
 							BSkyColLevels=uaCrossTablegen(uaorilevels,x,y,weight,layers,digits, max.width, expected, prop.r, prop.c,
-									prop.t, prop.chisq, chisq, fisher, mcnemar,resid, sresid, asresid,missing.include
-									, dnn,index=bSkyGlobalDatasetIndexToWorkOn)
-							
-							
+									prop.t, prop.chisq, chisq , chisqCorrect, chisqSimulate , chisqNoOfSimulations ,fisher, fisherCorrect, fisherSimulate, fisherNoOfSimulations, fisherAlternate, mcnemar,
+									mcnemarCorrect,resid, sresid, asresid,missing.include, dnn,index=bSkyGlobalDatasetIndexToWorkOn)
 							# cat("\nVarnames=\t")
 							# print(bSkyVarnames)
 							BSkyBuildReturnTableStructure(bSkyVarnames, bSkyDatasetname, OutputDataTableListIfPassed=NA)
@@ -528,7 +528,8 @@ BSkyCrossTable<- function(data = NULL, x=NA, y=NA,layers=NA, weight=NA, digits=3
 #ua.MultDimCrossTab calls "ua.2D.crosstab" for the counts that represented a unique layer tuple
 
 uaCrossTablegen<-function(uaorilevels,x, y,weight, layers,digits, max.width, expected, prop.r, prop.c,
-           prop.t, prop.chisq, chisq, fisher, mcnemar,
+           prop.t, prop.chisq, chisq, chisqCorrect, chisqSimulate , chisqNoOfSimulations,fisher, fisherCorrect, fisherSimulate , fisherNoOfSimulations, fisherAlternate, mcnemar,
+           mcnemarCorrect,
            resid, sresid, asresid,
            missing.include,
            dnn = NULL,index)
@@ -670,7 +671,9 @@ uaCrossTablegen<-function(uaorilevels,x, y,weight, layers,digits, max.width, exp
 	uadatasets$retstructure[[1]]$columnNames =BSkyColLevels
 	
 	#bskycartlevels= rev(expand.grid(x,y))
-	uatab <-ua.MultDimCrossTab (uaorilevels,uatab, ua.2D.crossTab.fun.name="ua.2D.crosstab", starting.dim.pos =3, format="SPSS", prop.r=prop.r, prop.c=prop.c, prop.t=prop.t, prop.chisq=prop.chisq, missing.include=missing.include,resid=resid, sresid=sresid, asresid=asresid,expected=expected,chisq=chisq,mcnemar=mcnemar,fisher=fisher)	
+	uatab <-ua.MultDimCrossTab (uaorilevels,uatab, ua.2D.crossTab.fun.name="ua.2D.crosstab", starting.dim.pos =3, format="SPSS", prop.r=prop.r, prop.c=prop.c, prop.t=prop.t, prop.chisq=prop.chisq, missing.include=missing.include,resid=resid, sresid=sresid, asresid=asresid,expected=expected,chisq=chisq,mcnemar=mcnemar,fisher=fisher,
+	                            chisqCorrect=chisqCorrect , chisqSimulate=chisqSimulate , chisqNoOfSimulations=chisqNoOfSimulations, fisherCorrect=fisherCorrect, fisherSimulate =fisherSimulate, fisherNoOfSimulations=fisherNoOfSimulations, fisherAlternate=fisherAlternate,
+	                            mcnemarCorrect=mcnemarCorrect)	
 	
 	
 	#The levels that we are returning values for are repeated in both the crosstab and the results of the statistics
@@ -1254,7 +1257,8 @@ uahandlenainpercents <-function(oritable,percenttable)
 
 ua.MultDimCrossTab<-function (uaorilevels,t,  ua.2D.crossTab.fun.name="ua.2D.crosstab",  starting.dim.pos =3, digits = 3, max.width = 5, expected = FALSE, 
     prop.r, prop.c, prop.t, prop.chisq , 
-    chisq = TRUE, fisher = FALSE, mcnemar = FALSE, resid = FALSE, 
+    chisq = TRUE, fisher = FALSE, mcnemar = FALSE, chisqCorrect=FALSE , chisqSimulate=FALSE , chisqNoOfSimulations=2000, fisherCorrect=FALSE, fisherSimulate =FALSE, fisherNoOfSimulations=2000, fisherAlternate="two.sided",
+    mcnemarCorrect=FALSE, resid = FALSE, 
     sresid = FALSE, asresid = FALSE, missing.include = TRUE, 
     format = NULL, dnn = NULL, ...) 
 {
@@ -1312,7 +1316,8 @@ ua.MultDimCrossTab<-function (uaorilevels,t,  ua.2D.crossTab.fun.name="ua.2D.cro
 		
 		crosstab.2D.return.obj$crosstab.2D.return.obj <-ua.2D.crosstab(uaorilevels,t,  digits = 3, max.width = 5, expected , 
 		prop.r , prop.c, prop.t , prop.chisq , 
-		chisq , fisher , mcnemar , resid , 
+		chisq , chisqCorrect, chisqSimulate , chisqNoOfSimulations,fisher, fisherCorrect, fisherSimulate , fisherNoOfSimulations, fisherAlternate, mcnemar,
+		mcnemarCorrect, resid , 
 		sresid , asresid ,oriprop.chisq ,orichisq,actualexpected, orifisher, orimcnemar ,oriresid,orisresid ,oriasresid,layerinfo="" ,missing.include, 
 		format , dnn, factorvals,noNonEmptyTables,storeOriLevelOfFirstVarIfOneByOneTable) 
 	
@@ -1380,7 +1385,8 @@ ua.MultDimCrossTab<-function (uaorilevels,t,  ua.2D.crossTab.fun.name="ua.2D.cro
     	#					format, dnn, ...) 
 		ua.2D.crosstab.broker<-function (ua.2D.crossTab.fun.name, uaorilevels,xtab.table.index, t, digits, max.width, expected, 
     						prop.r, prop.c, prop.t, prop.chisq, 
-    						chisq, fisher, mcnemar, resid, 
+    						chisq, chisqCorrect, chisqSimulate , chisqNoOfSimulations,fisher, fisherCorrect, fisherSimulate , fisherNoOfSimulations, fisherAlternate, mcnemar,
+    						mcnemarCorrect, resid, 
     						sresid, asresid,  oriprop.chisq ,orichisq,actualexpected, orifisher, orimcnemar ,oriresid,orisresid ,oriasresid,missing.include, 
     						format, dnn,factorval,noNonEmptyTables, storeOriLevelOfFirstVarIfOneByOneTable,...)
 		{
@@ -1488,9 +1494,17 @@ first.time=1
 								"prop.t =", prop.t, ",",
 								"prop.chisq =", prop.chisq, ",",
     								"chisq =", chisq, ",",
+								"chisqCorrect =", chisqCorrect, ",",
+								"chisqSimulate =", chisqSimulate, ",",
+								"chisqNoOfSimulations =", chisqNoOfSimulations, ",",
 								"fisher =", fisher, ",",
-								"mcnemar =", mcnemar, ",",
-								"resid =", resid, ",",
+								"fisherCorrect =", fisherCorrect, ",",
+								"fisherSimulate =",fisherSimulate, ",",
+								"fisherNoOfSimulations =", fisherNoOfSimulations, ",",
+								"fisherAlternate =",deparse(fisherAlternate, width.cutoff = 499), ",",
+								"mcnemar=",mcnemar, ",",
+								"mcnemarCorrect=", mcnemarCorrect, ",",
+							"resid =", resid, ",",
     								"sresid =", sresid, ",",
 								"asresid =", asresid, ",",
 								"actualexpected =", actualexpected, ",",
@@ -1543,8 +1557,16 @@ first.time=1
 								"prop.t =", prop.t, ",",
 								"prop.chisq =", prop.chisq, ",",
     								"chisq =", chisq, ",",
+								"chisqCorrect =", chisqCorrect, ",",
+								"chisqSimulate =", chisqSimulate, ",",
+								"chisqNoOfSimulations =", chisqNoOfSimulations, ",",
 								"fisher =", fisher, ",",
-								"mcnemar =", mcnemar, ",",
+								"fisherCorrect =", fisherCorrect, ",",
+								"fisherSimulate =",fisherSimulate, ",",
+								"fisherNoOfSimulations =", fisherNoOfSimulations, ",",
+								"fisherAlternate =",deparse(fisherAlternate, width.cutoff = 499), ",",
+								"mcnemar =",mcnemar, ",",
+								"mcnemarCorrect =", mcnemarCorrect, ",",
 								"resid =", resid, ",",
     								"sresid =", sresid, ",",
 								"asresid =", asresid, ",",
@@ -1610,7 +1632,8 @@ first.time=1
 				uatemp <-xtab.dim.loop.tracking
 				crosstab.2D.return.obj <- ua.2D.crosstab.broker(ua.2D.crossTab.fun.name, uaorilevels,xtab.dim.loop.tracking, t, digits, max.width, expected, 
    						prop.r, prop.c, prop.t, prop.chisq, 
-    						chisq, fisher, mcnemar, resid, 
+    						chisq, chisqCorrect, chisqSimulate , chisqNoOfSimulations,fisher, fisherCorrect, fisherSimulate , fisherNoOfSimulations, fisherAlternate, mcnemar,
+   						mcnemarCorrect, resid, 
     						sresid, asresid, oriprop.chisq ,orichisq,actualexpected, orifisher, orimcnemar ,oriresid,orisresid ,oriasresid,missing.include, 
     						format, dnn, factorvals,noNonEmptyTables,storeOriLevelOfFirstVarIfOneByOneTable,...) 
 				#crosstab.2D.return.obj$crosstab.2D.return.obj$tableAllZeroCounts=TRUE when all rows of the table t are 0s i.e. ALL counts are 0s
@@ -1705,7 +1728,8 @@ first.time=1
 
 		ua.2D.crosstab<-function (uaorilevels,t,  digits = 3, max.width = 5, expected = FALSE, 
 			prop.r = TRUE, prop.c = TRUE, prop.t = TRUE, prop.chisq = TRUE, 
-			chisq = FALSE, fisher = FALSE, mcnemar = FALSE, resid = FALSE, 
+			chisq = FALSE, chisqCorrect=FALSE, chisqSimulate =FALSE, chisqNoOfSimulations = 0,fisher=FALSE, fisherCorrect=FALSE, fisherSimulate =FALSE, fisherNoOfSimulations =0, fisherAlternate ="two.sided",mcnemar=FALSE,
+			mcnemarCorrect=FALSE, resid = FALSE, 
 			sresid = FALSE, asresid = FALSE,oriprop.chisq ,orichisq,actualexpected, orifisher, orimcnemar ,oriresid,orisresid ,oriasresid,layerinfo="",missing.include = FALSE, 
 			format = NULL, dnn = NULL, factorvals=NULL,noNonEmptyTables,storeOriLevelOfFirstVarIfOneByOneTable, ...) 
 		{
@@ -1799,8 +1823,15 @@ first.time=1
 					
 					if (orichisq)
 					{
-						BSkyfootermsg ="Chi sq test cannot be run as row or column variables are constants (the number of levels in the row or column variables are less than 2)";
-					uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
+					  uadatasets.sk$footnoteNumber =uadatasets.sk$footnoteNumber+1
+					  if (length(layerinfo) ==0)
+					  {
+					        BSkyfootermsg =paste (uadatasets.sk$footnoteNumber, ": Chi sq test cannot be run as row or column variables are constants (the number of levels in the row or column variables are less than 2)");
+					  } else 
+					  {
+					   BSkyfootermsg =paste (uadatasets.sk$footnoteNumber, ": For layer variables -", paste(layerinfo, collapse=","), " Chi sq test cannot be run as row or column variables are constants (the number of levels in the row or column variables are less than 2)");					      
+					  }
+					  uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
 					}
 					if (expected)
 					{
@@ -1823,12 +1854,14 @@ first.time=1
 						#BSkyfootermsg =sprintf("Mcnemar test cannot be run as %s and %s are constants",names(dimnames(t))[1],names(dimnames(t))[2])
 						#BSkyfootermsg =paste("Mcnemar test cannot be run as %s and %s are constants",)
 						#BSkyfootermsg ="McNemar test cannot be run as row variable and column variables don't create a 2x2 table";
-
+				    uadatasets.sk$footnoteNumber =uadatasets.sk$footnoteNumber+1
 						if (length(layerinfo) ==0)
-						BSkyfootermsg <-"McNemar test cannot be run as row variables and column variables don't create a square table"
-						else
-						BSkyfootermsg <-paste ("McNemar test cannot be run as row variables and column variables don't create a square table for the following values in the layer variables:-", paste (layerinfo, collapse=","))
-						uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
+						{
+						  BSkyfootermsg <-paste (uadatasets.sk$footnoteNumber,": McNemar test cannot be run as row variables and column variables don't create a square table")
+						} else {
+						  BSkyfootermsg <-paste (uadatasets.sk$footnoteNumber, ": For layer variables -", paste(layerinfo, collapse=","), " McNemar test cannot be run as row variables and column variables don't create a square table")
+						}
+  					uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=NA,endCol=NA,BSkyMsg=BSkyfootermsg,RMsg= NA))
 					}
 					mcnemar<-FALSE
 				}
@@ -1889,20 +1922,35 @@ first.time=1
 								{
 									oddsRatio =NA
 									#warning ("Odds ratio could not be computed as one of the counts was 0")
-									if(layerinfo!="")
+									uadatasets.sk$footnoteNumber =uadatasets.sk$footnoteNumber+1
+									if(length(layerinfo) !=0)
 									{
-									msg = paste("Odds ratio could not be computed as one of the counts was 0, for layer ", layerinfo)
+									  msg = paste (uadatasets.sk$footnoteNumber, ": For layer variables -", paste(layerinfo, collapse=","), " Odds ratio could not be computed as one of the counts was 0")
 									}
 									else
 									{
-									msg="Odds ratio could not be computed as one of the counts was 0";
+									  msg= paste (uadatasets.sk$footnoteNumber,": Odds ratio could not be computed as one of the counts was 0");
 									}
-						#BSkyfootermsg ="Odds ratio could not be computed as one of the counts was 0";
-					uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=3,endCol=6,BSkyMsg=msg,RMsg= NA))									
+						      #BSkyfootermsg ="Odds ratio could not be computed as one of the counts was 0";
+					        uadatasets$retstructure[[2]]$metadatatable[[1]] =rbind(uadatasets$retstructure[[2]]$metadatatable[[1]],data.frame(varIndex=NA,type=2,varName=NA,dataTableRow=noNonEmptyTables,startCol=3,endCol=6,BSkyMsg=msg,RMsg= NA))									
 								}
 								else
 								{
-									ua.CSTc <- chisq.test(uaretstructure$uatforstats, correct = TRUE)
+									
+								  #Aaron 01/06/2023 Odds ratio is only calculated with ua.CSTC
+								  #ua.CSTc is not used anywhere else
+								  if (chisqCorrect)
+								  {
+								  ua.CSTc <- chisq.test(uaretstructure$uatforstats, correct = TRUE)
+								  } 
+								  else if (chisqSimulate) 
+								  {
+								    ua.CSTc <- chisq.test(uaretstructure$uatforstats, simulate.p.value = TRUE, B =chisqNoOfSimulations)
+								  }
+								  else 
+								  {
+								    ua.CSTc <- chisq.test(uaretstructure$uatforstats)
+								  }
 									b=uaretstructure$uatforstats
 									b[2,]=uaretstructure$uatforstats[1,]
 									b[1,]=uaretstructure$uatforstats[2,]
@@ -1910,7 +1958,22 @@ first.time=1
 									oddsRatio =BSkyorrr(b,verbose=FALSE)
 								}
 					}
-						ua.CST <- suppressWarnings(chisq.test(uaretstructure$uatforstats, correct = FALSE))
+					
+			    #01/06/2023 Commented below and added lines below	
+			    #ua.CST <- suppressWarnings(chisq.test(uaretstructure$uatforstats, correct = FALSE))
+			    
+			    if (chisqCorrect)
+			    {
+			      ua.CST <- chisq.test(uaretstructure$uatforstats, correct = TRUE)
+			    } 
+			    else if (chisqSimulate) 
+			    {
+			      ua.CST <- chisq.test(uaretstructure$uatforstats, simulate.p.value = TRUE, B =chisqNoOfSimulations)
+			    }
+			    else 
+			    {
+			      ua.CST <- chisq.test(uaretstructure$uatforstats, correct = FALSE)
+			    }
 						
 						#Added by Aaron 07/27/2019
 						
@@ -1922,11 +1985,28 @@ first.time=1
 			}
 
 			if (fisher) {
-						ua.FTt <- fisher.test(uaretstructure$uatforstats, alternative = "two.sided")
-						#Added by Aaron 08/11/2022
-						 #if (all(dim(uaretstructure$uatforstats) == 2)) {
-								ua.FTl <- fisher.test(uaretstructure$uatforstats, alternative = "less")
-								ua.FTg <- fisher.test(uaretstructure$uatforstats, alternative = "greater")
+			  
+			  
+			 
+			 if (fisherSimulate) 
+			  {
+			    ua.FTt <- fisher.test(uaretstructure$uatforstats, simulate.p.value = TRUE, B =chisqNoOfSimulations, alternative = fisherAlternate)
+			  }
+			  else 
+			  {
+			    ua.FTt <- fisher.test(uaretstructure$uatforstats, alternative = fisherAlternate)
+			  }
+			  
+			  
+			  
+			  
+			  #Aaron Commented code below 01/06/2023
+			  
+						# ua.FTt <- fisher.test(uaretstructure$uatforstats, alternative = "two.sided")
+						# #Added by Aaron 08/11/2022
+						#  #if (all(dim(uaretstructure$uatforstats) == 2)) {
+						# 		ua.FTl <- fisher.test(uaretstructure$uatforstats, alternative = "less")
+						# 		ua.FTg <- fisher.test(uaretstructure$uatforstats, alternative = "greater")
 				#}
 					}
 
@@ -1935,7 +2015,7 @@ first.time=1
 				#ua.McN <- mcnemar.test(uaretstructure$uatforstats, correct = FALSE)
 				#Commented by Aaron 08/11/2022
 				 #if (all(dim(uaretstructure$uatforstats) == 2)) 
-							ua.McNc <- mcnemar.test(uaretstructure$uatforstats, correct = TRUE)
+							ua.McNc <- mcnemar.test(uaretstructure$uatforstats, correct = mcnemarCorrect)
 					}
 
 			if (asresid) 
@@ -2073,9 +2153,11 @@ first.time=1
 										}
 			
 								}
+						  #Aaron 01/06/2023
+						  #set ua.FTl and ua.FTg to NA as this is in ua.FTt
 						  
 						  if (fisher) 
-						    ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = ua.FTl, fisher.gt = ua.FTg))
+						    ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = NA, fisher.gt = NA))
 						  #Added by Aaron 08/11/2022 
 						  if (mcnemar)
 						    ua.CT <- c(ua.CT, list(mcnemar = ua.McNc))
@@ -2092,8 +2174,10 @@ first.time=1
 						else {
 							 
 							#Added by Aaron 08/11/2022
+						  #Aaron 01/06/2023
+						  #set ua.FTl and ua.FTg to NA as this is in ua.FTt
 							if (fisher) 
-								 ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = ua.FTl, fisher.gt = ua.FTg))
+								 ua.CT <- c(ua.CT, list(fisher.ts = ua.FTt, fisher.tl = NA, fisher.gt = NA))
 							#Added by Aaron 08/11/2022 
 							if (mcnemar)
 									ua.CT <- c(ua.CT, list(mcnemar = ua.McNc))

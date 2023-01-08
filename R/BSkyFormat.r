@@ -4671,6 +4671,9 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 										}
 									}
 									
+									
+									
+									
 									# cat("<br>")
 									# cat("<br> iteration number,", n, "<br>")
 									# print(nrow(cross_table_skeleton))
@@ -4679,17 +4682,40 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 									
 									# now delete the invidual rows within the layer combinations filtered from the above step
 									
-									if(length(obj$tables[[n]]$metadatatable) > 1 && !is.null(obj$tables[[n]]$metadatatable[[2]]) && dim(obj$tables[[n]]$metadatatable[[2]])[1]>0 && dim(obj$tables[[n]]$metadatatable[[2]])[2]>0 && dim(obj$tables[[n]]$metadatatable[[2]])[1] == (dim(cross_table_skeleton)[1] - 1))
+									#01/05/2023
+									#The following changes were inserted to accomodate when the tabulation table has less rows than expected due to a error typically with the statistics test
+									
+									if(length(obj$tables[[n]]$metadatatable) > 1 && !is.null(obj$tables[[n]]$metadatatable[[2]]) && dim(obj$tables[[n]]$metadatatable[[2]])[1]>0 && dim(obj$tables[[n]]$metadatatable[[2]])[2]>0)
 									{
-										#cat("<br> ===================<br>")
-										row_filter = c(1,obj$tables[[n]]$metadatatable[[2]][,2])
-										cross_table_skeleton = cbind(cross_table_skeleton, row_filter)
+										if(dim(obj$tables[[n]]$metadatatable[[2]])[1] == (dim(cross_table_skeleton)[1] - 1))
+										{
+											#cat("<br> ===================<br>")
+											row_filter = c(1,obj$tables[[n]]$metadatatable[[2]][,2])
+											cross_table_skeleton = cbind(cross_table_skeleton, row_filter)
+										}
+										else 
+										{
+											row_filter = c(1, obj$tables[[n]]$metadatatable[[2]][,2], rep(0, (dim(cross_table_skeleton)[1] - dim(obj$tables[[n]]$metadatatable[[2]])[1] - 1)))
+											cross_table_skeleton = cbind(cross_table_skeleton, row_filter)
+										}
 									}
 									else
 									{
-										row_filter = c(rep(1, nrow(cross_table_skeleton)))
+										row_filter = c(1, rep(0, nrow(cross_table_skeleton)-1))
 										cross_table_skeleton = cbind(cross_table_skeleton, row_filter)
 									}
+									
+									# if(length(obj$tables[[n]]$metadatatable) > 1 && !is.null(obj$tables[[n]]$metadatatable[[2]]) && dim(obj$tables[[n]]$metadatatable[[2]])[1]>0 && dim(obj$tables[[n]]$metadatatable[[2]])[2]>0 && dim(obj$tables[[n]]$metadatatable[[2]])[1] == (dim(cross_table_skeleton)[1] - 1))
+									# {
+										# #cat("<br> ===================<br>")
+										# row_filter = c(1,obj$tables[[n]]$metadatatable[[2]][,2])
+										# cross_table_skeleton = cbind(cross_table_skeleton, row_filter)
+									# }
+									# else
+									# {
+										# row_filter = c(rep(1, nrow(cross_table_skeleton)))
+										# cross_table_skeleton = cbind(cross_table_skeleton, row_filter)
+									# }
 									
 									
 									# cat("<br>nrow(cross_table_skeleton)<br>")
@@ -4950,13 +4976,17 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 													
 													if(!is.na(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))
 													{
-														additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
+														#Commented by Aaron 01/05/2023
+														#additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
+														additional_info_str =  obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]
 														attr(cross_table_skeleton3, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 													}
 													
 													if(!is.na(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]))
 													{
-														additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
+														#Commented by Aaron 01/05/2023
+														#additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
+														additional_info_str =  obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]
 														attr(cross_table_skeleton3, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
 													}
 												}
@@ -5596,13 +5626,15 @@ BSkyFormatBSkyCrossTable <- function(obj, long_table = FALSE)
 												
 												if(!is.na(obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]))
 												{
-													additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
+													#additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " BSky Msg: ", obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg], sep="")
+													additional_info_str = obj$tables[[n]]$metadatatable[[1]]$BSkyMsg[addl_msg]
 													attr(tests_cross_table_skeleton, paste("BSkyFootnote_BSkyAppMsg_",index, sep="")) = additional_info_str
 												}
 												
 												if(!is.na(obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]))
 												{
-													additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
+													#additional_info_str = paste("Row: ", obj$tables[[n]]$metadatatable[[1]]$dataTableRow[addl_msg], " R Msg: ", obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg], sep="")
+													additional_info_str = obj$tables[[n]]$metadatatable[[1]]$RMsg[addl_msg]
 													attr(tests_cross_table_skeleton, paste("BSkyFootnote_BSkyRMsg_",index, sep="")) = additional_info_str
 												}
 											}
