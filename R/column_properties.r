@@ -1835,6 +1835,50 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 }
 
 # excludechars: a vector of values to be excluded when forming the set of levels
+BSkyMakeColumnOrderedFactor <- function(colNameOrIndex, dataSetNameOrIndex,  excludechars=c("", NA))
+{
+
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(dataSetNameOrIndex)
+	
+	BSkyErrMsg = paste("BSkyMakeColumnOrderedFactor: Error setting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable  :", paste(colNameOrIndex, collapse = ","),sep="")
+	BSkyWarnMsg = paste("BSkyMakeColumnOrderedFactor: Warning setting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable :", paste(colNameOrIndex, collapse = ","),sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+
+	if(!is.null(datasetname))
+	{		
+		colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
+		#Error: dataSetName and colname not found
+		if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
+		{
+				bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
+				# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
+				eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars, ordered = TRUE)', sep='')))
+				# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
+				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
+		}
+		else
+		{
+			# cat("\nError: Cannot set col property. Col not found\n")
+			BSkyErrMsg =paste("BSkyMakeColumnOrderedFactor: Cannot set col property. Col not found."," Col Name:", colNameOrIndex)
+			warning("BSkyMakeColumnOrderedFactor: Cannot set col property. Col not found.")
+		}				
+	}
+	else
+	{
+		# cat("\nError: Cannot set col property. Dataset name or index not found\n")
+		BSkyErrMsg =paste("BSkyMakeColumnOrderedFactor:  Can't make it factor. Dataset name or index not found."," Dataset Name:", datasetname)
+		warning("BSkyMakeColumnOrderedFactor:  Can't make it factor. Dataset name or index not found.")
+	}			
+
+		BSkyFunctionWrapUp()
+		return(invisible())	
+}
+
+
+# excludechars: a vector of values to be excluded when forming the set of levels
 BSkyMakeColumnFactor <- function(colNameOrIndex, dataSetNameOrIndex,  excludechars=c("", NA))
 {
 
@@ -1855,7 +1899,7 @@ BSkyMakeColumnFactor <- function(colNameOrIndex, dataSetNameOrIndex,  excludecha
 		{
 				bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
 				# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
-				eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars)', sep='')))
+				eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(x=',datasetname,'$',colNameOrIndex,',  exclude = excludechars, ordered = FALSE)', sep='')))
 				# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- factor(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
 				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
 		}
