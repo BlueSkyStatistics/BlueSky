@@ -109,9 +109,9 @@ BSky_Shapiro_Wilk_normality_test <- function (data = NULL, vars = NULL, dataset 
         }
     }
     
-	#BSkyFormat(mdat, singleTableOutputHeader = "Shapiro Wilks Normality Test")
+	#BSkyFormat(mdat, singleTableOutputHeader = "Shapiro Wilk Normality Test")
 	table_list = list(mdat)
-	table_list_names = c("Shapiro Wilks Normality Test")
+	table_list_names = c("Shapiro Wilk Normality Test")
 	names(table_list) = table_list_names
 	
 	if(BSkyIsRmarkdownOutputOn() == TRUE)
