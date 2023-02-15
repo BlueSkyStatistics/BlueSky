@@ -247,3 +247,4 @@ export(process.capability.enhanced, BSkySetSixSigmaTestOptions, BSkyGetSixSigmaT
 BSkyResetSixSigmaTestOptionDefaults, get.print.violation.indices, test.special.causes, violating.runs.indices, plot.qcc.spc.phases,
 print.qcc.spc.phases, compute.qcc.statistics)
 export(BSkyPartialSemiCorrelations, BSkyPartialCorrelationsErrWarnHandler)
+export(BSkyMakeColumnOrderedFactor)

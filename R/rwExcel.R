@@ -20,7 +20,7 @@
 #																						
 #Example: UAreadExcel("C:/Data/test.xls", "myxls", "Sheet1", replace=FALSE, xlsx=FALSE)																			
 ###################################################################################################################
-UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xlsx=FALSE, character.to.factor=FALSE)
+UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xlsx=FALSE, character.to.factor=FALSE, colNames=TRUE)
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -67,7 +67,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		######### Using RODBC package ########ends####
 		
 		#R command to open data file
-		corecommand = paste('readxl::read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\')', sep='')
+		corecommand = paste('readxl::read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\', col_names=',colNames,')', sep='')
 
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
@@ -86,16 +86,24 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 					eval( parse(text=paste('bskytempx <<- NULL',sep='')))## 03Aug2016 Clean x
 					######### Using readxl package ########		datasetname <- read_excel(path, sheet = 1)
 					eval( parse(text=paste('bskytempx <<- as.data.frame(',corecommand,')', sep=''  ))) # use with lapply
+
+					#generate column names if colNames is FALSE
+					if(!colNames)
+					{
+						colscount = eval(parse(text=paste('ncol(bskytempx)', sep='' ))) 
+						newcolnames = paste("X", c(1:colscount), sep='')
+						eval(parse(text=paste('names(bskytempx) = newcolnames', sep='' )))
+					}
 					# cat("\nNo global:\n")
 					# eval(parse(text=paste('objexists <- exists("bskytempx", envir=.GlobalEnv)',sep=''))) #dataset object exists
 					# print(objexists)
-					
+
 					# cat("\nGlobal:\n")
 					# eval(parse(text=paste('objexists <- exists(".GlobalEnv$bskytempx")',sep=''))) #dataset object exists
 					# print(objexists)					
 					#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
 					GenerateUniqueColName('bskytempx')
-					
+
 					##27May2022 it is found that if there is a numeric col that contains numbers as characters (e.e '24') then  this col will be 
 					## loaded as a factor col in the grid. If we make this col numeric (from the grid) the actual data is replace by factor levels
 					## 1,2,3 etc. To fix this issue we must first conver the character-numbers ('24') to numbers and then load this in the grid. Now
@@ -104,17 +112,26 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 					
 					#eval(parse(text=paste('bskytempx <<- lapply(bskytempx, function(x) type.convert(x, as.is=TRUE))',sep='')))
 					##15Jun2022 Line above was converting dates to character which in second eval were turning into factor
+
 					eval(parse(text=paste('bskytempx <<- lapply(bskytempx, function(x){if(!("POSIXct" %in% class(x)) && !("Date" %in% class(x)) && !("POSIXt" %in% class(x))) type.convert(x, as.is=TRUE) else x})',sep='')))
-					
+
 					#following line : empty col name replaced by something like C..NA..NA..NA
 					eval(parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( lapply (bskytempx, function(y) {if("character" %in% class(y)) y = factor(y) else y} ) )',sep='' )))
 				}
 				else
 				{
 					eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')', sep=''  ))) 
-					#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
-					GenerateUniqueColName(datasetname)				
 
+					#generate column names if colNames is FALSE
+					if(!colNames)
+					{
+						colscount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')', sep='' ))) 
+						newcolnames = paste("X", c(1:colscount), sep='')
+						eval(parse(text=paste('names(.GlobalEnv$',datasetname,') = newcolnames', sep='' )))
+					}					
+
+					#at this point we need to assign some column name(Var1, Var2) to the column those do not have any col-names.
+					GenerateUniqueColName(datasetname)		
 				}						
 				
 			}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
