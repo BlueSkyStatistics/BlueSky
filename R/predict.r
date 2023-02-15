@@ -1461,7 +1461,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 	
 	else if (modclass == "NaiveBayes" && (dependentclass == "factor" || dependentclass == "character" ||dependentclass == "ordered"))  {
         df <- as.data.frame(savePredictedProbs)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
              df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1479,7 +1479,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 	 else if (modclass == "nnet" && (dependentclass == "factor" || dependentclass == "character" ||dependentclass == "ordered"))  {
         df <- as.data.frame(savePredictedProbs)
         ##Set the names of the levels
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
               df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1498,7 +1498,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
     }
 else if (modclass == "xgb.Booster" && (dependentclass == "factor"|| dependentclass == "character" || dependentclass == "ordered" ))  {
         df <- as.data.frame(savePredictedProbs)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
               df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1766,7 +1766,7 @@ else if (modclass == "xgb.Booster" && (dependentclass == "factor"|| dependentcla
 else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == "character" || dependentclass == "ordered" )) {
         df <- as.data.frame(savePredictedProbs)
         ##Set the names of the levels
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
               df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1804,7 +1804,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
  else if (modclass == "nnet.formula" && (dependentclass == "factor"|| dependentclass == "character" || dependentclass == "ordered" )) {
         df <- as.data.frame(savePredictedProbs)
         ##Set the names of the levels
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) 
         {
@@ -1826,7 +1826,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 	
     else if (modclass == "rpart" && (dependentclass == "factor"|| dependentclass == "character" || dependentclass == "ordered" )) {
         df <- as.data.frame(savePredictedProbs)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
               df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1846,7 +1846,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
     else if (modclass == "rpart" && dependentclass == "logical") {
          df <- as.data.frame(predictions)
            names(df)=depvar
-		   nm <- names(df)
+		   nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
               df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1871,7 +1871,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
         }           
       #  df = eval(parse (text=paste ("lapply(savePredictedProbs, round, digits =", noofDigitsToRound, ")")))
       #  df <- as.data.frame(savePredictedProbs)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
          for (i in 1:ll) {
             df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1909,7 +1909,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
         }           
       #  df = eval(parse (text=paste ("lapply(savePredictedProbs, round, digits =", noofDigitsToRound, ")")))
       #  df <- as.data.frame(savePredictedProbs)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
          for (i in 1:ll) {
             df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -1948,7 +1948,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
         }           
       #  df = eval(parse (text=paste ("lapply(savePredictedProbs, round, digits =", noofDigitsToRound, ")")))
       #  df <- as.data.frame(savePredictedProbs)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
          for (i in 1:ll) {
             df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -2040,7 +2040,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 	
 	else if (modclass == "C5.0" && (dependentclass == "factor" ||   dependentclass == "character" || dependentclass == "ordered")) {
         df <- as.data.frame(savePredictedProbs)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
               df[[i]] =round (df[[i]], digits=noofDigitsToRound)
@@ -2062,7 +2062,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 	
     else if (modclass == "npregression") {
         df <- as.data.frame(predictions)
-        nm <- names(df)
+        nm <- base::make.names(names(df))
         ll <- length(nm)
         for (i in 1:ll) {
             aa <- paste(datasetname, "$", prefix, "_", nm[i], 
@@ -2081,7 +2081,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 		{
 			df <- as.data.frame(predictions)
 			df <-round(df[,], noofDigitsToRound) 
-			nm <- names(df)
+			nm <- base::make.names(names(df))
 			ll <- length(nm)
 			for (i in 1:ll) 
 			{
