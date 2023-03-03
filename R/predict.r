@@ -330,25 +330,32 @@ getModelIndependentVariables <- function(modelname, formulaoperators="[-+*/:^,)(
 		#WE DON'T HANDLE VARIABLE NAMES THAT ARE ALSO FUNCTION NAMES
 		#We have added, and placed the , before the ) so that we can handle poly(X,2,raw=T) in lm(Y ~ -1 + poly(X,2,raw=T))
 		#We want the X captured
-		formulaoperators="[-+*/:^,)(]|%in%"
+		#formulaoperators="[-+*/:^,)(]|%in%"
 		#This gives us the portion of the model formula after ~
 		indepVars =eval( parse(text=paste('as.character(',modelname,'$call[[2]])[3]',  sep='' ) ) )
+		#Remove package names for example stats::poly(x, degree)
+		indepVars <- gsub( "[\\.,_,A-Z,a-z,0-9]+::", "",  indepVars)
+		#Remove function names
+		indepVars <- gsub( "[\\.,_,A-Z,a-z,0-9]+\\s*\\(", "",  indepVars)
 		#We extract all functions i.e. poly(, exp(, .bgv(
-		functList <-str_extract_all(indepVars, "[\\.,A-Z,a-z,0-9]+\\(")
+		#indepVars <-str_extract_all(indepVars, "[\\.,_,A-Z,a-z,0-9]+\\s*\\(")
 		#We make it a string
-		functstring <- unlist(functList)
+		#functstring <- unlist(functList)
+		#Remove spaces \\s+ removes spaces from the start of the string, \\s+$ removes spaces from the end of the string
+		#functstring <- gsub("^\\s+|\\s+$", "", functstring)
 		#We generate a vector of all the function names
-		functstring <-str_replace_all(functstring, "\\(", "")
+		#functstring <-str_replace_all(functstring, "\\(", "")
 		#wE TOKENIZE THE portion of the formula after ~
-		modelvars <- eval( parse(text=paste('base::unlist(base::strsplit( as.character(',modelname,'$call[[2]])[3], formulaoperators ))', sep='' ) ) )
-		#Remove spaces
+		#modelvars <- eval( parse(text=paste('base::unlist(base::strsplit( as.character(',modelname,'$call[[2]])[3], formulaoperators ))', sep='' ) ) )
+		modelvars = base::unlist(base::strsplit( indepVars, formulaoperators ))
+		#Remove spaces \\s+ removes spaces from the start of the string, \\s+$ removes spaces from the end of the string
 		modelvars <- gsub("^\\s+|\\s+$", "", modelvars) 
 		#Finding the position of the formula as they are not valid variable names in the dataset
-		remove <-which (modelvars %in% functstring)
-		if (length(remove) !=0)
-		{
-		modelvars <-modelvars[-remove]
-		}
+		#BSkyRemove <-which (modelvars %in% functstring)
+		#if (length(BSkyRemove) !=0)
+		#{
+		#modelvars <-modelvars[-BSkyRemove]
+		#}
 		#REmove numbers as they are not valid variable names
 		modelvars<-modelvars[sapply(modelvars, BSkyisValidName)]
 		

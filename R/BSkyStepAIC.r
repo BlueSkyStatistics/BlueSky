@@ -293,10 +293,13 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	#Getting dependent and independent var from a model is different for each model class type.
 	if('lm' %in% modclass || 'polr' %in% modclass || 'glm' %in% modclass)
 	{
-		modelvars <- eval( parse( text=paste( 'unlist(strsplit( as.character(',modelname,'$call[[2]])[3], "[+]" ))', collapse='', sep='') ) )
-		modelvars <- gsub("^\\s+|\\s+$", "", modelvars) #remove extra space from both sides of each var.
+		modelvars <- getModelIndependentVariables(modelname)
+		#Added by Aaron 02/27/2023
+		#Commented 3 lines below
+		#modelvars <- eval( parse( text=paste( 'unlist(strsplit( as.character(',modelname,'$call[[2]])[3], "[+]" ))', collapse='', sep='') ) )
+		#modelvars <- gsub("^\\s+|\\s+$", "", modelvars) #remove extra space from both sides of each var.
 		#modelvars <- eval(parse(text=modelvars))
-		modelvars <- BSkyStripNumberVariableNames(modelvars)
+		#modelvars <- BSkyStripNumberVariableNames(modelvars)
 		#also find dependentvar
 		dependentvar <-  eval( parse(text=paste('as.character(',modelname,'$call$formula[[2]])',sep='')))
 	}
