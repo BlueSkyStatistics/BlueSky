@@ -242,7 +242,7 @@ getModelDependentVariable <- function(modelname)
 		#dependentvariable <- eval(parse(text=paste('{{%DATASET%}}','$',depvar, sep='') ) )
 		#dependentclass=eval( parse( text=paste('class(dependentvariable)',sep='') ) )
 	}
-	else if(modclass =='polr' || modclass =='multinom' || modclass == 'glm' || modclass == 'lm')
+	else if('polr' %in% modclass || 'multinom' %in% modclass || 'glm' %in% modclass || 'lm' %in% modclass || 'negbin' %in% modclass)
 	{
 		depvar <- eval(parse(text=paste('as.character(',modelname,'$call$formula[[2]])', sep='') ) )
 		#dependentvariable <- eval(parse(text=paste('{{%DATASET%}}','$',depvar, collapse='', sep='') ) )
@@ -312,16 +312,16 @@ getModelIndependentVariables <- function(modelname, formulaoperators="[-+*/:^,)(
 			modelvars <-strsplit(gsub("'","",modelvars),",")[[1]]
 		}
 	}
-	else if(modclass =='NaiveBayes')
+	else if('NaiveBayes' %in% modclass)
 	{
 		modelvars <- eval( parse(text=paste(modelname,'$varname',sep='')))
 	}
-	else if(modclass =='randomForest')
+	else if('randomForest' %in% modclass)
 	{
 		modelvars <- eval( parse(text=paste('as.character(',modelname,'$call$x)[[4]]', sep='' ) ) )
 		modelvars <- eval(parse(text=modelvars))
 	}
-	else if(modclass =='polr' || modclass =='multinom' || modclass =='glm' || modclass =='lm')
+	else if('polr' %in% modclass || 'multinom' %in% modclass || 'glm' %in% modclass || 'lm' %in% modclass || 'negbin' %in% modclass)
 	{
 		#modelvars <- eval( parse(text=paste('base::unlist(base::strsplit( as.character(',modelname,'$call[[2]])[3], formulaoperators ))', sep='' ) ) )
 		#modelvars <- gsub("^\\s+|\\s+$", "", modelvars) 
@@ -1285,6 +1285,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 	
 	
 	#04/19/2020 The else below is NOT invoked for model class glm and dependent variable numeric
+	#Its invoked for negbin and other glm models with different families
     
 	else {
         predictions <- eval(parse(text = paste("predict(", modelname, 
@@ -2114,6 +2115,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 
 	
 	#Added by Aaron 5/16/2020
+	 #When i come to the code below in most cases predictionsSaved = FALSE, note predictions are generated in code above
 	 #This is the case where there are 2+ dependent variables, this happens for neural nets, you dummy code a factor variable 
 	 #Think species in the iris dataset, you dummy code species, you get 2 scale variables
 	 #in this case depvar contains multiple variables separated by , and dependentvariable is null

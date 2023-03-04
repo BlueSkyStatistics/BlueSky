@@ -1990,7 +1990,7 @@ first.time=1
 			 
 			 if (fisherSimulate) 
 			  {
-			    ua.FTt <- fisher.test(uaretstructure$uatforstats, simulate.p.value = TRUE, B =chisqNoOfSimulations, alternative = fisherAlternate)
+			    ua.FTt <- fisher.test(uaretstructure$uatforstats, simulate.p.value = TRUE, B =fisherNoOfSimulations, alternative = fisherAlternate)
 			  }
 			  else 
 			  {
