@@ -139,10 +139,23 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		
 		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
 		{
-			success = 0
-			## maybe return 0 for success
-			cat("\nSuccessfully opened using:\n") 
-			print(corecommand) #no need to print this
+			colscount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')', sep='' ))) 
+			if(colscount == 0)## Success in open but no the sheet is mepty
+			{
+				cat("\nError: Empty sheet.\n") 
+				print(corecommand) #no need to print this
+				eval(parse(text=paste('.GlobalEnv$',datasetname,'=NULL', sep='' ))) #cleanup
+				# eval(parse(text="bsky_opencommand_execution_an_exception_occured = TRUE"), envir=globalenv())
+				success = -1;
+			}
+			else
+			{
+				success = 0
+				## maybe return 0 for success
+				cat("\nSuccessfully opened using:\n") 
+				print(corecommand) #no need to print this
+			}
+
 		}
 		else ## Failure
 		{
