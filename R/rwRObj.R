@@ -236,8 +236,11 @@ UAwriteRObj <- function(RObjfileName,dataSetNameOrIndex) ##  index of dataset an
 			if(length(grep(".RData", onlyfilenamewithextension, ignore.case = TRUE))==0)
 				extnPattern = ".RDa"
 				
-			#get filename without extension
-			onlyfilename = stringr::str_replace(onlyfilenamewithextension, regex(extnPattern, ignore_case = TRUE), "")
+			#get filename without extension 
+			#onlyfilename = stringr::str_replace(onlyfilenamewithextension, regex(extnPattern, ignore_case = TRUE), "")##this fails if the filename has RData in the primary filename e.g. myRData.Rdata
+			#24Mar2023 this is better way to get the filename without extension.
+			onlyfilename = tools::file_path_sans_ext(onlyfilenamewithextension)
+
 			
 			#remove spaces or specialchars in filename, else eval/parse below will not work.
 			onlyfilename =str_replace_all(onlyfilename, "[^([:alnum:]_.)]", "") ##"^([[:alnum:]])+([_])"
