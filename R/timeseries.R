@@ -514,8 +514,13 @@ BSkyPrintARIMA<-function (x, digits = max(3, getOption("digits") - 3), se = TRUE
       if (plotOriginalandForecast==TRUE)
       {
         mainTitle =paste("Observed vs fitted for variable", vars[i])
-        plot(BSkyRes, main=mainTitle)
-        legend("topright", c("observed","fitted"), lty=c(1,1), lwd=c(2.5,2.5), col=c(1,2))
+        #plot(BSkyRes, main=mainTitle)
+        #legend("topright", c("observed","fitted"), lty=c(1,1), lwd=c(2.5,2.5), col=c(1,2))
+		plot(BSkyRes$x, col = "red", ylab=ylab, main = mainTitle)
+		lines(fitted(BSkyRes), col = "blue")
+        #plot(BSkyRes, main = mainTitle)
+        legend("topright", c("observed", "fitted"), lty = c(1,
+                1), lwd = c(2.5, 2.5), col = c(1, 2))
       }
       
       
