@@ -79,6 +79,8 @@ GenerateUniqueColName <- function(datasetname, maxval=50000)
 ## replace special characters
 ReplaceSplChrsAndPrefixXForDigitInBegining <- function(anystring)
 {
+	if(!BSkyGetReplaceSplChars())
+		return(invisible(anystring))
 	BSkyFunctionInit()
 	
 	BSkyErrMsg = paste("ReplaceSplChrsAndDigitInBegining: Error replace special characters : ",sep="")
@@ -269,4 +271,26 @@ BSky.startsWith <- function (str, pattern, trim = FALSE, ignore.case = FALSE)
         pattern <- toupper(pattern)
     }
     substr(str, start = 1, stop = nchar(pattern)) == pattern
+}
+
+BSkySetReplaceSplChars <- function(ReplaceSplChars = FALSE) #
+{
+	if(exists("BSKY.replaceSplChars"))
+	{
+		BSKY.replaceSplChars <<- ReplaceSplChars
+	}
+	
+	return(invisible(ReplaceSplChars))
+}
+
+BSkyGetReplaceSplChars <- function()
+{
+	ReplaceSplChars = FALSE
+	
+	if(exists("BSKY.replaceSplChars"))
+	{
+		ReplaceSplChars = BSKY.replaceSplChars
+	}
+	
+	return(invisible(ReplaceSplChars))
 }
