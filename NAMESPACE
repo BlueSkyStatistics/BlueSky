@@ -249,4 +249,4 @@ print.qcc.spc.phases, compute.qcc.statistics)
 export(BSkyPartialSemiCorrelations, BSkyPartialCorrelationsErrWarnHandler)
 export(BSkyMakeColumnOrderedFactor)
 
-export(chinesetest, BSkySetReplaceSplChars, BSkyGetReplaceSplChars)
+export(chinesetest, BSkySetReplaceSplChars, BSkyGetReplaceSplChars, BSkySetLocale)

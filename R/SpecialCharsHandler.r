@@ -75,7 +75,7 @@ GenerateUniqueColName <- function(datasetname, maxval=50000)
 }
 
 
-
+## instead of this function we can use base::make.names(). It replaces invalid char from avariable name with a dot (period)
 ## replace special characters
 ReplaceSplChrsAndPrefixXForDigitInBegining <- function(anystring)
 {
@@ -294,3 +294,59 @@ BSkyGetReplaceSplChars <- function()
 	
 	return(invisible(ReplaceSplChars))
 }
+
+BSkySetLocale <- function(newLocale="") #
+{
+	BSkyFunctionInit()
+	
+	BSkyErrMsg = paste("BSkySetLocale: Error setting locale : ",sep="")
+	BSkyWarnMsg = paste("BSkySetLocale: Warning setting locale : ",sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success=-1
+	if(!is.null(newLocale) && !is.na(newLocale))
+	{		
+		corecommand = paste('Sys.setlocale(category = "LC_ALL", locale = "',newLocale,'")', sep='')
+		#reset global error-warning flag
+		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
+		#trying to save the datafile
+		tryCatch({
+		
+				withCallingHandlers({
+					eval(parse(text=corecommand))
+				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+				}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		
+		if(bsky_opencommand_execution_an_exception_occured == FALSE)## Success
+		{
+			success = 0
+			## maybe return 0 for success
+			# cat("\nSuccessfully executed\n") 
+			# print(corecommand) #no need to print this
+		}
+		else ## Failure
+		{
+			cat("\nError: Can't set the locale\n") 
+			# cat("\n\nCommand executed:\n")
+			print(corecommand)
+			## gracefully report error to the app layer about the issue so it does not keep waiting. 
+			## maybe return -1 for failure
+			success = -1;
+		}	
+		print(paste("Current Locale : ", Sys.getlocale()))	
+	}
+		
+	BSkyFunctionWrapUp()	
+	return(success)
+}
+
+# BSkyGetLocale <- function()
+# {
+# 	ReplaceSplChars = FALSE
+	
+# 	if(exists("BSKY.replaceSplChars"))
+# 	{
+# 		ReplaceSplChars = BSKY.replaceSplChars
+# 	}
+	
+# 	return(invisible(ReplaceSplChars))
+# }
