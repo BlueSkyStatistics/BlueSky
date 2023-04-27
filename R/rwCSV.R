@@ -181,7 +181,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 					cat("\nSpl Chr:OldName = ")
 					print(eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']',sep=''))))
 				}			
-				eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+				eval(parse(text=paste('names(.GlobalEnv$',datasetname,')[',i,']  <- base::make.names(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
 				#names(datasetname)[i] = ReplaceSplChrsAndPrefixXForDigitInBegining(names(datasetname)[i])
 				
 				if(logflag)

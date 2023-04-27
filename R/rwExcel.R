@@ -198,7 +198,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 			#ptm= proc.time()
 			for( i in 1:colcount)
 			{
-				eval(parse(text=paste('names(','.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+				eval(parse(text=paste('names(','.GlobalEnv$',datasetname,')[',i,']  <- base::make.names(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
 			}
 			
 			# set the name (Which is passed as an input parameter to this function)

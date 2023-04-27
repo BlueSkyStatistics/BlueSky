@@ -145,7 +145,7 @@ UAreadRObj <- function(RObjfileName, datasetname, replace=FALSE)
 				colcount <- eval(parse(text=paste('length(names(.GlobalEnv$',datasetname,'))', sep='' ))) #colcount = length(names(datasetname))
 				for( i in 1:colcount)
 				{
-					eval(parse(text=paste('names(','.GlobalEnv$',datasetname,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
+					eval(parse(text=paste('names(','.GlobalEnv$',datasetname,')[',i,']  <- base::make.names(names(.GlobalEnv$',datasetname,')[',i,'])', sep='')))
 				}
 				uadatasets$name <- c(uadatasets$name, datasetname)
 

@@ -125,7 +125,7 @@ BSky.LoadRefresh.Dataframe <- function(dframe)
 						cat("\nSpl Chr:OldName = ")
 						print(eval(parse(text=paste('names(.GlobalEnv$',dframe,')[',i,']',sep=''))))
 					}			
-					eval(parse(text=paste('names(.GlobalEnv$',dframe,')[',i,']  <- ReplaceSplChrsAndPrefixXForDigitInBegining(names(.GlobalEnv$',dframe,')[',i,'])', sep='')))
+					eval(parse(text=paste('names(.GlobalEnv$',dframe,')[',i,']  <- make.names(names(.GlobalEnv$',dframe,')[',i,'])', sep='')))
 					#names(datasetname)[i] = ReplaceSplChrsAndPrefixXForDigitInBegining(names(datasetname)[i])
 					
 					if(logflag)
