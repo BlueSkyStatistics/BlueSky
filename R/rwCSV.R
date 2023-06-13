@@ -266,7 +266,14 @@ UAwriteCSV <- function(csvfilename, dataSetNameOrIndex)
 		# eval(parse(text=paste('write.csv(',datasetname,', csvfilename,  row.names=FALSE)')))
 		# above line was in use before putting tryCatch around it (below)
 		
-		corecommand = paste('utils::write.csv(',datasetname,', csvfilename,  row.names=FALSE)')
+		##10Jun2023 Hadley's readr::write_csv(data, path = file_path)
+		corecommand = paste('readr::write_csv(',datasetname,', path="',csvfilename,'")',sep='')
+		
+		##10Jun2023 we can pass fileEncoding='UTF-8' o fix the issue when we save an Excel(with umlaut chars) to CSV. Or we can use Hadley's syntax. Both work.
+		#corecommand = paste('utils::write.csv(',datasetname,', csvfilename,  row.names=FALSE, fileEncoding="UTF-8")')
+		
+		#corecommand = paste('utils::write.csv(',datasetname,', csvfilename,  row.names=FALSE)') 
+		
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())		
 		#trying to save the datafile
