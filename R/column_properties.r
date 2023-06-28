@@ -468,7 +468,8 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				# colIndex <- UAgetIndexOfColInDataSet(DataSetIndex,colName)	
 				if(colIndex > 0){	
 					#cat("\nadding col name")			
-					eval(parse(text=paste('colnames(',datasetname,')[',colIndex,'] <- newName',sep=''))) ## names(uadatasets$lst[[DataSetIndex]])[colIndex] <- newName	#. <<- to <-
+					# eval(parse(text=paste('colnames(',datasetname,')[',colIndex,'] <- newName',sep=''))) ## names(uadatasets$lst[[DataSetIndex]])[colIndex] <- newName	#. <<- to <-
+					eval(parse(text=paste('colnames(',datasetname,')[',colIndex,'] <- base::make.names("',newName,'")',sep='') ))
 					#cat("\nadded col name")
 					## Also if missing exisits. Change name there also. $misvals$accid
 					#cazing prbl names(attributes(uadatasets$lst[[DataSetIndex]])$misvals)[colIndex] <- newName

@@ -248,3 +248,5 @@ BSkyResetSixSigmaTestOptionDefaults, get.print.violation.indices, test.special.c
 print.qcc.spc.phases, compute.qcc.statistics)
 export(BSkyPartialSemiCorrelations, BSkyPartialCorrelationsErrWarnHandler)
 export(BSkyMakeColumnOrderedFactor)
+
+export( BSkySetReplaceSplChars, BSkyGetReplaceSplChars, BSkySetLocale)

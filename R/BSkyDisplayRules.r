@@ -15,7 +15,7 @@ supp <- qual[[1]]
 # confidence
 conf <- qual[[2]] 
 # lift
-lift <- qual[[3]] 
+lift <- qual[[4]] 
 
 #checking rule count
 recs <- length(supp)
