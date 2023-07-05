@@ -9,6 +9,7 @@ uaperformance =1
 bskymaxfactors = 20
 uadatasets.sk <- NULL
 BSkyBlankDSColNameClassList <<- list()
+BSkyBlankDSColNameLevelsList <<- list()
 blankDScolumnnames <<- NULL
 blankDSrowcount <<- NULL
 #bskyCurrentDatasetSplitSliceObj <- NULL

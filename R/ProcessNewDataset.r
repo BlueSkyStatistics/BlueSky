@@ -63,6 +63,7 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 			if(TRUE) #This block removes empty rows from the bottom(moving up) and empty cols from the right(moving left)
 			{
 				BSkyBlankDSColNameClassList <<- list()
+				BSkyBlankDSColNameLevelsList <<- list()
 				blankDScolumnnames <<-NULL
 				blankDSrowcount <<- eval(parse(text=paste('nrow(',datasetname,')',sep='')))
 				#28Jun2023 backup: save all col-names and col-class in a temp BSkyColNameClassList variable
@@ -71,6 +72,11 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 				{
 					columnclass = eval(parse(text=paste('class(',datasetname,'$',colname,')',sep='')))
 					eval(parse(text=paste('BSkyBlankDSColNameClassList$',colname,' <<- columnclass' ,sep='')))
+					if("factor" %in% columnclass)
+					{
+						columnlevels = eval(parse(text=paste('levels(',datasetname,'$',colname,')',sep='')))
+						eval(parse(text=paste('BSkyBlankDSColNameLevelsList$',colname,' <<- columnlevels' ,sep='')))
+					}
 				}
 
 				# print(BSkyBlankDSColNameClassList)
@@ -275,6 +281,13 @@ BSkyIsEmptyDataset <- function(datasetName)
 #back empty cells. Note that analysis may add (or remove) cols, so add as much to make final rows=30 and cols=6
 #If for any reason we already have rows=30 and cols=6 after analysis then we should not be adding 
 #any more empty rows(or discuss with team)
+
+### 28Jun-05Jul2023 updated: say sub-dataset has 2 cols filled. We add all the previously removed rows to these 2 cols. Then we add previously removed cols with 
+### vlaues as NAs or ""(for char only) and proper class and levels if "factor" col.
+### This will help us to not introduce unwanted NAs. 
+### In old code, we were adding removed cols first and then adding the rows to all cols, which was filling the whole dataset blank cells with NAs and then
+### next time cleanup was not working while saving(or running analysis) and the whole dataset starts taking part in SAVE or analysis even though grid looks
+### empty except 2 cols that were filled.
 BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 15)
 {
 	# print("Showing backed up values:")
@@ -328,11 +341,16 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
     }
 
 	emptySupported = c("character") #, "numeric", "integer", "Date", "POSIXct", "POSIXt")
+	colmlevels=""
     if (addCols > 0) {
 		rowcount = blankDSrowcount
 		for( cname in blankDScolumnnames)
 		{
 			colmclass = eval(parse(text=paste('BSkyBlankDSColNameClassList$',cname, sep=''))) 
+			if("factor" %in% colmclass)
+			{
+				colmlevels = eval(parse(text=paste('BSkyBlankDSColNameLevelsList$',cname, sep='')))
+			}
 			
 			if(!(cname %in% subDScolnames)) ## append columns that are not present in sub-dataset
 			{
@@ -358,10 +376,14 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 				 if('ordered' %in% colmclass)
 				 {
 					eval(parse(text = paste(datasetname,'$',cname,' <- ordered(',datasetname,'$',cname,')', sep='')))
+					#we can add levels in line above but for easy readablity we have a separate line below
+					eval(parse(text=paste('levels(',datasetname,'$',cname,') <- colmlevels',sep='')))
 				 }
 				 else if ('factor' %in% colmclass)
 				 {
 					eval(parse(text = paste(datasetname,'$',cname,' <- factor(',datasetname,'$',cname,')', sep='')))
+					#we can add levels in line above but for easy readablity we have a separate line below
+					eval(parse(text=paste('levels(',datasetname,'$',cname,') <- colmlevels',sep='')))					
 				 }
 				 else 
 				 {
@@ -378,10 +400,14 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 				if('ordered' %in% colmclass)
 				{
 					eval(parse(text = paste(datasetname,'$',cname,' <- ordered(',datasetname,'$',cname,')', sep='')))
+					#we can add levels in line above but for easy readablity we have a separate line below
+					eval(parse(text=paste('levels(',datasetname,'$',cname,') <- colmlevels',sep='')))					
 				}
 				else if ('factor' %in% colmclass)
 				{
 					eval(parse(text = paste(datasetname,'$',cname,' <- factor(',datasetname,'$',cname,')', sep='')))
+					#we can add levels in line above but for easy readablity we have a separate line below
+					eval(parse(text=paste('levels(',datasetname,'$',cname,') <- colmlevels',sep='')))					
 				}
 				else 
 				{
