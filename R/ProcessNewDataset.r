@@ -8,7 +8,9 @@
 #
 # This function remove empty rows and columns from a new dataset.
 # 
-
+# BSkyBlankDSColNameClassList <<- list()
+# blankDScolumnnames <<- NULL
+# blankDSrowcount <<- NULL
 BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFactor=TRUE, excludechars=c("", NA))
 {
 	BSkyFunctionInit()
@@ -60,6 +62,21 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 			
 			if(TRUE) #This block removes empty rows from the bottom(moving up) and empty cols from the right(moving left)
 			{
+				BSkyBlankDSColNameClassList <<- list()
+				blankDScolumnnames <<-NULL
+				blankDSrowcount <<- eval(parse(text=paste('nrow(',datasetname,')',sep='')))
+				#28Jun2023 backup: save all col-names and col-class in a temp BSkyColNameClassList variable
+				blankDScolumnnames <<- eval(parse(text=paste('colnames(',datasetname,')',sep='')))
+				for(colname in blankDScolumnnames) # save column name with the class
+				{
+					columnclass = eval(parse(text=paste('class(',datasetname,'$',colname,')',sep='')))
+					eval(parse(text=paste('BSkyBlankDSColNameClassList$',colname,' <<- columnclass' ,sep='')))
+				}
+
+				# print(BSkyBlankDSColNameClassList)
+				# print(blankDScolumnnames)
+				# print(blankDSrowcount)
+
 				# max non-empty row index and max non-empty col index, will be taken as the last cell of our data.frame.
 				# So, now we need to remove all rows and columns beyond this cell index
 				# We allow user to have empty row or empty col before the last cell of the data.frame
@@ -67,8 +84,17 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 				# 'which' starts counting col by col. So first col has 30 values, second col first cell is index 31 and 3rd
 				# col will start at index 61, 4th col starts with 91. 5th col starts with 121.
 				#
-				#Get all non-empty cell indexes
-				allidxnotNA = eval(parse(text=paste('which(',datasetname,'!="")')))
+				#Get all non-empty cell indexes. Since following does no work well with Date/POSIX col. we will make a copy
+				# of a dataset and make all cols character so that we can find the filled cell in a copy dataset.
+				#29Jun2023  allidxnotNA = eval(parse(text=paste('which(',datasetname,'!="")')))
+
+				# BSkyTeMpDs235 <- as.data.frame(lapply(datasetname, as.character), stringsAsFactors = FALSE)
+				eval(parse(text=paste('BSkyTeMpDs235 <- as.data.frame(lapply(',datasetname,', as.character), stringsAsFactors = FALSE)', sep='' )))
+				allidxnotNA = eval(parse(text=paste('which(BSkyTeMpDs235 !="")')))
+
+
+				rm(BSkyTeMpDs235) #clean temp copy of the dataset
+
 				if(length(allidxnotNA) > 0)
 				{
 					#find max of all the indexes in allidxnotNA
@@ -77,7 +103,9 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 					r=eval(parse(text=paste('nrow(',datasetname,')',sep='')))
 					col=eval(parse(text=paste('ncol(',datasetname,')',sep='')))
 					
-					lastcellcolidx = ceiling(idx / r)
+					lastcellcolidx = ceiling(idx / r) ## this gives us the last col in which user atleast filled one cell
+
+					##27Jun2023 we also need to find if beyond last cell user renamed any col from 'Xn' to something else(e.g. X4 to 'age').
 					
 					#finding row index is not very straight forward
 					# in allidxnotNA find if there is an index that is 
@@ -168,6 +196,7 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 
 						#cat("\nCreating Extra attributes for new DS. ")
 						eval(parse(text=paste('attr(',datasetname,',"maxfactor") <-', bskymaxfactors)))
+						eval(parse(text=paste('attr(',datasetname,',"processDS") <- TRUE')))
 						UAcreateExtraAttributes(datasetname, "RDATA")
 				}
 			}
@@ -246,45 +275,127 @@ BSkyIsEmptyDataset <- function(datasetName)
 #back empty cells. Note that analysis may add (or remove) cols, so add as much to make final rows=30 and cols=6
 #If for any reason we already have rows=30 and cols=6 after analysis then we should not be adding 
 #any more empty rows(or discuss with team)
-BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 16)
+BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 15)
 {
+	# print("Showing backed up values:")
+	# print(BSkyBlankDSColNameClassList)
+	# print(blankDScolumnnames)
+	# print(blankDSrowcount)
+	# print("End-of Showing backed up values:")
+	datasetname <- paste('.GlobalEnv$',datasetName, sep='')
+    # datasetname <- datasetName
+    rowcount = eval(parse(text = paste("nrow(", datasetname, ")", sep = "")))
+    colcount = eval(parse(text = paste("ncol(", datasetname, ")", sep = "")))
+	subDScolumnnames <- eval(parse(text=paste('colnames(',datasetname,')',sep='')))
+	#we should not use the following beacause maybe user deleted 20 empty rows before analysis still have some. We should not stick to 80 rows
+    #28Jun2023 addRows = defaultRows - rowcount
+    #28Jun2023 addCols = defaultCols - colcount
 
-    datasetname <- datasetName
-    rowcount = eval(parse(text = paste("nrow(", datasetname,
-        ")", sep = "")))
-    colcount = eval(parse(text = paste("ncol(", datasetname,
-        ")", sep = "")))
-    addRows = defaultRows - rowcount
-    addCols = defaultCols - colcount
-
+	addRows = blankDSrowcount - rowcount
+	addCols = length(blankDScolumnnames) - colcount
+	# allBSkyVarNames = c('X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'X8', 'X9', 'X10', 'X11', 'X12', 'X13', 'X14', 'X15')
+	subDScolnames = eval(parse(text=paste('colnames(',datasetname,')',sep=''))) ##col names of the sub-dataset (in which empty cells were removed)
 	##11Jul2022 this mutate code was converting all cols back to character
     # require(dplyr)
     # eval(parse(text = paste(datasetname, " <<- ", datasetname,
     #     " %>%  dplyr::mutate(across(everything(), as.character))",
     #     sep = "")))
+
+	#Either add rows first or col first modify code accordingly. Better ot add cols last because you can restore 'class' properly
+	#otherwise weired things happens and class is not what it was before cleanup (before process-blank-dataset)
+
+    if (addRows > 0) { ## Add rows first
+
+		##create emptyRowdata that will contain "" only for "character" and NA for other classes
+		emptyRowdata <- rep("", colcount)
+		for(colidx in 1: colcount)
+		{
+			# colmclass = eval(parse(text=paste('BSkyBlankDSColNameClassList[[',colidx,']]', sep='')))# colclass should not come from old original (full) dataset
+			colmclass = eval(parse(text = paste('class(',datasetname,'[[',colidx,']])', sep='')))# col-class should come from sub-DS because new row is being added to sub-DS
+			if( !("character" %in% colmclass))
+			{
+				emptyRowdata[colidx] = NA
+			}
+		}
+		# print("insert:")
+		# print(emptyRowdata)
+
+        for (i in rowcount+1:addRows) {
+			# emptyRowdata <- rep("", rowcount)
+			#29Jun2023  eval(parse(text = paste(datasetname,' <- ',datasetname,' %>% tibble::add_row()', sep=''))) #this inserts NAs in blank cells so we need to remove them below
+			eval(parse(text = paste(datasetname,'[',i,',] <- emptyRowdata', sep='')))
+        }
+    }
+
+	emptySupported = c("character") #, "numeric", "integer", "Date", "POSIXct", "POSIXt")
     if (addCols > 0) {
-        for (i in 1:addCols) {
-            newcol <- rep("", rowcount)
-            eval(parse(text = paste(datasetname, "[ , ncol(",
-                datasetname, ") + 1] <<- newcol", sep = "")))
-            eval(parse(text = paste("colnames(", datasetname,
-                ")[ncol(", datasetname, ")] <<- paste0(\"X\", ",
-                (colcount + i), ")", sep = "")))
-        }
+		rowcount = blankDSrowcount
+		for( cname in blankDScolumnnames)
+		{
+			colmclass = eval(parse(text=paste('BSkyBlankDSColNameClassList$',cname, sep=''))) 
+			
+			if(!(cname %in% subDScolnames)) ## append columns that are not present in sub-dataset
+			{
+				# print(eval(parse(text=paste('BSkyBlankDSColNameClassList$',cname, sep=''))))
+				# print(paste0(cname,":", colmclass))##from backup
+
+				if( any(emptySupported %in% colmclass) ) # if any from emptySupported class is in colmclass
+				{
+					emptyColdata <- rep("", rowcount)
+				}
+				else 
+				{
+					emptyColdata <- rep(NA, rowcount)
+				}
+				# print(emptyColdata)
+				eval(parse(text = paste(datasetname, "[ , ncol(", datasetname, ") + 1] <- emptyColdata", sep = ""))) ## append a col
+
+				eval(parse(text = paste("colnames(", datasetname, ")[ncol(", datasetname, ")] <- cname", sep = ""))) ## assign name to the appended col
+
+				# print(eval(parse(text = paste('class(',datasetname,'$',cname,')', sep='')))) #existing class in sub-dataset
+
+				 ## assign the same class that was there before cleanup. Restoring class is imp b'coz user might have empty col renamed and converted to say factor
+				 if('ordered' %in% colmclass)
+				 {
+					eval(parse(text = paste(datasetname,'$',cname,' <- ordered(',datasetname,'$',cname,')', sep='')))
+				 }
+				 else if ('factor' %in% colmclass)
+				 {
+					eval(parse(text = paste(datasetname,'$',cname,' <- factor(',datasetname,'$',cname,')', sep='')))
+				 }
+				 else 
+				 {
+					eval(parse(text = paste('class(',datasetname,'$',cname,') <- colmclass', sep='')))
+				 }
+
+				# print("New class:")
+				# print(eval(parse(text = paste('class(',datasetname,'$',cname,')', sep=''))))
+				
+			}
+			else ## existing col in sub-dataset may have a different class during analysis execution we need to put back what it was just before analysis
+			{
+				# print(paste0(cname,":", colmclass)) ##from backup
+				if('ordered' %in% colmclass)
+				{
+					eval(parse(text = paste(datasetname,'$',cname,' <- ordered(',datasetname,'$',cname,')', sep='')))
+				}
+				else if ('factor' %in% colmclass)
+				{
+					eval(parse(text = paste(datasetname,'$',cname,' <- factor(',datasetname,'$',cname,')', sep='')))
+				}
+				else 
+				{
+					eval(parse(text = paste('class(',datasetname,'$',cname,') <- colmclass', sep='')))
+				}
+				# print("Class:")
+				# print(eval(parse(text = paste('class(',datasetname,'$',cname,')', sep=''))))
+
+			}
+		}
+
     }
-    colcount = eval(parse(text = paste("ncol(", datasetname,
-        ")", sep = "")))
-    if (addRows > 0) {
-        for (i in 1:addRows) {
-			##11Jul2022 this code is not good enough if dataset cols are non-character class.
-            # newrow <- rep("", colcount)
-            # eval(parse(text = paste(datasetname, "[nrow(", datasetname,
-            #     ")+1, ] <<- newrow", sep = "")))
-			##11Jul2022 following call will generate correct class for each col.
-			#require(tibble)
-			eval(parse(text = paste(datasetname,' <<- ',datasetname,' %>% tibble::add_row()', sep='')))
-        }
-    }
+    # colcount = eval(parse(text = paste("ncol(", datasetname, ")", sep = "")))
+
 	# cat("Exiting BSkyPutEmptyCellsBack");
 	return(invisible())
 }
