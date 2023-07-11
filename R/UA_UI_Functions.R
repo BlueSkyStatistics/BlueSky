@@ -461,7 +461,7 @@ BSkyReloadDataset<-function(fullpathfilename,  filetype, sheetname=NULL, csvHead
 
 BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex, processit=TRUE)
 {
-	processDS = FALSE   ## do noe process datasets
+	processDS = FALSE   ## do not process datasets
 	eval(parse(text=paste('attrlist = names(attributes(',dataSetNameOrIndex,'))',sep='')))
 	if("processDS" %in% attrlist )
 	{
@@ -556,6 +556,10 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 		{
 		withCallingHandlers(
 		{
+			## before saving to a file we must turn-off processDS attribute so that when we load this
+			## dataset (.RData) later it should not run the empty dataset processing on the file based dataset.
+			## because processDS = FALSE in saved file, we do not do any empty row/col cleaning.
+			eval(parse(text=paste('attr(',dataSetNameOrIndex,',"processDS") <<- FALSE')))
 			#find extension
 			#extn = File.sav
 			if(filetype=="SAV"){
