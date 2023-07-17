@@ -383,8 +383,13 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 		## to character. The reason why we load dataset and converted the character columns to factor is probably
 		## because we need levels count in the following block. Maybe making them factor is an easy way to find out 
 		## how many distince values a character column have.
-		## 
-		if(success == 0 && maxFactor != 0 && !(filetype == "RDATA" || filetype == "RDA")) ## if file opened successfully
+		##
+		
+		### We load these files (Excel, CSV, DAT and SAS) converting char to factor so only these files should go 
+		### under this processing to convert factor back to characters based on maxFactor value.
+		allowedFileFormats = c("XLSX","XLS","CSV","DAT","SAS7BDAT")
+
+		if(success == 0 && maxFactor != 0 && (filetype %in% allowedFileFormats)) ## if file opened successfully
 		{
 			colcount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')')))
 			for(i in 1:colcount)
