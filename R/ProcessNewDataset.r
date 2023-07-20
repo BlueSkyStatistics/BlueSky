@@ -29,6 +29,7 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	# datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	datasetname <- paste('.GlobalEnv$',datasetName, sep='')
+	lastcellcolidx = 0
 	tryCatch(
 		{
 		withCallingHandlers(
@@ -66,6 +67,7 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 				BSkyBlankDSColNameLevelsList <<- list()
 				blankDScolumnnames <<-NULL
 				blankDSrowcount <<- eval(parse(text=paste('nrow(',datasetname,')',sep='')))
+				blankDScolremoved <<- 0 #no. of empty cols deleted from the say Dataset1
 				#28Jun2023 backup: save all col-names and col-class in a temp BSkyColNameClassList variable
 				blankDScolumnnames <<- eval(parse(text=paste('colnames(',datasetname,')',sep='')))
 				for(colname in blankDScolumnnames) # save column name with the class
@@ -82,6 +84,25 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 				# print(BSkyBlankDSColNameClassList)
 				# print(blankDScolumnnames)
 				# print(blankDSrowcount)
+				
+				#19Jul23 Ross want us to keep the empty cols on the right of the boundary cell if it is renamed (X5 -> gender, but is empty col)
+				# And say in this scenario the 3rd col is renamed to X3 -> weight and has values.
+				# hint: create lastcellcolidx based on the name changed from original (X5 in above example). lastcellrowidx will remain as it is now.
+				keepEmptyRtCols = TRUE #this flag enables disables this capability.
+				if(keepEmptyRtCols)
+				{
+					defaultColNames = c('X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'X8', 'X9', 'X10', 'X11', 'X12', 'X13', 'X14', 'X15')
+					for(i in 15:1)
+					{
+						if(!(blankDScolumnnames[i] %in% defaultColNames) )
+						{
+							lastcellcolidx = i
+							break
+						}
+						
+					}
+				}
+				
 
 				# max non-empty row index and max non-empty col index, will be taken as the last cell of our data.frame.
 				# So, now we need to remove all rows and columns beyond this cell index
@@ -101,33 +122,39 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 
 				rm(BSkyTeMpDs235) #clean temp copy of the dataset
 
-				if(length(allidxnotNA) > 0)
+				if(length(allidxnotNA) > 0 || lastcellcolidx > 0)#this 'if' executes either there is data in the grid or column name is changed.
 				{
-					#find max of all the indexes in allidxnotNA
-					idx = max(allidxnotNA) 
-
 					r=eval(parse(text=paste('nrow(',datasetname,')',sep='')))
-					col=eval(parse(text=paste('ncol(',datasetname,')',sep='')))
-					
-					lastcellcolidx = ceiling(idx / r) ## this gives us the last col in which user atleast filled one cell
-
-					##27Jun2023 we also need to find if beyond last cell user renamed any col from 'Xn' to something else(e.g. X4 to 'age').
-					
-					#finding row index is not very straight forward
-					# in allidxnotNA find if there is an index that is 
-					# completely divisible by data.frame row count 'r'
-					# if so then the last non empty row index is equal 
-					# to the row count of the data.frame.
-					remainderzeroIndexes = which( allidxnotNA %% r == 0) # list of indexes completely divisible by row-count 'r'
-					if( length(remainderzeroIndexes) > 0 )#if any such index found then max row index = row-count 'r'
+					maxCols=eval(parse(text=paste('ncol(',datasetname,')',sep='')))# col count when the dataset was not cleaned (not processed)
+					lastcellrowidx = r
+					if(length(allidxnotNA) > 0)## this if block will execute only if there is any data in the grid
 					{
-						lastcellrowidx = r
-					}
-					else #if last row was empty then the max remainder found below should be the last non empty row
-					{
-						lastcellrowidx = max(allidxnotNA %% r)
-					}
+						#find max of all the indexes in allidxnotNA
+						idx = max(allidxnotNA) 
+						lastcellcolidx2 = ceiling(idx / r) ## this gives us the last col in which user atleast filled one cell
+						if(lastcellcolidx2 > lastcellcolidx) ##pick the higher column index
+						{
+							lastcellcolidx = lastcellcolidx2
+						}
 
+						##27Jun2023 we also need to find if beyond last cell user renamed any col from 'Xn' to something else(e.g. X4 to 'age').
+						
+						#finding row index is not very straight forward
+						# in allidxnotNA find if there is an index that is 
+						# completely divisible by data.frame row count 'r'
+						# if so then the last non empty row index is equal 
+						# to the row count of the data.frame.
+						remainderzeroIndexes = which( allidxnotNA %% r == 0) # list of indexes completely divisible by row-count 'r'
+						if( length(remainderzeroIndexes) > 0 )#if any such index found then max row index = row-count 'r'
+						{
+							lastcellrowidx = r
+						}
+						else #if last row was empty then the max remainder found below should be the last non empty row
+						{
+							lastcellrowidx = max(allidxnotNA %% r)
+						}
+					}
+					
 					#get current col names. This will be only used if there is just one column
 					Colnames = eval(parse(text=paste('colnames(',datasetname,')[1]',sep=''))) # saving one col name only
 					#cat(Colnames)
@@ -174,10 +201,11 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 								# }
 							# }
 					# }
-
+						colmlevels = c()
 						colcount = eval(parse(text=paste('ncol(',datasetname,')')))
 						for(i in 1:colcount)
 						{
+							colmlevels = c()
 							coluname = eval(parse(text=paste('colnames(',datasetname,')[',i,']')))
 
 							## if col class is factor it may have a blank level because of the blank cell in between (in the grid). This blank level must be dropped.
@@ -186,9 +214,39 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 							#print(colclass)
 							if("factor" %in% colclass)
 							{
+								colmlevels = eval(parse(text=paste('BSkyBlankDSColNameLevelsList$',coluname, sep='')))
+							}
+							
+							
+							if("ordered" %in% colclass)
+							{
+								eval(parse(text=paste(datasetname,'$',coluname,' <- ordered(x=',datasetname,'$',coluname,',  exclude = excludechars)', sep='')))
+								#eval(parse(text=paste('print(levels(',datasetname,'$',coluname,'))',sep='')))
+								
+								#19Jul23 restore factor levels too
+								eval(parse(text=paste('levels(',datasetname,'$',coluname,') <- colmlevels',sep='')))
+							}	
+							else if("factor" %in% colclass)
+							{
 								eval(parse(text=paste(datasetname,'$',coluname,' <- factor(x=',datasetname,'$',coluname,',  exclude = excludechars)', sep='')))
 								#eval(parse(text=paste('print(levels(',datasetname,'$',coluname,'))',sep='')))
-							}				
+								
+								#19Jul23 restore factor levels too
+								eval(parse(text=paste('levels(',datasetname,'$',coluname,') <- colmlevels',sep='')))
+							}							
+							
+							#19Jul23 utils::type.convert() above seems to convert the empty 'character' cols to 'logical'. I think we should convert it back to character
+							# But we will only convert the logical col class to character if they were character before utils::type.convert()
+							fixChar2Logical=TRUE #this flag enables disables this capability.
+							if(fixChar2Logical)
+							{
+								colmclass = eval(parse(text=paste('BSkyBlankDSColNameClassList$',coluname, sep=''))) 
+								if("logical" %in% colclass && 'character' %in% colmclass)
+								{
+									#eval(parse(text = paste('class(',datasetname,'$',coluname,') <- BSkyBlankDSColNameClassList[',i,']', sep='')))
+									eval(parse(text = paste('class(',datasetname,'$',coluname,') <- colmclass', sep='')))
+								}
+							}
 							
 							###creating missing value attribute, which is dataset level att.
 							colmisatt <- eval(parse(text=paste(coluname,'<-list(',coluname,'=list(type="none", value=""))')))
@@ -204,6 +262,7 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 						eval(parse(text=paste('attr(',datasetname,',"maxfactor") <-', bskymaxfactors)))
 						eval(parse(text=paste('attr(',datasetname,',"processDS") <- TRUE')))
 						UAcreateExtraAttributes(datasetname, "RDATA")
+						blankDScolremoved <<- maxCols - colcount ##maxcols=15 and colcount is col in subDS after cleanup
 				}
 			}
 		},
@@ -305,7 +364,7 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
     #28Jun2023 addCols = defaultCols - colcount
 
 	addRows = blankDSrowcount - rowcount
-	addCols = length(blankDScolumnnames) - colcount
+	addCols = blankDScolremoved #add as many cols as many you deleted #length(blankDScolumnnames) - colcount
 	# allBSkyVarNames = c('X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'X8', 'X9', 'X10', 'X11', 'X12', 'X13', 'X14', 'X15')
 	subDScolnames = eval(parse(text=paste('colnames(',datasetname,')',sep=''))) ##col names of the sub-dataset (in which empty cells were removed)
 	##11Jul2022 this mutate code was converting all cols back to character
@@ -314,7 +373,7 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
     #     " %>%  dplyr::mutate(across(everything(), as.character))",
     #     sep = "")))
 
-	#Either add rows first or col first modify code accordingly. Better ot add cols last because you can restore 'class' properly
+	#Either add rows first or col first modify code accordingly. Better to add cols last because you can restore 'class' properly
 	#otherwise weired things happens and class is not what it was before cleanup (before process-blank-dataset)
 
     if (addRows > 0) { ## Add rows first

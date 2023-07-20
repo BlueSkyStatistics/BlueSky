@@ -12,6 +12,7 @@ BSkyBlankDSColNameClassList <<- list()
 BSkyBlankDSColNameLevelsList <<- list()
 blankDScolumnnames <<- NULL
 blankDSrowcount <<- NULL
+blankDScolremoved <<- 0
 #bskyCurrentDatasetSplitSliceObj <- NULL
 .onLoad<-function(libname, pkgname)
 {
