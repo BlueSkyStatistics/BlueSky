@@ -1286,6 +1286,11 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 	
 	#04/19/2020 The else below is NOT invoked for model class glm and dependent variable numeric
 	#Its invoked for negbin and other glm models with different families
+	
+	else if (modclass == "coxph"){
+         predictions <- eval(parse(text = paste("predict(", modelname,
+            ",", tmpstr2, ",type=\"survival\")", collapse = "", sep = "")))
+    }
     
 	else {
         predictions <- eval(parse(text = paste("predict(", modelname, 
@@ -2134,13 +2139,23 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 	# attr(MixedModel1, "depvar") <-"'frequency'"
 	# attr (MixedModel1, "indepvar") ="c('gender', 'scenario', 'subject', 'attitude')"
 	
+	#Code I added 07/26/2023, I just added the top if to check for null
+	# This code supports a dependent variable = null for scoring cox regression models
+	# i.e. codels where the dependent variable does not exist and the class of the dependent variable does not exist
+	if (!base::is.null(depvar))
+    {
+      if (substr(x = depvar, start = 1, stop = 1) == "'") 
+	  {
+            depvar = substr(x = depvar, start = 2, stop = nchar(depvar) -
+                1)
+      }
+    }
 	
-	
-	
-		if ( substr(x=depvar,start=1,stop=1) =="\'")
-		{
-		depvar = substr(x=depvar,start=2, stop=nchar(depvar)-1)
-		}
+		#Original code that I commented on 07/26/2023
+		# if ( substr(x=depvar,start=1,stop=1) =="\'")
+		# {
+		# depvar = substr(x=depvar,start=2, stop=nchar(depvar)-1)
+		# }
 		aa <- paste(datasetname, "$", prefix, "_" , depvar, "_Predictions<<-predictions", 
 			sep = "")
 		eval(parse(text = aa))
@@ -2148,17 +2163,31 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 	
 	# 06/01/2020
 	#Added this code as ROCR::prediction requires a numeric, it will not work with an integer
-	if (dependentclass == "integer")
-	{
-		dependentvariable =as.numeric(dependentvariable)
-	}
+	#Code I added 07/26/2023
+	# This code supports a dependent variable = null for scoring cox regression models
+	# i.e. codels where the dependent variable does not exist and the class of the dependent variable does not exist
+	
+	if (!base::is.null(dependentclass))
+      {
+    if (dependentclass == "integer") {
+        dependentvariable = as.numeric(dependentvariable)
+    }
+      }
 	#Aaron Added 02/16/2022
 	#Restoring dependentvariable to original value so that the confusion matrix 
 	#does not display if the dependentvariable does not exist, this will happen when the 
 	#database scored does not contain the dependent variable
+	#Code I added 07/26/2023
+	# This code supports a dependent variable = null for scoring cox regression models
+	# i.e. codels where the dependent variable does not exist and the class of the dependent variable does not exist
+	if (!base::is.null(depvar))
+	{
 	dependentvariable <- eval(parse(text = paste(datasetname, 
                 "$", depvar, sep = "")))
-				
+	}else {
+	dependentvariable =NULL
+	}
+	
     return(list(predictions, predictedProbs, dependentvariable, 
         ROC))
 }
