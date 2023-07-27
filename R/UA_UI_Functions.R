@@ -361,8 +361,35 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
     	}
 		
 		# if maxFactor = -1 then we do not convert factor col to character
-		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
-		if(success == 0 && maxFactor > 0 && !(filetype == "RDATA" || filetype == "RDA")) ## if file opened successfully
+		# if maxFactor is a positive integer and factor columns has levels more than maxFactor 
+		# we convert this col to character.
+		#
+		## 11Jul2023 : The logic above is old. We need new rules: 
+		## Ross asked for 1 and 2: 
+		## 1: no char to factor conversion if the UI setting ("Control the creation of factor variables") is unchecked. 
+		## that means when maxFactor == -1 then we should load all chars as chars (no conversion to factor)
+		##
+		## 2: When user setting is checked and a positive value is provided, the factor columns having levels count
+		## more than the maxFactor will be converted to character. While the remaining factors having levels count
+		## lower than the maxFactor will remain factors.
+		## 
+		## 3: to complete the set I think we can add one more rule. if maxFactor == 0, then we should keep all the
+		## factors as factors (no convertion from factor to character)
+		##
+		## I found, when Hadley's loads Excel or CSV, it loads characters as characters. We make
+		## these columns factor so that we can have some control over it using the maxFactor.		
+		## When we load (Excel, CSV, DAT and SAS) we are forcing char to factor conversion. Later based on the
+		## maxFactor value we are executing the following block of code to convert (all, none or a few) factor columns
+		## to character. The reason why we load dataset and converted the character columns to factor is probably
+		## because we need levels count in the following block. Maybe making them factor is an easy way to find out 
+		## how many distince values a character column have.
+		##
+		
+		### We load these files (Excel, CSV, DAT and SAS) converting char to factor so only these files should go 
+		### under this processing to convert factor back to characters based on maxFactor value.
+		allowedFileFormats = c("XLSX","XLS","CSV","DAT","SAS7BDAT")
+
+		if(success == 0 && maxFactor != 0 && (filetype %in% allowedFileFormats)) ## if file opened successfully
 		{
 			colcount = eval(parse(text=paste('ncol(.GlobalEnv$',datasetname,')')))
 			for(i in 1:colcount)
@@ -461,7 +488,7 @@ BSkyReloadDataset<-function(fullpathfilename,  filetype, sheetname=NULL, csvHead
 
 BSkysaveAsDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colnames = FALSE, newWorksheetName=NULL,factor2char=TRUE, dataSetNameOrIndex, processit=TRUE)
 {
-	processDS = FALSE   ## do noe process datasets
+	processDS = FALSE   ## do not process datasets
 	eval(parse(text=paste('attrlist = names(attributes(',dataSetNameOrIndex,'))',sep='')))
 	if("processDS" %in% attrlist )
 	{
@@ -556,6 +583,10 @@ BSkysaveDataset <-function(fullpathfilename,  filetype, Rownames = TRUE, Colname
 		{
 		withCallingHandlers(
 		{
+			## before saving to a file we must turn-off processDS attribute so that when we load this
+			## dataset (.RData) later it should not run the empty dataset processing on the file based dataset.
+			## because processDS = FALSE in saved file, we do not do any empty row/col cleaning.
+			eval(parse(text=paste('attr(',dataSetNameOrIndex,',"processDS") <<- FALSE')))
 			#find extension
 			#extn = File.sav
 			if(filetype=="SAV"){
