@@ -250,3 +250,4 @@ export(BSkyPartialSemiCorrelations, BSkyPartialCorrelationsErrWarnHandler)
 export(BSkyMakeColumnOrderedFactor)
 
 export( BSkySetReplaceSplChars, BSkyGetReplaceSplChars, BSkySetLocale)
+export(BSkySaveProjectSpace,BSkyLoadProjectSpace)
