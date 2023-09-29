@@ -72,55 +72,40 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 #' @return
 #'
 #' @examples
-BSkyGetAvailableModelsCP <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE)
+BSkyGetAvailableModelsCP <- function (objclasslist = c("lm", "glm", "randomForest"), returnClassTrain = TRUE)
 {
-	
-	if ("All_Models" %in% objclasslist)
-	{
-	#09/04/2021
-	#Removed function from the list below. This is probably one model function that returns a model of class function, I don't know what that model is
-	# when function is in the list, all functions created in the global space are getting returned, which is not needed
-		objclasslist = c("NaiveBayes","randomForest","lm", "glm", "rpart", "multinom", "nnet", "polr","ksvm","blasso","knn3","real_adaboost","adaboost", "lmerModLmerTest","xgb.Booster","C5.0","BinaryTree","lognet","glmnet","earth","mlp","rsnns","RandomForest","rlm","rq","ranger","gbm","train","nn","coxph")
-	}
-	ClassFilterAdvanced <- function(x) 
-	{ 
-		eval(parse(text=paste('inherits(get(x), "',objclasslist,'" )', collapse='||', sep='')))
-	}
-	
-	
-	#print(ls(envir=.GlobalEnv))
-    #All the models of the classes specified
-	Objs <- Filter( ClassFilterAdvanced, ls(envir=.GlobalEnv))
-	
-	if (returnClassTrain)
-	{
-    originalObjClassList = objclasslist
-    objclasslist = c("train")
-    # All the objects of class train
-    trainObjects <- Filter( ClassFilterAdvanced, ls(envir=.GlobalEnv))
-    validTrainObjects =NULL
-    #All train models that have a final model of classes specified
-    for (trainobj in trainObjects)
-    {
-        finalModelClass = eval(parse(text=paste('class('  ,trainobj, '$finalModel',  ')', collapse='', sep='')))
-        if (finalModelClass %in% originalObjClassList)
-        {
-            Objs = c( trainobj, Objs)
+    if ("All_Models" %in% objclasslist) {
+        objclasslist = c("NaiveBayes", "drc", "nls", "randomForest", "lm",
+            "glm", "rpart", "multinom", "nnet", "polr", "ksvm",
+            "blasso", "knn3", "real_adaboost", "adaboost", "lmerModLmerTest",
+            "xgb.Booster", "C5.0", "BinaryTree", "lognet", "glmnet",
+            "earth", "mlp", "rsnns", "RandomForest", "rlm", "rq",
+            "ranger", "gbm", "train", "nn", "coxph")
+    }
+    ClassFilterAdvanced <- function(x) {
+        eval(parse(text = paste("inherits(get(x), \"", objclasslist,
+            "\" )", collapse = "||", sep = "")))
+    }
+    Objs <- Filter(ClassFilterAdvanced, ls(envir = .GlobalEnv))
+    if (returnClassTrain) {
+        originalObjClassList = objclasslist
+        objclasslist = c("train")
+        trainObjects <- Filter(ClassFilterAdvanced, ls(envir = .GlobalEnv))
+        validTrainObjects = NULL
+        for (trainobj in trainObjects) {
+            finalModelClass = eval(parse(text = paste("class(",
+                trainobj, "$finalModel", ")", collapse = "",
+                sep = "")))
+            if (finalModelClass %in% originalObjClassList) {
+                Objs = c(trainobj, Objs)
+            }
         }
     }
+    if (identical(Objs, character(0))) {
+        return(c(""))
     }
-	#print(Objs)
-	# Added by Aaron 09/07/2021
-	#When ever there are no models that match the selected model class, Filter function above returns character 0
-	if (identical(Objs, character(0)))
-	{
-		return (c(''))
-	}
-	
-	return(Objs)
+    return(Objs)
 }
-
-
 ClassFilter <- function(x) 
 { 
 	inherits(get(x), 'lm' )|| inherits(get(x), 'glm' ) || inherits(get(x), 'randomForest' )
