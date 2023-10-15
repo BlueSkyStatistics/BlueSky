@@ -95,7 +95,7 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
         x$group <- rep(1L, length(x$lhs))
     }
     else {
-        ngroups <- lav_partable_ngroups(x)
+        ngroups <- lavaan:::lav_partable_ngroups(x)
     }
     if (is.null(x$level)) {
         nlevels <- 1L
@@ -261,8 +261,8 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
     for (g in 1:ngroups) {
         if (ngroups > 1L) {
             group.label <- attr(x, "group.label")
-            cat("\n\n")
-            cat("Group ", g, " [", group.label[g], "]:\n", sep = "")
+            #cat("\n\n")
+            #cat("Group ", g, " [", group.label[g], "]:\n", sep = "")
         }
         for (l in 1:nlevels) {
             b <- b + 1L
@@ -410,6 +410,10 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
                   }
                   #cat("\n", s, ":\n", sep = "")
 				  #print(M, quote = FALSE)
+				  #cat("Group ", g, " [", group.label[g], "]:\n", sep = "")
+				   if (ngroups > 1L) {
+				  s = paste (s, "-", "Group with label: " ,group.label[g])
+				  }
 				  BSkyFormat(M, singleTableOutputHeader= s)
                 }
                 else if (s == "R-Square") {
@@ -418,6 +422,9 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
                   rownames(M) <- rep("", NROW(M))
                   #cat("\n", s, ":\n", sep = "")
                   #print(M, quote = FALSE)
+				  if (ngroups > 1L) {
+				  s = paste (s, "-", "Group with label: " ,group.label[g])
+				  }
 				  BSkyFormat(M, singleTableOutputHeader= s)
                 }
                 else {
@@ -426,6 +433,9 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
                   rownames(M) <- rep("", NROW(M))
                   #cat("\n", s, ":\n", sep = "")
                   #print(M, quote = FALSE)
+				  if (ngroups > 1L) {
+				  s = paste (s, "-", "Group with label: " ,group.label[g])
+				  }
 				  BSkyFormat(M, singleTableOutputHeader= s)
                 }
             }
