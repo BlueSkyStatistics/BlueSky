@@ -95,7 +95,7 @@ BSkyLoadProjectSpace <- function(load = "all", filedir='C:/Users/User/Downloads'
 		dummy = lapply(.GlobalEnv$loaded_library_names, function(libname) eval(parse(text=paste("require(",libname,")"))))
 
 		# Load all UI grid data frame objects
-		dummy = lapply(.GlobalEnv$grid_dataset_names, BSkyLoadRefresh)
+		dummy = lapply(.GlobalEnv$grid_dataset_names, BSkyLoadRefresh, createAttr=FALSE)
 		
 		BSkyFormat(paste("Workspace and Datasets loaded succesfully from", filedir))
 	
@@ -109,7 +109,7 @@ BSkyLoadProjectSpace <- function(load = "all", filedir='C:/Users/User/Downloads'
 		
 		# Load all UI grid data frame objects
 		.GlobalEnv$grid_dataset_names = load(file = paste(filedir, "grid_data_frames.RData", sep='/'), verbose = TRUE, envir = .GlobalEnv)
-		dummy = lapply(.GlobalEnv$grid_dataset_names, BSkyLoadRefresh)
+		dummy = lapply(.GlobalEnv$grid_dataset_names, BSkyLoadRefresh, createAttr=FALSE)
 		
 		BSkyFormat(paste("Datasets loaded succesfully from", filedir))
 	}	
