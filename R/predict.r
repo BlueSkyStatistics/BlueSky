@@ -84,7 +84,7 @@ predictPrerequisite <-function (modelname, curdatasetname)
 #when you are scoring a dataset are different from c#
 #predictPrerequisiteCP <-function (modelname, curdatasetname) 
 #This function is called by cross platform not C#
-predictPrerequisiteCP <-function (modelname, curdatasetname) 
+predictPrerequisiteCP <-function (modelname, curdatasetname,BSkySurvival = FALSE, BSkySurvivalType ="ML") 
 {
     if (modelname =="")
 	{
@@ -114,7 +114,15 @@ predictPrerequisiteCP <-function (modelname, curdatasetname)
     dependentvar = character(0)
     dependentvar <- getModelDependentVariable(modelname)
     modelvars <- list()
-    modelvars <- getModelIndependentVariables(modelname)
+	
+	if (BSkySurvival == TRUE && BSkySurvivalType =="CL")
+	{
+		modelvars <-  getModelIndependentVariables(modelname, BSkySurvival = TRUE, BSkySurvivalType ="CL")
+	} else
+	{
+	    modelvars <- getModelIndependentVariables(modelname)
+	}
+	
     vardiff <- list()
     j = 1
     vrlst <- paste(modelvars, collapse = ", ", sep = ",")
@@ -275,7 +283,7 @@ BSkyisValidName <- function(string) {
 #5/17/2020 commented the line below as I changed formula operators
 #getModelIndependentVariables <- function(modelname, formulaoperators="[-+*/:^)(]|%in%")
 
-getModelIndependentVariables <- function(modelname, formulaoperators="[-+*/:^,)(]|%in%")
+getModelIndependentVariables <- function(modelname, formulaoperators="[-+*/:^,)(]|%in%", BSkySurvival = FALSE, BSkySurvivalType ="ML" )
 {
 	
 	msg=character(0)
@@ -294,7 +302,14 @@ getModelIndependentVariables <- function(modelname, formulaoperators="[-+*/:^,)(
 	####### Based on what model class is selected, find model independent variables. ####### 
 	
 	##if model is created using Model-Tuning then follwing attribute will not be null
-	modelvars <- eval(parse(text=paste('attr(',modelname,',"indepvar")', sep='')))
+	if (BSkySurvival == TRUE && BSkySurvivalType =="CL")
+	{
+		modelvars <- eval(parse(text=paste('attr(',modelname,',"indepvarCL")', sep='')))
+	}
+	else
+	{
+		modelvars <- eval(parse(text=paste('attr(',modelname,',"indepvar")', sep='')))
+	}
 	if(!is.null(modelvars) )
 	{
 		#modelvars <- eval(parse(text=modelvars))
@@ -532,7 +547,7 @@ AddPredictColToDataset <- function(predictor, newcolname, datasetname)
 #' @return
 #'
 #' @examples
-BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALSE, level =.95, datasetname='Dataset4') 
+BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALSE, level =.95, datasetname='Dataset4',BSkySurvival = FALSE, BSkySurvivalType ="ML", BSkyTime ="" ) 
 {
     
 	#Logistic regression family
@@ -637,7 +652,7 @@ BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALS
         
         
     
-    modelvars <- getModelIndependentVariables(modelname)
+    modelvars <- getModelIndependentVariables(modelname, BSkySurvival =BSkySurvival, BSkySurvivalType =BSkySurvivalType)
     tmpstr1 = paste0(modelvars, "=", datasetname, "$", modelvars, 
         collapse = ",", sep = "")
     tmpstr2 = paste0("data.frame(", tmpstr1, ")", collapse = ",", 
@@ -1044,7 +1059,7 @@ else  if (modclass == "C5.0" && (dependentclass == "factor" || dependentclass ==
     else if (modclass == "randomForest" && dependentclass == "logical") {
         savePredictedProbs <- eval(parse(text = paste("predict(", 
             modelname, ",", tmpstr2, ")", collapse = "", sep = "")))
-        predictions = ifelse(savePredictedProbs >= 0.5, TRUE, 
+        predictions = base::ifelse(savePredictedProbs >= 0.5, TRUE, 
             FALSE)
     }
     else if (modclass == "NaiveBayes" && (dependentclass == "factor" || dependentclass == "character" ||dependentclass == "ordered"))  {
@@ -1165,7 +1180,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
         }
         else
         {
-          predictions = ifelse(savePredictedProbs >= 0.5, levels(dependentvariable)[2], levels(dependentvariable)[1])
+          predictions = base::ifelse(savePredictedProbs >= 0.5, levels(dependentvariable)[2], levels(dependentvariable)[1])
           predictions =factor(predictions, levels =levels(dependentvariable)) 
         }
         #predictions <- eval(parse(text = paste("predict(", modelname, 
@@ -1287,10 +1302,35 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 	#04/19/2020 The else below is NOT invoked for model class glm and dependent variable numeric
 	#Its invoked for negbin and other glm models with different families
 	
-	else if (modclass == "coxph"){
-         predictions <- eval(parse(text = paste("predict(", modelname,
-            ",", tmpstr2, ",type=\"survival\")", collapse = "", sep = "")))
-    }
+	else if(modclass =='coxph' ) 
+	{
+	
+		if (BSkySurvival == TRUE && BSkySurvivalType =="CL")
+		{
+			# modelvars <- eval(parse(text=paste('as.character(',modelname,'$xnames)', sep='') ) )
+			# tmpPredictions <- eval(parse(text = paste("predict(", modelname,
+						# ",", ", type=\"survival\")", collapse = "",
+						# sep = "")))
+			# BSKyMarkerForMissing <- which(is.na(tmpPredictions))
+			# #BSkyRawPredictions <- summary(survfit(CoxRegModel1, newdata=mockstudy), time=c(500, 1000))$surv
+			
+			#BSKyMarkerForMissing <- eval(parse (text = paste ("which(is.na(", tmpstr2, "))")))
+				predictionProbs <- eval(parse(text =paste("summary(survfit(", modelname, ", newdata =", 
+                                             tmpstr2, "),time =",
+													deparse(substitute(BSkyTime)),")$surv"))) 
+			BSKyMarkerForMissing =eval(parse(text =paste("stats::na.action(stats::na.exclude(", tmpstr2, "))") ))
+				predictionProbs = base::t(predictionProbs)
+			# Here is the trick: give the "bad" vector a class
+
+			#class(BSKyMarkerForMissing) <- "exclude"
+			predictionProbs <- stats::napredict(BSKyMarkerForMissing, predictionProbs)
+		}
+		else
+		{
+			 predictionProbs <- eval(parse(text = paste("predict(", modelname, 
+            ",", tmpstr2, ", type=\"survival\")", collapse = "", sep = "")))
+		}
+	}
     
 	else {
         predictions <- eval(parse(text = paste("predict(", modelname, 
@@ -1382,7 +1422,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 					predictedProbs =predictions[,1]
 				# }
                 # predictions = ifelse( predictions >= 0.5, 0, 1)
-                predictions =ifelse( predictions[,1] >= 0.5, 0, 1)
+                predictions =base::ifelse( predictions[,1] >= 0.5, 0, 1)
 				aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1], "_Pred_XG_binary_logistic", "<<-predictions[[", 1, "]]", sep = "")
 					eval(parse(text = aa))
 				ROC=TRUE
@@ -1868,7 +1908,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
             eval(parse(text = aa))
         }
         predictedProbs = predictions
-        predictions = ifelse(predictions >= 0.5, TRUE, FALSE)
+        predictions = base::ifelse(predictions >= 0.5, TRUE, FALSE)
         ROC = TRUE
     }
     else if (modclass == "randomForest" && (dependentclass == "logical" || dependentclass == "factor" || dependentclass == "character")) 
@@ -1996,7 +2036,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
         if (fly =="binomial")
         {
              predictedProbs = predictions
-			predictions = ifelse(predictions >= 0.5, levels(dependentvariable)[2], 
+			predictions = base::ifelse(predictions >= 0.5, levels(dependentvariable)[2], 
                 levels(dependentvariable)[1])
 			#Added 04/19/2020
 			#The code abobe makes predictions a string, we need to convert to factor
@@ -2030,7 +2070,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 			#not necessary as the algorithm only takes 0-1 
 			#highlevel =max(dependentvariable)
 			#lowlevel=min(dependentvariable)
-            predictions = ifelse(predictions >= 0.5, 1, 0)
+            predictions = base::ifelse(predictions >= 0.5, 1, 0)
 			predictions =as.numeric(predictions)
             ROC = TRUE
             bb <- paste(datasetname, "$", prefix,"_" , depvar,  "_PredictedProbs<<-predictedProbs ", 
@@ -2044,7 +2084,7 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
     #Predictions contain TRUE FALSE
         predictedProbs = predictions
         predictedProbs = round (predictedProbs,noofDigitsToRound) 
-        predictions = ifelse(predictions >= 0.5, TRUE, FALSE)
+        predictions = base::ifelse(predictions >= 0.5, TRUE, FALSE)
         ROC = TRUE
         bb <- paste(datasetname, "$", prefix, "_" , depvar, "_PredictedProbs<<-predictedProbs ", 
             sep = "")
@@ -2117,6 +2157,31 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 		
        
     }
+	
+else if (modclass == "coxph" && (dependentclass == "numeric"|| dependentclass == "double" || dependentclass == "integer" ))
+{
+	predictionProbs =data.frame(predictionProbs)
+    ll <- ncol(predictionProbs )
+    for (i in 1:ll) 
+    {
+		# #There is only a single column in the data frame
+		# predictions[[i]] = round(predictions[[i]], digits = noofDigitsToRound)
+		# aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_", BSkyTime[i], "<<-predictions[[", i, "]]", sep = "")
+		# eval(parse(text = aa))
+		predictions = base::ifelse(predictionProbs[[i]] >= 0.5, 1, 0)
+		#There is only a single column in the data frame
+		predictionProbs[[i]] = round(predictionProbs[[i]], digits = noofDigitsToRound)
+		# We are NOT saving predictions
+		#aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_", BSkyTime[i], "<<-predictions", sep = "")
+		#eval(parse(text = aa))
+		aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_Prob_", BSkyTime[i], "<<-predictionProbs[[", i, "]]", sep = "")
+		eval(parse(text = aa))
+	}
+    predictions = base::ifelse(predictionProbs[[1]] >= 0.5, 1, 0)
+	predictedProbs = predictionProbs[[1]]
+	ROC = TRUE
+	predictionsSaved = TRUE
+}
 
 	
 	#Added by Aaron 5/16/2020
@@ -2168,11 +2233,11 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 	# i.e. codels where the dependent variable does not exist and the class of the dependent variable does not exist
 	
 	if (!base::is.null(dependentclass))
-      {
-    if (dependentclass == "integer") {
-        dependentvariable = as.numeric(dependentvariable)
+    {
+		if (dependentclass == "integer") {
+			dependentvariable = as.numeric(dependentvariable)
+		}
     }
-      }
 	#Aaron Added 02/16/2022
 	#Restoring dependentvariable to original value so that the confusion matrix 
 	#does not display if the dependentvariable does not exist, this will happen when the 
@@ -2389,7 +2454,7 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
              fly =eval( parse(text=paste ("family(" ,modelname, ")$family") ))
             }
             generateConfusionmatrix = FALSE
-            if ((modclass == "randomForest" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "logical")) || (modclass == "mlp" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered" )) ||(modclass == "nn" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered" )) || (modclass == "xgb.Booster" && (dependentclass == "factor" ||   dependentclass == "character" || dependentclass == "ordinal")) ||(modclass == "rsnns" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered"  ))|| (modclass == "nnet" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered" )) || ( modclass == "nnet.formula" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered")) ||(modclass == "polr" && (dependentclass == "ordered" ))  || modclass == "table" || modclass == "NaiveBayes" || (modclass == "rpart" && (dependentclass == "factor" || dependentclass == "character" || dependentclass == "logical")) ||  modclass == "multinom" || (modclass == "ksvm" &&                 (dependentclass == "factor" || dependentclass ==  "character")) || (modclass == "adaboost" &&                 (dependentclass == "factor" || dependentclass ==                   "character")) || (modclass == "real_adaboost" &&                 (dependentclass == "factor" || dependentclass ==                   "character")) || (modclass == "fast_adaboost" &&                 (dependentclass == "factor" || dependentclass ==                   "character")) || (modclass == "knn3" && (dependentclass ==                 "factor" || dependentclass == "character")) ||                 (modclass == "glm" && (dependentclass == "factor" ||                   dependentclass == "logical"  || fly == "binomial"))  ||(modclass == "C5.0" && (dependentclass == "factor" || dependentclass == "ordered" || dependentclass == "character" ))) {
+            if ((modclass == "randomForest" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "logical")) || (modclass == "mlp" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered" )) ||(modclass == "nn" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered" )) || (modclass == "xgb.Booster" && (dependentclass == "factor" ||   dependentclass == "character" || dependentclass == "ordinal")) ||(modclass == "rsnns" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered"  ))|| (modclass == "nnet" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered" )) || ( modclass == "nnet.formula" && (dependentclass =="factor" || dependentclass == "character" || dependentclass == "ordered")) ||(modclass == "polr" && (dependentclass == "ordered" ))  || modclass == "table" || modclass == "NaiveBayes" || (modclass == "rpart" && (dependentclass == "factor" || dependentclass == "character" || dependentclass == "logical")) ||  modclass == "multinom" || (modclass == "ksvm" &&                 (dependentclass == "factor" || dependentclass ==  "character")) || (modclass == "adaboost" &&                 (dependentclass == "factor" || dependentclass ==                   "character")) || (modclass == "real_adaboost" &&                 (dependentclass == "factor" || dependentclass ==                   "character")) || (modclass == "fast_adaboost" &&                 (dependentclass == "factor" || dependentclass ==                   "character")) || (modclass == "knn3" && (dependentclass ==                 "factor" || dependentclass == "character")) ||                 (modclass == "glm" && (dependentclass == "factor" ||                   dependentclass == "logical"  || fly == "binomial"))  ||(modclass == "C5.0" && (dependentclass == "factor" || dependentclass == "ordered" || dependentclass == "character" )) || (modclass == "coxph")) {
                 generateConfusionmatrix = TRUE
             }
 			
@@ -2406,7 +2471,7 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
 			}
             else 
 			{
-                if (!(dependentclass == "factor" || dependentclass == "character")) {
+                if (!(dependentclass == "factor" || dependentclass == "character") ) {
                   msg = paste("Error: The creation of a confusion matrix for a dependent variable of class ", 
                     dependentclass, " is not supported.")
                   cat("\n", msg)
