@@ -325,7 +325,7 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 #' @examples 
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyLoadRefresh('df')
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor())## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor(), createAttr=TRUE)## change this to a string parameter from a dataset object 
 {
 	isdataframe=FALSE
 	isdesign=FALSE
@@ -600,7 +600,11 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid
 		{
 			uadatasets$name <- c(uadatasets$name, bskyDatasetName)
 		}
-		UAcreateExtraAttributes(bskyDatasetName, "RDATA")
+		if(createAttr)
+		{
+			UAcreateExtraAttributes(bskyDatasetName, "RDATA")
+		}
+		
 
 		# if maxFactor = -1 then we do not convert factor col to character
 		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
