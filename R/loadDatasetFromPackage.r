@@ -49,14 +49,68 @@ BSkyisValidName <- function(string) {
 #' @return
 #'
 #' @examples
-BSkyGetDatasetNameFromPackageDatasetList <-function(datasetAndPackagedetails)
+# BSkyGetDatasetNameFromPackageDatasetList <-function(datasetAndPackagedetails)
+# {
+# return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),3])
+# }
+
+# BSkyGetPackageNameFromPackageDatasetList <-function(datasetAndPackagedetails)
+# {
+# return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),1])
+# }
+
+
+## 06Dec2023
+#The following functon is modifed locally, but should be in the original file in the BSky package
+BSkyGetDatasetNameFromPackageDatasetList <- function (datasetAndPackagedetails)
 {
-return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),3])
+	if(is.null(uadatasets.sk$BSkyDataFramePackageDetails) || (is.data.frame(uadatasets.sk$BSkyDataFramePackageDetails) && dim(uadatasets.sk$BSkyDataFramePackageDetails)[1] < 1))
+	{
+		input_string = datasetAndPackagedetails #example: "pistonrings-[Piston rings data]-qcc"
+		# Specify the character to match
+		character_to_match <- "-"
+
+		# Use sub() to extract characters before the first occurrence of the matching character '-'
+		datasetName <- sub(paste0(character_to_match, ".*"), "", input_string)
+		
+		# Use sub() to extract characters after the last occurrence of the matching character '-'
+		pkgName <- sub(paste0(".*", character_to_match), "", input_string)
+		
+		eval(parse(text=paste("require(",pkgName,")")))
+		
+		invisible(return(datasetName))
+	}
+	else
+	{
+		return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==
+			datasetAndPackagedetails), 3])
+	}
 }
 
-BSkyGetPackageNameFromPackageDatasetList <-function(datasetAndPackagedetails)
+## 06Dec2023
+#The following functon is modifed locally, but should be in the original file in the BSky package
+BSkyGetPackageNameFromPackageDatasetList <- function (datasetAndPackagedetails)
 {
-return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==datasetAndPackagedetails),1])
+	if(is.null(uadatasets.sk$BSkyDataFramePackageDetails) || (is.data.frame(uadatasets.sk$BSkyDataFramePackageDetails) && dim(uadatasets.sk$BSkyDataFramePackageDetails)[1] < 1))
+	{
+		input_string = datasetAndPackagedetails #example: "pistonrings-[Piston rings data]-qcc"
+		# Specify the character to match
+		character_to_match <- "-"
+
+		# Use sub() to extract characters before the first occurrence of the matching character '-'
+		datasetName <- sub(paste0(character_to_match, ".*"), "", input_string)
+		
+		# Use sub() to extract characters after the last occurrence of the matching character '-'
+		pkgName <- sub(paste0(".*", character_to_match), "", input_string)
+		
+		eval(parse(text=paste("require(",pkgName,")")))
+		
+		cat("\n", paste("Loading dataset:", datasetName, "from R Package:", pkgName), "\n")
+		invisible(return(pkgName))
+	}
+	else
+	{
+		return(uadatasets.sk$BSkyDataFramePackageDetails[which(uadatasets.sk$BSkyDataFramePackageDetails$Keys ==
+			datasetAndPackagedetails), 1])
+	}
 }
-
-

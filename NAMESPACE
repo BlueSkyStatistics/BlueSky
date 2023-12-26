@@ -255,4 +255,5 @@ export( BSkySetReplaceSplChars, BSkyGetReplaceSplChars, BSkySetLocale)
 export(print.lavaan.summary_bsky, print.lavaan.parameterEstimates_bsky,lav_print_loadings_aar, lav_print_psi_bsky, lav_test_print_aar,lav_data_print_short_aar, print.lavaan.fitMeasures_aar )
 
 export(BSkySaveProjectSpace,BSkyLoadProjectSpace)
+export(BSkyScriptAutomationEngine)
 
