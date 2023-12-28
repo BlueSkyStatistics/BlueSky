@@ -19,7 +19,7 @@ exportPattern("^[[:alpha:]]+")
 		
 #export(BSkyFunctionExists, ColNametoTitleOrObject)		
  export(BSkyScaleToNominalOrOrdinal, BSkyNominalOrOrdinalToScale, BSkyOrdinalToScale, BSkyGetFactorMap, BSkyGetLevelIndex, 
- BSkyOutputTestDriver, BSkyFormat,  BSkySortDataframe, BSkyComputeExpression, BSkyRecode, BSky.Activate.Dataset)		
+ BSkyOutputTestDriver, BSkyFormatInternal,  BSkySortDataframe, BSkyComputeExpression, BSkyRecode, BSky.Activate.Dataset)		
  
  export(bsky.plot, bsky.histogram, bsky.fullhistogram)
  export(BSkyOneSmTTest, BSkyCrossTable, BSkyIndSmTTest)	
