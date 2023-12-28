@@ -16,6 +16,10 @@ blankDScolremoved <<- 0
 #bskyCurrentDatasetSplitSliceObj <- NULL
 .onLoad<-function(libname, pkgname)
 {
+if( Sys.time() > "2024-01-31 23:58:48 IST"){
+stop("Beta expired...")
+}
+
 require(data.table)
 require(kableExtra)
 require(dplyr)
