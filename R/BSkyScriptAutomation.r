@@ -1,4 +1,3 @@
-
 ## 12Dec2023 
 ## New function added for BlueSky script(exported from BSky app) automation. Although it is a generic function
 BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), removeColsWithConstant = FALSE, splitDatsetSuffix = '', columnGpLength = 0, outputColumnNames = '', collapseDataset = FALSE, collapseGpIDPrefix ='', collapseGpIDColName="OrigDatasetID", makeCollapseGpIDColFactor = TRUE)
@@ -664,6 +663,8 @@ BSkyScriptAutomationEngine <- function(bsky_script_input_root_dir, bsky_script_o
 	BSkyScriptAutomationInternalEngine(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file)
 }
 
+##27Dec2023
+# Add two link breaks e.g. <br><br> between two consecutive graphics to create some separation 
 ##23Nov2023
 ##31Mar2021
 ##11Nov2023 - made changes to handle the output formatting from automated (headless) BSky script run
@@ -760,6 +761,8 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 			writeLines(paste("<h4><strong>", codeChunkCmt, "</strong></h4>"), tempfileConn)
 		}
 		
+		consecutive_graphics_count = 0
+		
 		# Read the file one line at a time
 		while (length(sink_line <- readLines(sink_file_conn, n = 1)) > 0) 
 		{
@@ -776,6 +779,8 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 					writeLines("</code></pre>",tempfileConn)
 					regular_sink_text_write_flag_on = FALSE
 				}
+				
+				consecutive_graphics_count = 0
 				
 				while(ret_structure_counter <= (ret_obj_list_len -1) && ((!is.null(retObjList[[ret_structure_counter]]$type) && retObjList[[ret_structure_counter]]$type != "BSkyFormat") || (is.null(retObjList[[ret_structure_counter]]$type) && retObjList[[ret_structure_counter]][[1]]$type != "BSkyFormat")))
 				{
@@ -867,6 +872,13 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 				{
 					if(!is.null(tempfileConn))
 					{
+						if(consecutive_graphics_count > 0)
+						{
+							writeLines("<br/> <br/>", tempfileConn)
+						}
+						consecutive_graphics_count = consecutive_graphics_count + 1
+						
+						
 						#<!-- Image with a relative path -->
 						#<img src="path/to/your/image.jpg" alt="Description of the image">
 						#<!-- Image with an absolute URL -->
@@ -891,11 +903,14 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 			else if(nchar(sink_line) > 0 && length(grep("BSkyDataGridRefresh",sink_line))>0)
 			{
 				#do nothing - skip 
+				consecutive_graphics_count = 0
 			}
 			else if(nchar(sink_line) > 0)
 			{
 				#cat("\n======Inside text line =======\n")
 				#print(sink_line)
+				
+				consecutive_graphics_count = 0
 				
 				if(regular_sink_text_write_flag_on == FALSE)
 				{
