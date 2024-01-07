@@ -233,7 +233,7 @@ BSkyEmpty <-function(datasetName ,noOfRows,noOfCols)
 #' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
 #' BSkyLoadRefresh(exceldata)
 BSkyloadDataset <-function(fullpathfilename,  filetype, worksheetName=NULL, replace_ds=FALSE, 
-load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL, maxFactor=BSkyGetMaxFactor() )
+load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL, maxFactor=BSkyGetMaxFactor(), skip = 0 )
 {
 
 	BSkyFunctionInit()
@@ -263,10 +263,10 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 				success = BSkyReadStata(fullpathfilename, datasetname, replace=replace_ds) 
 			}			
 			else if(filetype == "XLS"){
-				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=FALSE, character.to.factor=character.to.factor, colNames=csvHeader)
+				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=FALSE, character.to.factor=character.to.factor, colNames=csvHeader, skip = skip)
 			}
 			else if(filetype == "XLSX"){
-				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=TRUE, character.to.factor=character.to.factor, colNames=csvHeader)
+				success = UAreadExcel(fullpathfilename, datasetname, worksheetName, replace=replace_ds, xlsx=TRUE, character.to.factor=character.to.factor, colNames=csvHeader, skip = skip)
 			}			
 			else if(isBasketData && (filetype == "CSV" || filetype == "DAT" || filetype == "TXT") ) #if its mkt basket data in a flat file having extension csv, txt or data
 			{

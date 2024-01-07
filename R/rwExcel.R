@@ -20,7 +20,7 @@
 #																						
 #Example: UAreadExcel("C:/Data/test.xls", "myxls", "Sheet1", replace=FALSE, xlsx=FALSE)																			
 ###################################################################################################################
-UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xlsx=FALSE, character.to.factor=FALSE, colNames=TRUE)
+UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xlsx=FALSE, character.to.factor=FALSE, colNames=TRUE, skip=0)
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -67,7 +67,7 @@ UAreadExcel <- function(excelfilename, datasetname, sheetname, replace=FALSE, xl
 		######### Using RODBC package ########ends####
 		
 		#R command to open data file
-		corecommand = paste('readxl::read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\', col_names=',colNames,')', sep='')
+		corecommand = paste('readxl::read_excel(path=\'',excelfilename,'\',sheet=\'',sheetname,'\', col_names=',colNames,', skip =',skip,')', sep='')
 
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
