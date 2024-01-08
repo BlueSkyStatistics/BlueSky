@@ -72,7 +72,7 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 #' @return
 #'
 #' @examples
-BSkyGetAvailableModelsCP <- function (objclasslist = c("lm", "glm", "randomForest"), returnClassTrain = TRUE)
+BSkyGetAvailableModelsCP <- function (objclasslist = c("lm", "glm", "randomForest"), returnClassTrain = TRUE, suppress ="")
 {
     if ("All_Models" %in% objclasslist) {
         objclasslist = c("NaiveBayes", "drc", "nls", "randomForest", "lm",
@@ -82,6 +82,10 @@ BSkyGetAvailableModelsCP <- function (objclasslist = c("lm", "glm", "randomFores
             "earth", "mlp", "rsnns", "RandomForest", "rlm", "rq",
             "ranger", "gbm", "train", "nn", "coxph")
     }
+	if (suppress !="")
+	{
+		objclasslist <- objclasslist[objclasslist != suppress]
+	}
     ClassFilterAdvanced <- function(x) {
         eval(parse(text = paste("inherits(get(x), \"", objclasslist,
             "\" )", collapse = "||", sep = "")))
