@@ -1,6 +1,6 @@
 ## 12Dec2023 
 ## New function added for BlueSky script(exported from BSky app) automation. Although it is a generic function
-BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), removeColsWithConstant = FALSE, splitDatsetSuffix = '', columnGpLength = 0, outputColumnNames = '', collapseDataset = FALSE, collapseGpIDPrefix ='', collapseGpIDColName="OrigDatasetID", makeCollapseGpIDColFactor = TRUE)
+BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), removeColsWithConstant = FALSE, splitDatsetSuffix = '', columnGpLength = 0, outputColumnNames = '', collapseDataset = FALSE, collapseGpIDColFirst = TRUE, collapseGpIDPrefix ='', collapseGpIDColName="OrigDatasetID", makeCollapseGpIDColFactor = TRUE, complete.cases = TRUE)
 {
 	if(is.null(columnGpLength))
 	{
@@ -26,7 +26,7 @@ BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), r
 	if(removeColsWithConstant == TRUE)
 	{
 		# Identify columns with constant values# Identify columns with constant values
-		constant_columns <- sapply(datasetObj_non_empty_cols, function(col) length(unique(col)) == 1)
+		constant_columns <- sapply(datasetObj_non_empty_cols, function(col) length(unique(tolower(col))) == 1)
 		
 		# Remove columns with constant values
 		datasetObj_non_empty_cols <- datasetObj_non_empty_cols[, !constant_columns]
@@ -111,13 +111,26 @@ BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), r
 		  datasetObj_non_empty_cols[, (indices:(indices+no_of_unque_cols-1)), drop = FALSE]
 		})
 		
-		if(trimws(splitDatsetSuffix) == '')
+		splitDatsetSuffix = trimws(splitDatsetSuffix)
+		
+		if(collapseDataset == FALSE)
 		{
-			names(subdatasets) = paste0(datasetNameStr, "_", seq_along(subdatasets))
-		}
-		else
-		{
-			names(subdatasets) = paste0(datasetNameStr, "_", splitDatsetSuffix, "_", seq_along(subdatasets))
+			if(splitDatsetSuffix[1] == '')
+			{
+				names(subdatasets) = paste0(datasetNameStr, "_", seq_along(subdatasets))
+			}
+			else
+			{
+				if(length(subdatasets) <= length(splitDatsetSuffix))
+				{
+					names(subdatasets) = paste0(datasetNameStr, "_", seq_along(subdatasets), "_", splitDatsetSuffix[1:length(subdatasets)])
+				}
+				else
+				{
+					cat("Number of output dataset name suffix strings provided not enough for", length(subdatasets), "output datasets - auto generating using the first string\n")
+					names(subdatasets) = paste0(datasetNameStr, "_", splitDatsetSuffix[1], "_", seq_along(subdatasets))
+				}
+			}
 		}
 		
 		collapse_gp_name = ''
@@ -130,7 +143,15 @@ BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), r
 		
 		for (i in seq_along(subdatasets)) 
 		{
+			if(complete.cases == TRUE)
+			{
+				subdatasets[[i]] = subdatasets[[i]][complete.cases(subdatasets[[i]]), ]
+			}
+			
 			names(subdatasets[[i]]) = cleaned_string[1:no_of_unque_cols]
+			
+			# Make column names unique
+			names(subdatasets[[i]]) <- make.unique(names(subdatasets[[i]]))
 			
 			if(collapseDataset == FALSE)
 			{
@@ -146,13 +167,13 @@ BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), r
 		
 		if(collapseDataset == TRUE && dim(collapsed_df)[1] > 0)
 		{
-			if(trimws(splitDatsetSuffix) == '')
+			if(splitDatsetSuffix[1] == '')
 			{
 				collapsed_dataset_name = paste0(datasetNameStr, "_1")
 			}
 			else
 			{
-				collapsed_dataset_name = paste0(datasetNameStr, "_", splitDatsetSuffix)
+				collapsed_dataset_name = paste0(datasetNameStr, "_", splitDatsetSuffix[1])
 			}
 			
 			if(trimws(collapseGpIDColName) == '')
@@ -160,12 +181,26 @@ BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), r
 				collapseGpIDColName="OrigDatasetID"
 			}
 			
-			names(collapsed_df) = c(cleaned_string[1:no_of_unque_cols], collapseGpIDColName)
+			if(collapseGpIDColFirst == TRUE)
+			{
+				# Move the last column to be the first column
+				collapsed_df = collapsed_df[, c(ncol(collapsed_df), 1:(ncol(collapsed_df)-1))]
+				names(collapsed_df) = c(collapseGpIDColName, cleaned_string[1:no_of_unque_cols])
+			}
+			else
+			{
+				names(collapsed_df) = c(cleaned_string[1:no_of_unque_cols], collapseGpIDColName)
+			}
+			
+			# Make column names unique
+			names(collapsed_df) <- make.unique(names(collapsed_df))
 			
 			if(makeCollapseGpIDColFactor == TRUE)
 			{
-				collapsed_df[collapseGpIDColName] = factor(collapsed_df[, length(names(collapsed_df))])
+				#collapsed_df[collapseGpIDColName] = factor(collapsed_df[, length(names(collapsed_df))])
+				collapsed_df[collapseGpIDColName] = factor(collapsed_df[[collapseGpIDColName]])
 			}
+			
 			eval(parse(text=paste(".GlobalEnv$", collapsed_dataset_name, "=", "collapsed_df" )))
 			BSkyLoadRefresh(collapsed_dataset_name)
 		}
@@ -178,7 +213,7 @@ BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), r
 		}
 		else
 		{
-			cat("\nDataset:", datasetNameStr,"has been collapsed with", length(names(subdatasets)),"underlying datasets\n")
+			cat("\nDataset:", datasetNameStr,"has been collapsed with", length(subdatasets),"underlying datasets to\n")
 			cat(collapsed_dataset_name)
 			cat("\n")
 		}
