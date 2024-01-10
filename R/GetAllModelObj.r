@@ -69,8 +69,9 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 			}
         }
 	#print(Objs)
-	return(Objs)
+	#return(Objs)
 }
+return(Objs)
 }
 
 
