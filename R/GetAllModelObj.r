@@ -87,6 +87,9 @@ return(Objs)
 #' @return
 #'
 #' @examples
+
+#Added by Aaron 01/10/2024, this should no longer be used. BSkyGetAvailableModels is used
+
 BSkyGetAvailableModelsCP <- function (objclasslist = c("lm", "glm", "randomForest"), returnClassTrain = TRUE, suppress ="")
 {
     if ("All_Models" %in% objclasslist) {

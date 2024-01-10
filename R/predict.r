@@ -1315,7 +1315,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 			# #BSkyRawPredictions <- summary(survfit(CoxRegModel1, newdata=mockstudy), time=c(500, 1000))$surv
 			
 			#BSKyMarkerForMissing <- eval(parse (text = paste ("which(is.na(", tmpstr2, "))")))
-				predictionProbs <- eval(parse(text =paste("summary(survfit(", modelname, ", newdata =", 
+				predictionProbs <- eval(parse(text =paste("summary(survival::survfit(", modelname, ", newdata =", 
                                              tmpstr2, "),time =",
 													deparse(substitute(BSkyTime)),")$surv"))) 
 			BSKyMarkerForMissing =eval(parse(text =paste("stats::na.action(stats::na.exclude(", tmpstr2, "))") ))
