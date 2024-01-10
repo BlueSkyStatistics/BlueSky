@@ -18,7 +18,7 @@
 #' @return
 #'
 #' @examples
-BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE)
+BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), returnClassTrain =TRUE, suppress ="")
 {
 	
 	if ("All_Models" %in% objclasslist )
@@ -26,7 +26,17 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 	#09/04/2021
 	#Removed function from the list below. This is probably one model function that returns a model of class function, I don't know what that model is
 	# when function is in the list, all functions created in the global space are getting returned, which is not needed
-		objclasslist = c("NaiveBayes","randomForest","lm", "glm", "rpart", "multinom", "nnet", "polr","ksvm","blasso","knn3","real_adaboost","adaboost", "lmerModLmerTest","xgb.Booster","C5.0","BinaryTree","lognet","glmnet","earth","mlp","rsnns","RandomForest","rlm","rq","ranger","gbm","train","nn","coxph")
+		#objclasslist = c("NaiveBayes","randomForest","lm", "glm", "rpart", "multinom", "nnet", "polr","ksvm","blasso","knn3","real_adaboost","adaboost", "lmerModLmerTest","xgb.Booster","C5.0","BinaryTree","lognet","glmnet","earth","mlp","rsnns","RandomForest","rlm","rq","ranger","gbm","train","nn","coxph")
+		objclasslist = c("NaiveBayes", "drc", "nls", "randomForest", "lm",
+"glm", "rpart", "multinom", "nnet", "polr", "ksvm",
+"blasso", "knn3", "real_adaboost", "adaboost", "lmerModLmerTest",
+"xgb.Booster", "C5.0", "BinaryTree", "lognet", "glmnet",
+"earth", "mlp", "rsnns", "RandomForest", "rlm", "rq",
+"ranger", "gbm", "nn", "coxph")
+	}
+	if (suppress !="")
+	{
+	objclasslist <- objclasslist[objclasslist != suppress]
 	}
 	ClassFilterAdvanced <- function(x) 
 	{ 
@@ -46,15 +56,18 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
     trainObjects <- Filter( ClassFilterAdvanced, ls(envir=.GlobalEnv))
     validTrainObjects =NULL
     #All train models that have a final model of classes specified
-    for (trainobj in trainObjects)
-    {
-        finalModelClass = eval(parse(text=paste('class('  ,trainobj, '$finalModel',  ')', collapse='', sep='')))
-        if (finalModelClass %in% originalObjClassList && !trainobj %in% Objs  )
-        {
-            Objs = c( trainobj, Objs)
+     for (trainobj in trainObjects) {
+            finalModelClass = eval(parse(text = paste("class(",
+                trainobj, "$finalModel", ")", collapse = "",
+                sep = "")))		
+			for (eachFinalModelClass in finalModelClass)
+			{
+				if (eachFinalModelClass %in% originalObjClassList) {
+                #Objs = c(trainobj, Objs)
+				Objs = unique(c(Objs, trainobj))
+				}
+			}
         }
-    }
-    }
 	#print(Objs)
 	return(Objs)
 }
@@ -80,7 +93,7 @@ BSkyGetAvailableModelsCP <- function (objclasslist = c("lm", "glm", "randomFores
             "blasso", "knn3", "real_adaboost", "adaboost", "lmerModLmerTest",
             "xgb.Booster", "C5.0", "BinaryTree", "lognet", "glmnet",
             "earth", "mlp", "rsnns", "RandomForest", "rlm", "rq",
-            "ranger", "gbm", "train", "nn", "coxph")
+            "ranger", "gbm", "nn", "coxph")
     }
 	if (suppress !="")
 	{
@@ -99,10 +112,14 @@ BSkyGetAvailableModelsCP <- function (objclasslist = c("lm", "glm", "randomFores
         for (trainobj in trainObjects) {
             finalModelClass = eval(parse(text = paste("class(",
                 trainobj, "$finalModel", ")", collapse = "",
-                sep = "")))
-            if (finalModelClass %in% originalObjClassList) {
-                Objs = c(trainobj, Objs)
-            }
+                sep = "")))		
+			for (eachFinalModelClass in finalModelClass)
+			{
+				if (eachFinalModelClass %in% originalObjClassList) {
+                #Objs = c(trainobj, Objs)
+				Objs = unique(c(Objs, trainobj))
+				}
+			}
         }
     }
     if (identical(Objs, character(0))) {
