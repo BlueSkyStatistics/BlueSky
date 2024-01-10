@@ -71,6 +71,7 @@ BSkyGetAvailableModels <- function(objclasslist=c("lm", "glm", "randomForest"), 
 	#print(Objs)
 	return(Objs)
 }
+}
 
 
 ### title should fit on one line, be written in sentence case, but not end in a full stop
