@@ -2174,7 +2174,7 @@ else if (modclass == "coxph" && (dependentclass == "numeric"|| dependentclass ==
 		# We are NOT saving predictions
 		#aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_", BSkyTime[i], "<<-predictions", sep = "")
 		#eval(parse(text = aa))
-		aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_Prob_", BSkyTime[i], "<<-predictionProbs[[", i, "]]", sep = "")
+		aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_Surv_", BSkyTime[i], "<<-predictionProbs[[", i, "]]", sep = "")
 		eval(parse(text = aa))
 	}
     predictions = base::ifelse(predictionProbs[[1]] >= 0.5, 1, 0)
