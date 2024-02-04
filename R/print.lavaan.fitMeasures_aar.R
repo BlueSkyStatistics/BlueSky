@@ -169,7 +169,7 @@ print.lavaan.fitMeasures_aar <- function (x, ..., nd = 3L, add.h0 = TRUE)
         colnames(M) <- rep("", ncol(M))
         rownames(M) <- rep(" ", nrow(M))
        #write.table(M, row.names = TRUE, col.names = FALSE, quote = FALSE)
-	   BSkyFormat(M, singleTableOutputHeader= "User Model versus Baseline Model")
+	   BSkyFormat(M, singleTableOutputHeader= "Fit Indices")
 		
     }
     if ("logl" %in% names.x) {

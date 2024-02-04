@@ -249,7 +249,7 @@ print.lavaan.summary_bsky <- function (x, ..., nd = 3L)
             class(tmp) <- c("lavaan.data.frame", "data.frame")
             #print(tmp, row.names = rep(" ", nrow(tmp)), nd = nd)
 			#BSkyFormat(tmp, singleTableOutputHeader= "Print 1")
-			BSkyFormat(tmp, singleTableOutputHeader= "Summary Information Structural part")
+			BSkyFormat(tmp, singleTableOutputHeader= "Summary Information Structural Part")
         }
     }
     if (!is.null(y$test)) {
@@ -408,7 +408,7 @@ print.lavaan.summary_bsky <- function (x, ..., nd = 3L)
         MI <- y$mi
         rownames(MI) <- NULL
         print(MI, nd = nd)
-		BSkyFormat(MI, singleTableOutputHeader= "Modification indices")
+		BSkyFormat(MI, singleTableOutputHeader= "Modification Indices")
 		
     }
     invisible(y)

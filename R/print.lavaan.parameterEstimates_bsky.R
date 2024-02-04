@@ -87,7 +87,7 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
 			
             #write.table(M, row.names = TRUE, col.names = FALSE,
              #   quote = FALSE)
-			 BSkyFormat(M, singleTableOutputHeader= "Parameter estimates")
+			 BSkyFormat(M, singleTableOutputHeader= "Parameter Estimates")
         }
     }
     if (is.null(x$group)) {
@@ -102,7 +102,7 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
         x$level <- rep(1L, length(x$lhs))
     }
     else {
-        nlevels <- lav_partable_nlevels(x)
+        nlevels <- lavaan:::lav_partable_nlevels(x)
     }
     if (is.null(x$block)) {
         x$block <- rep(1L, length(x$lhs))
@@ -414,7 +414,7 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
 				   if (ngroups > 1L) {
 				  s = paste (s, "-", "Group with label: " ,group.label[g])
 				  }
-				  BSkyFormat(M, singleTableOutputHeader= s)
+				  BSkyFormat(M, singleTableOutputHeader= paste ("Model Parameter Estimates:",s))
                 }
                 else if (s == "R-Square") {
                   M <- m[row.idx, 1:2, drop = FALSE]
@@ -436,7 +436,7 @@ print.lavaan.parameterEstimates_bsky <- function (x, ..., nd = 3L)
 				  if (ngroups > 1L) {
 				  s = paste (s, "-", "Group with label: " ,group.label[g])
 				  }
-				  BSkyFormat(M, singleTableOutputHeader= s)
+				  BSkyFormat(M, singleTableOutputHeader= paste ("Model Parameter Estimates:",s))
                 }
             }
         }

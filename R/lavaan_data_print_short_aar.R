@@ -143,7 +143,7 @@ lav_data_print_short_aar <- function (object, nd = 3L)
     }
     colnames(M) <- rep("", ncol(M))
     rownames(M) <- rep(" ", nrow(M))
-	 BSkyFormat(M, singleTableOutputHeader= "Dataset summary")
+	 BSkyFormat(M, singleTableOutputHeader= "Dataset Summary")
     #write.table(M, row.names = TRUE, col.names = FALSE, quote = FALSE)
     invisible(M)
 }
