@@ -203,8 +203,8 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path, exp
 		}
 	}
 	
-	#Anil old_dataset_name = order(unique(old_dataset_name))
-	old_dataset_name = unique(old_dataset_name)
+	old_dataset_name = sort(unique(old_dataset_name))
+	
 	#cat("\n", old_dataset_name, "\n")
 	return(invisible(old_dataset_name))
 }
@@ -276,8 +276,10 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 		#code_chunks_comments <- grep("^#", rmd_content, value = TRUE)
 
 		# Define the regular expression pattern to match everything after "output_title:"
-		pattern <- '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
 		#pattern <- '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
+		
+		#pattern <- '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
+		pattern <- '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
 		
 		# Extract the desired string using regmatches and regexpr
 		code_chunks_comments <- regmatches(rmd_text, gregexpr(pattern, rmd_text))[[1]]
@@ -285,7 +287,7 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 		# Remove the "output_title: " prefix and extra enclosure " around 
 		#code_chunks_comments <- gsub('output_title: ', '', code_chunks_comments) 
 		#code_chunks_comments <- gsub('"', '', code_chunks_comments)
-		code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )', '', code_chunks_comments)
+		code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )|(\\{console\\})', '', code_chunks_comments)
 	}
 	else
 	{
@@ -314,7 +316,7 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 	
 	if(debug)
 	{
-		cat("\nFinal lis of old dataset names extracted from the script code\n")
+		cat("\nFinal list of old dataset names extracted from the script code\n")
 		print(old_dataset_name)
 		cat("\n")
 	}
@@ -424,6 +426,7 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 						}
 						else
 						{
+							#cat("\nOld dataset name:", old_dataset_name)
 							cat("\nThe script will be run after replacing the Dataset:", old_dataset_name, "with the Dataset:",currentDatasetName,"\n")
 						}
 					}
