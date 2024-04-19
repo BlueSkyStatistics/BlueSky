@@ -235,13 +235,22 @@ BSkyInAppScriptExtractDialogDataset <- function(rmd_text)
 	# Create a data frame from the extracted values
 	df <- data.frame(t(result))
 	
+	#BSkyFormat(df)
+	
 	dataset_name_to_discard = c("reRunOutput", "loadDatasetFromPackage", "saveAModel", "loadAModel")
 	
-	dataset_name_to_discard_df <- df[(df$id %in% dataset_name_to_discard), ]
-	row.names(dataset_name_to_discard_df) = c()
-	dataset_name_to_discard_df_freq = data.frame(table(dataset_name_to_discard_df$dataset))
-	
-	#BSkyFormat(dataset_name_to_discard_df_freq)
+	if(any(df$id %in% dataset_name_to_discard))
+	{
+		dataset_name_to_discard_df <- df[(df$id %in% dataset_name_to_discard), ]
+		row.names(dataset_name_to_discard_df) = c()
+		
+		dataset_name_to_discard_df_freq = data.frame(table(dataset_name_to_discard_df$dataset))
+		#BSkyFormat(dataset_name_to_discard_df_freq)
+	}
+	else
+	{
+		dataset_name_to_discard_df_freq = NULL
+	}
 	
 	return(invisible(dataset_name_to_discard_df_freq))
 }
@@ -310,18 +319,21 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 		
 		discard_df_freq = BSkyInAppScriptExtractDialogDataset(rmd_text)
 		
-		for(i in 1:dim(discard_df_freq)[1])
+		if(!is.null(discard_df_freq))
 		{
-			# Find the indices of the occurrences of the string to remove
-			indices_to_remove = which(dataset_names == discard_df_freq[i,1])
+			for(i in 1:dim(discard_df_freq)[1])
+			{
+				# Find the indices of the occurrences of the string to remove
+				indices_to_remove = which(dataset_names == discard_df_freq[i,1])
 
-			# Check if the number of occurrences to remove is less than or equal to the actual occurrences
-			if (discard_df_freq[i,2] <= length(indices_to_remove)) {
-				# Remove the specified number of occurrences
-				dataset_names = dataset_names[-indices_to_remove[1:discard_df_freq[i,2]]]
-			} else {
-				# If the number of occurrences to remove is greater than the actual occurrences, print a warning
-				print("Number of occurrences of dataset names to remove exceeds the actual occurrences.")
+				# Check if the number of occurrences to remove is less than or equal to the actual occurrences
+				if (discard_df_freq[i,2] <= length(indices_to_remove)) {
+					# Remove the specified number of occurrences
+					dataset_names = dataset_names[-indices_to_remove[1:discard_df_freq[i,2]]]
+				} else {
+					# If the number of occurrences to remove is greater than the actual occurrences, print a warning
+					print("Number of occurrences of dataset names to remove exceeds the actual occurrences.")
+				}
 			}
 		}
 		
