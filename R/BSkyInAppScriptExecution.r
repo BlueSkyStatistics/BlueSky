@@ -1,6 +1,6 @@
 
- BSkyInAppScriptExtractDatasetNames <- function(code_chunk, debug = FALSE) 
- {
+BSkyInAppScriptExtractDatasetNames.OLD <- function(code_chunk, debug = FALSE) 
+{
 		# df1$col1
 		# df2[, 'y']
 		# df3[1,]
@@ -60,7 +60,6 @@
 		
 	return(invisible(dataset_names))
 }
-
 
 BSkyInAppScriptExtractOldDatasetList.OLD <- function(bsky_script_full_file_path, expand_extraction = TRUE, debug = FALSE)
 {
@@ -212,13 +211,13 @@ BSkyInAppScriptExtractOldDatasetList.OLD <- function(bsky_script_full_file_path,
 BSkyInAppScriptExtractDialogDataset <- function(rmd_text)
 {
 	# Define a function to extract "id" and "dataset" values from a string
-	extract_values <- function(str) {
-	  id_match <- regmatches(str, regexpr('id: "\\w+"', str))  # Extract "id" match
-	  dataset_match <- regmatches(str, regexpr('dataset: "\\w+"', str))  # Extract "dataset" match
+	extract_values_fn <- function(str) {
+	  id_match = regmatches(str, regexpr('id: "\\w+"', str))  # Extract "id" match
+	  dataset_match = regmatches(str, regexpr('dataset: "\\w+"', str))  # Extract "dataset" match
 	  
 	  if (length(id_match) > 0 && length(dataset_match) > 0) {
-		id <- gsub('id: "|"', '', id_match)  # Extract "id" value
-		dataset <- gsub('dataset: "|"', '', dataset_match)  # Extract "dataset" value
+		id = gsub('id: "|"', '', id_match)  # Extract "id" value
+		dataset = gsub('dataset: "|"', '', dataset_match)  # Extract "dataset" value
 		return(c(id = id, dataset = dataset))
 	  } else {
 		return(c(id = NA, dataset = NA))
@@ -226,30 +225,28 @@ BSkyInAppScriptExtractDialogDataset <- function(rmd_text)
 	}
 	
 	dialog_pattern = 'dialog:.*\\n.*\\n\\s*dataset:\\s*"([^"]+)"'
-	dialog_db <- regmatches(rmd_text, gregexpr(dialog_pattern, rmd_text,perl = TRUE))[[1]]
+	dialog_db = regmatches(rmd_text, gregexpr(dialog_pattern, rmd_text,perl = TRUE))[[1]]
 	#print(dialog_db)
 
-	# Apply the extract_values function to each element of the string array
-	result <- sapply(dialog_db, extract_values)
+	# Apply the extract_values_fn function to each element of the string array
+	result = sapply(dialog_db, extract_values_fn)
 
 	# Create a data frame from the extracted values
-	df <- data.frame(t(result))
+	df = data.frame(t(result))
 	
 	#BSkyFormat(df)
+	
+	dataset_name_to_discard_df_freq = NULL
 	
 	dataset_name_to_discard = c("reRunOutput", "loadDatasetFromPackage", "saveAModel", "loadAModel")
 	
 	if(any(df$id %in% dataset_name_to_discard))
 	{
-		dataset_name_to_discard_df <- df[(df$id %in% dataset_name_to_discard), ]
+		dataset_name_to_discard_df = df[(df$id %in% dataset_name_to_discard), ]
 		row.names(dataset_name_to_discard_df) = c()
 		
 		dataset_name_to_discard_df_freq = data.frame(table(dataset_name_to_discard_df$dataset))
 		#BSkyFormat(dataset_name_to_discard_df_freq)
-	}
-	else
-	{
-		dataset_name_to_discard_df_freq = NULL
 	}
 	
 	return(invisible(dataset_name_to_discard_df_freq))
@@ -266,7 +263,7 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 		}
 		
 		# Get the extension string
-		file_type <- toupper(tools::file_ext(bsky_script_full_file_path))
+		file_type = toupper(tools::file_ext(bsky_script_full_file_path))
 		
 		if(file_type != "BMD" && file_type != "RMD") 
 		{ 
@@ -280,14 +277,14 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 			suppressMessages(require(readr))
 			
 			# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
-			zip_file_path <- bsky_script_full_file_path
-			script_file_name_without_ext <- tools::file_path_sans_ext(basename(bsky_script_full_file_path))
+			zip_file_path = bsky_script_full_file_path
+			script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
 			
 			# Open a connection to the zip file
-			zip_connection <- unz(zip_file_path, script_file_name_without_ext)
+			zip_connection = unz(zip_file_path, script_file_name_without_ext)
 			
 			# Read the lines from the text file inside the zip
-			rmd_content <- read_lines(zip_connection)
+			rmd_content = read_lines(zip_connection)
 			
 			# Close the zip connection
 			#close(zip_connection)
@@ -298,24 +295,41 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 		}
 
 		# Combine lines into a single string
-		rmd_text <- paste(rmd_content, collapse = "\n")
+		rmd_text = paste(rmd_content, collapse = "\n")
+		
+		######################
+		# SK for testing only 
+		######################
+		
+		#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+		#desired_blocks <- regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+		desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
+		#print(desired_blocks)
+		
+		# Combine lines into a single string
+		desired_blocks = paste(desired_blocks, collapse = "\n")
+		
+		rmd_text = desired_blocks
+		##########################
+		##########################
 	}
 
 	if(file_type == "BMD")
 	{
+		#cat(rmd_text)
+		
 		#dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
 		#dataset_names_pattern = '(\\bdataset:\\s*"([^"]+)")|(\\bdataset:[^)]+)'
 		#dataset_names_pattern = 'dataset:\\s*"([^"]+)"|\\bdataset:[^)]+'
 		 #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
 		#dataset_names_pattern =  '\\(dataset:([^)"\\n]+)\\)'
+		
 		dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
-
-		#cat(rmd_text)
 		dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
 		dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
 		
-		# cat("\nBefore removing unwanted dataset names\n")
-		# print(dataset_names)
+		#cat("\nBefore removing unwanted dataset names\n")
+		#print(dataset_names)
 		
 		discard_df_freq = BSkyInAppScriptExtractDialogDataset(rmd_text)
 		
@@ -332,13 +346,13 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 					dataset_names = dataset_names[-indices_to_remove[1:discard_df_freq[i,2]]]
 				} else {
 					# If the number of occurrences to remove is greater than the actual occurrences, print a warning
-					print("Number of occurrences of dataset names to remove exceeds the actual occurrences.")
+					print("Number of occurrences of dataset names to remove exceeds the actual occurrences")
 				}
 			}
 		}
 		
-		# cat("\nAfter removing unwanted dataset names\n")
-		# print(dataset_names)
+		#cat("\nAfter removing unwanted dataset names\n")
+		#print(dataset_names)
 		
 		dataset_names = sort(unique(dataset_names))
 	}
@@ -351,11 +365,6 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 	{
 		# Suppress warnings and info messages for require()
 		suppressMessages(require(jsonlite))
-		#suppressWarnings(require(jsonlite))
-		
-		#for(i in 1:length(code_chunk_list)){
-		# dump the values into json file 
-		#}
 		
 		if (!file.exists(json_output_file_path)) 
 		{
@@ -383,7 +392,6 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 }
 
 
-
 BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_output_file_path =c(), currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), expand_extraction = TRUE, debug = FALSE)
 { 
 	if (!file.exists(bsky_script_full_file_path)) 
@@ -393,7 +401,7 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 	}
 	
 	# Get the extension string
-	file_type <- toupper(tools::file_ext(bsky_script_full_file_path))
+	file_type = toupper(tools::file_ext(bsky_script_full_file_path))
 	
 	if(file_type != "BMD" && file_type != "RMD") 
 	{ 
@@ -407,14 +415,14 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 		suppressMessages(require(readr))
 
 		# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
-		zip_file_path <- bsky_script_full_file_path
-		script_file_name_without_ext <- tools::file_path_sans_ext(basename(bsky_script_full_file_path))
+		zip_file_path = bsky_script_full_file_path
+		script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
 
 		# Open a connection to the zip file
-		zip_connection <- unz(zip_file_path, script_file_name_without_ext)
+		zip_connection = unz(zip_file_path, script_file_name_without_ext)
 
 		# Read the lines from the text file inside the zip
-		rmd_content <- read_lines(zip_connection)
+		rmd_content = read_lines(zip_connection)
 
 		# Close the zip connection
 		#close(zip_connection)
@@ -425,40 +433,53 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 	}
 
 	# Combine lines into a single string
-	rmd_text <- paste(rmd_content, collapse = "\n")
+	rmd_text = paste(rmd_content, collapse = "\n")
+	
+	######################
+	# SK for testing only 
+	######################
+	
+	#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+	#desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+	desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
+	#print(desired_blocks)
+	
+	# Combine lines into a single string
+	desired_blocks <- paste(desired_blocks, collapse = "\n")
+	
+	rmd_text = desired_blocks
+
+	##########################
+	##########################
 
 	# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
-	code_chunks <- regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
+	code_chunks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
 
 	# Remove the enclosures from each code chunk
-	code_chunks <- gsub("```\\{r\\}|```", "", code_chunks)
+	code_chunks = gsub("```\\{r\\}|```", "", code_chunks)
 	
 	if(file_type == "BMD")
 	{
-		# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
-		#blocks <- regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
-		#print(blocks)
-	
 		# Extract lines that start with '#'
-		#code_chunks_comments <- grep("^#", rmd_content, value = TRUE)
+		#code_chunks_comments = grep("^#", rmd_content, value = TRUE)
 
-		# Define the regular expression pattern to match everything after "output_title:"
-		#pattern <- '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
+		# Define the regular expression pattern to match everything after "output_title: and within ```console block"
+		#title_pattern = '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
 		
-		#pattern <- '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
-		pattern <- '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
+		#title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
+		title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
 		
 		# Extract the desired string using regmatches and regexpr
-		code_chunks_comments <- regmatches(rmd_text, gregexpr(pattern, rmd_text))[[1]]
+		code_chunks_comments = regmatches(rmd_text, gregexpr(title_pattern, rmd_text))[[1]]
 		
 		# Remove the "output_title: " prefix and extra enclosure " around 
-		#code_chunks_comments <- gsub('output_title: ', '', code_chunks_comments) 
-		#code_chunks_comments <- gsub('"', '', code_chunks_comments)
+		#code_chunks_comments = gsub('output_title: ', '', code_chunks_comments) 
+		#code_chunks_comments = gsub('"', '', code_chunks_comments)
 		code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )|(\\{console\\})', '', code_chunks_comments)
 		
 		# Define the regular expression pattern with exact case matching for "dataset"
 		#dataset_name_and_console_comment_pattern <- '(dataset:\\s*"([^"]+)")|(```\\{console\\}(.*?)```)'
-		dataset_name_and_console_comment_pattern <- 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))|(```\\{console\\}(.*?)```)'
+		dataset_name_and_console_comment_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))|(```\\{console\\}(.*?)```)'
 		datasets_names_and_console_comments = regmatches(rmd_text, gregexpr(dataset_name_and_console_comment_pattern, rmd_text))[[1]]
 		
 		# #dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
@@ -468,6 +489,68 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 		# dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
 		
 		dataset_names = BSkyInAppScriptExtractOldDatasetList(rmd_text = rmd_text, file_type = file_type)
+		
+		if(length(code_chunks) > length(code_chunks_comments))
+		{
+			#Extract "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+			dialog_console_r_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+			
+			if(debug)
+			{
+				cat("\nnumber of ```r code blocks\n")
+				print(length(code_chunks))
+				cat("\nnumber of code titles\n")
+				print(length(code_chunks_comments))
+				cat("\nnumber of blocks - dialog,r,console blocks\n")
+				print(length(dialog_console_r_blocks))
+			
+				BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+				BSkyFormat(dialog_console_r_blocks)
+			}
+			
+			code_chunks_comments_modified = c()
+			datasets_names_and_console_comments_modified = c()
+			
+			multiple_r_blocks_found = FALSE
+			k = 1
+			
+			for(j in 1:length(dialog_console_r_blocks))
+			{	
+				if(trimws(dialog_console_r_blocks[j]) == "```{r}")
+				{
+					if(multiple_r_blocks_found == TRUE)
+					{
+						#Seccond or more continuous occurance of a ```r block for a given dialog block
+						code_chunks_comments_modified = c(code_chunks_comments_modified, "BSky_NO_TITLE")
+						datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "BSky_NO_TITLE")	
+					}
+					else
+					{
+						#First occurance of a ```r block - do nothing 
+						multiple_r_blocks_found = TRUE
+					}
+				}
+				else if(trimws(dialog_console_r_blocks[j]) == "```{dialog}" || trimws(dialog_console_r_blocks[j]) == "```{console}")
+				{
+					code_chunks_comments_modified = c(code_chunks_comments_modified, code_chunks_comments[k])
+					datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, datasets_names_and_console_comments[k])
+					
+					k = k+1
+					multiple_r_blocks_found = FALSE
+				}
+				else
+				{
+					cat("\n","UNNOWN BLOCK==",trimws(dialog_console_r_blocks[j]),"==","\n")
+				}
+			}
+			
+			if(debug)
+			{
+				BSkyFormat(cbind(code_chunks_comments_modified,datasets_names_and_console_comments_modified))
+			}
+			code_chunks_comments = code_chunks_comments_modified
+			datasets_names_and_console_comments = datasets_names_and_console_comments_modified
+		}	
 	}
 	else
 	{
@@ -488,13 +571,16 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 	# print(code_chunks_comments)
 	# cat("\ndatasets_names_and_console_comments\n")
 	# print(datasets_names_and_console_comments)
-	# cat("\nDATASET NAMES\n")
-	# print(dataset_names)
-	#return()
+	if(debug)
+	{
+		BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+		cat("\nDATASET NAMES\n")
+		print(dataset_names)
+		#return()
+	}
 	
 	if(is.null(replaceOldDatasetName) || length(replaceOldDatasetName) == 0 || (length(replaceOldDatasetName) == 1 && trimws(replaceOldDatasetName) == ""))
 	{
-		#old_dataset_name = BSkyInAppScriptExtractOldDatasetList(bsky_script_full_file_path, expand_extraction, debug)
 		old_dataset_name = dataset_names
 	}
 	else
@@ -523,13 +609,9 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 		print(final_dataset_names)
 		cat("\n")
 	}
-	
-	#code_chunk_list = c(code_chunk_list, dataset_names = list(final_dataset_names))
-				
+					
 	codeChunkNum = 0
 	codeChunkCommentNum = 0
-						
-	# Print the extracted R code chunks
 	
 	for (chunk in code_chunks) 
 	{	
@@ -617,27 +699,30 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 				}
 			}
 			
-			#cat("\nBefore: ",code_chunks_comments[codeChunkCommentNum],"\n")
-			
-			if((length(grep("dataset:", code_chunks_comments[codeChunkCommentNum])) == 0) && length(grep("dataset:", datasets_names_and_console_comments[codeChunkCommentNum])) > 0)
+			if(debug)
 			{
-				datasets_names_and_console_comments[codeChunkCommentNum] = gsub('"', '', datasets_names_and_console_comments[codeChunkCommentNum])	
-				code_chunks_comments[codeChunkCommentNum] = paste0(code_chunks_comments[codeChunkCommentNum], " (", datasets_names_and_console_comments[codeChunkCommentNum], ")")
+				cat("\nBefore: ",code_chunks_comments[codeChunkCommentNum],"\n")
+			}
+			
+			if(!(code_chunks_comments[codeChunkCommentNum] %in% c("Save Models to a file", "Load Models from a file")))
+			{
+				if((length(grep("dataset:", code_chunks_comments[codeChunkCommentNum])) == 0) && length(grep("dataset:", datasets_names_and_console_comments[codeChunkCommentNum])) > 0)
+				{
+					datasets_names_and_console_comments[codeChunkCommentNum] = gsub('"', '', datasets_names_and_console_comments[codeChunkCommentNum])	
+					code_chunks_comments[codeChunkCommentNum] = paste0(code_chunks_comments[codeChunkCommentNum], " (", datasets_names_and_console_comments[codeChunkCommentNum], ")")
+				}
 			}
 			
 			code_chunks_comment = paste0("Title:",code_chunks_comments[codeChunkCommentNum]) #Anil 10Apr24. used this instead of line abv for title
-			#cat("\nAfter: ",code_chunks_comment,"\n")
+			
+			if(debug)
+			{
+				cat("\nAfter: ",code_chunks_comment,"\n")
+			}
 			
 			code_chunk_list = c(code_chunk_list, chunk_header = list(code_chunks_comment))
 			#code_chunk_list = c(code_chunk_list, chunk_new_line = list("BSkyFormat('\n')")) #Anil 10Apr24. Now we have title, this is not needed
 			code_chunk_list = c(code_chunk_list, chunk_code = list(chunk_modified))
-			
-			###################################################################################################
-			# Execute the script copied from BlueSky Statistics App as is without any dataset name substitution
-			###################################################################################################
-			#cmd_execution_status = BSkyEvalRcommand(RcommandString = chunk)
-			
-			#cat("\nCommand Execution Status : ", cmd_execution_status$executionStatus, "\n") if -1 that indicates failed execution 
 		}
 	}
 	
@@ -649,7 +734,6 @@ BSkyInAppScriptExecutionEngine <- function(bsky_script_full_file_path, json_outp
 	{
 		# Suppress warnings and info messages for require()
 		suppressMessages(require(jsonlite))
-		#suppressWarnings(require(jsonlite))
 		
 		#for(i in 1:length(code_chunk_list)){
 		# dump the values into json file 
