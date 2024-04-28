@@ -256,4 +256,5 @@ export(print.lavaan.summary_bsky, print.lavaan.parameterEstimates_bsky,lav_print
 
 export(BSkySaveProjectSpace,BSkyLoadProjectSpace)
 export(BSkyScriptAutomationEngine, BSkyInAppScriptExecutionEngine, BSkyInAppScriptExtractOldDatasetList)
+export(BSkyMultipleEditDataGrid)
 
