@@ -312,7 +312,6 @@ every_column <- data[seq(i, length(data), by = noOfCols)]
     #Lets get the corresponding class of the column that needs to be replaced
     classOfVariable  <- eval(parse(text = paste("class(",
                   dataSetNameOrIndex, "[,",startCol,"])")))
-    print(classOfVariable)  
     if ("numeric" %in% classOfVariable ||"integer" %in% classOfVariable )
     {
      #tryCatch( expr = { every_column = as.numeric(every_column)}, error = function (e) 
@@ -322,7 +321,6 @@ every_column <- data[seq(i, length(data), by = noOfCols)]
           # You can also choose to return a default value or take other actions
        #   return(NULL)
      #})
-      print(every_column)
       every_column_temp <-every_column
       empty_string_count <- sum(nchar(every_column) == 0)
       every_column = suppressWarnings(as.numeric(every_column))
@@ -354,7 +352,7 @@ every_column <- data[seq(i, length(data), by = noOfCols)]
                   dataSetNameOrIndex, "[,", startCol, "])", sep='')))
       #cat("\nlevelsInDestinationColumn:",levelsInDestinationColumn)
      for( element in levelsInPastedData) {
-        print(element)
+       # print(element)
   if (!(element %in% levelsInDestinationColumn)){
        # cat("\nValue of element:", element )
        # cat("\nValue of levelsInDestinationColumn", levelsInDestinationColumn)
