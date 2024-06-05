@@ -6258,6 +6258,8 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 	
 	parsed_Rcommands = c()
 	parsed_orig_Rcommands = c()
+	parsed_Rcommands_by_R_parse_srcref = c()
+	parsed_orig_Rcommands_by_R_parse_srcref = c()
 	
 	if(is.null(origRcommands) || trimws(origRcommands) == "")
 	{
@@ -6287,53 +6289,81 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		echoInline = echoInline$echoInline
 	}
 	
-
+	# No try catch exception block around the parse(), because all the parsing errors should have been caught in the parent function 
 	parsed_Rcommands_by_R_parse = parse(text={RcommandString}, keep.source = TRUE)
+	
+	#Extract each R expression from the parsed expression and create an array of R command strings 
+	for (expr_index in 1: length(parsed_Rcommands_by_R_parse)) {
+		parsed_Rcommands = c(parsed_Rcommands, (paste(deparse(parsed_Rcommands_by_R_parse[[expr_index]]),collapse="\n")))
+	}
+	
+	parsed_Rcommands_by_R_parse_srcref = parsed_Rcommands
+	
+	# cat("\n<SK> ===========print each R expression from Parsing by R eval() ================\n")
+	# print(parsed_Rcommands)
 	
 	if(bskyEvalDebug == TRUE)
 	{
 		print("printing parsed_Rcommands from parse()")
 		print(parsed_Rcommands_by_R_parse)
 	}
+
+	# eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
 	
-	eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
-	
-	tryCatch({
-			withCallingHandlers({
-					parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
-			}, warning = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
-			}, error = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+	# tryCatch({
+			# withCallingHandlers({
+					# parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
+			# }, warning = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+			# }, error = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
 	
 	
-	if(bsky_rcommand_parsing_an_exception_occured == TRUE)
-	{		
-		if(bskyEvalDebug == TRUE)
-		{
-			cat("\nParsing Error in tidy_source\n")
-			cat(RcommandString)
-			cat("\n")
-		}
+	# if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+	# {		
+		# cat("\n<SK> ===========Parsing Error in tidy_source================\n")
 		
-		parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
-		parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
-	}
+		# if(bskyEvalDebug == TRUE)
+		# {
+			# cat("\nParsing Error in tidy_source\n")
+			# cat(RcommandString)
+			# cat("\n")
+		# }
+		
+		# parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
+		# parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
+	# }
 	
-	if(bskyEvalDebug == TRUE)
-	{
-		parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
-		parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
+	# cat("\n<SK> ===========Parsing by R eval() ================\n")
+	# print(parsed_Rcommands_by_R_parse)
+	# cat("\n<SK> ===========print each R expression from Parsing by R eval() ================\n")
+	# for (expr_index in 1: length(parsed_Rcommands_by_R_parse)) {
+		# #print(parsed_Rcommands_by_R_parse[expr_index])
+		# print(paste(deparse(parsed_Rcommands_by_R_parse[[expr_index]]),collapse="\n"))
+	# }
+	# cat("\n<SK> ===========Parsing tidy_source(() ================\n")
+	# print(parsed_Rcommands)
+	# if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+	# {	
+		# cat("\n<SK> =========== parsed_Rcommands_by_R_parse_srcref ================\n")
+		# print(parsed_Rcommands_by_R_parse_srcref)
+	# }
+	
+	
+	# if(bskyEvalDebug == TRUE)
+	# {
+		# parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
+		# parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
 		
-		cat("\n============== parsed_Rcommands in parse() and tidy_source() ============= \n")
-		print("printing parsed_Rcommands_by_R_parse_srcref from parse()")
-		print(parsed_Rcommands_by_R_parse_srcref)
+		# cat("\n============== parsed_Rcommands in parse() and tidy_source() ============= \n")
+		# print("printing parsed_Rcommands_by_R_parse_srcref from parse()")
+		# print(parsed_Rcommands_by_R_parse_srcref)
 		
-		cat("\n++++++++++++++++++++++++++++++++++ \n")
+		# cat("\n++++++++++++++++++++++++++++++++++ \n")
 		
-		print("printing parsed_Rcommands from tidy_source()")
-		print(parsed_Rcommands)
+		# print("printing parsed_Rcommands from tidy_source()")
+		# print(parsed_Rcommands)
 		
-		cat("\n=========================== \n")
-	}
+		# cat("\n=========================== \n")
+	# }
 	
 	
 	#Rcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)
@@ -6343,35 +6373,42 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 	{
 		parsed_orig_Rcommands_by_R_parse = parse(text={origRcommands}, keep.source = TRUE)
 		
-		if(bsky_rcommand_parsing_an_exception_occured == TRUE)
-		{
-			parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
-			parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
-		}
-		else
-		{
-			parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
+		#Extract each R expression from the parsed expression and create an array of R command strings 
+		for (expr_index in 1: length(parsed_orig_Rcommands_by_R_parse)) {
+			parsed_orig_Rcommands = c(parsed_orig_Rcommands, (paste(deparse(parsed_orig_Rcommands_by_R_parse[[expr_index]]),collapse="\n")))
 		}
 		
-		#origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
-		#parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
+		parsed_orig_Rcommands_by_R_parse_srcref = parsed_orig_Rcommands
 		
-		if(bskyEvalDebug == TRUE)
-		{
-			parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
-			parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
+		# if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+		# {
+			# parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
+			# parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
+		# }
+		# else
+		# {
+			# parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
+		# }
+		
+		# #origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
+		# #parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
+		
+		# if(bskyEvalDebug == TRUE)
+		# {
+			# parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
+			# parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
 			
-			cat("\n============== parsed_orig_Rcommands in parse() and tidy_source() ============= \n")
-			print("printing parsed_orig_Rcommands_by_R_parse_srcref from parse()")
-			print(parsed_orig_Rcommands_by_R_parse_srcref)
+			# cat("\n============== parsed_orig_Rcommands in parse() and tidy_source() ============= \n")
+			# print("printing parsed_orig_Rcommands_by_R_parse_srcref from parse()")
+			# print(parsed_orig_Rcommands_by_R_parse_srcref)
 			
-			cat("\n++++++++++++++++++++++++++++++++++ \n")
+			# cat("\n++++++++++++++++++++++++++++++++++ \n")
 			
-			print("printing parsed_orig_Rcommands from tidy_source()")
-			print(parsed_orig_Rcommands)
+			# print("printing parsed_orig_Rcommands from tidy_source()")
+			# print(parsed_orig_Rcommands)
 			
-			cat("\n=========================== \n")
-		}
+			# cat("\n=========================== \n")
+		# }
 	}
 	
 	
@@ -6980,6 +7017,7 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		return(invisible(RcommandString))
 	}
 }
+
 
 
 #22Sep2021
