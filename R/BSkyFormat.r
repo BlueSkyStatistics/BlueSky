@@ -6245,6 +6245,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 #23Dec2021
 #09Jan2022
 #07Jul2022
+#24May24 replaced the tidy_source with base R parsing.
 BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
 	if(bskyEvalDebug == TRUE)
@@ -7527,6 +7528,7 @@ BSkyGetSplitCountDisplaySetting <- function()
 	return(invisible(splitIterationCountDisplay))
 }
 
+#28Feb2024 # change the original order of gsub from str0,str1,str2 to str1,str2,str0
 #21Jun2021
 BSkyDatasetNameSubstitute <- function(datasetName, toDatasetName, replaceOldColumnNames = c(), currentColumnNames = c(), RcommandString, splitOn = FALSE, preSplitDatasetName = c())
 {
@@ -7539,18 +7541,35 @@ BSkyDatasetNameSubstitute <- function(datasetName, toDatasetName, replaceOldColu
 	grep_dataset_str1 = paste("((\\bdata=",datasetName,"\\b)|(\\bdata=\\s+",datasetName,"\\b)|(\\bdata\\s+=",datasetName,"\\b)|(\\bdata\\s+=\\s+",datasetName,"\\b))", sep="")
 	grep_dataset_str2 = paste("((",datasetName,"\\[))", sep = "")
 	
+	
+	# print(grep_dataset_str0)
+	# print(grep_dataset_str1)
+	# print(grep_dataset_str2)
+	
 	for(n in 1:length(RcommandString))
 	{
 		#replace the datasetName with toDatasetName
-		RcommandString[n] = gsub(grep_dataset_str0, toDatasetName , RcommandString[n])
+		#RcommandString[n] = gsub(grep_dataset_str0, toDatasetName , RcommandString[n])
+		
+		#replace the data=datasetName with data=toDatasetName
+		#sub_str1 = paste("data=", toDatasetName) 
+		#RcommandString[n] = gsub(grep_dataset_str1, sub_str1, RcommandString[n])
+	
+		#substitute datasetName such as datasetName[index] that uses the convention to refer to its columns with toDatasetName[index]
+		#sub_str2 = paste(toDatasetName,"[",sep="")
+		#RcommandString[n] = gsub(grep_dataset_str2, sub_str2, RcommandString[n])
 		
 		#replace the data=datasetName with data=toDatasetName
 		sub_str1 = paste("data=", toDatasetName) 
 		RcommandString[n] = gsub(grep_dataset_str1, sub_str1, RcommandString[n])
-	
+		
 		#substitute datasetName such as datasetName[index] that uses the convention to refer to its columns with toDatasetName[index]
 		sub_str2 = paste(toDatasetName,"[",sep="")
 		RcommandString[n] = gsub(grep_dataset_str2, sub_str2, RcommandString[n])
+		
+		#replace the datasetName with toDatasetName
+		RcommandString[n] = gsub(grep_dataset_str0, toDatasetName , RcommandString[n])
+		
 		
 		#substitute the column names 
 		if(length(replaceOldColumnNames) > 0 && length(currentColumnNames) > 0)
@@ -7608,6 +7627,7 @@ BSkyDatasetNameSubstitute <- function(datasetName, toDatasetName, replaceOldColu
 	
 	return(invisible(RcommandString))
 }
+
 
 
 
