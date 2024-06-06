@@ -2411,7 +2411,7 @@ BSkyScriptSystemSinkFileMgmt <- function(bsky_script_system_dir, cur_timestamp, 
 	}
 }
 
-# Needed t create copy from the original BSkyEvalRcommand() to avoid the recurssion error to execute R code block from app in BMD script
+# Needed to create copy from the original BSkyEvalRcommand() to avoid the recurssion error to execute R code block from app in BMD script
 BSkyEvalRcommandForAppScript <- function (RcommandString, numExprParse = -1, selectionStartpos = 0,
     selectionEndpos = 0, executeSelectOnly = FALSE, currentDatasetName = BSkyGetCurrentDatabaseName(),
     replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(),
@@ -2834,8 +2834,9 @@ BSkyEvalRcommandForAppScript <- function (RcommandString, numExprParse = -1, sel
         parsedCommandList = Rcommands_initial_parse$parsedCommandList)))
 }
 
-# Needed t create copy from the original BSkyEvalBasicRcommand() to avoid the recurssion error to execute R code block from app in BMD script
-BSkyEvalRcommandBasicForAppScript <- function (RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(),
+#commented out on 060624
+# Needed to create copy from the original BSkyEvalBasicRcommand() to avoid the recurssion error to execute R code block from app in BMD script
+BSkyEvalRcommandBasicForAppScript.withTidy.retired <- function (RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(),
     echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE,
     graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
 {
@@ -3373,6 +3374,784 @@ BSkyEvalRcommandBasicForAppScript <- function (RcommandString, origRcommands = c
         return(invisible(RcommandString))
     }
 }
+
+
+#060624 - BSkyEvalRcommandBasic() copied from BSkyFormat.r and renamed below
+# Needed to create copy from the original BSkyEvalBasicRcommand() to avoid the recurssion error to execute R code block from app in BMD script
+# All tidy_source() parsing is removed same copy as original BSkyEvalRcommandBasic() to avoid sporadic syntax error for dialog with a lot of code 
+BSkyEvalRcommandBasicForAppScript <- function(RcommandString, origRcommands = c(), echo = BSkyGetRCommandDisplaySetting(), echoInline = BSkyGetRCommandDisplaySetting(), splitOn = FALSE, graphicsDir = BSkyGetGraphicsDirPath(), bskyEvalDebug = FALSE)
+{
+	if(bskyEvalDebug == TRUE)
+	{
+		print("printing in BSkyEvalRcommandBasicForAppScript")
+		print(RcommandString)
+		cat("\n==============origRcommands============= \n")
+		print(origRcommands)
+		cat("\n=========================== \n")
+	}
+	
+	parsed_Rcommands = c()
+	parsed_orig_Rcommands = c()
+	parsed_Rcommands_by_R_parse_srcref = c()
+	parsed_orig_Rcommands_by_R_parse_srcref = c()
+	
+	if(is.null(origRcommands) || trimws(origRcommands) == "")
+	{
+		origRcommands = c()
+	}
+	
+	bsky_Rmarkdown_settings = BSkyGetKableAndRmarkdownFormatting()
+	
+	first_Graphics_Command_Executed = FALSE
+	graphicsDir_exists = FALSE
+	
+	if(!is.null(graphicsDir) && length(graphicsDir) > 0 && trimws(graphicsDir) != "" && dir.exists(graphicsDir) && bsky_Rmarkdown_settings$doRmarkdownFormatting == FALSE)
+	{
+		graphicsDir_exists = TRUE
+		#BSkyFormat("BSky graphics output directory found")
+	}
+	#else #BSkyFormat("BSky graphics output directory not found") or not needed because it is not C# or Electron app environment 
+	
+	
+	if(class(echo)[1] == "list")
+	{
+		echo = echo$echo
+	}
+	
+	if(class(echoInline)[1] == "list")
+	{
+		echoInline = echoInline$echoInline
+	}
+	
+	# No try catch exception block around the parse(), because all the parsing errors should have been caught in the parent function 
+	parsed_Rcommands_by_R_parse = parse(text={RcommandString}, keep.source = TRUE)
+	
+	#Extract each R expression from the parsed expression and create an array of R command strings 
+	for (expr_index in 1: length(parsed_Rcommands_by_R_parse)) {
+		parsed_Rcommands = c(parsed_Rcommands, (paste(deparse(parsed_Rcommands_by_R_parse[[expr_index]]),collapse="\n")))
+	}
+	
+	parsed_Rcommands_by_R_parse_srcref = parsed_Rcommands
+	
+	# cat("\n<SK> ===========print each R expression from Parsing by R eval() ================\n")
+	# print(parsed_Rcommands)
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		print("printing parsed_Rcommands from parse()")
+		print(parsed_Rcommands_by_R_parse)
+	}
+
+	# eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
+	
+	# tryCatch({
+			# withCallingHandlers({
+					# parsed_Rcommands = (tidy_source(text = RcommandString, output = FALSE))$text.tidy
+			# }, warning = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+			# }, error = BSkyRcommandParsingErrWarnHandler, silent = TRUE)
+	
+	
+	# if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+	# {		
+		# cat("\n<SK> ===========Parsing Error in tidy_source================\n")
+		
+		# if(bskyEvalDebug == TRUE)
+		# {
+			# cat("\nParsing Error in tidy_source\n")
+			# cat(RcommandString)
+			# cat("\n")
+		# }
+		
+		# parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
+		# parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
+	# }
+	
+	# cat("\n<SK> ===========Parsing by R eval() ================\n")
+	# print(parsed_Rcommands_by_R_parse)
+	# cat("\n<SK> ===========print each R expression from Parsing by R eval() ================\n")
+	# for (expr_index in 1: length(parsed_Rcommands_by_R_parse)) {
+		# #print(parsed_Rcommands_by_R_parse[expr_index])
+		# print(paste(deparse(parsed_Rcommands_by_R_parse[[expr_index]]),collapse="\n"))
+	# }
+	# cat("\n<SK> ===========Parsing tidy_source(() ================\n")
+	# print(parsed_Rcommands)
+	# if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+	# {	
+		# cat("\n<SK> =========== parsed_Rcommands_by_R_parse_srcref ================\n")
+		# print(parsed_Rcommands_by_R_parse_srcref)
+	# }
+	
+	
+	# if(bskyEvalDebug == TRUE)
+	# {
+		# parsed_Rcommands = (tidy_source(text = as.character(parsed_Rcommands_by_R_parse), output = FALSE))$text.tidy
+		# parsed_Rcommands_by_R_parse_srcref = attr(parsed_Rcommands_by_R_parse, "srcref")
+		
+		# cat("\n============== parsed_Rcommands in parse() and tidy_source() ============= \n")
+		# print("printing parsed_Rcommands_by_R_parse_srcref from parse()")
+		# print(parsed_Rcommands_by_R_parse_srcref)
+		
+		# cat("\n++++++++++++++++++++++++++++++++++ \n")
+		
+		# print("printing parsed_Rcommands from tidy_source()")
+		# print(parsed_Rcommands)
+		
+		# cat("\n=========================== \n")
+	# }
+	
+	
+	#Rcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = RcommandString, numExprParse = numExprParse)
+	#parsed_Rcommands = (tidy_source(text = Rcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
+	
+	if(length(origRcommands) > 0)
+	{
+		parsed_orig_Rcommands_by_R_parse = parse(text={origRcommands}, keep.source = TRUE)
+		
+		#Extract each R expression from the parsed expression and create an array of R command strings 
+		for (expr_index in 1: length(parsed_orig_Rcommands_by_R_parse)) {
+			parsed_orig_Rcommands = c(parsed_orig_Rcommands, (paste(deparse(parsed_orig_Rcommands_by_R_parse[[expr_index]]),collapse="\n")))
+		}
+		
+		parsed_orig_Rcommands_by_R_parse_srcref = parsed_orig_Rcommands
+		
+		# if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+		# {
+			# parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
+			# parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
+		# }
+		# else
+		# {
+			# parsed_orig_Rcommands = (tidy_source(text = origRcommands, output = FALSE))$text.tidy
+		# }
+		
+		# #origRcommands_initial_parse = BSkyRCommandParsedCharCount(RcommandString = origRcommands, numExprParse = numExprParse)
+		# #parsed_orig_Rcommands = (tidy_source(text = origRcommands_initial_parse$parsedCommandList, output = FALSE, end.comment="\n"))$text.tidy
+		
+		# if(bskyEvalDebug == TRUE)
+		# {
+			# parsed_orig_Rcommands = (tidy_source(text = as.character(parsed_orig_Rcommands_by_R_parse), output = FALSE))$text.tidy
+			# parsed_orig_Rcommands_by_R_parse_srcref = attr(parsed_orig_Rcommands_by_R_parse, "srcref")
+			
+			# cat("\n============== parsed_orig_Rcommands in parse() and tidy_source() ============= \n")
+			# print("printing parsed_orig_Rcommands_by_R_parse_srcref from parse()")
+			# print(parsed_orig_Rcommands_by_R_parse_srcref)
+			
+			# cat("\n++++++++++++++++++++++++++++++++++ \n")
+			
+			# print("printing parsed_orig_Rcommands from tidy_source()")
+			# print(parsed_orig_Rcommands)
+			
+			# cat("\n=========================== \n")
+		# }
+	}
+	
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+		{
+			cat("<pre class=\"r\"><code>")
+		}
+		
+		if(length(origRcommands) > 0)
+		{
+			print(origRcommands)
+			#cat("\nExpressions parsed (orig)\n")
+			#print(origRcommands_initial_parse$parsedCommandList)
+			cat("\nExpressions to be executed (orig)\n")
+			print(parsed_orig_Rcommands)
+		}
+		else
+		{
+			print(RcommandString)
+			#cat("\nExpressions parsed\n")
+			#print(Rcommands_initial_parse$parsedCommandList)
+			cat("\nExpressions to be executed\n")
+			print(parsed_Rcommands)
+		}
+		
+		if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+		{
+			cat("</code></pre>")
+		}
+	}
+	
+	if(echo == TRUE && echoInline == FALSE && splitOn == FALSE)  
+	{
+		cat("\n")
+		
+		if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+		{
+			cat("<pre class=\"r\"><code>")
+					 
+			if(length(origRcommands) > 0)
+			{
+				 RcommandString_modified_print = gsub("\\n", "<br>", origRcommands)
+				 cat(RcommandString_modified_print)
+				 cat("<br>")
+			}
+			else
+			{
+				RcommandString_modified_print = gsub("\\n", "<br>", RcommandString)
+				cat(RcommandString_modified_print)
+				cat("<br>")
+			}
+			
+			cat("</code></pre>")
+		}
+		else
+		{
+			if(length(origRcommands) > 0)
+			{
+				 cat(origRcommands)
+			}
+			else
+			{
+				cat(RcommandString)
+			}
+		}
+		
+		cat("\n")
+	}
+	
+
+	for (i in seq_along(parsed_Rcommands)) 
+	{
+	   eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+	   
+		# tryCatch(        
+			# withAutoprint({{eval(ll[[i]])}}, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE),         
+			# error = function(e) message("Error: ", as.character(e))    
+			# )
+		
+		#if(splitOn == FALSE) #Let split iteration also spit our inline RcommandString
+		#{
+			if(echo == TRUE && echoInline == TRUE)
+			{
+				cat("\n")
+				
+				if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+				{
+					cat("<pre class=\"r\"><code>")
+				}
+				
+				if(length(origRcommands) > 0)
+				{
+					if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+					{
+						print(parsed_orig_Rcommands_by_R_parse_srcref[[i]])
+					}
+					else
+					{
+						#print(parsed_orig_Rcommands[[i]])
+						cat(parsed_orig_Rcommands[[i]])
+						#cat("\n")
+					}
+				}
+				else
+				{
+					if(bsky_rcommand_parsing_an_exception_occured == TRUE)
+					{
+						print(parsed_Rcommands_by_R_parse_srcref[[i]])
+					}
+					else
+					{
+						#print(parsed_Rcommands[[i]])
+						cat(parsed_Rcommands[[i]])
+						#cat("\n")
+					}
+				}
+				
+				if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+				{
+					cat("</code></pre>")
+				}
+				
+				cat("\n")
+			}
+		#}
+		
+		# https://stat.ethz.ch/R-manual/R-devel/library/base/html/source.html
+		# https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparse.html
+		# https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparseOpts.html
+		
+		isCommentOrBlankLine = FALSE
+		isHelpCommand = FALSE
+		isPkgInstallCommand = FALSE 
+		HelpOrCommentOrBlankLineStr = trimws(parsed_Rcommands[[i]])
+		
+		# print(HelpOrCommentOrBlankLineStr)
+		# cat("<br>")
+		if(substr(HelpOrCommentOrBlankLineStr,1,3) == "`?`" || substr(HelpOrCommentOrBlankLineStr,1,5) == "help(" || substr(HelpOrCommentOrBlankLineStr,1,5) == "help ")
+		{
+			
+			helpfile = c()
+			package_only_help_command = FALSE
+			package_name = c()
+			
+			topic_param_name_found = grep("\\btopic\\b", HelpOrCommentOrBlankLineStr)
+			# cat("\ntopic_param_name_found\n")
+			# print(topic_param_name_found)
+			# return()
+			
+			if(length(topic_param_name_found) == 0) #regexpr("(\\bpackage(\\s)*=)", x)
+			{
+				package_param_name_found = regexpr("(\\bpackage(\\s)*=)", HelpOrCommentOrBlankLineStr) #"\\bpackage\\b"
+				
+				if(package_param_name_found != -1)
+				{
+					y = strsplit(HelpOrCommentOrBlankLineStr, ",")
+					non_topic_param_in_1st_place = grep("=", y[[1]][1])
+					
+					if(length(non_topic_param_in_1st_place) != 0)
+					{
+						substr_start_from_package_param = substr(HelpOrCommentOrBlankLineStr, package_param_name_found, nchar(HelpOrCommentOrBlankLineStr))
+						package_param = strsplit(substr_start_from_package_param, ",")
+						package_name = strsplit(package_param[[1]][1], "=")
+						
+						if(trimws(package_name[[1]][1]) == "package")
+						{
+							package_name = trimws(package_name[[1]][2])
+							nchar_package_name = nchar(package_name)
+							#cat("\n 1. ========= The package name is: ", package_name, "\n")
+							
+							if(nchar_package_name > 0)
+							{
+								package_name = trimws((strsplit(package_name, "\""))[[1]][2])
+								#cat("\n 2. ========= The package name is: ", package_name, "\n")
+							}
+							
+							
+							# options(help_type = 'text')
+							# x = help(package = "dplyr") - package only help command
+							# str(x)
+							# class(x) - "packageInfo"
+
+							package_only_help_command = TRUE
+						}
+					}
+				}
+			}
+			
+			# R_none BSky generates its own HTML file in temp location that app will display instead of calling R help HTTP server
+			if(BSkyGetRHelpHTTPServer() == "R_none" || BSkyGetRHelpParallelHTTPServerPortNumber() == 0)
+			{
+				# temporarily set to text to avoid R popping up browser when command format contains just pkg e.g. help(package = "dplyr")
+				options(help_type = 'text') 
+				
+				tryCatch({
+						withCallingHandlers({
+								withAutoprint({{helpfile = eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
+						}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
+						}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+				
+				
+				if(bsky_rcommand_execution_an_exception_occured == FALSE)
+				{
+					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+					{
+						cat("\n")
+						cat("<pre class=\"r\"><code>")
+					}
+						
+					if(class(helpfile)[1] == "help_files_with_topic" && length(as.character(helpfile)) > 0)
+					{
+						temp_help_file_path = c()
+						
+						pkgname <- basename(dirname(dirname(helpfile)))
+						
+						if(length(pkgname) > 1)
+						{
+							cat("\nhelp topic is found in multiple packages: ", pkgname, "\n")
+							cat("Displaying the help topic from the first package", pkgname[1], "found in the package search path\n")
+							cat("if you want the help(topic) from a specific package, add the package parameter to help(topic, package = 'pkg name')\n")
+						}
+						
+						temp_help_file_path <- tools::Rd2HTML(utils:::.getHelpFile(helpfile[1]), out = tempfile(pattern = "BSkyhelpsink", fileext = ".html"), package = pkgname[1])
+						
+						# For testing purpose to copy the file in the download directory as R removes all temp files upon closing the R session 
+						#file.copy(temp_help_file_path, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
+						# browseURL(temp_help_file_path)
+						
+						cat("\n")
+						#print(str(helpfile))
+						#print(as.character(helpfile))
+						cat(paste("BSkyHelpCommandMarker ", temp_help_file_path, sep=""))
+						cat("\n")
+					}
+					else if (class(helpfile)[1] == "packageInfo")
+					{	
+						title = gettextf("Documentation for package %s", sQuote(helpfile$name))
+						
+						outFile = tempfile(pattern = "BSkyhelpsink", fileext = ".html")
+						
+						#print(format(gsub(" ","&nbsp;",helpfile)
+						
+						content = format(helpfile)
+						
+						cat("<!DOCTYPE html>\n<html>\n<body>\n", file = outFile, append = TRUE)
+						cat("<table>\n", file = outFile, append = TRUE)
+						for(cont in 1:length(content))
+						{
+							content[cont] = trimws(content[cont])
+							splitline = gregexpr(":|\\s+", content[cont])
+							
+							cat("<tr>\n", file = outFile, append = TRUE) 
+							if(splitline[[1]][1] == -1)
+							{
+								cat("<td colspan=\"2\">\n", file = outFile, append = TRUE)
+								cat(content[cont],file = outFile, append = TRUE)
+								cat("\n</td>\n", file = outFile, append = TRUE)
+							}
+							else
+							{
+								cat("<td>\n", file = outFile, append = TRUE)
+								cat(substr(content[cont], 1, (splitline[[1]][1])),file = outFile, append = TRUE)
+								cat("\n</td>\n", file = outFile, append = TRUE)
+								
+								if((splitline[[1]][1] + 1) <= nchar(content[cont]))
+								{
+									cat("<td>\n", file = outFile, append = TRUE)
+									cat(substr(content[cont], (splitline[[1]][1] + 1), nchar(content[cont])),file = outFile, append = TRUE)
+									cat("\n</td>\n", file = outFile, append = TRUE)
+								}
+							}
+							
+							cat("</tr>\n", file = outFile, append = TRUE)
+						}
+						cat("</table>\n", file = outFile, append = TRUE)
+						cat("\n</body>\n</html>", file = outFile, append = TRUE)
+						
+						# For testing purpose to copy the file in the download directory as R removes all temp files upon closing the R session 
+						# file.copy(outFile, paste("C:/Users/User/Downloads/BSkyTempHelpFile_",i,".html",sep=""), overwrite = TRUE)
+						# browseURL(outFile)
+						
+						cat("\n")
+						#print(str(helpfile))
+						cat(paste("BSkyHelpCommandMarker ", outFile, sep=""))
+						cat("\n")
+					}
+					else
+					{
+						cat("\n", paste("No documentation for the package or the topic in specified packages and libraries :", parsed_Rcommands[[i]]),"\n")
+					}
+					
+					if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+					{
+						cat("</code></pre>")
+						cat("\n")
+					}
+				}
+				else
+				{
+					eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+				}
+				
+				options(help_type = 'html')
+				isHelpCommand = TRUE
+			}
+			else
+			{
+				if(BSkyGetRHelpHTTPServer() == "R_parallel")
+				{
+					options(help_type = 'html')
+					
+					#require(future)
+					
+					#oplan <- plan(multisession, workers = 2)
+					#on.exit(plan(oplan), add = TRUE)
+					
+					port = BSkyGetRHelpParallelHTTPServerPortNumber()
+					
+					if(package_only_help_command == TRUE)
+					{
+					
+						options(help_type = 'text')
+						
+						tryCatch({
+						withCallingHandlers({
+								withAutoprint({{helpfile = eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
+						}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
+						}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+				
+						
+						if(bsky_rcommand_execution_an_exception_occured == FALSE)
+						{
+							options(help_type = 'html')
+							if(length(package_name) > 0)
+							{
+								# fut_help_command <- future(
+									# {
+										# port = tools::startDynamicHelp(NA);
+										# browseURL(paste0("http://127.0.0.1:", port, "/library/", package_name, "/html/00Index.html"));
+									# }#, packages = c('base', 'stats', 'tools','dplyr'), globals = 'package_name'
+								# )
+								
+								browseURL(paste0("http://127.0.0.1:", port, "/library/", package_name, "/html/00Index.html"))
+							}
+						
+							#Sys.sleep(60)
+						}
+						else
+						{
+							eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+						}
+					}
+					else
+					{
+						# fut_help_command <- future(
+							# {
+								# withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE);
+							# } #, packages = c('base', 'stats', 'tools', 'dplyr')
+						# )
+						
+						#Sys.sleep(60)
+						
+						options(help_type = 'text')
+						
+						tryCatch({
+						withCallingHandlers({
+								withAutoprint({{helpfile = eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
+						}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
+						}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+				
+						
+						if(bsky_rcommand_execution_an_exception_occured == FALSE)
+						{
+							options(help_type = 'html')
+							
+							if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+							{
+								cat("\n")
+								cat("<pre class=\"r\"><code>")
+							}
+								
+							if(class(helpfile)[1] == "help_files_with_topic" && length(as.character(helpfile)) > 0)
+							{	
+								pkgname <- basename(dirname(dirname(helpfile)))
+								
+								if(length(pkgname) > 1)
+								{
+									cat("\nhelp topic is found in multiple packages: ", pkgname, "\n")
+									cat("Displaying the help topic from the first package", pkgname[1], "found in the package search path\n")
+									cat("if you want the help(topic) from a specific package, add the package parameter to help(topic, package = 'pkg name')\n")
+								}
+						
+								pkgname = pkgname[1]
+								topic = basename(helpfile[1])
+								
+								# http://127.0.0.1:21072/library/stats/html/lm.html
+								# http://127.0.0.1:21072/library/dplyr/html/select.html
+								# http://127.0.0.1:21072/library/dplyr/html/dplyr-package.html
+								
+								browseURL(paste0("http://127.0.0.1:", port, "/library/", pkgname, "/html/",topic,".html"));
+							}
+						}
+						else
+						{
+							eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+						}
+					}
+					
+					isHelpCommand = TRUE
+					
+					# check whether the expression executed in the parallel R process is completed successfully 
+					# if not completed, the following call will block the current R process waiting for the sub-process to complete
+					# fut_value <- value(fut_help_command)
+					
+					# The following is a check for the subprocess without being blocked till the sub-process resolves/completes 
+					# while (!resolved(fut_help_command)) Sys.sleep(5)
+				}
+				else # The native R html option will not work (blocking R help http server) within BlueSky/Rpy2 app 
+				{
+					options(help_type = 'html')
+					port = tools::startDynamicHelp(NA)
+					
+					if(port <= 0)
+					{
+						cat("\nR HTML help server could not be started\n")
+						cat("\nGo to BlueSky Application configuration menu dialog and uncheck the R help server option and then try help(..) command again\n")
+					}
+					# else
+					# {
+						# cat("\nR HTML help server started on port number:\n", port)
+					# }
+					
+					if(package_only_help_command == TRUE)
+					{
+						if(length(package_name) > 0)
+						{
+							browseURL(paste0("http://127.0.0.1:", port, "/library/", package_name, "/html/00Index.html"))
+						}
+						
+						isHelpCommand = TRUE
+					}
+					
+					# if (port > 0L) 
+					# {
+						# path <- dirname(file)
+						# dirpath <- dirname(path)
+						# pkgname <- basename(dirpath)
+						# browseURL(paste0("http://127.0.0.1:", port, "/library/", pkgname, "/html/", basename(file), ".html"), browser)
+					# }
+				}
+			}
+		}
+		else if(substr(HelpOrCommentOrBlankLineStr,1,1) == "#" || substr(HelpOrCommentOrBlankLineStr,1,1) == "")
+		{
+			isCommentOrBlankLine = TRUE
+		}
+		else
+		{
+			if(length(grep("install\\.packages(\\s*)\\(|update\\.packages|install_github(\\s*)\\(|devtools::install_github(\\s*)\\(|::install|githubinstall|^install_(\\s|\\S)*\\(", HelpOrCommentOrBlankLineStr)) > 0)
+			{
+			
+				if(length(grep("BSkypackageinstall", HelpOrCommentOrBlankLineStr)) == 0)
+				{
+					isPkgInstallCommand = TRUE
+					#cat("\n")
+					#cat(HelpOrCommentOrBlankLineStr)
+					cat("\nPLEASE NOTE: For package installation and update, please see triple dot > Install R Package from the top level menu in the BlueSky Statistics application\n")
+				}
+			}
+		}
+		
+		if(isCommentOrBlankLine == FALSE && isHelpCommand == FALSE && isPkgInstallCommand == FALSE)
+		{
+			tryCatch({
+					withCallingHandlers({
+							withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
+					}, warning = BSkyRcommandErrWarnHandler, silent = TRUE)
+					}, error = BSkyRcommandErrWarnHandler, silent = TRUE)
+			
+			
+			if(bsky_rcommand_execution_an_exception_occured == TRUE)
+			{
+				#if(splitOn == TRUE || echoInline == FALSE)
+				if(echoInline == FALSE)
+				{
+					if(length(grep("library(\\s*)\\(|require(\\s*)\\(", HelpOrCommentOrBlankLineStr)) == 0)
+					{
+						cat("\n")
+						
+						if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+						{
+							cat("<pre class=\"r\"><code>")
+						}
+						
+						cat("\n----------------------\n")
+						cat("DIAGNOSTIC MESSAGE: The above R errors and/or warnings are generated by the following R code")
+						cat("\n----------------------\n")
+					
+						if(length(origRcommands) > 0)
+						{
+							#print(parsed_orig_Rcommands[[i]])
+							cat(parsed_orig_Rcommands[[i]])
+						}
+						else
+						{
+							#print(parsed_Rcommands[[i]])
+							cat(parsed_Rcommands[[i]])
+						}
+						
+						if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+						{
+							cat("</code></pre>")
+						}
+						
+						cat("\n")
+					}
+				}
+				
+				eval(parse(text="bsky_rcommand_execution_an_exception_occured = FALSE"), envir=globalenv())
+			}
+			
+			if(graphicsDir_exists == TRUE)
+			{
+				num_graphics_files = length(list.files(graphicsDir, pattern="png|svg"))
+				
+				if(bskyEvalDebug == TRUE)
+				{
+					cat("\n<br>********* Printing call details within BSkyEvalRcommandBasicForAppScript - num_graphics_files and uadatasets.sk$last_count_of_bsky_graphics_files ******<br>\n")
+					if(length(origRcommands) > 0)
+					{
+						print(parsed_orig_Rcommands[[i]])
+						#cat(parsed_orig_Rcommands[[i]])
+					}
+					else
+					{
+						print(parsed_Rcommands[[i]])
+						#cat(parsed_Rcommands[[i]])
+					}
+					print(list.files(graphicsDir, pattern="png|svg"))
+					print(num_graphics_files)
+					cat("strating_count_of_bsky_graphics_files\n")
+					print(uadatasets.sk$strating_count_of_bsky_graphics_files)
+					cat("last_count_of_bsky_graphics_files\n")
+					print(uadatasets.sk$last_count_of_bsky_graphics_files)
+					print(num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
+					cat("first_Graphics_Command_Executed\n")
+					print(first_Graphics_Command_Executed)
+				}
+			
+				if(num_graphics_files > uadatasets.sk$last_count_of_bsky_graphics_files)
+				{
+					if(uadatasets.sk$last_count_of_bsky_graphics_files == uadatasets.sk$strating_count_of_bsky_graphics_files && first_Graphics_Command_Executed == FALSE)
+					{
+						# if(bskyEvalDebug == TRUE)
+						# {
+							# BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= 1, isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+						# }
+						# else
+						if(file.exists(uadatasets.sk$initial_graphics_file_name ))
+						{
+							file.remove(uadatasets.sk$initial_graphics_file_name)
+							first_Graphics_Command_Executed = TRUE
+							
+							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files - 1
+						}
+						else
+						{
+							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
+						}
+					}
+					else
+					{
+						BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+						uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
+					}
+				}
+			}
+		}
+		# else
+		# {
+			# if(bsky_Rmarkdown_settings$doRmarkdownFormatting == TRUE && bsky_Rmarkdown_settings$doLatexFormatting == FALSE)
+			# {
+				# cat("<br>")
+			# }
+		# }
+	}
+	
+	eval(parse(text="rm(bsky_rcommand_execution_an_exception_occured)"), envir=globalenv())
+	
+	eval(parse(text="bsky_rcommand_parsing_an_exception_occured = FALSE"), envir=globalenv())
+	
+	#return(invisible(RcommandString)) 
+	
+	if(length(origRcommands) > 0)
+	{
+		#return(invisible(origRcommands_initial_parse))
+		return(invisible(origRcommands))
+	}
+	else
+	{
+		#return(invisible(RcommandString_initial_parse))
+		return(invisible(RcommandString))
+	}
+}
+
 
 # Needed t create copy from the original error/warn handler to avoid the recurssion error to execute R code block from app in BMD script
 BSkyRcommandErrWarnHandlerForAppScript <- function(m)
