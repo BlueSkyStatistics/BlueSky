@@ -305,7 +305,7 @@ BSkyMultipleEditDataGrid<- function (startRow = 2, startCol = 1, noOfRows = 4, n
 	if (length(data) ==1)
 	{
 		colname = eval(parse(text = paste( "names(", dataSetNameOrIndex, ")", "[", startCol, "]", sep ="")))
-		if (data =="" || data = "<NA>")
+		if (data =="" || data == "<NA>")
 		{
 			BSkyEditDatagrid(colname=colname, rowindex=startRow-1, dataSetNameOrIndex=dataSetNameOrIndex)
 		} else {
