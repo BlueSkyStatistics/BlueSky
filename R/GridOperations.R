@@ -294,28 +294,46 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 }
 
 
-
-
-BSkyMultipleEditDataGrid<- function (startRow = 2, startCol = 1, noOfRows = 4, noOfCols = 3,
+BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, noOfCols = 3,
     data = c("1", "2", "3", "uu", "abc", "6", "7", "", "xty",
         "10", "11", "12"), dataSetNameOrIndex = "mtcars")
 {
-    #data[data == ""] <- NA
-	
-	if (length(data) ==1)
-	{
-		colname = eval(parse(text = paste( "names(", dataSetNameOrIndex, ")", "[", startCol, "]", sep ="")))
-		if (data =="" || data == "<NA>")
-		{
-			BSkyEditDatagrid(colname=colname, rowindex=startRow-1, dataSetNameOrIndex=dataSetNameOrIndex)
-		} else {
-		BSkyEditDatagrid(colname=colname, colceldata=data, rowindex=startRow-1, dataSetNameOrIndex=dataSetNameOrIndex)
-		}
-		return
-	
-	}
-	
-    for (i in 1:noOfCols) {
+  
+  #Handle single cell, we call BSkyEditDatagrid
+  if (length(data) == 1) {
+        colname = eval(parse(text = paste("names(", dataSetNameOrIndex,
+            ")", "[", startCol, "]", sep = "")))
+        if (data == "" || data == "<NA>") {
+            BSkyEditDatagrid(colname = colname, rowindex = startRow -
+                1, dataSetNameOrIndex = dataSetNameOrIndex)
+        }
+        else {
+            BSkyEditDatagrid(colname = colname, colceldata = data,
+                rowindex = startRow - 1, dataSetNameOrIndex = dataSetNameOrIndex)
+        }
+     return()   
+    }
+  
+  totalDatasetCols = eval(parse(text = paste("ncol(", dataSetNameOrIndex, ")")))
+  newColumnBaseName ="var"
+  newColumnSuffix = 1
+  for (i in 1:noOfCols) { 
+	# Adding new columns
+      if (startCol > totalDatasetCols)
+      {
+        newColName =paste(newColumnBaseName, startCol, sep="")
+        eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[,c(", deparse(newColName), ")]", "<- NA", sep = "")))
+        
+        eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[,c(", startCol, ")]", "<- as.numeric(.GlobalEnv$",
+                  dataSetNameOrIndex, "[, c(", deparse(newColName), ")])",
+                  sep = "")))
+		newColumnSuffix = newColumnSuffix +1
+
+      }
+      
+      
         every_column <- data[seq(i, length(data), by = noOfCols)]
         classOfVariable <- eval(parse(text = paste("class(",
             dataSetNameOrIndex, "[,", startCol, "])")))
@@ -327,6 +345,9 @@ BSkyMultipleEditDataGrid<- function (startRow = 2, startCol = 1, noOfRows = 4, n
             every_column = suppressWarnings(as.numeric(every_column))
             empty_numeric_count <- sum(is.na(every_column) ==
                 TRUE)
+          	
+          
+          
             if (empty_string_count != empty_numeric_count) {
                 every_column <- every_column_temp
                 eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
@@ -342,6 +363,7 @@ BSkyMultipleEditDataGrid<- function (startRow = 2, startCol = 1, noOfRows = 4, n
         }
         else if ("factor" %in% classOfVariable || "ordered" %in%
             classOfVariable) {
+			every_column[every_column ==""] =NA
             every_column = as.factor(every_column)
             levelsInPastedData = levels(every_column)
             levelsInDestinationColumn = eval(parse(text = paste("levels(",
@@ -382,7 +404,6 @@ BSkyMultipleEditDataGrid<- function (startRow = 2, startCol = 1, noOfRows = 4, n
         }
     }
 }
-
 
 
 #Adding a row in data grid
