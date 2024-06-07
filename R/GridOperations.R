@@ -294,8 +294,6 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 }
 
 
-
-
 BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, noOfCols = 3,
     data = c("1", "2", "3", "uu", "abc", "6", "7", "", "xty",
         "10", "11", "12"), dataSetNameOrIndex = "mtcars")
@@ -402,7 +400,6 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
         }
     }
 }
-
 
 
 #Adding a row in data grid
