@@ -298,6 +298,8 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
     data = c("1", "2", "3", "uu", "abc", "6", "7", "", "xty",
         "10", "11", "12"), dataSetNameOrIndex = "mtcars")
 {
+  
+  #Handle single cell, we call BSkyEditDatagrid
   if (length(data) == 1) {
         colname = eval(parse(text = paste("names(", dataSetNameOrIndex,
             ")", "[", startCol, "]", sep = "")))
@@ -316,16 +318,18 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
   newColumnBaseName ="var"
   newColumnSuffix = 1
   for (i in 1:noOfCols) { 
+	# Adding new columns
       if (startCol > totalDatasetCols)
       {
+        newColName =paste(newColumnBaseName, startCol, sep="")
+        eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[,c(", deparse(newColName), ")]", "<- NA", sep = "")))
         
         eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                  "[,", startCol, "]", "<- NA", sep = "")))
-        
-        eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                  "[,", startCol, "]", "<- as.numeric(.GlobalEnv$",
-                  dataSetNameOrIndex, "[, ", startCol, "])",
+                  "[,c(", startCol, ")]", "<- as.numeric(.GlobalEnv$",
+                  dataSetNameOrIndex, "[, c(", deparse(newColName), ")])",
                   sep = "")))
+		newColumnSuffix = newColumnSuffix +1
 
       }
       
@@ -359,7 +363,7 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
         }
         else if ("factor" %in% classOfVariable || "ordered" %in%
             classOfVariable) {
-            every_column[every_column ==""] =NA
+			every_column[every_column ==""] =NA
             every_column = as.factor(every_column)
             levelsInPastedData = levels(every_column)
             levelsInDestinationColumn = eval(parse(text = paste("levels(",
