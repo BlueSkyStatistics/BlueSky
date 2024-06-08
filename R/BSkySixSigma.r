@@ -3080,7 +3080,6 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 								mark.test.number = TRUE,
 								restore.par = TRUE, extend.plot.range =c(NA,NA))
 {
-
 	if (missing(data)) 
         stop("data is required")
 	
@@ -3433,7 +3432,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
     mtext(main.title, side = 3, line = top.line, font = par("font.main"), 
         cex = qcc.options("cex"), col = par("col.main"))
 		
-	if(length(spec.limits) > 0 && !is.null(spec.limits$lsl))
+	if(length(spec.limits) > 0 && !is.null(spec.limits$lsl) && !is.na(spec.limits$lsl))
 	{
 		abline(h = spec.limits$lsl, lty = 3, lwd = 2, col = gray(0.3))
 		
@@ -3446,7 +3445,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 					cex = par("cex") * 0.8)     # Size
 	}
 	
-	if(length(spec.limits) > 0 && !is.null(spec.limits$usl))
+	if(length(spec.limits) > 0 && !is.null(spec.limits$usl) && !is.na(spec.limits$usl))
 	{
 		abline(h = spec.limits$usl, lty = 3, lwd = 2, col = gray(0.3))
 		
