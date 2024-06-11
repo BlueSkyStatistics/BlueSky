@@ -1246,8 +1246,8 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
             # exp.USL <- 0
     # }
 	
-	obs.LSL <- sum(x < LSL)/n * 100
-    obs.USL <- sum(x > USL)/n * 100
+	obs.LSL <- round(sum(x < LSL)/n * 100, digits)
+    obs.USL <- round(sum(x > USL)/n * 100, digits)
 	
 	#h <- hist(x, breaks = breaks, plot = FALSE)
     #ylim <- range(h$density, dx)
@@ -1352,19 +1352,23 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
 		if(capability.type == "overall")
 		{
 			mtext(paste("Pp     = ", ifelse(is.na(Pp), "", 
-				signif(Pp, 3)), sep = ""), side = 1, line = top.line, 
+				#signif(Pp, 3)), sep = ""), side = 1, line = top.line, 
+				signif(Pp, digits)), sep = ""), side = 1, line = top.line,
 				adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Pp_l  = ", ifelse(is.na(Ppl), "", 
-				signif(Ppl, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Ppl, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Ppl, digits)), sep = ""), side = 1, line = top.line +
 				1, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Pp_u = ", ifelse(is.na(Ppu), "", 
-				signif(Ppu, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Ppu, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Ppu, digits)), sep = ""), side = 1, line = top.line +
 				2, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Pp_k = ", ifelse(is.na(Ppk), "", 
-				signif(Ppk, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Ppk, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Ppk, digits)), sep = ""), side = 1, line = top.line +
 				3, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			# mtext(paste("Ppm  = ", ifelse(is.na(Cpm), "", 
@@ -1407,12 +1411,14 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
             # at = at.col[4], font = qcc.options("font.stats"), 
             # cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs<LSL ", ifelse(is.na(obs.LSL), 
-            "", paste(signif(obs.LSL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.LSL, 2), "%", sep = "")),
+			"", paste(signif(obs.LSL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line , adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs>USL ", ifelse(is.na(obs.USL), 
-            "", paste(signif(obs.USL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.USL, 2), "%", sep = "")),
+			"", paste(signif(obs.USL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 1, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
@@ -1785,8 +1791,10 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
         if (exp.USL < 0.01) 
             exp.USL <- 0
     }
-    obs.LSL <- sum(x < LSL)/n * 100
-    obs.USL <- sum(x > USL)/n * 100
+
+    obs.LSL <- round(sum(x < LSL)/n * 100, digits)
+    obs.USL <- round(sum(x > USL)/n * 100, digits)
+
     xlim <- range(x, USL, LSL, target, na.rm = TRUE)
     xlim <- xlim + diff(xlim) * c(-0.1, 0.1)
     xx <- seq(min(xlim), max(xlim), length = 250)
@@ -1877,67 +1885,81 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
 		if(capability.type == "overall")
 		{
 			mtext(paste("Pp     = ", ifelse(is.na(Cp), "", 
-				signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+				#signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+				signif(Cp, digits)), sep = ""), side = 1, line = top.line,
 				adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Pp_l  = ", ifelse(is.na(Cp.l), "", 
-				signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.l, digits)), sep = ""), side = 1, line = top.line +
 				1, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Pp_u = ", ifelse(is.na(Cp.u), "", 
-				signif(Cp.u, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cp.u, 3)), sep = ""), side = 1, line = top.line +
+				signif(Cp.u, digits)), sep = ""), side = 1, line = top.line +
 				2, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Pp_k = ", ifelse(is.na(Cp.k), "", 
-				signif(Cp.k, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cp.k, 3)), sep = ""), side = 1, line = top.line +
+				signif(Cp.k, digits)), sep = ""), side = 1, line = top.line +
 				3, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Ppm  = ", ifelse(is.na(Cpm), "", 
-				signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cpm, digits)), sep = ""), side = 1, line = top.line +
 				4, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 		}
 		else
 		{
 						mtext(paste("Cp     = ", ifelse(is.na(Cp), "", 
-				signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+				#signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+				signif(Cp, digits)), sep = ""), side = 1, line = top.line,
 				adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Cp_l  = ", ifelse(is.na(Cp.l), "", 
-				signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.l, digits)), sep = ""), side = 1, line = top.line + 
 				1, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Cp_u = ", ifelse(is.na(Cp.u), "", 
-				signif(Cp.u, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cp.u, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.u, digits)), sep = ""), side = 1, line = top.line + 
 				2, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Cp_k = ", ifelse(is.na(Cp.k), "", 
-				signif(Cp.k, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cp.k, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.k, digits)), sep = ""), side = 1, line = top.line +
 				3, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Cpm  = ", ifelse(is.na(Cpm), "", 
-				signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cpm, digits)), sep = ""), side = 1, line = top.line +
 				4, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 		}
 		
         mtext(paste("Exp<LSL ", ifelse(is.na(exp.LSL), 
-            "", paste(signif(exp.LSL, 2), "%", sep = "")), 
+            #"", paste(signif(exp.LSL, 2), "%", sep = "")), 
+			"", paste(signif(exp.LSL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Exp>USL ", ifelse(is.na(exp.USL), 
-            "", paste(signif(exp.USL, 2), "%", sep = "")), 
+            #"", paste(signif(exp.USL, 2), "%", sep = "")),
+			"", paste(signif(exp.USL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 1, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs<LSL ", ifelse(is.na(obs.LSL), 
-            "", paste(signif(obs.LSL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.LSL, 2), "%", sep = "")),
+			"", paste(signif(obs.LSL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 2, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs>USL ", ifelse(is.na(obs.USL), 
-            "", paste(signif(obs.USL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.USL, 2), "%", sep = "")),
+			"", paste(signif(obs.USL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 3, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
@@ -1962,30 +1984,36 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
                 "", formatC(signif(USL, digits = digits), 
                   flag = "-")), "\n", sep = ""))
         cat("\nCapability indices:\n\n")
-        print(tab, digits = 4, na.print = "", print.gap = 2)
+        #print(tab, digits = 4, na.print = "", print.gap = 2)
+		print(tab, digits = digits, na.print = "", print.gap = 2)
         cat("\n")
         cat(paste("Exp<LSL", ifelse(is.na(exp.LSL), "\t", 
-            paste(format(exp.LSL, digits = 2), "%\t", sep = "")), 
+            #paste(format(exp.LSL, digits = 2), "%\t", sep = "")),
+			paste(format(exp.LSL, digits = digits), "%\t", sep = "")), 					
             "Obs<LSL", ifelse(is.na(obs.LSL), "", 
-                paste(format(obs.LSL, digits = 2), "%\n", 
+                #paste(format(obs.LSL, digits = 2), "%\n",
+				paste(format(obs.LSL, digits = digits), "%\n",
                   sep = ""))))
         cat(paste("Exp>USL", ifelse(is.na(exp.USL), "\t", 
-            paste(format(exp.USL, digits = 2), "%\t", sep = "")), 
+            #paste(format(exp.USL, digits = 2), "%\t", sep = "")),
+			paste(format(exp.USL, digits = digits), "%\t", sep = "")), 
             "Obs>USL", ifelse(is.na(obs.USL), "", 
-                paste(format(obs.USL, digits = 2), "%\n", 
+                #paste(format(obs.USL, digits = 2), "%\n", 
+				paste(format(obs.USL, digits = digits), "%\n",
                   sep = ""))))
     }
+	
     invisible(list(nobs = n, center = center, std.dev = std.dev, 
         target = target, spec.limits = {
             sl <- c(LSL, USL)
             names(sl) <- c("LSL", "USL")
             sl
         }, indices = tab, exp = {
-            exp <- c(exp.LSL, exp.USL)/100
+            exp <- round(c(exp.LSL, exp.USL)/100, digits)
             names(exp) <- c("Exp < LSL", "Exp > USL")
             exp
         }, obs = {
-            obs <- c(obs.LSL, obs.USL)/100
+            obs <- round(c(obs.LSL, obs.USL)/100, digits)
             names(obs) <- c("Obs < LSL", "Obs > USL")
             obs
         }))
