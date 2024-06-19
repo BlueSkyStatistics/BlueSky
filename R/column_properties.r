@@ -640,7 +640,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 #Example: UAgetColDesc("mydataset","agecat")																			
 #############################################################################################################
 #get col description same as UAgetSPSSVariableView_Lable but uses extra col level attribute "coldesc" to get result
-UAgetColDesc <- function(dataSetNameOrIndex, colNameOrIndex, isDSValidated=FALSE)
+UAgetColDesc <- function(dataSetNameOrIndex, colNameOrIndex, isDSValidated=FALSE, usehaven=TRUE)
 {
 	#BSkyFunctionInit()
 	#BSkySetCurrentDatasetName(dataSetNameOrIndex)
@@ -663,18 +663,27 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 				# colIndex <- UAgetIndexOfColInDataSet(DataSetIndex,colName)
 				#colDesc <- ""	
 				if(colIndex > 0){
-					
-					if(is.null(eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc")',sep='')))))
-						eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc") <- ""',sep=''))) 
 
-					colDesc <- eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc")',sep='')))##coldesc is not standard BSky attribute
+					if(usehaven){
+						colDesc <- eval(parse(text=paste('attributes(',datasetname,'[,',colIndex,'])$label',sep='')))
+					}
+					else {
 
-						#colDesc <- attr(uadatasets$lst[[DataSetIndex]], "variable.labels")[[colIndex]] 
+						if(is.null(eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc")',sep='')))))
+							eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc") <- ""',sep=''))) 
 
-					#if(is.null(colDesc))#handle NULL
-						#colDesc <- ""	
+						colDesc <- eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc")',sep='')))##coldesc is not standard BSky attribute
 
-						#-return(colDesc)
+							#colDesc <- attr(uadatasets$lst[[DataSetIndex]], "variable.labels")[[colIndex]] 
+
+						#if(is.null(colDesc))#handle NULL
+							#colDesc <- ""	
+
+							#-return(colDesc)
+					}
+					if(is.null(colDesc)){
+						colDesc=""
+					}					
 				}	
 				else
 				{
@@ -707,7 +716,7 @@ return(invisible(colDesc))
 #Example: UAsetColDesc("mydataset","agecat", "Age Cat")																			
 #############################################################################################################
 #get col description same as UAgetSPSSVariableView_Lable but uses extra col level attribute "coldesc" to get result
-UAsetColDesc <- function(dataSetNameOrIndex, colNameOrIndex, newLabel)#Label
+UAsetColDesc <- function(dataSetNameOrIndex, colNameOrIndex, newLabel, usehaven=TRUE)#Label
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(dataSetNameOrIndex)
@@ -729,9 +738,14 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 					#17Jul2015 eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc") <<- newLabel',sep=''))) #<<-
 					eval(parse(text=paste('setattr(x=',datasetname,'[,',colIndex,'], name= "coldesc", value= newLabel)' ,sep='')))#17Jul2015 
 					#cat("\ncoldesc Set.")
-					#attr(uadatasets$lst[[DataSetIndex]], "variable.labels")[[colIndex]] <- newLabel
-					eval(parse(text=paste('attr(',datasetname,',"variable.labels")[[colIndex]] <- newLabel',sep=''))) #<<- #. <<- to <-
-					#eval(parse(text=paste('setattr(',datasetname,', "variable.labels", newLabel)' ,sep='')))#17Jul2015 
+					if(usehaven){
+						eval(parse(text=paste('attributes(',datasetname,'[,',colIndex,'])$label <- newLabel',sep='')))
+					}
+					else {
+						#attr(uadatasets$lst[[DataSetIndex]], "variable.labels")[[colIndex]] <- newLabel
+						eval(parse(text=paste('attr(',datasetname,',"variable.labels")[[colIndex]] <- newLabel',sep=''))) #<<- #. <<- to <-
+						#eval(parse(text=paste('setattr(',datasetname,', "variable.labels", newLabel)' ,sep='')))#17Jul2015 
+					}
 					#cat("\nvariable.labels Set.")
 				}	
 				else
