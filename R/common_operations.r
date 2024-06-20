@@ -983,6 +983,12 @@ BSkyAttributesBackup <- function(colIndex, datasetname)
 	align = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$align',sep='')))
 	measure = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$measure',sep='')))
 	role = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role',sep='')))
+	label = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$label',sep='')))
+	colname = eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']',sep=''))) ## this can be used while restoring attr
+	if(is.null(label)){
+		label=""
+	}
+	
 
 	bskyattlist <- list(at1 = coldesc,
 		at2 = usermissing,
@@ -992,7 +998,9 @@ BSkyAttributesBackup <- function(colIndex, datasetname)
 		at6 = columns,
 		at7 = align,
 		at8 = measure,
-		at9 = role)
+		at9 = role,
+		at10 = label,
+		at11 = colname)
 		
 	BSkyFunctionWrapUp()
 	return(invisible(bskyattlist))
@@ -1017,6 +1025,7 @@ BSkyAttributesRestore <- function(colIndex, bskyattlist, datasetname)
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$align <- bskyattlist$at7',sep='')))# <<- to <- coz .GlobalEnv
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$measure <- bskyattlist$at8',sep='')))# <<- to <- coz .GlobalEnv
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role	 <- bskyattlist$at9',sep='')))# <<- to <- coz .GlobalEnv
+	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$label <- bskyattlist$at10',sep='')))# <<- to <- coz .GlobalEnv
 	#cat("\nRestored Attr..")
 	BSkyFunctionWrapUp()
 	return(invisible())
