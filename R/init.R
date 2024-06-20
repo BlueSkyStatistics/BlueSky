@@ -10,6 +10,7 @@ bskymaxfactors = 20
 uadatasets.sk <- NULL
 BSkyBlankDSColNameClassList <<- list()
 BSkyBlankDSColNameLevelsList <<- list()
+BSkyblankDSallColAttr <<- list()
 blankDScolumnnames <<- NULL
 blankDSrowcount <<- NULL
 blankDScolremoved <<- 0
