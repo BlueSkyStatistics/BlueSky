@@ -260,3 +260,5 @@ export(BSkyScriptAutomationEngine, BSkyInAppScriptExtractOldDatasetList)
 export(BSkySplitCollapseDatasetWithRepeatingColumns, BSkyInAppBMDScriptExecutionEngine)
 
 export(BSkyMultipleEditDataGrid)
+
+export(backupAllColAttr, restoreAllColAttr)
