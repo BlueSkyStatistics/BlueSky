@@ -732,6 +732,9 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 			#if(DataSetIndex <= length(uadatasets$lst) && DataSetIndex >0)##Put these checks everywhere
 			if(!is.null(datasetname))
 			{	
+				#backup all col attrs in BSkyblankDSallColAttr
+				backupAllColAttr(datasetname)		
+
 				col.names <- UAgetColNames(dataSetNameOrIndex)
 				idx = 1;
 				# for each find data type and put the default value
@@ -891,6 +894,9 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 		#cat("\nClass of the dataset col 3 After adding row :")
 		#print(eval(parse(text=paste('class(',datasetname,'[[3]])', sep=''))))
 		#cat("\n")
+		
+			#restore all col attrs from BSkyblankDSallColAttr
+			restoreAllColAttr(datasetname)
 		}#End of if
 } ,#End of with calling handlers
 		warning = UAwarnHandlerFn
@@ -970,6 +976,9 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	#if dataset index is valid and rowindex is valid. rowindex should be not more that total rows.
 	if(!is.null(datasetname) && rowindex <= totrows)
 	{	
+		#backup all col attrs in BSkyblankDSallColAttr
+		backupAllColAttr(datasetname)
+
 		if(totcols==1)
 		{
 			bkupcolnames = eval(parse(text=paste('names(',datasetname,')',sep='')))
@@ -980,6 +989,10 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 		{
 			eval(parse(text=paste(datasetname,' <- ',datasetname,'[-rowindex,]' )))
 		}
+
+		#restore all col attrs from BSkyblankDSallColAttr
+		restoreAllColAttr(datasetname)
+
 	}#if dataset index is valid and existing row index is valid
 	else
 	{
