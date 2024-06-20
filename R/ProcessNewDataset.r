@@ -503,6 +503,7 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 			if(colIndex > 0)
 			{
 				bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
+				# bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',coluname, sep='')))
 				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
 			}
 		}
