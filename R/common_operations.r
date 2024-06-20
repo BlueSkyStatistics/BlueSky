@@ -974,17 +974,28 @@ BSkyAttributesBackup <- function(colIndex, datasetname)
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
 	#### colNamesOrIndex, dataSetNameOrIndex are already valid. Calling function will do that varificaiton. ####	
-	coldesc = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$coldesc',sep='')))
-	usermissing = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$usermissing',sep='')))
-	split = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$split',sep='')))
-	levelLabels = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$levelLabels',sep='')))
-	width = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$width',sep='')))
-	columns = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$columns',sep='')))
-	align = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$align',sep='')))
-	measure = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$measure',sep='')))
-	role = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role',sep='')))
-	label = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$label',sep='')))
+	dsattrs = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])',sep='')))
+	# coldesc = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$coldesc',sep='')))
+	# usermissing = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$usermissing',sep='')))
+	# split = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$split',sep='')))
+	# levelLabels = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$levelLabels',sep='')))
+	# width = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$width',sep='')))
+	# columns = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$columns',sep='')))
+	# align = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$align',sep='')))
+	# measure = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$measure',sep='')))
+	# role = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role',sep='')))
+	# label = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$label',sep='')))
 	colname = eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']',sep=''))) ## this can be used while restoring attr
+	coldesc = dsattrs$coldesc
+	usermissing = dsattrs$usermissing
+	split = dsattrs$split
+	levelLabels = dsattrs$levelLabels
+	width = dsattrs$width
+	columns = dsattrs$columns
+	align = dsattrs$align
+	measure = dsattrs$measure
+	role = dsattrs$role
+	label = dsattrs$label
 	if(is.null(label)){
 		label=""
 	}
