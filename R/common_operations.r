@@ -129,7 +129,14 @@ UAgetIndexOfColInDataSet<-function(datasetname,colName)#DONE
 	##30jul2013 No need of following 'if' this function is a sub function and top function can varify for valid dataset.
 	# if(UAgetIndexOfDataSet(datasetname) > 0 ) ##Verifying if dataset is valid
 	# {
-		#find index of col
+		#find index of col index <- match(column_name, names(df))
+		# idx <- eval(parse(text=paste('match(colName, names(',datasetname,') )',sep='')))
+		# cat("\nCol-Name\n")
+		# print(colName)
+		# cat("\nCol-DIM\n")
+		# print(eval(parse(text=paste('dim(',datasetname,')[2]',sep=''))))
+		# cat("\nDIM NAMES\n")
+		# print(eval(parse(text=paste('colnames(',datasetname,')',sep=''))))
 		idx <- eval(parse(text=paste('which(colName == colnames(',datasetname,') )',sep='')))
 		#idx <- eval(parse(text=paste('which(colName == colnames(.GlobalEnv$',datasetname,') )',sep='')))
 #cat("\n Col index after searching..\n")
@@ -973,6 +980,27 @@ BSkyAttributesBackup <- function(colIndex, datasetname)
 	BSkyWarnMsg = paste("BSkyAttributesBackup: Warning attributes backup : ", "DataSetIndex :", datasetname," ", "Variable :", paste(colIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
+	#### colNamesOrIndex, dataSetNameOrIndex are already valid. Calling function will do that varificaiton. ####
+	# bb[!names(bb) %in% c("class", "levels")]
+
+	dsColAttrs = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])[!names(attributes(',datasetname,'[[',colIndex,']])) %in%  c("class", "levels")]',sep='')))	
+	# dsColAttrs = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])',sep='')))
+	# cat("\nBackup Attr..now\n")
+	# print(dsColAttrs)
+	BSkyFunctionWrapUp()
+	return(invisible(dsColAttrs))
+
+}
+
+BSkyAttributesBackup.old <- function(colIndex, datasetname)
+{
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(datasetname)
+	
+	BSkyErrMsg = paste("BSkyAttributesBackup: Error attributes backup : ", "DataSetIndex :", datasetname," ", "Variable  :", paste(colIndex, collapse = ","),sep="")
+	BSkyWarnMsg = paste("BSkyAttributesBackup: Warning attributes backup : ", "DataSetIndex :", datasetname," ", "Variable :", paste(colIndex, collapse = ","),sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	
 	#### colNamesOrIndex, dataSetNameOrIndex are already valid. Calling function will do that varificaiton. ####	
 	dsattrs = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])',sep='')))
 	# coldesc = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$coldesc',sep='')))
@@ -1018,7 +1046,26 @@ BSkyAttributesBackup <- function(colIndex, datasetname)
 
 }
 
-BSkyAttributesRestore <- function(colIndex, bskyattlist, datasetname) 
+
+BSkyAttributesRestore <- function(colIndex, bskyColAttlist, datasetname) 
+{
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(datasetname)
+	# cat("\nRestoring Attr..")
+	BSkyErrMsg = paste("BSkyAttributesRestore: Error restoring attributes: ", "DataSetIndex :", datasetname," ", "Variable  :", paste(colIndex, collapse = ","),sep="")
+	BSkyWarnMsg = paste("BSkyAttributesRestore: Warning restoring attributes: ", "DataSetIndex :", datasetname," ", "Variable :", paste(colIndex, collapse = ","),sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	# cat("\nRestoring Attr..now\n")
+	# print(bskyColAttlist)  #dd = BSkyUpdateColAttributes(cc, attributes(titanic$sex))
+
+	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']]) <- BSkyUpdateColAttributes(bskyColAttlist, attributes(',datasetname,'[[',colIndex,']]))',sep='')))
+	# eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']]) <- bskyColAttlist',sep='')))
+	#cat("\nRestored Attr..")
+	BSkyFunctionWrapUp()
+	return(invisible())
+}
+
+BSkyAttributesRestore.old <- function(colIndex, bskyattlist, datasetname) 
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -1054,6 +1101,18 @@ BSkyAttributesRestore <- function(colIndex, bskyattlist, datasetname)
 	BSkyFunctionWrapUp()
 	return(invisible())
 }
+
+
+BSkyUpdateColAttributes <- function(original, updates) {
+  for (name in names(original)) {
+    #if (name %in% names(original)) {
+       updates[[name]] <- original[[name]]
+    #}
+    
+  }
+  return(updates)
+}
+
 
 ##TOP SUB##
 BSkyGetFactorMap <- function(colNameOrIndex, dataSetNameOrIndex)

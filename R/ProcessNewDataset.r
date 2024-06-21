@@ -78,8 +78,8 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 					if(colIndex > 0)
 					{
 						bskyattrs <- BSkyAttributesBackup(colIndex, datasetname)
-						# eval(parse(text=paste('BSkyblankDSallColAttr$',colname,' <<- bskyattrs' ,sep='')))
-						BSkyblankDSallColAttr <<- append(BSkyblankDSallColAttr, list(bskyattrs))
+						eval(parse(text=paste('BSkyblankDSallColAttr$',colname,' <<- bskyattrs' ,sep='')))
+						# BSkyblankDSallColAttr <<- append(BSkyblankDSallColAttr, list(bskyattrs))
 					}
 
 					columnclass = eval(parse(text=paste('class(',datasetname,'$',colname,')',sep='')))
@@ -273,8 +273,8 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 			colIndex <- BSkyValidateColumn(datasetname, coluname)	
 			if(colIndex > 0) #this may not require col-name to fetch details from backup because cleaned DS start from 0,0 to all filled cells
 			{
-				bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
-				# bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',coluname, sep='')))
+				# bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
+				bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',coluname, sep='')))
 				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
 			}							
 						}
@@ -424,8 +424,10 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 	colmlevels=""
     if (addCols > 0) {
 		rowcount = blankDSrowcount
+		idx = 0
 		for( cname in blankDScolumnnames)
 		{
+			idx = idx + 1
 			colmclass = eval(parse(text=paste('BSkyBlankDSColNameClassList$',cname, sep=''))) 
 			if("factor" %in% colmclass)
 			{
@@ -499,11 +501,11 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 			}
 
 			#put back col attributes
-			colIndex <- BSkyValidateColumn(datasetname, cname)	
+			colIndex <- idx #BSkyValidateColumn(datasetname, cname)	#
 			if(colIndex > 0)
 			{
-				bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
-				# bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',coluname, sep='')))
+				# bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
+				bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',cname, sep='')))
 				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
 			}
 		}
