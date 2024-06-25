@@ -738,6 +738,11 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 					#17Jul2015 eval(parse(text=paste('attr(',datasetname,'[,',colIndex,'],"coldesc") <<- newLabel',sep=''))) #<<-
 					eval(parse(text=paste('setattr(x=',datasetname,'[,',colIndex,'], name= "coldesc", value= newLabel)' ,sep='')))#17Jul2015 
 					#cat("\ncoldesc Set.")
+					if(is.null(newLabel) || trimws(newLabel) == "")## remove the ''label' atribute from col, if it is null or empty
+					{
+						newLabel = NULL
+					}
+
 					if(usehaven){
 						eval(parse(text=paste('attributes(',datasetname,'[,',colIndex,'])$label <- newLabel',sep='')))
 					}
