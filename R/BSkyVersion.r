@@ -12,90 +12,96 @@
 #' @return prints details about system, R session etc.
 #'
 #' @examples BSkyVersion()
-BSkyVersion<-function()
+BSkyVersion<-function(fulldetails=TRUE)
 {
 
-bskyver= "Version: 8.97"
-bskydate="Date: 2024-07-09"
-bskytime="06:46PM"
-
-rver = R.Version()
-print("------ BlueSky R package version ------")
-print(bskyver) 
-print(bskydate)
-print(bskytime) 
-
-cat("\n\n------ R Home ------\n")
-print(R.home())
-
-cat("\n\n------ R library paths ------\n")
-print(.libPaths()) 
-
-cat("\n\n------ R version ------\n")
-print(rver)
-
-cat("\n\n------ R SessionInfo ------\n")
-print(sessionInfo())
-
-cat("\n\n------ Encoding ------\n")
-print(getOption("encoding"))
-
-cat("\n\n------ Internationalization ------\n")
-print(l10n_info())
-
-cat("\n\n------ System Info ------\n")
-print(Sys.info()[c(1:3,5)])
-
-if(.Platform$OS.type == "windows")
-{ 
-	cat("\n\n------ RAM and Drive Info ------\n")
-	disks_type <- system('powershell get-physicaldisk', inter=TRUE)
-	disks_type = disks_type[c(grep("[0-9]+", disks_type))] 
-	
-	disks <- system("wmic logicaldisk get size,freespace,caption", inter=TRUE)
-	disks <- read.fwf(textConnection(disks[1:(length(disks)-1)]), 
-			 widths=c(9, 13, 13), strip.white=TRUE, stringsAsFactors=FALSE)
-
-	colnames(disks) <- disks[1,]
-	disks <- disks[-1,]
-	orig_names = dimnames(disks)[[2]]
-	if(dim(disks)[1] == 1)
+	bskyver= "Version: 8.97"
+	bskydate="Date: 2024-07-09"
+	bskytime="07:46PM"
+	if(fulldetails)
 	{
-	disks <- cbind(disks[,1], t(round(as.numeric(disks[,-c(1)])/(1000*1000*1000), digits = 0)))
+		rver = R.Version()
+		print("------ BlueSky R package version ------")
+		print(bskyver) 
+		print(bskydate)
+		print(bskytime) 
+
+		cat("\n\n------ R Home ------\n")
+		print(R.home())
+
+		cat("\n\n------ R library paths ------\n")
+		print(.libPaths()) 
+
+		cat("\n\n------ R version ------\n")
+		print(rver)
+
+		cat("\n\n------ R SessionInfo ------\n")
+		print(sessionInfo())
+
+		cat("\n\n------ Encoding ------\n")
+		print(getOption("encoding"))
+
+		cat("\n\n------ Internationalization ------\n")
+		print(l10n_info())
+
+		cat("\n\n------ System Info ------\n")
+		print(Sys.info()[c(1:3,5)])
+
+		if(.Platform$OS.type == "windows")
+		{ 
+			cat("\n\n------ RAM and Drive Info ------\n")
+			disks_type <- system('powershell get-physicaldisk', inter=TRUE)
+			disks_type = disks_type[c(grep("[0-9]+", disks_type))] 
+			
+			disks <- system("wmic logicaldisk get size,freespace,caption", inter=TRUE)
+			disks <- read.fwf(textConnection(disks[1:(length(disks)-1)]), 
+					 widths=c(9, 13, 13), strip.white=TRUE, stringsAsFactors=FALSE)
+
+			colnames(disks) <- disks[1,]
+			disks <- disks[-1,]
+			orig_names = dimnames(disks)[[2]]
+			if(dim(disks)[1] == 1)
+			{
+			disks <- cbind(disks[,1], t(round(as.numeric(disks[,-c(1)])/(1000*1000*1000), digits = 0)))
+			}
+			else
+			{
+			 disks <- cbind(disks[,1], round((apply((disks[,-c(1)]),2, as.numeric))/(1024*1024*1024)))
+			}
+			dimnames(disks)[[2]] = c("Drives(GB)", orig_names[2:length(orig_names)])
+			rownames(disks) <- NULL
+			disks = noquote(disks)
+
+			withAutoprint({
+			memory.size() # memory (MB) currently used by R
+			memory.size(TRUE) # maximum memory (MB) has been used by R in the current session
+			memory.limit() # memory (MB) size in the machine 
+			disks # different disk drives in the machine
+			disks_type # brand and whether SDD or HDD - SDD will say fixed i.e. not removable HDD drive
+			})
+		}
+
+
+		# location of R's own temp directory
+		cat("\n\n------ R's temp directory ------\n")
+		print(tempdir())
+
+		# R's working directory
+		cat("\n\n------ R's working directory ------\n")
+		print(getwd())
+
+		# finding .Rprofile file path 
+		candidates <- c( Sys.getenv("R_PROFILE"),
+						 file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site"),
+						  Sys.getenv("R_PROFILE_USER"),
+						  file.path(getwd(), ".Rprofile") )
+		cat("\n\n------ Rprofile details ------\n")
+		Filter(file.exists, candidates)
 	}
-	else
-	{
-	 disks <- cbind(disks[,1], round((apply((disks[,-c(1)]),2, as.numeric))/(1024*1024*1024)))
+	else {
+		details = paste(bskyver,'\n', bskydate,'\n', bskytime, sep='')
+		return(invisible(details))
 	}
-	dimnames(disks)[[2]] = c("Drives(GB)", orig_names[2:length(orig_names)])
-	rownames(disks) <- NULL
-	disks = noquote(disks)
-
-	withAutoprint({
-	memory.size() # memory (MB) currently used by R
-	memory.size(TRUE) # maximum memory (MB) has been used by R in the current session
-	memory.limit() # memory (MB) size in the machine 
-	disks # different disk drives in the machine
-	disks_type # brand and whether SDD or HDD - SDD will say fixed i.e. not removable HDD drive
-	})
-}
-
-
-# location of R's own temp directory
-cat("\n\n------ R's temp directory ------\n")
-print(tempdir())
-
-# R's working directory
-cat("\n\n------ R's working directory ------\n")
-print(getwd())
-
-# finding .Rprofile file path 
-candidates <- c( Sys.getenv("R_PROFILE"),
-                 file.path(Sys.getenv("R_HOME"), "etc", "Rprofile.site"),
-                  Sys.getenv("R_PROFILE_USER"),
-                  file.path(getwd(), ".Rprofile") )
-cat("\n\n------ Rprofile details ------\n")
-Filter(file.exists, candidates)
 }
 
 # "bskyfrmtobj <- BSkyFormat(bskytempvarname, bSkyFormatAppRequest = TRUE, singleTableOutputHeader = \"c(\"a\")\" )"
