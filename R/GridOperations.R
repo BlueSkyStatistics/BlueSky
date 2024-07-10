@@ -295,11 +295,78 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 
 BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, noOfCols = 3,
-    data = c("1", "2", "3", "uu", "abc", "6", "7", "", "xty",
-        "10", "11", "12"), dataSetNameOrIndex = "mtcars")
+    data = NA, dataSetNameOrIndex = "mtcars")
 {
   
-  #Handle single cell, we call BSkyEditDatagrid
+  # Get system information
+	sys_info <- Sys.info()
+	
+	# Check the operating system
+	os_type <- sys_info['sysname']
+	
+	if (!is.na(data))
+	{
+		validData =TRUE
+	}
+	
+	if (is.na(data))
+	{
+
+	if (os_type == "Windows") 
+	{
+	#print("The operating system is Windows.")
+	library(clipr)
+	# Read clipboard content
+	clipboard_content <- read_clip()
+	# Check if the clipboard is empty
+	if (is.null(clipboard_content) || clipboard_content == "") {
+	print("The clipboard is empty.")
+	return("The clipboard is empty.")
+	} else 
+	{
+	#print("The clipboard is not empty.")
+	tabular_data <- read.delim("clipboard", header = FALSE, stringsAsFactors = FALSE)
+	noOfRows =nrow(tabular_data)
+	noOfCols =ncol(tabular_data)
+	 data = as.character(as.matrix(tabular_data))
+	validData =TRUE
+	}
+  
+	} else if (os_type == "Darwin") {
+
+	clipboard_content <- tryCatch({
+	readLines(pipe("pbpaste"), warn = FALSE)
+	}, error = function(e) {
+  NULL
+	})
+
+# Check if the clipboard is empty
+if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboard_content == "")) {
+  print("The clipboard is empty.")
+  return("The clipboard is empty.")
+} else {
+  tabular_data <- read.delim(pipe("pbpaste"), header = FALSE, stringsAsFactors = FALSE)
+	noOfRows =nrow(tabular_data)
+	noOfCols =ncol(tabular_data)
+	 data = as.character(as.matrix(tabular_data))
+  validData =TRUE
+}
+
+  #print("The operating system is macOS.")
+   
+} 
+
+}
+  
+  
+  # #Handle single cell, we call BSkyEditDatagrid
+  # tabular_data <- read.delim("clipboard", header = FALSE, stringsAsFactors = FALSE)
+  
+  # tabular_data <- read.delim(pipe("pbpaste"), header = FALSE, stringsAsFactors = FALSE)
+  if (validData)
+  {
+  #data = as.character(as.matrix(tabular_data))
+  
   if (length(data) == 1) {
         colname = eval(parse(text = paste("names(", dataSetNameOrIndex,
             ")", "[", startCol, "]", sep = "")))
@@ -402,7 +469,8 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
                 sep = "")))
             startCol = startCol + 1
         }
-    }
+		}
+	}
 }
 
 
