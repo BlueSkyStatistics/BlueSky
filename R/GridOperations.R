@@ -305,7 +305,7 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	# Check if the clipboard is empty
 	if (is.null(clipboard_content) || clipboard_content == "") {
 	print("The clipboard is empty.")
-	return("The clipboard is empty.")
+	return(invisible("The clipboard is empty."))
 	} else 
 	{
 	#print("The clipboard is not empty.")
@@ -327,7 +327,7 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 # Check if the clipboard is empty
 if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboard_content == "")) {
   print("The clipboard is empty.")
-  return("The clipboard is empty.")
+  return(invisible("The clipboard is empty."))
 } else {
   tabular_data <- read.delim(pipe("pbpaste"), header = FALSE, stringsAsFactors = FALSE)
 	noOfRows =nrow(tabular_data)
@@ -362,7 +362,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
             BSkyEditDatagrid(colname = colname, colceldata = data,
                 rowindex = startRow - 1, dataSetNameOrIndex = dataSetNameOrIndex)
         }
-     return()   
+     return(invisible())  
     }
   
   totalDatasetCols = eval(parse(text = paste("ncol(", dataSetNameOrIndex, ")")))
