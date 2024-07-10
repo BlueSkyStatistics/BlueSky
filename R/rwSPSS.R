@@ -531,11 +531,21 @@ UAcreateExtraAttributes <- function(dataSetNameOrIndex, filetype, usehaven=TRUE)
 		label <- ""  #putting colname here instead of blank would be better. 
 		#filetype <- eval(parse(text=paste('attr(',datasetname,',"filetype")')))
 		#cat("\nFile Type:",filetype,"\n")
-		if(filetype == "SPSS" && !usehaven)# should only be used if foreign is used for opening SPSS
+		if(filetype == "SPSS")# should only be used if foreign is used for opening SPSS
 		{
 			colName = eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']',sep='')))
-			label = UAgetSPSSVariableView_Label(datasetname,colName)
+			if(usehaven){
+				label = eval(parse(text=paste('attributes(',datasetname,'[,',colIndex,'])$label',sep='')))
+			}
+			else {
+				label = UAgetSPSSVariableView_Label(datasetname,colName)
+			}
+
+			if(is.null(label)){
+				label=""
+			}
 		}
+
 		if(filetype == "SAS")
 		{
 		}
@@ -1231,7 +1241,7 @@ UAsetSPSSColProperties <- function(dataSetNameOrIndex, colName, colType, colLabe
 			#cat("\nType:",colType)
 			
 			#set col label
-			#UAsetColDesc(dataSetNameOrIndex, colName, colDesc)
+			UAsetColDesc(dataSetNameOrIndex, colName, colDesc)
 			#cat("\nLabel:",colLabel)
 			
 			#set col values, factor part

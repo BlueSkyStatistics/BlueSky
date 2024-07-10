@@ -26,7 +26,8 @@
 #' @examples
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyFormat(df)
-BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, isTextOutput = FALSE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", textTableFormat = BSkyGetTextTableFormat(), tableStylingOptions = "table_border = F, column_align = r, header_background = \"#bdbdbd\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))", RM.SSP = TRUE, RM.SSPE = RM.SSP) # bdbdbd F0F8FF
+#Jun-25-2024 changed the args list for BSkyFormat
+BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), datasetName = BSkyGetCurrentDatabaseName(), colLabelFilterList=list(), maxOutputTables = BSkyGetTableDisplayLimits(), outputTableIndex = c(), outputColumnIndex = c(), outputTableRenames = c(), outputColumnRenames = c(), outputColumnRenamesRow = c(), maxRowLimit = BSkyGetTableDisplayLimits(), maxColLimit = BSkyGetTableDisplayLimits(), silentFormatting = FALSE, bSkyFormatAppRequest = FALSE, bSkyReturnObj = TRUE,  ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE, decimalDigitsRounding = BSkyGetDecimalDigitSetting(), engNotationSetting = BSkyGetEngNotationSetting(), singleTableOutputHeader = "", repeatAllTableFooter = c(), perTableFooter = c(), isRound=BSkyGetRound(), coefConfInt = 0.95, pvalueDisplaySettings = BSkyGetPvalueDisplaySetting(), isKableOutput = TRUE, isLatexOutput = FALSE, isRmarkdownOutput = TRUE, isTextOutput = FALSE, getNonRenderedTables = FALSE, ignoreEnvStyleOverride = FALSE, forceColumnAlign = c(), kableStyleTheme = "kable_styling", textTableFormat = BSkyGetTextTableFormat(), tableStylingOptions = "table_border = F, column_align = r, header_background = \"#bdbdbd\" , more_options = c(bootstrap_options = c(\"striped\", \"hover\", \"condensed\", \"responsive\"), position = \"left\", full_width = F, html_font = \"Helvetica\", fixed_thead = list(enabled = T, background = \"#bdbdbd\"))", RM.SSP = TRUE, RM.SSPE = RM.SSP) # bdbdbd F0F8FF
 {
 	# cat("\n Parameters passed to BSkyFrequency1\n")
 	# print(match.call())
@@ -34,6 +35,11 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 	
 	# print(class(obj))
 	# print(obj)
+	
+	colLabelOutput = colLabelOutput 
+	datasetName = datasetName
+	merged_col_top_header = c()
+	tableCaption = c("")	
 	
 	if(is.null(obj) || (length(obj) == 1 && is.na(obj)))
 	{
@@ -1604,7 +1610,72 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 								}
 							}
 						}
-						
+						#Jun-25-2024 For SPSS label handling in the output tables
+						if(colLabelOutput)
+						{
+							if(length(colLabelFilterList) == 0)
+							{
+								if(trimws(tableCaption) != '')
+								{
+									tableCaption = BSkyOutputColumnLabelAdjustment(obj = tableCaption, datasetName = datasetName)
+								}
+								
+								if(length(merged_col_top_header) > 0)
+								{
+									merged_col_top_header = BSkyOutputColumnLabelAdjustment(obj = merged_col_top_header, datasetName = datasetName)
+									# cat("\nIn BSkyFormat 2:\n")
+									# print(merged_col_top_header)
+								}
+								
+								new_table_removed_empty_rows = BSkyOutputColumnLabelAdjustment(obj = new_table_removed_empty_rows, datasetName = datasetName)
+							}
+							else
+							{
+								list_index <- which(sapply(colLabelFilterList, 
+																	function(x){
+																		(is.character(x$table) && x$table == trimws(tableCaption)) ||
+																		(is.numeric(x$table) && x$table == i)
+																	}
+															))
+															
+								# cat("\nTrying to find the index in the list for the table","i :", i, "table name :",trimws(tableCaption), "\n")							
+								# print(list_index)
+								
+								if(length(list_index) > 0)
+								{
+									if(trimws(tableCaption) != '')
+									{
+										tableCaption = BSkyOutputColumnLabelAdjustment(obj = tableCaption, datasetName = datasetName)
+									}
+									
+									if(length(merged_col_top_header) > 0)
+									{
+										# cat("\nBefore merged_col_top_header:", merged_col_top_header, "\n")
+									
+										if(!is.null(colLabelFilterList[[list_index[1]]]$colNames))
+										{
+											# cat("\ncolNameIndices = colLabelFilterList[[list_index[1]]]$colNames\n")
+											# print(colLabelFilterList[[list_index[1]]]$colNames)
+											
+											merged_col_top_header = BSkyOutputColumnLabelAdjustment(obj = merged_col_top_header, datasetName = datasetName, colNameIndices = colLabelFilterList[[list_index[1]]]$colNames)
+										}
+										else
+										{
+											merged_col_top_header = BSkyOutputColumnLabelAdjustment(obj = merged_col_top_header, datasetName = datasetName)
+										}
+										
+										# cat("\nAfter merged_col_top_header:", merged_col_top_header, "\n")
+									}
+									
+									# cat("\ncolIndices = colLabelFilterList[[list_index[1]]]$cols\n")
+									# print(colLabelFilterList[[list_index[1]]]$cols)
+									# cat("\ncolNameIndices = colLabelFilterList[[list_index[1]]]$colNames\n")
+									# print(colLabelFilterList[[list_index[1]]]$colNames)
+									new_table_removed_empty_rows = BSkyOutputColumnLabelAdjustment(obj = new_table_removed_empty_rows, datasetName = datasetName, colIndices = colLabelFilterList[[list_index[1]]]$cols, colNameIndices = colLabelFilterList[[list_index[1]]]$colNames)
+								}
+							}
+						}
+												
 							
 						if(repeated_column_header_found == TRUE)
 						{
@@ -2105,6 +2176,210 @@ BSkyFormat <- function(obj, maxOutputTables = BSkyGetTableDisplayLimits(), outpu
 		
 		return(invisible(BSkyFormat_output))
 	}
+}
+
+
+#SPSS Label handling helper function for BSkyFormat()
+BSkyOutputColumnLabelAdjustment <- function(obj, datasetName = c(''), colIndices = c(), colNameIndices = c(), prefixColName = BSkyGetPrefixColNametoLabelOutput())
+{
+	if(class(obj)[1] %in% c("data.frame", "matrix", "character"))
+	{
+		if(trimws(datasetName) == '')
+		{
+			datasetName = BSkyGetCurrentDatabaseName()
+		}
+		
+		dataset = get(datasetName)
+		
+		label_attributes <- lapply(dataset, function(col) attr(col, "label"))
+		label_attributes_non_null = label_attributes[!sapply(label_attributes, is.null)]
+		#print(label_attributes)
+        
+		#print(class(obj))
+		#cat("\nIn BSkyOutputColumnLabelAdjustment\n")
+		#print(dimnames(obj))
+		#print(obj)
+		
+		if(class(obj)[1] == "character")
+		{
+			orig_obj_column_names = obj
+			obj_column_names = orig_obj_column_names
+		}
+		else
+		{
+			obj = as.data.frame(obj)
+			orig_obj_column_names = dimnames(obj)[[2]]
+			obj_column_names = orig_obj_column_names
+			
+			if(length(colNameIndices) > 0)
+			{
+				colNameIndices = colNameIndices[colNameIndices <= dim(obj)[2]]
+				obj_column_names = orig_obj_column_names[colNameIndices]
+			}
+		}
+		
+		# cat("\nBefore: obj_column_names\n")
+		# print(obj_column_names)
+		
+		if(length(label_attributes_non_null) > 0)
+		{
+			Orig_col_names = names(label_attributes)
+			#print(Orig_col_names)
+			
+			if(length(unique(obj_column_names)) > 1 || (length(unique(obj_column_names)) ==1 && unique(obj_column_names) != ""))
+			{
+				for (i in seq_along(Orig_col_names)) 
+				{
+					# cat("\n i:",i, "\n")
+					# print(Orig_col_names[i])
+					# print(paste0("\\b", Orig_col_names[i], "\\b"))
+					# print(label_attributes[i])
+					if(!is.null(label_attributes[[i]]) && trimws(label_attributes[[i]]) != "")
+					{
+						substituteStr = trimws(label_attributes[i])
+						
+						if(prefixColName == TRUE)
+						{
+							substituteStr = paste0(trimws(Orig_col_names[i]),":",trimws(label_attributes[i]))
+						}
+						
+						#obj_column_names = gsub(paste0("\\b", Orig_col_names[i], "\\b"), label_attributes[i], obj_column_names)
+						obj_column_names = gsub(paste0("\\b", Orig_col_names[i], "\\b"), substituteStr, obj_column_names)
+					}
+				}
+			}
+			
+			# cat("\nAfter: obj_column_names\n")
+			# print(obj_column_names)
+			
+			if(length(colNameIndices) > 0)
+			{
+				orig_obj_column_names[colNameIndices] = obj_column_names
+			}
+			else
+			{
+				orig_obj_column_names = obj_column_names
+			}
+			
+			
+			if(class(obj)[1] == "character")
+			{
+				#print(obj_column_names)
+				return(invisible(orig_obj_column_names))
+			}
+			
+			dimnames(obj)[[2]] = orig_obj_column_names
+			
+			# cat("\nFinal column names\n")
+			# print(orig_obj_column_names)
+			
+			substitute_words <- function(text, input_words, replacement_words) {
+				  for (i in seq_along(input_words)) {
+					if(!is.null(label_attributes[[i]]) && trimws(label_attributes[[i]]) != "")
+					{
+						substituteStr = trimws(replacement_words[i])
+						
+						if(prefixColName == TRUE)
+						{
+							substituteStr = paste0(trimws(input_words[i]),":",trimws(replacement_words[i]))
+						}
+						
+						#text = gsub(paste0("\\b", input_words[i], "\\b"), replacement_words[i], text)
+						text = gsub(paste0("\\b", input_words[i], "\\b"), substituteStr, text)
+					}
+				  }
+				  return(text)
+			}
+
+			
+			if(length(colIndices) > 0)
+			{
+				colIndices = colIndices[colIndices <= dim(obj)[2]]
+				
+				selected_obj_columns = lapply(obj[,colIndices], function(column) {
+					sapply(column, substitute_words, input_words = Orig_col_names, replacement_words = label_attributes)
+				})
+				
+				if(length(colIndices) > 1)
+				{
+					obj[,colIndices] = as.data.frame(selected_obj_columns)
+				}
+				else
+				{
+					# cat("\nBEGIN Table Update\n")
+					# #print(obj)
+					# selected_obj_columns = as.matrix(selected_obj_columns, ncol=1)
+					# print(selected_obj_columns)
+					# print(selected_obj_columns[,colIndices])
+					# print(selected_obj_columns[,1])
+					obj[,colIndices] = as.character(unlist(selected_obj_columns))
+					# print(obj)
+					# cat("\nEND Table Update\n")
+				}
+			}
+			else
+			{
+				obj[] = lapply(obj, function(column) {
+					sapply(column, substitute_words, input_words = Orig_col_names, replacement_words = label_attributes)
+				})
+			}
+			
+			#print(class(obj))
+			#print(dimnames(obj))
+			row.names(obj) = NULL
+		}
+	}
+	
+	#print(dimnames(obj))
+	return(invisible(obj))
+}
+
+# 06/20/24
+#Global Setting for SPSS Label handling in BSkyFormat()
+BSkySetColumnLabelOutput <- function(colLabelOutput = TRUE) 
+{	
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyColLabelOutput = colLabelOutput
+	}
+	
+	return(invisible(colLabelOutput))
+}
+
+BSkyGetColumnLabelOutput <- function()
+{
+	colLabelOutput = FALSE
+	
+	if(exists("uadatasets.sk") && exists("BSkyColLabelOutput", env=uadatasets.sk))
+	{
+		colLabelOutput = uadatasets.sk$BSkyColLabelOutput
+	}
+	
+	return(invisible(colLabelOutput))
+}
+
+# 06/25/24
+#Global Setting for SPSS Label handling in BSkyFormat()
+BSkySetPrefixColNametoLabelOutput <- function(prefixColName = TRUE) 
+{	
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyPrefixColNametoLabelOutput = prefixColName
+	}
+	
+	return(invisible(prefixColName))
+}
+
+BSkyGetPrefixColNametoLabelOutput <- function()
+{
+	prefixColName = FALSE
+	
+	if(exists("uadatasets.sk") && exists("BSkyPrefixColNametoLabelOutput", env=uadatasets.sk))
+	{
+		prefixColName = uadatasets.sk$BSkyPrefixColNametoLabelOutput
+	}
+	
+	return(invisible(prefixColName))
 }
 
 

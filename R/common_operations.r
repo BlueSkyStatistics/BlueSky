@@ -129,7 +129,14 @@ UAgetIndexOfColInDataSet<-function(datasetname,colName)#DONE
 	##30jul2013 No need of following 'if' this function is a sub function and top function can varify for valid dataset.
 	# if(UAgetIndexOfDataSet(datasetname) > 0 ) ##Verifying if dataset is valid
 	# {
-		#find index of col
+		#find index of col index <- match(column_name, names(df))
+		# idx <- eval(parse(text=paste('match(colName, names(',datasetname,') )',sep='')))
+		# cat("\nCol-Name\n")
+		# print(colName)
+		# cat("\nCol-DIM\n")
+		# print(eval(parse(text=paste('dim(',datasetname,')[2]',sep=''))))
+		# cat("\nDIM NAMES\n")
+		# print(eval(parse(text=paste('colnames(',datasetname,')',sep=''))))
 		idx <- eval(parse(text=paste('which(colName == colnames(',datasetname,') )',sep='')))
 		#idx <- eval(parse(text=paste('which(colName == colnames(.GlobalEnv$',datasetname,') )',sep='')))
 #cat("\n Col index after searching..\n")
@@ -973,16 +980,54 @@ BSkyAttributesBackup <- function(colIndex, datasetname)
 	BSkyWarnMsg = paste("BSkyAttributesBackup: Warning attributes backup : ", "DataSetIndex :", datasetname," ", "Variable :", paste(colIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
+	#### colNamesOrIndex, dataSetNameOrIndex are already valid. Calling function will do that varificaiton. ####
+	# bb[!names(bb) %in% c("class", "levels")]
+
+	dsColAttrs = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])[!names(attributes(',datasetname,'[[',colIndex,']])) %in%  c("class", "levels")]',sep='')))	
+	# dsColAttrs = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])',sep='')))
+	# cat("\nBackup Attr..now\n")
+	# print(dsColAttrs)
+	BSkyFunctionWrapUp()
+	return(invisible(dsColAttrs))
+
+}
+
+BSkyAttributesBackup.old <- function(colIndex, datasetname)
+{
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(datasetname)
+	
+	BSkyErrMsg = paste("BSkyAttributesBackup: Error attributes backup : ", "DataSetIndex :", datasetname," ", "Variable  :", paste(colIndex, collapse = ","),sep="")
+	BSkyWarnMsg = paste("BSkyAttributesBackup: Warning attributes backup : ", "DataSetIndex :", datasetname," ", "Variable :", paste(colIndex, collapse = ","),sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	
 	#### colNamesOrIndex, dataSetNameOrIndex are already valid. Calling function will do that varificaiton. ####	
-	coldesc = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$coldesc',sep='')))
-	usermissing = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$usermissing',sep='')))
-	split = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$split',sep='')))
-	levelLabels = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$levelLabels',sep='')))
-	width = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$width',sep='')))
-	columns = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$columns',sep='')))
-	align = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$align',sep='')))
-	measure = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$measure',sep='')))
-	role = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role',sep='')))
+	dsattrs = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])',sep='')))
+	# coldesc = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$coldesc',sep='')))
+	# usermissing = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$usermissing',sep='')))
+	# split = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$split',sep='')))
+	# levelLabels = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$levelLabels',sep='')))
+	# width = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$width',sep='')))
+	# columns = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$columns',sep='')))
+	# align = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$align',sep='')))
+	# measure = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$measure',sep='')))
+	# role = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role',sep='')))
+	# label = eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$label',sep='')))
+	colname = eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']',sep=''))) ## this can be used while restoring attr
+	coldesc = dsattrs$coldesc
+	usermissing = dsattrs$usermissing
+	split = dsattrs$split
+	levelLabels = dsattrs$levelLabels
+	width = dsattrs$width
+	columns = dsattrs$columns
+	align = dsattrs$align
+	measure = dsattrs$measure
+	role = dsattrs$role
+	label = dsattrs$label
+	if(is.null(label)){
+		label=""
+	}
+	
 
 	bskyattlist <- list(at1 = coldesc,
 		at2 = usermissing,
@@ -992,14 +1037,35 @@ BSkyAttributesBackup <- function(colIndex, datasetname)
 		at6 = columns,
 		at7 = align,
 		at8 = measure,
-		at9 = role)
+		at9 = role,
+		at10 = label,
+		at11 = colname)
 		
 	BSkyFunctionWrapUp()
 	return(invisible(bskyattlist))
 
 }
 
-BSkyAttributesRestore <- function(colIndex, bskyattlist, datasetname) 
+
+BSkyAttributesRestore <- function(colIndex, bskyColAttlist, datasetname) 
+{
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(datasetname)
+	# cat("\nRestoring Attr..")
+	BSkyErrMsg = paste("BSkyAttributesRestore: Error restoring attributes: ", "DataSetIndex :", datasetname," ", "Variable  :", paste(colIndex, collapse = ","),sep="")
+	BSkyWarnMsg = paste("BSkyAttributesRestore: Warning restoring attributes: ", "DataSetIndex :", datasetname," ", "Variable :", paste(colIndex, collapse = ","),sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	# cat("\nRestoring Attr..now\n")
+	# print(bskyColAttlist)  #dd = BSkyUpdateColAttributes(cc, attributes(titanic$sex))
+
+	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']]) <- BSkyUpdateColAttributes(bskyColAttlist, attributes(',datasetname,'[[',colIndex,']]))',sep='')))
+	# eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']]) <- bskyColAttlist',sep='')))
+	#cat("\nRestored Attr..")
+	BSkyFunctionWrapUp()
+	return(invisible())
+}
+
+BSkyAttributesRestore.old <- function(colIndex, bskyattlist, datasetname) 
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -1008,6 +1074,7 @@ BSkyAttributesRestore <- function(colIndex, bskyattlist, datasetname)
 	BSkyWarnMsg = paste("BSkyAttributesRestore: Warning restoring attributes: ", "DataSetIndex :", datasetname," ", "Variable :", paste(colIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	#cat("\nRestoring Attr..now")
+									#### using setattr()  ####
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$coldesc <- bskyattlist$at1',sep='')))# <<- to <- coz .GlobalEnv
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$usermissing <- bskyattlist$at2',sep='')))# <<- to <- coz .GlobalEnv
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$split <- bskyattlist$at3',sep='')))# <<- to <- coz .GlobalEnv
@@ -1017,10 +1084,35 @@ BSkyAttributesRestore <- function(colIndex, bskyattlist, datasetname)
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$align <- bskyattlist$at7',sep='')))# <<- to <- coz .GlobalEnv
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$measure <- bskyattlist$at8',sep='')))# <<- to <- coz .GlobalEnv
 	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$role	 <- bskyattlist$at9',sep='')))# <<- to <- coz .GlobalEnv
+	eval(parse(text=paste('attributes(',datasetname,'[[',colIndex,']])$label <- bskyattlist$at10',sep='')))# <<- to <- coz .GlobalEnv
+
+									#### using setattr()  ####
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"coldesc"' , ', "', bskyattlist$at1,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"usermissing"' , ', "', bskyattlist$at2,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"split"' , ', "', bskyattlist$at3,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"levelLabels"' , ', "', bskyattlist$at4,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"columns"' , ', "', bskyattlist$at5,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"columns"' , ', "', bskyattlist$at6,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"align"' , ', "', bskyattlist$at7,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"measure"' , ', "', bskyattlist$at8,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"role"' , ', "', bskyattlist$at9,'")',sep='')))
+	# eval(parse(text=paste('setattr(',datasetname,'[[',colIndex,']],','"label"' , ', "', bskyattlist$at10,'")',sep='')))
 	#cat("\nRestored Attr..")
 	BSkyFunctionWrapUp()
 	return(invisible())
 }
+
+
+BSkyUpdateColAttributes <- function(original, updates) {
+  for (name in names(original)) {
+    #if (name %in% names(original)) {
+       updates[[name]] <- original[[name]]
+    #}
+    
+  }
+  return(updates)
+}
+
 
 ##TOP SUB##
 BSkyGetFactorMap <- function(colNameOrIndex, dataSetNameOrIndex)
@@ -1433,4 +1525,61 @@ ExtractDatasetNameFromGlobal <- function(datasetname)
 			}
 		}
 		return(invisible(datasetname))
+}
+
+
+## backup col attributes of all the cols of a dataset in BSkyblankDSallColAttr
+backupAllColAttr <- function(datasetname){
+
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(datasetname)
+	
+	BSkyErrMsg = paste("backupAllColAttr: Error restoring all col attributes: ", "DatasetnameOrIndex :", datasetname,sep="")
+	BSkyWarnMsg = paste("backupAllColAttr: Warning restoring all col attributes: ", "DatasetnameOrIndex :", datasetname,sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+
+	BSkyblankDSallColAttr <<- list()
+	datasetname <- BSkyValidateDataset(datasetname)
+	if(!is.null(datasetname))
+	{
+		dscolnames <- eval(parse(text=paste('colnames(',datasetname,')',sep='')))
+		for(colname in dscolnames) 
+		{
+			colIndex <- BSkyValidateColumn(datasetname, colname)	
+			if(colIndex > 0)
+			{
+				bskyattrs <- BSkyAttributesBackup(colIndex, datasetname)
+				# eval(parse(text=paste('BSkyblankDSallColAttr$',colname,' <<- bskyattrs' ,sep='')))
+				BSkyblankDSallColAttr <<- append(BSkyblankDSallColAttr, list(bskyattrs))
+			}
+		}
+	}
+	BSkyFunctionWrapUp()
+}
+
+## restore col attributes of all the col of a dataset in BSkyblankDSallColAttr
+restoreAllColAttr <- function(datasetname){
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(datasetname)
+	# cat("\nRestoring Attr..")
+	BSkyErrMsg = paste("restoreAllColAttr: Error restoring all col attributes: ", "DatasetnameOrIndex :", datasetname,sep="")
+	BSkyWarnMsg = paste("restoreAllColAttr: Warning restoring all col attributes: ", "DatasetnameOrIndex :", datasetname,sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+
+	datasetname <- BSkyValidateDataset(datasetname)
+	if(!is.null(datasetname))
+	{
+		dscolnames <- eval(parse(text=paste('colnames(',datasetname,')',sep='')))
+		for(colname in dscolnames) 
+		{
+			colIndex <- BSkyValidateColumn(datasetname, colname)	
+			if(colIndex > 0) 
+			{
+				bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
+				# bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',colname, sep='')))
+				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+			}	
+		}
+	}
+	BSkyFunctionWrapUp()
 }

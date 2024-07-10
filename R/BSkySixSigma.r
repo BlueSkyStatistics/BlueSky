@@ -1,3 +1,1422 @@
+
+#########################
+# Generate a random seed
+#########################
+BSkyGetRandomSeed <- function()
+{
+	# Set a different seed each time based on the current time
+	set.seed(Sys.time()) 
+
+	# Generate a random number between 1 and 10000
+	random_seed <- sample.int(10000, 1)  
+
+	#set.seed(random_seed)
+	#print(random_seed)
+	
+	# Return the random seed
+	return(invisible(random_seed))
+}
+
+
+#######################
+#MSA Attribute Analysis
+#######################
+kappam.fleiss.reference.value <- function(ratingMatrix, operator, detail=TRUE, levels, digits = 10)
+{
+	kappam_fleiss_mat_reference_std = c()
+	
+	m_trials = dim(ratingMatrix)[2] - 1
+	
+	for(trial in 1: m_trials)
+	{
+		mat_eachTrial_reference = ratingMatrix[,c(trial, (m_trials+1))]
+		
+		if(FALSE)
+		{
+			cat("\ntrial number: ", trial, "for Operator: ",operator,"\n")
+			BSkyFormat(mat_eachTrial_reference)
+			bsky_standard_kappa = c(bsky_standard_kappa, list(modified.kappam.fleiss(mat_eachTrial_reference, detail=detail, levels = levels, showVariance = TRUE, digits = 10)))
+			print(bsky_standard_kappa)
+		}
+		
+		kappam_fleiss = (modified.kappam.fleiss(mat_eachTrial_reference, detail=detail, levels = levels, showVariance = TRUE, digits = digits))$detail
+		kappam_fleiss = cbind(Operator=c(operator, rep("",dim(kappam_fleiss)[1]-1)), Response = dimnames(kappam_fleiss)[[1]], kappam_fleiss)
+		rownames(kappam_fleiss) = NULL
+		kappam_fleiss_mat_reference_std = rbind(kappam_fleiss_mat_reference_std, kappam_fleiss )
+	}
+	
+	#bsky_standard_kappa <<- list()
+	#BSkyFormat(kappam_fleiss_mat_reference_std, outputTableRenames=paste0("kappam_fleiss_mat_reference_std_",operator))
+	
+	kappa_reference_matrix = c()
+	
+	for(category in 1:length(levels)) 
+	{
+		kappam_fleiss_mat_reference_std = as.data.frame(kappam_fleiss_mat_reference_std)
+		all_rows_category = kappam_fleiss_mat_reference_std[kappam_fleiss_mat_reference_std$Response == levels[category],]
+		
+		Response = levels[category]
+		Kappa = sum(as.numeric(all_rows_category$Kappa))/m_trials
+		variance = sum(as.numeric(all_rows_category$variance))/(m_trials)^2
+		SE_Kappa = sqrt(variance)
+		z = Kappa/(sqrt(variance))
+		p.value = 2 * (1 - pnorm(abs(z)))
+		
+		kappa_reference_matrix = rbind(kappa_reference_matrix, c(Response = Response, Kappa = Kappa, 'SE Kappa'= SE_Kappa, z = z, p.value = p.value))
+	}
+	
+	#operator_col = c(operator, rep(c(""), (length(levels) -1)))
+	#kappa_reference_matrix = cbind(Operator = operator_col, kappa_reference_matrix)
+	
+	#BSkyFormat(kappa_reference_matrix)
+	return(kappa_reference_matrix)
+}
+
+modified.kappam.fleiss <- function (ratings, exact = FALSE, detail = FALSE, levels =c(), showVariance = FALSE, digits = 10)
+{
+    ratings <- as.matrix(na.omit(ratings))
+    ns <- nrow(ratings)
+    nr <- ncol(ratings)
+    
+	if(length(levels) > 0)
+	{
+		# this is added to modify the kappam.fleiss() to include an optional levels parameter
+		# to pass the ordered factor list for the response and reference variables. Without this
+		# factor levels are displayed in alphabetical orders in the kappam.fleiss output table
+		
+		lev = levels 
+	}
+	else
+	{
+		lev <- levels(as.factor(ratings))
+	}
+    
+	for (i in 1:ns) {
+        frow <- factor(ratings[i, ], levels = lev)
+        if (i == 1)
+            ttab <- as.numeric(table(frow))
+        else ttab <- rbind(ttab, as.numeric(table(frow)))
+    }
+    ttab <- matrix(ttab, nrow = ns)
+    agreeP <- sum((apply(ttab^2, 1, sum) - nr)/(nr * (nr - 1))/ns)
+    if (!exact) {
+        method <- "Fleiss' Kappa for m Raters"
+        chanceP <- sum(apply(ttab, 2, sum)^2)/(ns * nr)^2
+    }
+    else {
+        method <- "Fleiss' Kappa for m Raters (exact value)"
+        for (i in 1:nr) {
+            rcol <- factor(ratings[, i], levels = lev)
+            if (i == 1)
+                rtab <- as.numeric(table(rcol))
+            else rtab <- rbind(rtab, as.numeric(table(rcol)))
+        }
+        rtab <- rtab/ns
+        chanceP <- sum(apply(ttab, 2, sum)^2)/(ns * nr)^2 - sum(apply(rtab,
+            2, var) * (nr - 1)/nr)/(nr - 1)
+    }
+    value <- (agreeP - chanceP)/(1 - chanceP)
+    if (!exact) {
+        pj <- apply(ttab, 2, sum)/(ns * nr)
+        qj <- 1 - pj
+        varkappa <- (2/(sum(pj * qj)^2 * (ns * nr * (nr - 1)))) *
+            (sum(pj * qj)^2 - sum(pj * qj * (qj - pj)))
+        SEkappa <- sqrt(varkappa)
+        u <- value/SEkappa
+        p.value <- 2 * (1 - pnorm(abs(u)))
+        if (detail) {
+            pj <- apply(ttab, 2, sum)/(ns * nr)
+            pjk <- (apply(ttab^2, 2, sum) - ns * nr * pj)/(ns *
+                nr * (nr - 1) * pj)
+            kappaK <- (pjk - pj)/(1 - pj)
+            varkappaK <- 2/(ns * nr * (nr - 1))
+            SEkappaK <- sqrt(varkappaK)
+            uK <- kappaK/SEkappaK
+            p.valueK <- 2 * (1 - pnorm(abs(uK)))
+			
+			# 7/8/24
+			# Added the variance == TRUE section to get the variance out for Apprise vs. Standard Kappa calculation 
+			if(showVariance == TRUE)
+			{
+				tableK <- as.table(round(cbind(kappaK, SEkappaK, uK, p.valueK, varkappaK, (kappaK/uK)^2),
+					digits = digits))
+				rownames(tableK) <- lev
+				colnames(tableK) <- c("Kappa", "SE Kappa", "z", "p.value", "variance", "variance2")
+			}
+			else
+			{
+				tableK <- as.table(round(cbind(kappaK, SEkappaK, uK, p.valueK),
+					digits = digits))
+				rownames(tableK) <- lev
+				colnames(tableK) <- c("Kappa", "SE Kappa", "z", "p.value")
+			}
+        }
+    }
+    if (!exact) {
+        if (!detail) {
+            rval <- list(method = method, subjects = ns, raters = nr,
+                irr.name = "Kappa", value = value)
+        }
+        else {
+            rval <- list(method = method, subjects = ns, raters = nr,
+                irr.name = "Kappa", value = value, detail = tableK)
+        }
+        rval <- c(rval, stat.name = "z", statistic = u, p.value = p.value)
+    }
+    else {
+        rval <- list(method = method, subjects = ns, raters = nr,
+            irr.name = "Kappa", value = value)
+    }
+    class(rval) <- "irrlist"
+    return(rval)
+}
+
+BSkyAttributeAgreementAnalysis.internal <- function(part, operator, response, reference = c(), summaryDisagreementPrint = FALSE, showMisclassificationStat = FALSE, alpha = 0.95, digits = 10)
+{
+	orig_part = part
+	orig_operator = operator
+	orig_response = response
+	orig_reference = reference 
+	
+	if(is.factor(response)){
+		response_levels = levels(response)
+	}else{
+		all_reponse = as.character(response)
+		response_levels = levels(factor(all_reponse))
+		#response = sort(unique(all_reponse))
+	}
+	
+
+	# Optional reference value for response if given
+	reference_given = FALSE
+	if(length(reference) > 0)
+	{
+		reference_given = TRUE
+		
+		if(is.factor(reference)){
+			reference = levels(reference)
+			orig_reference_levels = levels(orig_reference)
+		}else{
+			all_reference = as.character(reference)
+			reference = levels(factor(all_reference))
+			#reference = sort(unique(all_reference))
+			orig_reference = factor(all_reference)
+			orig_reference_levels = levels(orig_reference)
+		}
+	}
+	
+	all_part = as.character(part)
+	part = unique(all_part)
+	part_len = length(part)
+	
+	all_operator = as.character(operator)
+	operator = unique(all_operator)
+
+
+	resp_mat = list()
+	resp_mat_no_reference = list()
+	resp_mat_names = c()
+	j = 1
+	withinAgreement = c()
+	withinAgreement_reference = c()
+	
+	disagreement_reference = c()
+	summaryDisagreement_reference = c()
+	
+	kappam_fleiss_mat = c()
+	kappam_fleiss_mat_reference = c()
+	
+	
+	observations_per_op = c()
+	
+
+	for(i in 1:length(operator))
+	{
+		kappam_fleiss_mat_reference_std = c()
+		
+		observations_per_op = length(which(orig_operator == operator[i]))
+		
+		Op_resp_mat = matrix(orig_response[j:(j + observations_per_op - 1)], nrow = part_len, byrow = TRUE)
+						  
+		dimnames(Op_resp_mat)[[2]] = c(paste(operator[i], seq(1:dim(Op_resp_mat)[2]), sep=""))
+						  
+		resp_mat = c(resp_mat, list(Op_resp_mat))
+		resp_mat_no_reference = c(resp_mat_no_reference, list(Op_resp_mat))
+		  
+		resp_mat_names = c(resp_mat_names, operator[i])
+		names(resp_mat) = resp_mat_names
+		names(resp_mat_no_reference) = resp_mat_names
+		
+		#dimnames(resp_mat[[i]])[[2]] = c(paste(operator[i], seq(1:dim(resp_mat[[i]])[2]), sep="")) 
+
+		CI_stat = agreementCI(response_df = resp_mat[[i]], alpha = alpha)
+		
+		withinAgreement = rbind(withinAgreement, c(operator[i], CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100))
+		
+		dimnames(withinAgreement)[[2]] = c("Operator", "Agreement", "Inspected", "%Agreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+		
+		kappam_fleiss = (modified.kappam.fleiss(resp_mat[[i]], detail=TRUE, levels = response_levels))$detail
+		kappam_fleiss = cbind(Operator=c(operator[i], rep("",dim(kappam_fleiss)[1]-1)), Response = dimnames(kappam_fleiss)[[1]], kappam_fleiss)
+		rownames(kappam_fleiss) = NULL
+		kappam_fleiss_mat = rbind(kappam_fleiss_mat, kappam_fleiss )
+		
+		if(reference_given == TRUE)
+		{
+			tries_by_op = paste(operator[i], seq(1:dim(resp_mat[[i]])[2]), sep="")
+
+			#resp_mat[[i]] = cbind(resp_mat[[i]], orig_reference[j:(j + part_len -1)]) 
+			resp_mat[[i]] = cbind(resp_mat[[i]], orig_reference[seq(j, (j + observations_per_op -1), by = (observations_per_op/part_len))])
+			resp_mat[[i]] = as.data.frame(resp_mat[[i]])
+			resp_mat[[i]][,dim(resp_mat[[i]])[2]] = factor(resp_mat[[i]][,dim(resp_mat[[i]])[2]])
+			levels(resp_mat[[i]][,dim(resp_mat[[i]])[2]]) = orig_reference_levels
+			
+			dimnames(resp_mat[[i]])[[2]] = c(tries_by_op, "Reference")
+			
+			CI_stat = agreementCI(response_df = resp_mat[[i]], alpha = alpha)
+		
+			withinAgreement_reference = rbind(withinAgreement_reference, c(operator[i], CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100))
+			dimnames(withinAgreement_reference)[[2]] = c("Operator", "Agreement", "Inspected", "%Agreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+			
+			#kappam_fleiss = (modified.kappam.fleiss(resp_mat[[i]], detail=TRUE, levels = orig_reference_levels))$detail
+			kappam_fleiss = kappam.fleiss.reference.value(resp_mat[[i]], detail=TRUE, operator = operator[i], levels = orig_reference_levels, digits = digits)
+			kappam_fleiss = cbind(Operator=c(operator[i], rep("",dim(kappam_fleiss)[1]-1)), Response = dimnames(kappam_fleiss)[[1]], kappam_fleiss)
+			rownames(kappam_fleiss) = NULL
+			kappam_fleiss_mat_reference = rbind(kappam_fleiss_mat_reference, kappam_fleiss )
+		
+			if(length(orig_reference_levels) == 2)
+			{
+				disagreement_stat = disagreementStat(response_df = resp_mat[[i]])
+				disagreement_reference = rbind(disagreement_reference, c(operator[i], disagreement_stat))
+				dimnames(disagreement_reference)[[2]] = c("Operator", 
+																paste("# ",orig_reference_levels[1],"/",orig_reference_levels[2], sep=""), 
+																"Percent", 
+																paste("# ",orig_reference_levels[2],"/",orig_reference_levels[1], sep=""),
+																"Percent",
+																"# Mixed", "Percent")
+			}
+		}
+		
+		j = j + observations_per_op
+	}
+
+	between_agreement_response_mat = c()                        
+	x = lapply(resp_mat_no_reference, function(x){between_agreement_response_mat <<- cbind(between_agreement_response_mat,x)})
+
+	CI_stat = agreementCI(response_df = between_agreement_response_mat, alpha = alpha)
+	between_agreement_mat = matrix(c("All", CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100), nrow = 1)
+	dimnames(between_agreement_mat)[[2]] = c("Operator", "Agreement", "Inspected", "%Agreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+
+	kappam_fleiss_all = (modified.kappam.fleiss(between_agreement_response_mat, detail=TRUE, levels = response_levels))$detail
+	kappam_fleiss_mat_all = cbind(Operator=c("All", rep("",dim(kappam_fleiss_all)[1]-1)), Response = dimnames(kappam_fleiss_all)[[1]], kappam_fleiss_all)
+	rownames(kappam_fleiss_mat_all) = NULL
+
+	if(reference_given == TRUE)
+	{
+		between_agreement_response_mat = c()                        
+		x = lapply(resp_mat_no_reference, function(x){between_agreement_response_mat <<- cbind(between_agreement_response_mat,x)})
+		
+		between_agreement_response_mat = as.data.frame(between_agreement_response_mat)
+		#between_agreement_response_mat = cbind(between_agreement_response_mat, Reference = orig_reference[1:part_len])
+
+		between_agreement_response_mat = cbind(between_agreement_response_mat, Reference = orig_reference[seq(1, (1 + observations_per_op -1), by = (observations_per_op/part_len))])
+		
+		#between_agreement_response_mat = cbind(between_agreement_response_mat, Reference = orig_reference[1:part_len])
+  
+		between_agreement_response_mat[,dim(between_agreement_response_mat)[2]] = factor(between_agreement_response_mat[,dim(between_agreement_response_mat)[2]])
+		levels(between_agreement_response_mat[,dim(between_agreement_response_mat)[2]]) = orig_reference_levels
+
+		CI_stat = agreementCI(response_df = between_agreement_response_mat, alpha = alpha)
+		between_agreement_mat_reference = matrix(c("All", CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100), nrow = 1)
+		dimnames(between_agreement_mat_reference)[[2]] = c("Operator", "Agreement", "Inspected", "%Agreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+
+		#kappam_fleiss_all_reference = (modified.kappam.fleiss(between_agreement_response_mat, detail=TRUE, levels = orig_reference_levels))$detail
+		kappam_fleiss_all_reference = kappam.fleiss.reference.value(between_agreement_response_mat, detail=TRUE, operator = operator[i], levels = orig_reference_levels, digits = digits)
+		kappam_fleiss_mat_all_reference = cbind(Operator=c("All", rep("",dim(kappam_fleiss_all_reference)[1]-1)), Response = dimnames(kappam_fleiss_all_reference)[[1]], kappam_fleiss_all_reference)
+		rownames(kappam_fleiss_mat_all_reference) = NULL
+		
+		if(length(orig_reference_levels) == 2)
+		{
+			#summaryDisagreement_reference = summaryDisagreement(response_list = resp_mat_no_reference, reference = orig_reference[1:part_len])
+			summaryDisagreement_reference = summaryDisagreement(response_list = resp_mat_no_reference, reference = orig_reference[seq(1, (1 + observations_per_op -1), by = (observations_per_op/part_len))])
+		}
+	}
+	
+
+	BSkyFormat(withinAgreement, outputTableRenames = c("Within Appraiser Agreement")) 	
+	BSkyFormat(kappam_fleiss_mat, outputTableRenames = c("Within Appraiser Fleiss Kappa Statistic"))
+	BSkyFormat(between_agreement_mat, outputTableRenames = c("Between Appraiser Agreement"))
+	BSkyFormat(kappam_fleiss_mat_all, outputTableRenames = c("Between Appraiser Fleiss Kappa Statistic"))
+
+	if(reference_given == TRUE)
+	{
+		BSkyFormat(withinAgreement_reference, outputTableRenames = c("Each Appraiser Agreement Vs Standard"))
+		
+		#if(length(disagreement_reference) > 0)  
+		#{
+		#	BSkyFormat(disagreement_reference, outputTableRenames = c("Each Appraiser Disagreement Vs Standard"))
+		#}
+		
+		BSkyFormat(kappam_fleiss_mat_reference, outputTableRenames = c("Each Appraiser Vs Standard Fleiss Kappa Statistic"))
+		BSkyFormat(between_agreement_mat_reference, outputTableRenames = c("All Appraisers Agreement Vs Standard"))
+		
+		#if(length(summaryDisagreement_reference) > 0)  
+		#{
+		#	BSkyFormat(summaryDisagreement_reference, outputTableRenames = c("Summary of Appraiser Disagreement Vs Standard"))
+		#}
+		
+		BSkyFormat(kappam_fleiss_mat_all_reference, outputTableRenames = c("All Appraisers Vs Standard Fleiss Kappa Statistic"))
+	
+		if(length(disagreement_reference) > 0)  
+		{
+			BSkyFormat(disagreement_reference, outputTableRenames = c("Each Appraiser Disagreement Vs Standard"))
+		}
+		
+		if(summaryDisagreementPrint == TRUE && length(summaryDisagreement_reference) > 0)  
+		{
+			BSkyFormat(summaryDisagreement_reference, outputTableRenames = c("Summary of Appraiser Disagreement Vs Standard"))
+		}
+	}
+	
+	# Prepare for Plot Graphs
+	ggplot_df1 = NULL
+	y_percentage = round(as.numeric(c(t(withinAgreement[,c(4:6)]))), digit=2)
+	x_appraiser = c(sapply(operator, function(x) rep(x,3)))
+	ggplot_df1 = data.frame(Appraiser = x_appraiser, Percentage = y_percentage)
+	
+	#plotAgreemnt(df = ggplot_df1, main_title = c("Confidence Intervals Within Appraisers"))
+	
+	ggplot_df2 = NULL 
+	if(reference_given == TRUE)
+	{	
+		y_percentage = round(as.numeric(c(t(withinAgreement_reference[,c(4:6)]))), digit=2)
+		x_appraiser = c(sapply(operator, function(x) rep(x,3)))
+		ggplot_df2 = data.frame(Appraiser = x_appraiser, Percentage = y_percentage)
+		
+		#plotAgreemnt(df = ggplot_df2, main_title = c("Confidence Intervals Against Reference"))
+	}
+	
+	#invisible(return(list(ggplot_df1, ggplot_df2)))
+	
+	return(invisible(list(resp_mat = resp_mat, plot_list = list(ggplot_df1, ggplot_df2))))
+}
+
+disagreementStat <- function(response_df)
+{
+	#print(response_df)
+	
+	first_level_matched = 0
+	second_level_matched = 0
+	
+	#N is sample size
+	N = dim(response_df)[1]
+	
+	level_reference = levels(response_df$Reference)
+
+	#matched_rows = response_df[apply(response_df, 1, function(row) length(unique(row)) == 1),]
+	
+	#Rows with all matched
+	
+	apply(response_df, 1, 
+		function(row) 
+		{
+			if((length(unique(row[1:(length(row)-1)])) == 1) && unique(row[1:(length(row)-1)]) == level_reference[1] && row[length(row)] != level_reference[1] )
+			{
+				first_level_matched <<- first_level_matched + 1
+			}
+			
+			if((length(unique(row[1:(length(row)-1)])) == 1) && unique(row[1:(length(row)-1)]) == level_reference[2] && row[length(row)] != level_reference[2])
+			{
+				second_level_matched <<- second_level_matched + 1
+			}
+		} 
+	)
+	
+	
+	mixed_disageement_rows = response_df[apply(response_df, 1, function(row) length(unique(row[1:(length(row)-1)])) != 1),]
+
+	if(!is.matrix(mixed_disageement_rows) && !is.data.frame(mixed_disageement_rows))
+	{
+		m = 0
+		if(length(mixed_disageement_rows) > 0)
+			m = 1
+	}
+	else
+	{
+		m = dim(mixed_disageement_rows)[1]
+	}
+	
+	#print(c(first_level_matched, (first_level_matched/N)*100, second_level_matched, (second_level_matched/N)*100, m, (m/N)*100 ))															
+
+	invisible(return(c(first_level_matched, (first_level_matched/N)*100, second_level_matched, (second_level_matched/N)*100, m, (m/N)*100 )))															
+
+}
+
+summaryDisagreement <- function(response_list, reference)
+{
+	reference = as.character(reference)
+	samples = length(reference)
+	
+	#print(response_list)
+	#print(reference)
+	
+	disagreement_df = data.frame(Sample = seq(1:samples), Standard = reference)
+	
+	lapply(response_list, 
+		function(op_response)
+		{
+			all_count = c()
+			all_percent = c()
+			
+			for(i in 1:samples)
+			{
+				count = length(which(op_response[i,] != reference[i]))
+				percent = count/(length(op_response[i,]))*100
+				all_count = c(all_count, count)
+				all_percent = c(all_percent, percent)
+			}
+			
+			disagreement_df <<- cbind(disagreement_df, all_count, all_percent)
+		}
+	)
+	
+	count_pct_columns = rep(c("Count", "Percent"), length(response_list))
+	disagreement_df = rbind(c("Sample", "Standard", count_pct_columns), disagreement_df)
+	 
+	col_names = c(" ", " ", rep(names(response_list), each=2))
+	dimnames(disagreement_df)[[2]] = col_names
+	rownames(disagreement_df) = NULL 
+	
+	invisible(return(disagreement_df))
+}
+
+agreementCI <- function(response_df, alpha = 0.95)
+{
+	#Rows with all matched
+
+	matched_rows = response_df[apply(response_df, 1, function(row) length(unique(row)) == 1),]
+
+	if(!is.matrix(matched_rows) && !is.data.frame(matched_rows))
+	{
+		# m = dim(matrix(matched_rows, ncol = dim(response_df)[2]))[1]
+		m = 1
+	}
+	else
+	{
+		m = dim(matched_rows)[1]
+	}
+
+		#N is sample size
+		N = dim(response_df)[1]
+
+		v1 = 2*m
+		v2 = 2*(N - m + 1)
+
+	if(m == N)
+	{
+		alphaL = (1-alpha)
+		alphaU = alpha
+
+		qfl = qf(alphaL, df1=v1, df2=v2)
+
+		LL = (v1* qfl)/(v2 + v1*qfl)
+	}
+	else if(m !=0)
+	{
+		alphaL = (1-alpha)/2
+		alphaU = alpha + (1-alpha)/2
+
+		qfl = qf(alphaL, df1=v1, df2=v2)
+
+		LL = (v1* qfl)/(v2 + v1*qfl)
+	}
+	else
+	{
+		LL = 0
+	}
+
+
+		v1 = 2*(m + 1)
+		v2 = 2*(N - m)
+
+	if(m == N)
+	{
+		UL = 1
+	}
+	else if(m == 0)
+	{
+		alphaL = (1-alpha)
+		alphaU = alpha
+		qfu = qf(alphaU, df1=v1, df2=v2)
+		UL = (v1* qfu)/(v2 + v1*qfu)
+	}
+	else
+	{
+		alphaL = (1-alpha)/2
+		alphaU = alpha + (1-alpha)/2
+		qfu = qf(alphaU, df1=v1, df2=v2)
+		UL = (v1* qfu)/(v2 + v1*qfu)
+	}
+
+	invisible(return(c(m=m,N=N,LL=LL,UL=UL)))
+}
+
+plotAgreemnt <- function(df, main_title = c())
+{
+	ggplot(df, aes(x=Appraiser, y=Percentage, group = Appraiser, label= Percentage, color=Appraiser )) + 
+		  geom_line(linewidth = 2) + 
+		  geom_point(size = 8, shape = 19) +
+		  geom_text(hjust=1.6, vjust=0, size = 6) + 
+		  scale_y_continuous(breaks=seq((min(df$Percentage)- (min(df$Percentage)%%10)),100,5))+ 
+		  theme_grey(base_size = 20) +
+		  theme(plot.title = element_text(size = 20))+
+		  ggtitle(main_title) +
+		  xlab("Appraiser") + 
+		  ylab("Percentage")
+}
+
+BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, reference = c(), trial = c(), showMisclassificationStat = FALSE, alpha = 0.95)
+{
+	orig_part = part
+	orig_operator = operator
+	orig_response = response
+	orig_reference = reference 
+	
+	if(is.factor(response)){
+		response_levels = levels(response)
+	}else{
+		all_reponse = as.character(response)
+		response_levels = levels(factor(all_reponse))
+		#response = sort(unique(all_reponse))
+	}
+	
+
+	# Optional reference value for response if given
+	reference_given = FALSE
+	if(length(reference) > 0)
+	{
+		reference_given = TRUE
+		
+		if(is.factor(reference)){
+			reference = levels(reference)
+			orig_reference_levels = levels(orig_reference)
+		}else{
+			all_reference = as.character(reference)
+			reference = levels(factor(all_reference))
+			#reference = sort(unique(all_reference))
+			orig_reference = factor(all_reference)
+			orig_reference_levels = levels(orig_reference)
+		}
+	}
+	
+	all_part = as.character(part)
+	part = unique(all_part)
+	part_len = length(part)
+	
+	all_operator = as.character(operator)
+	operator = unique(all_operator)
+
+
+	resp_mat = list()
+	resp_mat_no_reference = list()
+	resp_mat_names = c()
+	j = 1
+	withinAgreement = c()
+	withinAgreement_reference = c()
+	
+	disagreement_reference = c()
+	summaryDisagreement_reference = c()
+	
+	kappam_fleiss_mat = c()
+	kappam_fleiss_mat_reference = c()
+	
+	observations_per_op = c()
+
+	for(i in 1:length(operator))
+	{
+		observations_per_op = length(which(orig_operator == operator[i]))
+
+# print(operator[i])
+# print(observations_per_op)
+# print(part_len)
+# print(orig_response[j:(j + observations_per_op - 1)])
+		
+		Op_resp_mat = matrix(orig_response[j:(j + observations_per_op - 1)], nrow = part_len, byrow = TRUE)
+						  
+		dimnames(Op_resp_mat)[[2]] = c(paste(operator[i], seq(1:dim(Op_resp_mat)[2]), sep=""))
+						  
+		resp_mat = c(resp_mat, list(Op_resp_mat))
+		resp_mat_no_reference = c(resp_mat_no_reference, list(Op_resp_mat))
+		  
+		resp_mat_names = c(resp_mat_names, operator[i])
+		names(resp_mat) = resp_mat_names
+		names(resp_mat_no_reference) = resp_mat_names
+		
+		#dimnames(resp_mat[[i]])[[2]] = c(paste(operator[i], seq(1:dim(resp_mat[[i]])[2]), sep="")) 
+
+# print("resp_mat without reference for")
+# print(operator[i])
+# BSkyFormat(resp_mat[[i]])
+
+		
+		CI_stat = agreementCI(response_df = resp_mat[[i]], alpha = alpha)
+		
+		withinAgreement = rbind(withinAgreement, c(operator[i], CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100))
+		
+		dimnames(withinAgreement)[[2]] = c("Operator", "Agreement", "Inspected", "%Aggreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+		
+		kappam_fleiss = (modified.kappam.fleiss(resp_mat[[i]], detail=TRUE, levels = response_levels))$detail
+		kappam_fleiss = cbind(Operator=c(operator[i], rep("",dim(kappam_fleiss)[1]-1)), Response = dimnames(kappam_fleiss)[[1]], kappam_fleiss)
+		rownames(kappam_fleiss) = NULL
+		kappam_fleiss_mat = rbind(kappam_fleiss_mat, kappam_fleiss )
+		
+		if(reference_given == TRUE)
+		{
+			tries_by_op = paste(operator[i], seq(1:dim(resp_mat[[i]])[2]), sep="")
+
+#print(orig_reference[seq(j, (j + observations_per_op -1), by = (observations_per_op/part_len))])
+
+			#resp_mat[[i]] = cbind(resp_mat[[i]], orig_reference[j:(j + part_len -1)]) 
+			resp_mat[[i]] = cbind(resp_mat[[i]], orig_reference[seq(j, (j + observations_per_op -1), by = (observations_per_op/part_len))])
+			resp_mat[[i]] = as.data.frame(resp_mat[[i]])
+			resp_mat[[i]][,dim(resp_mat[[i]])[2]] = factor(resp_mat[[i]][,dim(resp_mat[[i]])[2]])
+			levels(resp_mat[[i]][,dim(resp_mat[[i]])[2]]) = orig_reference_levels
+			
+			dimnames(resp_mat[[i]])[[2]] = c(tries_by_op, "Reference")
+
+# print("resp_mat without reference for")
+# print(operator[i])
+# BSkyFormat(resp_mat[[i]])
+			
+			CI_stat = agreementCI(response_df = resp_mat[[i]], alpha = alpha)
+		
+			withinAgreement_reference = rbind(withinAgreement_reference, c(operator[i], CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100))
+			dimnames(withinAgreement_reference)[[2]] = c("Operator", "Agreement", "Inspected", "%Aggreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+			
+			kappam_fleiss = (modified.kappam.fleiss(resp_mat[[i]], detail=TRUE, levels = orig_reference_levels))$detail
+			kappam_fleiss = cbind(Operator=c(operator[i], rep("",dim(kappam_fleiss)[1]-1)), Response = dimnames(kappam_fleiss)[[1]], kappam_fleiss)
+			rownames(kappam_fleiss) = NULL
+			kappam_fleiss_mat_reference = rbind(kappam_fleiss_mat_reference, kappam_fleiss )
+			
+			if(length(orig_reference_levels) == 2)
+			{
+				disagreement_stat = disagreementStat(response_df = resp_mat[[i]])
+				disagreement_reference = rbind(disagreement_reference, c(operator[i], disagreement_stat))
+				dimnames(disagreement_reference)[[2]] = c("Operator", 
+																paste("# ",orig_reference_levels[1],"/",orig_reference_levels[2], sep=""), 
+																"Percent", 
+																paste("# ",orig_reference_levels[2],"/",orig_reference_levels[1], sep=""),
+																"Percent",
+																"# Mixed", "Percent")
+			}
+		}
+		
+		j = j + observations_per_op
+	}
+	
+	
+#print(resp_mat)
+
+	between_agreement_response_mat = c()                        
+	x = lapply(resp_mat_no_reference, function(x){between_agreement_response_mat <<- cbind(between_agreement_response_mat,x)})
+
+# print("between_agreement_response_mat with no reference")
+# BSkyFormat(between_agreement_response_mat)
+
+	CI_stat = agreementCI(response_df = between_agreement_response_mat, alpha = alpha)
+	between_agreement_mat = matrix(c("All", CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100), nrow = 1)
+	dimnames(between_agreement_mat)[[2]] = c("Operator", "Agreement", "Inspected", "%Aggreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+
+	kappam_fleiss_all = (modified.kappam.fleiss(between_agreement_response_mat, detail=TRUE, levels = response_levels))$detail
+	kappam_fleiss_mat_all = cbind(Operator=c("All", rep("",dim(kappam_fleiss_all)[1]-1)), Response = dimnames(kappam_fleiss_all)[[1]], kappam_fleiss_all)
+	rownames(kappam_fleiss_mat_all) = NULL
+
+	if(reference_given == TRUE)
+	{
+		between_agreement_response_mat = c()                        
+		x = lapply(resp_mat_no_reference, function(x){between_agreement_response_mat <<- cbind(between_agreement_response_mat,x)})
+		
+		between_agreement_response_mat = as.data.frame(between_agreement_response_mat)
+		#between_agreement_response_mat = cbind(between_agreement_response_mat, Reference = orig_reference[1:part_len])
+
+# print("between_agreement_response_mat")
+# BSkyFormat(between_agreement_response_mat)
+# print(observations_per_op)
+# print(orig_reference[seq(1, (1 + observations_per_op -1), by = (observations_per_op/part_len))])
+
+		between_agreement_response_mat = cbind(between_agreement_response_mat, Reference = orig_reference[seq(1, (1 + observations_per_op -1), by = (observations_per_op/part_len))])
+		
+		#between_agreement_response_mat = cbind(between_agreement_response_mat, Reference = orig_reference[1:part_len])
+  
+		between_agreement_response_mat[,dim(between_agreement_response_mat)[2]] = factor(between_agreement_response_mat[,dim(between_agreement_response_mat)[2]])
+		levels(between_agreement_response_mat[,dim(between_agreement_response_mat)[2]]) = orig_reference_levels
+
+# print("between_agreement_response_mat with reference")
+# BSkyFormat(between_agreement_response_mat)
+
+		CI_stat = agreementCI(response_df = between_agreement_response_mat, alpha = alpha)
+		between_agreement_mat_reference = matrix(c("All", CI_stat["m"], CI_stat["N"], (CI_stat["m"]/CI_stat["N"])*100, CI_stat["LL"]*100, CI_stat["UL"]*100), nrow = 1)
+		dimnames(between_agreement_mat_reference)[[2]] = c("Operator", "Agreement", "Inspected", "%Aggreement", paste(format(round(alpha, 2), nsmall = 2),"CI (lower)"), paste(format(round(alpha, 2), nsmall = 2),"CI (upper)"))
+
+		kappam_fleiss_all_reference = (modified.kappam.fleiss(between_agreement_response_mat, detail=TRUE, levels = orig_reference_levels))$detail
+		kappam_fleiss_mat_all_reference = cbind(Operator=c("All", rep("",dim(kappam_fleiss_all_reference)[1]-1)), Response = dimnames(kappam_fleiss_all_reference)[[1]], kappam_fleiss_all_reference)
+		rownames(kappam_fleiss_mat_all_reference) = NULL
+		
+		if(length(orig_reference_levels) == 2)
+		{
+			#summaryDisagreement_reference = summaryDisagreement(response_list = resp_mat_no_reference, reference = orig_reference[1:part_len])
+			summaryDisagreement_reference = summaryDisagreement(response_list = resp_mat_no_reference, reference = orig_reference[seq(1, (1 + observations_per_op -1), by = (observations_per_op/part_len))])
+		}
+	}
+	
+
+	BSkyFormat(withinAgreement, outputTableRenames = c("Within Appraiser Agreement")) 	
+	BSkyFormat(kappam_fleiss_mat, outputTableRenames = c("Within Appraiser Fleiss Kappa Statistic"))
+	BSkyFormat(between_agreement_mat, outputTableRenames = c("Between Appraiser Agreement"))
+	BSkyFormat(kappam_fleiss_mat_all, outputTableRenames = c("Between Appraiser Fleiss Kappa Statistic"))
+
+	if(reference_given == TRUE)
+	{
+		BSkyFormat(withinAgreement_reference, outputTableRenames = c("Each Appraiser Agreement Vs Standard"))
+		
+		#if(length(disagreement_reference) > 0)  
+		#{
+		#	BSkyFormat(disagreement_reference, outputTableRenames = c("Each Appraiser Disagreement Vs Standard"))
+		#}
+		
+		BSkyFormat(kappam_fleiss_mat_reference, outputTableRenames = c("Each Appraiser Vs Standard Fleiss Kappa Statistic"))
+		BSkyFormat(between_agreement_mat_reference, outputTableRenames = c("All Appraisers Agreement Vs Standard"))
+		
+		#if(length(summaryDisagreement_reference) > 0)  
+		#{
+		#	BSkyFormat(summaryDisagreement_reference, outputTableRenames = c("Summary of Appraiser Disagreement Vs Standard"))
+		#}
+		
+		BSkyFormat(kappam_fleiss_mat_all_reference, outputTableRenames = c("All Appraisers Vs Standard Fleiss Kappa Statistic"))
+	
+		if(length(disagreement_reference) > 0)  
+		{
+			BSkyFormat(disagreement_reference, outputTableRenames = c("Each Appraiser Disagreement Vs Standard"))
+		}
+		
+		if(length(summaryDisagreement_reference) > 0)  
+		{
+			BSkyFormat(summaryDisagreement_reference, outputTableRenames = c("Summary of Appraiser Disagreement Vs Standard"))
+		}
+
+		
+		if(showMisclassificationStat == TRUE)
+		{
+			cat("\nOverall Accuracy and Misclassification Rates\n")
+			
+			#Overall accuracy
+			bsky_total_observations = length(orig_response)
+			bsky_overall_accuracy = sum(orig_response == orig_reference)/bsky_total_observations
+			cat(paste0("\nOverall accuracy rate: ", round(bsky_overall_accuracy, BSkyGetDecimalDigitSetting()), "\n"))
+			
+			#Accuracy for each appraiser
+			bsky_accuracy_by_appraiser <- as.data.frame(({{dataset.name}} %>%
+				group_by({{selected.variableOpSelcted | safe}}) %>%
+					summarise(
+						Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
+						Obs_count = n(),
+						Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n()
+					)))
+			BSkyFormat(bsky_accuracy_by_appraiser, outputTableRenames = "Accuracy rate for each {{selected.variableOpSelcted | safe}}",
+						perTableFooter = paste0("{{selected.variableOpSelcted | safe}} classified accurately compared to its {{selected.variableRefSelcted | safe}} value"))
+			
+			#Accuracy by standard
+			bsky_accuracy_by_standard <- as.data.frame(({{dataset.name}} %>%
+				group_by({{selected.variableRefSelcted | safe}}) %>%
+					summarise(
+						Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
+						Obs_count = n(),
+						Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n()
+					)))
+			BSkyFormat(bsky_accuracy_by_standard, outputTableRenames = "Accuracy rate comapred to {{selected.variableRefSelcted | safe}}")
+			
+			if(length(trial) > 0)
+			{
+				#Accuracy by trial
+				bsky_accuracy_by_trial <- as.data.frame(({{dataset.name}} %>%
+					group_by({{selected.variableTrialSelcted | safe}}) %>%
+						summarise(
+							Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
+							Obs_count = n(),
+							Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n()
+						)))
+				BSkyFormat(bsky_accuracy_by_trial, outputTableRenames = "Accuracy rate by {{selected.variableTrialSelcted | safe}} comapred to {{selected.variableRefSelcted | safe}}")
+			}	
+			
+			#Accuracy by appraiser and standard
+			bsky_accuracy_by_appraiser_standard <- as.data.frame(({{dataset.name}} %>%
+				group_by({{selected.variableOpSelcted | safe}}, {{selected.variableRefSelcted | safe}}) %>%
+					summarise(
+						Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
+						Obs_count = n(),
+						Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n(),
+						.groups = 'drop'
+					)))
+			BSkyFormat(bsky_accuracy_by_appraiser_standard, outputTableRenames = "Accuracy rate by {{selected.variableOpSelcted | safe}} and {{selected.variableRefSelcted | safe}}",
+						perTableFooter = paste0("{{selected.variablePartSelcted | safe}} classified correctly compared to its {{selected.variableRefSelcted | safe}} value by {{selected.variableOpSelcted | safe}}"))
+			
+			#Misclassification rates
+			bsky_overall_error_rate = 1 - bsky_overall_accuracy
+			cat(paste0("\nOverall misclassification error rate: ", round(bsky_overall_error_rate, BSkyGetDecimalDigitSetting()),"\n"))
+			
+			bsky_misclassification_by_standard <- as.data.frame(({{dataset.name}} %>%
+				group_by({{selected.variableRefSelcted | safe}}) %>%
+					summarise(
+						Misclassification_count = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}}),
+						Obs_count = n(),
+						Misclassification = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}})/n(),
+						.groups = 'drop'
+					)))
+			BSkyFormat(bsky_misclassification_by_standard, outputTableRenames = "Misclassification rate compared to {{selected.variableRefSelcted | safe}}")
+			
+			#Overall appraiser misclassification rate
+			bsky_combined_resp_mat = c()
+			lapply(resp_mat, function(x){names(x) = seq(1:dim(x)[2]); bsky_combined_resp_mat <<- rbind(bsky_combined_resp_mat, x)})
+			not_all_equal_rows_count <- sum(apply(bsky_combined_resp_mat[,c(1:dim(bsky_combined_resp_mat)[2]-1)], 1, function(row){!all(row == row[1])}))
+			cat(paste0("\nOverall {{selected.variableOpSelcted | safe}} misclassification rate: ",(not_all_equal_rows_count/dim(bsky_combined_resp_mat)[1]),"\n"))
+			
+			#Appraiser misclassification rates
+			bsky_misclassification_by_standard_appraiser <- as.data.frame(({{dataset.name}} %>%
+				group_by({{selected.variableRefSelcted | safe}}, {{selected.variableOpSelcted | safe}}) %>%
+					summarise(
+						Misclassification_count = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}}),
+						Obs_count = n(),
+						Misclassification = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}})/n(),
+						.groups = 'drop'
+					)))
+			BSkyFormat(bsky_misclassification_by_standard_appraiser, outputTableRenames = "Misclassification rate by {{selected.variableOpSelcted | safe}} comapred to {{selected.variableRefSelcted | safe}}", 
+						perTableFooter = paste0("{{selected.variablePartSelcted | safe}} misclassified compared to its {{selected.variableRefSelcted | safe}} value by {{selected.variableOpSelcted | safe}}"))
+
+			#Appraiser misclassification rate
+			not_all_equal_rows_count_by_appraiser <- lapply(resp_mat, function(df){sum(apply(df[,c(1:dim(df)[2]-1)], 1, function(row){!all(row == row[1])}))})
+			bsky_appraiser_misclassification_df = t(data.frame(not_all_equal_rows_count_by_appraiser))
+			bsky_appraiser_misclassification_df = cbind(bsky_appraiser_misclassification_df, rep(dim(resp_mat[[1]])[1], length(operator)))
+			bsky_appraiser_misclassification_df = cbind(bsky_appraiser_misclassification_df, bsky_appraiser_misclassification_df[,1]/bsky_appraiser_misclassification_df[,2])
+			dimnames(bsky_appraiser_misclassification_df)[[2]] = c("Misclassification_count", "Obs_count", "Misclassification")
+			dimnames(bsky_appraiser_misclassification_df)[[1]] = operator 
+			BSkyFormat(bsky_appraiser_misclassification_df, outputTableRenames = "Misclassification rate by {{selected.variableOpSelcted | safe}}",
+						perTableFooter = paste0("{{selected.variableOpSelcted | safe}} classified the same {{selected.variablePartSelcted | safe}} correctly and incorrectly across multiple trials"))
+
+			
+			#Misclassification by part
+			bsky_misclassification_by_part <- as.data.frame(({{dataset.name}} %>%
+				group_by({{selected.variablePartSelcted | safe}}, {{selected.variableRefSelcted | safe}}) %>%
+					summarise(
+						Misclassification_count = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}}),
+						Obs_count = n(),
+						Misclassification = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}})/n(),
+						.groups = 'drop'
+					)))
+			BSkyFormat(bsky_misclassification_by_part, outputTableRenames = "Misclassification rate for {{selected.variablePartSelcted | safe}}", 
+						perTableFooter = paste0("{{selected.variablePartSelcted | safe}} misclassified compared to its {{selected.variableRefSelcted | safe}} value"))
+		
+		}
+		
+	}
+	
+	# Plot Graphs
+	
+	ggplot_df1 = NULL
+	y_percentage = round(as.numeric(c(t(withinAgreement[,c(4:6)]))), digit=2)
+	x_appraiser = c(sapply(operator, function(x) rep(x,3)))
+	ggplot_df1 = data.frame(Appraiser = x_appraiser, Percentage = y_percentage)
+	
+	#plotAgreemnt(df = ggplot_df1, main_title = c("Confidence Intervals Within Appraisers"))
+	
+	ggplot_df2 = NULL 
+	if(reference_given == TRUE)
+	{	
+		y_percentage = round(as.numeric(c(t(withinAgreement_reference[,c(4:6)]))), digit=2)
+		x_appraiser = c(sapply(operator, function(x) rep(x,3)))
+		ggplot_df2 = data.frame(Appraiser = x_appraiser, Percentage = y_percentage)
+		
+		#plotAgreemnt(df = ggplot_df2, main_title = c("Confidence Intervals Against Reference"))
+	}
+	
+	invisible(return(list(ggplot_df1, ggplot_df2)))
+}
+
+
+###################
+#MSA Gage Analysis
+###################
+ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tolerance = usl -
+    lsl, data, main = "Six Sigma Gage R&R Study", sub = "", alphaLim = 0.05,
+    errorTerm = "interaction", digits = 4, method = "crossed",
+    print_plot = TRUE, signifstars = FALSE)
+{
+    curr_stars <- getOption("show.signif.stars")
+    if (signifstars) {
+        options(show.signif.stars = TRUE)
+    }
+    else {
+        options(show.signif.stars = FALSE)
+    }
+    if (is.data.frame(data)) {
+        if (deparse(substitute(var)) %in% names(data)) {
+            var <- deparse(substitute(var))
+        }
+        if (!(var %in% names(data))) {
+            stop(var, "is not a valid column name for", deparse(substitute(data)))
+        }
+        if (deparse(substitute(part)) %in% names(data)) {
+            part <- deparse(substitute(part))
+        }
+        if (deparse(substitute(appr)) %in% names(data)) {
+            appr <- deparse(substitute(appr))
+        }
+        if (part %in% names(data)) {
+            data[[part]] <- factor(data[[part]])
+        }
+        else {
+            stop(part, "is not a valid column name for", data)
+        }
+        if (appr %in% names(data)) {
+            data[[appr]] <- factor(data[[appr]])
+        }
+        else {
+            stop(appr, "is not a valid column name for", data)
+        }
+    }
+    else {
+        stop("A data.frame object is needed as data argument")
+    }
+    if (method == "nested") {
+        data[part] = paste(data[[appr]], data[[part]], sep = "-")
+        data[[part]] <- factor(data[[part]])
+    }
+    a <- nlevels(data[[part]])
+    b <- nlevels(data[[appr]])
+    if (method == "crossed") {
+        n <- nrow(data)/(a * b)
+    }
+    else {
+        n <- nrow(data)/a
+    }
+    if (abs(n - round(n)) != 0 && method == "crossed") {
+        stop("The design is not balanced.")
+    }
+    if (n < 2 && method == "crossed") {
+        stop("The design has no replications.")
+    }
+    if (method == "crossed") {
+        if (b == 1) {
+            modelf <- as.formula(paste(var, "~", part))
+            model <- aov(modelf, data = data)
+            modelm <- summary(model)
+            rownames(modelm[[1]])[2] <- "Repeatability"
+            modelm[[1]] <- rbind(modelm[[1]], c(colSums(modelm[[1]][,
+                1:2]), rep(NA, 3)))
+            rownames(modelm[[1]])[3] <- "Total"
+            #cat("One-way ANOVA (single appraiser):\n\n")
+            #print(modelm)
+            modelrm <- NULL
+        }
+        else {
+            modelf <- as.formula(paste(var, "~", part, "*", appr))
+            modelfm <- as.formula(paste(var, "~", part, "*",
+                appr, "+ Error(", part, "/", appr, ")"))
+            model <- aov(modelf, data = data)
+            modelm <- summary(model)
+            if (errorTerm == "interaction") {
+                modelm[[1]][1:2, 4] <- modelm[[1]][1:2, 3]/modelm[[1]][3,
+                  3]
+                modelm[[1]][1:2, 5] <- pf(modelm[[1]][1:2, 4],
+                  modelm[[1]][1:2, 1], modelm[[1]][3, 1], lower.tail = FALSE)
+            }
+            rownames(modelm[[1]])[4] <- "Repeatability"
+            modelm[[1]] <- rbind(modelm[[1]], c(colSums(modelm[[1]][,
+                1:2]), rep(NA, 3)))
+            rownames(modelm[[1]])[5] <- "Total"
+            #cat("Complete model (with interaction):\n\n")
+            #print(modelm)
+            #cat("\nalpha for removing interaction:", alphaLim,
+            #   "\n")
+            pint <- modelm[[1]][3, 5]
+            if (pint > alphaLim) {
+                modelfr <- as.formula(paste(var, "~", part, "+",
+                  appr))
+                modelr <- aov(modelfr, data = data)
+                modelrm <- summary(modelr)
+                rownames(modelrm[[1]])[3] <- "Repeatability"
+                modelrm[[1]] <- rbind(modelrm[[1]], c(colSums(modelrm[[1]][,
+                  1:2]), rep(NA, 3)))
+                rownames(modelrm[[1]])[4] <- "Total"
+                #cat("\n\nReduced model (without interaction):\n\n")
+                #print(modelrm)
+            }
+            else modelrm <- NULL
+        }
+        varComp <- matrix(ncol = 6, nrow = 7)
+        rownames(varComp) <- c("Total Gage R&R", "  Repeatability",
+            "  Reproducibility", paste0("    ", appr), paste0(part,
+                ":", appr), "Part-To-Part", "Total Variation")
+        colnames(varComp) <- c("VarComp", "%Contrib", "StdDev",
+            "StudyVar", "%StudyVar", "%Tolerance")
+        if (b == 1) {
+            varComp[2, 1] <- modelm[[1]][2, 3]
+            varComp[4, 1] <- NA
+            varComp[5, 1] <- NA
+            varComp[3, 2] <- NA
+            varComp[6, 1] <- max(c((modelm[[1]][1, 3] - modelm[[1]][2,
+                3])/(b * n), 0))
+            varComp[1, 1] <- varComp[2, 1]
+            varComp[7, 1] <- varComp[1, 1] + varComp[6, 1]
+        }
+        else {
+            if (pint > alphaLim) {
+                varComp[2, 1] <- modelrm[[1]][3, 3]
+                varComp[4, 1] <- max(c((modelrm[[1]][2, 3] -
+                  modelrm[[1]][3, 3])/(a * n), 0))
+                varComp[5, 1] <- NA
+                varComp[3, 1] <- varComp[4, 1]
+                varComp[6, 1] <- max(c((modelrm[[1]][1, 3] -
+                  modelrm[[1]][3, 3])/(b * n), 0))
+                varComp[1, 1] <- varComp[2, 1] + varComp[3, 1]
+                varComp[7, 1] <- varComp[1, 1] + varComp[6, 1]
+            }
+            else {
+                varComp[2, 1] <- modelm[[1]][4, 3]
+                varComp[4, 1] <- max(c((modelm[[1]][2, 3] - modelm[[1]][3,
+                  3])/(a * n), 0))
+                varComp[5, 1] <- max(c((modelm[[1]][3, 3] - modelm[[1]][4,
+                  3])/n, 0))
+                varComp[3, 1] <- varComp[4, 1] + varComp[5, 1]
+                varComp[6, 1] <- max(c((modelm[[1]][1, 3] - modelm[[1]][3,
+                  3])/(b * n), 0))
+                varComp[1, 1] <- varComp[2, 1] + varComp[3, 1]
+                varComp[7, 1] <- varComp[1, 1] + varComp[6, 1]
+            }
+        }
+        varComp[, 2] <- round(100 * (varComp[, 1]/varComp[7,
+            1]), 2)
+        varComp[, 3] <- sqrt(varComp[, 1])
+        varComp[, 4] <- varComp[, 3] * sigma
+        varComp[, 5] <- round(100 * (varComp[, 3]/varComp[7,
+            3]), 2)
+        varComp[, 6] <- round(100 * (varComp[, 4]/(tolerance)),
+            2)
+        ncat <- max(c(1, floor((varComp[6, 4]/varComp[1, 4]) *
+            1.41)))
+        if (b == 1) {
+            varComp <- varComp[-c(3:5), ]
+        }
+        else {
+            if (pint > alphaLim) {
+                varComp <- varComp[-c(5), ]
+            }
+        }
+        #cat(paste("\nGage R&R\n\n"))
+        #print(varComp[, 1:2])
+        #cat("\n")
+        if ((!is.na(usl) && !is.na(lsl)) || !is.na(tolerance)) {
+            #print(varComp[, c(1, 3:6)])
+        }
+        else {
+            #print(varComp[, 3:5])
+        }
+        cat(paste("\nNumber of Distinct Categories =", ncat,
+            "\n"))
+    }
+    else if (method == "nested") {
+        if (b == 1) {
+            modelf <- as.formula(paste(var, "~", part))
+            model <- aov(modelf, data = data)
+            modelm <- summary(model)
+            rownames(modelm[[1]])[2] <- "Repeatability"
+            modelm[[1]] <- rbind(modelm[[1]], c(colSums(modelm[[1]][,
+                1:2]), rep(NA, 3)))
+            rownames(modelm[[1]])[3] <- "Total"
+            #cat("One-way ANOVA (single appraiser):\n\n")
+            #print(modelm)
+            modelrm <- NULL
+        }
+        else {
+            modelf <- as.formula(paste(var, "~", appr, "/", part))
+            modelfm <- as.formula(paste(var, "~", appr, "/",
+                part, "+ Error(", appr, "/", part, ")"))
+            model <- aov(modelf, data = data)
+            modelm <- summary(model)
+            if (errorTerm == "interaction") {
+                modelm[[1]][1, 4] <- modelm[[1]][1, 3]/modelm[[1]][2,
+                  3]
+                modelm[[1]][1, 5] <- pf(modelm[[1]][1, 4], modelm[[1]][1,
+                  1], modelm[[1]][3, 1], lower.tail = FALSE)
+            }
+            rownames(modelm[[1]])[3] <- "Repeatability"
+            modelm[[1]] <- rbind(modelm[[1]], c(colSums(modelm[[1]][,
+                1:2]), rep(NA, 3)))
+            rownames(modelm[[1]])[4] <- "Total"
+            #cat("Complete model (with interaction):\n\n")
+            #print(modelm)
+            #cat("\nalpha for removing interaction:", alphaLim,
+            #   "\n")
+            modelrm <- NULL
+        }
+        varComp <- matrix(ncol = 6, nrow = 5)
+        rownames(varComp) <- c("Total Gage R&R", "  Repeatability",
+            "  Reproducibility", "Part-To-Part", "Total Variation")
+        colnames(varComp) <- c("VarComp", "%Contrib", "StdDev",
+            "StudyVar", "%StudyVar", "%Tolerance")
+        if (b == 1) {
+            varComp[2, 1] <- modelm[[1]][3, 3]
+            varComp[3, 2] <- NA
+            varComp[4, 1] <- max(c((modelm[[1]][2, 3] - modelm[[1]][3,
+                3])/n, 0))
+            varComp[1, 1] <- varComp[2, 1]
+            varComp[5, 1] <- varComp[1, 1] + varComp[4, 1]
+        }
+        else {
+            varComp[2, 1] <- modelm[[1]][3, 3]
+            varComp[3, 1] <- max(c((modelm[[1]][1, 1] * (modelm[[1]][1,
+                3] - modelm[[1]][2, 3])/(a * n)), 0))
+            varComp[4, 1] <- max(c((modelm[[1]][2, 3] - modelm[[1]][3,
+                3])/n, 0))
+            varComp[1, 1] <- varComp[2, 1] + varComp[3, 1]
+            varComp[5, 1] <- varComp[1, 1] + varComp[4, 1]
+        }
+        varComp[, 2] <- round(100 * (varComp[, 1]/varComp[5,
+            1]), 2)
+        varComp[, 3] <- sqrt(varComp[, 1])
+        varComp[, 4] <- varComp[, 3] * sigma
+        varComp[, 5] <- round(100 * (varComp[, 3]/varComp[5,
+            3]), 2)
+        varComp[, 6] <- round(100 * (varComp[, 4]/(tolerance)),
+            2)
+        ncat <- max(c(1, floor((varComp[4, 4]/varComp[1, 4]) *
+            1.41)))
+        if (b == 1) {
+            varComp <- varComp[-c(3:5), ]
+        }
+        #cat(paste("\nGage R&R\n\n"))
+        #print(varComp[, 1:2])
+        #cat("\n")
+        if ((!is.na(usl) && !is.na(lsl)) || !is.na(tolerance)) {
+            #print(varComp[, c(1, 3:6)])
+        }
+        else {
+            #print(varComp[, 3:5])
+        }
+        cat(paste("\nNumber of Distinct Categories =", ncat,
+            "\n"))
+        pint <- 0
+    }
+    if (print_plot) {	
+        #.ss.prepCanvas(main, sub)
+		SixSigma:::.ss.prepCanvas(paste("Components of Variation (", main,")"), sub)
+        
+		#vp.plots <- grid::viewport(name = "plots", layout = grid::grid.layout(3,2))
+		vp.plots <- grid::viewport(name = "plots", layout = grid::grid.layout(1,1))
+		
+		# vp.plots <- grid::viewport(name = "plots", layout = grid::grid.layout(3,
+            # 2, widths=unit(4, "inches"),
+                          # heights=unit(6, "npc"),))
+        grid::pushViewport(vp.plots)
+        vp.bar <- grid::viewport(name = "barplot", layout.pos.row = 1,
+            layout.pos.col = 1)
+        grid::pushViewport(vp.bar)
+        if (b == 1) {
+            rowstoplot <- c(1, 2, 3)
+        }
+        else if (method == "nested") {
+            rowstoplot <- c(1, 2, 3, 4)
+        }
+        else if (method == "crossed") {
+            if (pint > alphaLim) {
+                rowstoplot <- c(1, 2, 3, 5)
+            }
+            else {
+                rowstoplot <- c(1, 2, 3, 6)
+            }
+        }
+        if ((!is.na(usl) && !is.na(lsl)) || !is.na(tolerance)) {
+            colstoplot <- c(2, 5, 6)
+            klabels <- c("%Contribution", "%Study Var", "%Tolerance")
+        }
+        else {
+            colstoplot <- c(2, 5)
+            klabels <- c("%Contribution", "%Study Var")
+        }
+        databar <- varComp[rowstoplot, colstoplot]
+        if (b == 1) {
+            rownames(databar) <- c("G.R&R", "Repeat", "Part2Part")
+        }
+        else {
+            rownames(databar) <- c("G.R&R", "Repeat", "Reprod",
+                "Part2Part")
+        }
+		
+        plot <- lattice::barchart(databar, freq = FALSE, grid = TRUE,
+            scales = list(x = list(rot = 45)), par.settings = list(axis.text = list(cex = 0.6),
+                par.ylab.text = list(cex = 0.8), par.main.text = list(cex = 0.85)),
+            ylab = list("Percent", fontsize = 8), panel = function(...) {
+                lattice::panel.barchart(...)
+                lattice::panel.abline(h = 0)
+                lattice::panel.abline(h = c(10, 30), lty = 2,
+                  col = "gray")
+            }, auto.key = list(text = klabels, cex = 0.8, columns = length(colstoplot),
+                space = "bottom", rectangles = TRUE, points = FALSE,
+                adj = 1, rep = FALSE), stack = FALSE, horizontal = FALSE
+            #main = list("Components of Variation", fontsize = 14)
+			)
+        print(plot, newpage = FALSE)
+        grid::popViewport()
+		
+		SixSigma:::.ss.prepCanvas(paste(var, "by", part,"(", main,")"), sub)
+		vp.plots <- grid::viewport(name = "plots2", layout = grid::grid.layout(1,1))
+		vp.varByPart <- grid::viewport(name = "varByPart", layout.pos.row = 1,
+            layout.pos.col = 1)
+			
+        #vp.varByPart <- grid::viewport(name = "varByPart", layout.pos.row = 1,
+        #    layout.pos.col = 2)
+		
+        grid::pushViewport(vp.varByPart)
+        plot <- lattice::stripplot(as.formula(paste(var, "~",
+            part)), data = data, grid = TRUE, scales = list(x = list(rot = 45)),
+            par.settings = list(axis.text = list(cex = 0.6),
+                par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
+                par.main.text = list(cex = 0.9)),
+				#main = paste(var, "by", part), 
+				type = c("p", "a")
+				)
+        print(plot, newpage = FALSE)
+        grid::popViewport()
+		
+		SixSigma:::.ss.prepCanvas(paste(var, "by", appr, "(", main,")"), sub)
+		vp.plots <- grid::viewport(name = "plots3", layout = grid::grid.layout(1,1))
+        vp.varByAppr <- grid::viewport(name = "varByAppr", layout.pos.row = 1,
+            layout.pos.col = 1)
+			
+		#vp.varByAppr <- grid::viewport(name = "varByAppr", layout.pos.row = 2,
+        #   layout.pos.col = 2)
+		
+        grid::pushViewport(vp.varByAppr)
+        plot <- lattice::stripplot(as.formula(paste(var, "~",
+            appr)), data = data, grid = TRUE, scales = list(x = list(rot = 45)),
+            par.settings = list(axis.text = list(cex = 0.6),
+                par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
+                par.main.text = list(cex = 0.9)),
+				#main = paste(var, "by", appr), 
+				type = c("p", "a")
+				)
+        print(plot, newpage = FALSE)
+        grid::popViewport()
+		
+		
+		SixSigma:::.ss.prepCanvas(paste(paste0(part, ":", appr, " Interaction"), "(", main,")"), sub)
+		vp.plots <- grid::viewport(name = "plots4", layout = grid::grid.layout(1,1))
+		
+        if (method == "crossed") {
+			
+			vp.Interact <- grid::viewport(name = "Interact",
+                layout.pos.row = 1, layout.pos.col = 1)
+				
+            #vp.Interact <- grid::viewport(name = "Interact",
+            #    layout.pos.row = 3, layout.pos.col = 2)
+            
+			grid::pushViewport(vp.Interact)
+            data.xbar <- aggregate(as.formula(paste(var, "~",
+                appr, "+", part)), data = data, mean)
+            plot <- lattice::stripplot(as.formula(paste(var,
+                "~", part)), groups = get(appr), data = data.xbar,
+                pch = 16, grid = TRUE, par.settings = list(par.main.text = list(cex = 0.9)),
+                #main = paste0(part, ":", appr, " Interaction"),
+                type = c("p", "a"), auto.key = list(text = levels(data[[appr]]),
+                  columns = nlevels(data[[appr]]), space = "bottom",
+                  cex = 0.5, lines = TRUE, points = FALSE, adj = 1))
+            print(plot, newpage = FALSE)
+            grid::popViewport()
+        }
+        data.xbar <- aggregate(as.formula(paste(var, "~", appr,
+            "+", part)), data = data, mean)
+        data.xrange <- aggregate(as.formula(paste(var, "~", appr,
+            "+", part)), data = data, function(x) {
+            max(x) - min(x)
+        })
+		
+		
+		SixSigma:::.ss.prepCanvas(paste("Xbar Chart by", appr, "(", main,")"), sub)
+		vp.plots <- grid::viewport(name = "plots5", layout = grid::grid.layout(1,1))
+		vp.ccMean <- grid::viewport(name = "ccMean", layout.pos.row = 1,
+            layout.pos.col = 1)
+		
+        ar <- mean(data.xrange[[var]])
+		
+        #vp.ccMean <- grid::viewport(name = "ccMean", layout.pos.row = 3,
+        #    layout.pos.col = 1)
+		
+        grid::pushViewport(vp.ccMean)
+        xbar <- mean(data[[var]], na.rm = TRUE)
+        ucl <- xbar + (3/(ss.cc.getd2(n) * sqrt(n))) * ar
+        lcl <- xbar - (3/(ss.cc.getd2(n) * sqrt(n))) * ar
+        glimits <- c(min(range(data.xbar[[var]])[1], lcl), max(range(data.xbar[[var]])[2],
+            ucl)) + c(-1, 1) * 0.1 * diff(range(data.xbar[[var]]))
+        plot <- lattice::xyplot(as.formula(paste(var, "~", part,
+            "|", appr)), data = data.xbar, pch = 16, par.settings = list(axis.text = list(cex = 0.6),
+            par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
+            par.main.text = list(cex = 0.9)), par.strip.text = list(cex = 0.6),
+            #main = bquote(bold(bar(x) * " Chart by " * .(appr))),
+            grid = TRUE, layout = c(b, 1), type = "b", axs = "r",
+            ylim = glimits, scales = list(alternating = FALSE,
+                x = list(relation = "free", rot = 45)), panel = function(...) {
+                lattice::panel.xyplot(...)
+                lattice::panel.abline(h = xbar, lty = 2)
+                lattice::panel.abline(h = ucl, col = "red3")
+                lattice::panel.abline(h = lcl, col = "red3")
+            })
+        print(plot, newpage = FALSE)
+        grid::popViewport()
+		
+		SixSigma:::.ss.prepCanvas(paste("R Chart by", appr, "(", main,")"), sub)
+		vp.plots <- grid::viewport(name = "plots6", layout = grid::grid.layout(1,1))
+		vp.ccRange <- grid::viewport(name = "ccRange", layout.pos.row = 2,
+            layout.pos.col = 1)
+		
+        #vp.ccRange <- grid::viewport(name = "ccRange", layout.pos.row = 2,
+        #    layout.pos.col = 1)
+        grid::pushViewport(vp.ccRange)
+        this.d3 <- ss.cc.getd3(n)
+        this.d2 <- ss.cc.getd2(n)
+        rlimits <- c(max(ar * (1 - 3 * (this.d3/(this.d2))),
+            0), ar * (1 + 3 * (this.d3/(this.d2))))
+        glimits <- c(min(range(data.xrange[[var]])[1], rlimits[1]),
+            max(range(data.xrange[[var]])[2], rlimits[2])) +
+            c(-1, 1) * 0.1 * diff(range(data.xrange[[var]]))
+        if (all(glimits == 0)) {
+            glimits <- c(0, max(data[[var]]))
+        }
+        plot <- lattice::xyplot(as.formula(paste(var, "~", part,
+            "|", appr)), data = data.xrange, pch = 16, par.settings = list(axis.text = list(cex = 0.6),
+            par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
+            par.main.text = list(cex = 0.9), layout.widths = list(axis.panel = c(1,
+                0, 0))), par.strip.text = list(cex = 0.6), 
+				#main = paste("R Chart by", appr), 
+			grid = TRUE, layout = c(b, 1), type = "b",
+            axs = "r", ylim = glimits, scales = list(alternating = FALSE,
+                x = list(relation = "free", rot = 45)), panel = function(...) {
+                lattice::panel.xyplot(...)
+                lattice::panel.abline(h = ar, lty = 2)
+                lattice::panel.abline(h = rlimits[1], col = "red3")
+                lattice::panel.abline(h = rlimits[2], col = "red3")
+            })
+        print(plot, newpage = FALSE)
+        grid::popViewport()
+    }
+	
+    options(show.signif.stars = curr_stars)
+    
+	invisible(list(anovaTable = modelm, anovaRed = modelrm, varComp = varComp[,
+        1:2], studyVar = varComp[, 3:6], ncat = ncat))
+}
+
+
+############################
+#Process Capability Analysis
+############################
 process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(), spec.limits, target, 
     breaks = "scott", add.stats = TRUE, print = TRUE, capability.type = "overall", digits = getOption("digits"), 
     restore.par = TRUE) 
@@ -22,7 +1441,7 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
 	)
 	
 	if(is.null(fitg_dist))
-		stop("Could compute using the distribution function chosen")
+		stop("Could not compute without a distribution function chosen")
 	
 	center = NULL
 	
@@ -123,6 +1542,14 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
 	Ppu = (USL - quantile_05) / (quantile_99865 - quantile_05)
 	Ppk = min(Ppl,Ppu)
 	
+	#Pp= 0.878082 Ppl= 0.6909042 Ppu= 1.06526 Ppk= 0.6909042 (with both LSL and USL)
+	#Pp= NA       Ppl= 0.6909042 Ppu= NA      Ppk= NA        (with LSL and USL is NA)
+	#Pp= NA       Ppl= NA        Ppu= 1.06526 Ppk= NA        (with LSL is NA and USL)
+	#cat("\n","Pp=",Pp,"Ppl=",Ppl,"Ppu=",Ppu,"Ppk=", Ppk,"\n")
+	
+	if(is.na(LSL) && is.na(Ppk)) Ppk = Ppu
+	if(is.na(USL) && is.na(Ppk)) Ppk = Ppl
+	
 	exp.LSL <- 0
 	exp.USL <- 0
 	# if (is.na(LSL)) 
@@ -140,8 +1567,8 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
             # exp.USL <- 0
     # }
 	
-	obs.LSL <- sum(x < LSL)/n * 100
-    obs.USL <- sum(x > USL)/n * 100
+	obs.LSL <- round(sum(x < LSL)/n * 100, digits)
+    obs.USL <- round(sum(x > USL)/n * 100, digits)
 	
 	#h <- hist(x, breaks = breaks, plot = FALSE)
     #ylim <- range(h$density, dx)
@@ -245,20 +1672,24 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
 		# changed to incorporate overall vs potential (P vs. C conventions that was missing in qcc package)
 		if(capability.type == "overall")
 		{
-			mtext(paste("Pp     = ", ifelse(is.na(Pp), "", 
-				signif(Pp, 3)), sep = ""), side = 1, line = top.line, 
+			mtext(paste("Pp   = ", ifelse(is.na(Pp), "", 
+				#signif(Pp, 3)), sep = ""), side = 1, line = top.line, 
+				signif(Pp, digits)), sep = ""), side = 1, line = top.line,
 				adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Pp_l  = ", ifelse(is.na(Ppl), "", 
-				signif(Ppl, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Ppl  = ", ifelse(is.na(Ppl), "", 
+				#signif(Ppl, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Ppl, digits)), sep = ""), side = 1, line = top.line +
 				1, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Pp_u = ", ifelse(is.na(Ppu), "", 
-				signif(Ppu, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Ppu = ", ifelse(is.na(Ppu), "", 
+				#signif(Ppu, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Ppu, digits)), sep = ""), side = 1, line = top.line +
 				2, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Pp_k = ", ifelse(is.na(Ppk), "", 
-				signif(Ppk, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Ppk = ", ifelse(is.na(Ppk), "", 
+				#signif(Ppk, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Ppk, digits)), sep = ""), side = 1, line = top.line +
 				3, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			# mtext(paste("Ppm  = ", ifelse(is.na(Cpm), "", 
@@ -301,12 +1732,14 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
             # at = at.col[4], font = qcc.options("font.stats"), 
             # cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs<LSL ", ifelse(is.na(obs.LSL), 
-            "", paste(signif(obs.LSL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.LSL, 2), "%", sep = "")),
+			"", paste(signif(obs.LSL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line , adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs>USL ", ifelse(is.na(obs.USL), 
-            "", paste(signif(obs.USL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.USL, 2), "%", sep = "")),
+			"", paste(signif(obs.USL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 1, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
@@ -648,6 +2081,12 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
     Cp.u <- (USL - center)/(nsigmas * std.dev)
     Cp.l <- (center - LSL)/(nsigmas * std.dev)
     Cp.k <- min(Cp.u, Cp.l)
+	
+	#cat("\n", "Cpl or Ppl: ", Cp.l, "nsigmas: ", nsigmas, "std.dev: ", std.dev, "\n")
+	
+	if(is.na(LSL) && is.na(Cp.k)) Cp.k = Cp.u
+	if(is.na(USL) && is.na(Cp.k)) Cp.k = Cp.l
+	
     Cpm <- Cp/sqrt(1 + ((center - target)/std.dev)^2)
     alpha <- 1 - confidence.level
     Cp.limits <- Cp * sqrt(qchisq(c(alpha/2, 1 - alpha/2), n - 
@@ -679,8 +2118,10 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
         if (exp.USL < 0.01) 
             exp.USL <- 0
     }
-    obs.LSL <- sum(x < LSL)/n * 100
-    obs.USL <- sum(x > USL)/n * 100
+
+    obs.LSL <- round(sum(x < LSL)/n * 100, digits)
+    obs.USL <- round(sum(x > USL)/n * 100, digits)
+
     xlim <- range(x, USL, LSL, target, na.rm = TRUE)
     xlim <- xlim + diff(xlim) * c(-0.1, 0.1)
     xx <- seq(min(xlim), max(xlim), length = 250)
@@ -694,13 +2135,13 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
 	# changed to incorporate overall vs potential (P vs. C conventions that was missing in qcc package)
 	if(capability.type == "overall")
 	{
-		rownames(tab) <- c("Pp", "Pp_l", "Pp_u", 
-			"Pp_k", "Ppm")
+		rownames(tab) <- c("Pp", "Ppl", "Ppu", 
+			"Ppk", "Ppm")
 	}
 	else
 	{
-		rownames(tab) <- c("Cp", "Cp_l", "Cp_u", 
-			"Cp_k", "Cpm")
+		rownames(tab) <- c("Cp", "Cpl", "Cpu", 
+			"Cpk", "Cpm")
 	}
 	
     colnames(tab) <- c("Value", names(Cp.limits))
@@ -770,68 +2211,82 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
 		# changed to incorporate overall vs potential (P vs. C conventions that was missing in qcc package)
 		if(capability.type == "overall")
 		{
-			mtext(paste("Pp     = ", ifelse(is.na(Cp), "", 
-				signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+			mtext(paste("Pp   = ", ifelse(is.na(Cp), "", 
+				#signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+				signif(Cp, digits)), sep = ""), side = 1, line = top.line,
 				adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Pp_l  = ", ifelse(is.na(Cp.l), "", 
-				signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Ppl  = ", ifelse(is.na(Cp.l), "", 
+				#signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.l, digits)), sep = ""), side = 1, line = top.line +
 				1, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Pp_u = ", ifelse(is.na(Cp.u), "", 
-				signif(Cp.u, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Ppu = ", ifelse(is.na(Cp.u), "", 
+				#signif(Cp.u, 3)), sep = ""), side = 1, line = top.line +
+				signif(Cp.u, digits)), sep = ""), side = 1, line = top.line +
 				2, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Pp_k = ", ifelse(is.na(Cp.k), "", 
-				signif(Cp.k, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Ppk = ", ifelse(is.na(Cp.k), "", 
+				#signif(Cp.k, 3)), sep = ""), side = 1, line = top.line +
+				signif(Cp.k, digits)), sep = ""), side = 1, line = top.line +
 				3, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Ppm  = ", ifelse(is.na(Cpm), "", 
-				signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cpm, digits)), sep = ""), side = 1, line = top.line +
 				4, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 		}
 		else
 		{
-						mtext(paste("Cp     = ", ifelse(is.na(Cp), "", 
-				signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+						mtext(paste("Cp   = ", ifelse(is.na(Cp), "", 
+				#signif(Cp, 3)), sep = ""), side = 1, line = top.line, 
+				signif(Cp, digits)), sep = ""), side = 1, line = top.line,
 				adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Cp_l  = ", ifelse(is.na(Cp.l), "", 
-				signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Cpl  = ", ifelse(is.na(Cp.l), "", 
+				#signif(Cp.l, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.l, digits)), sep = ""), side = 1, line = top.line + 
 				1, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Cp_u = ", ifelse(is.na(Cp.u), "", 
-				signif(Cp.u, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Cpu = ", ifelse(is.na(Cp.u), "", 
+				#signif(Cp.u, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.u, digits)), sep = ""), side = 1, line = top.line + 
 				2, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
-			mtext(paste("Cp_k = ", ifelse(is.na(Cp.k), "", 
-				signif(Cp.k, 3)), sep = ""), side = 1, line = top.line + 
+			mtext(paste("Cpk = ", ifelse(is.na(Cp.k), "", 
+				#signif(Cp.k, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cp.k, digits)), sep = ""), side = 1, line = top.line +
 				3, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 			mtext(paste("Cpm  = ", ifelse(is.na(Cpm), "", 
-				signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				#signif(Cpm, 3)), sep = ""), side = 1, line = top.line + 
+				signif(Cpm, digits)), sep = ""), side = 1, line = top.line +
 				4, adj = 0, at = at.col[3], font = qcc.options("font.stats"), 
 				cex = par("cex") * qcc.options("cex.stats"))
 		}
 		
         mtext(paste("Exp<LSL ", ifelse(is.na(exp.LSL), 
-            "", paste(signif(exp.LSL, 2), "%", sep = "")), 
+            #"", paste(signif(exp.LSL, 2), "%", sep = "")), 
+			"", paste(signif(exp.LSL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Exp>USL ", ifelse(is.na(exp.USL), 
-            "", paste(signif(exp.USL, 2), "%", sep = "")), 
+            #"", paste(signif(exp.USL, 2), "%", sep = "")),
+			"", paste(signif(exp.USL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 1, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs<LSL ", ifelse(is.na(obs.LSL), 
-            "", paste(signif(obs.LSL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.LSL, 2), "%", sep = "")),
+			"", paste(signif(obs.LSL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 2, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
         mtext(paste("Obs>USL ", ifelse(is.na(obs.USL), 
-            "", paste(signif(obs.USL, 2), "%", sep = "")), 
+            #"", paste(signif(obs.USL, 2), "%", sep = "")),
+			"", paste(signif(obs.USL, digits), "%", sep = "")),
             sep = ""), side = 1, line = top.line + 3, adj = 0, 
             at = at.col[4], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
@@ -856,30 +2311,36 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
                 "", formatC(signif(USL, digits = digits), 
                   flag = "-")), "\n", sep = ""))
         cat("\nCapability indices:\n\n")
-        print(tab, digits = 4, na.print = "", print.gap = 2)
+        #print(tab, digits = 4, na.print = "", print.gap = 2)
+		print(tab, digits = digits, na.print = "", print.gap = 2)
         cat("\n")
         cat(paste("Exp<LSL", ifelse(is.na(exp.LSL), "\t", 
-            paste(format(exp.LSL, digits = 2), "%\t", sep = "")), 
+            #paste(format(exp.LSL, digits = 2), "%\t", sep = "")),
+			paste(format(exp.LSL, digits = digits), "%\t", sep = "")), 					
             "Obs<LSL", ifelse(is.na(obs.LSL), "", 
-                paste(format(obs.LSL, digits = 2), "%\n", 
+                #paste(format(obs.LSL, digits = 2), "%\n",
+				paste(format(obs.LSL, digits = digits), "%\n",
                   sep = ""))))
         cat(paste("Exp>USL", ifelse(is.na(exp.USL), "\t", 
-            paste(format(exp.USL, digits = 2), "%\t", sep = "")), 
+            #paste(format(exp.USL, digits = 2), "%\t", sep = "")),
+			paste(format(exp.USL, digits = digits), "%\t", sep = "")), 
             "Obs>USL", ifelse(is.na(obs.USL), "", 
-                paste(format(obs.USL, digits = 2), "%\n", 
+                #paste(format(obs.USL, digits = 2), "%\n", 
+				paste(format(obs.USL, digits = digits), "%\n",
                   sep = ""))))
     }
+	
     invisible(list(nobs = n, center = center, std.dev = std.dev, 
         target = target, spec.limits = {
             sl <- c(LSL, USL)
             names(sl) <- c("LSL", "USL")
             sl
         }, indices = tab, exp = {
-            exp <- c(exp.LSL, exp.USL)/100
+            exp <- round(c(exp.LSL, exp.USL)/100, digits)
             names(exp) <- c("Exp < LSL", "Exp > USL")
             exp
         }, obs = {
-            obs <- c(obs.LSL, obs.USL)/100
+            obs <- round(c(obs.LSL, obs.USL)/100, digits)
             names(obs) <- c("Obs < LSL", "Obs > USL")
             obs
         }))
@@ -986,7 +2447,7 @@ BSkyResetSixSigmaTestOptionDefaults <- function()
 
 
 
-get.print.violation.indices <- function(object, print.summary = FALSE, print.detail = FALSE)
+get.print.violation.indices <- function(object, print.summary = FALSE, print.detail = FALSE, sigma.symbol = 'σ')
 {
 	violationIndices = list()
 	
@@ -1018,6 +2479,7 @@ get.print.violation.indices <- function(object, print.summary = FALSE, print.det
 												test8 = testOptions$test8, k.run.beyond.1dev = testOptions$k.run.beyond.1dev, 
 												either.side = testOptions$either.side, 
 												digits = testOptions$digits, 
+												sigma.symbol = sigma.symbol,
 												optional.data.names = testOptions$optional.data.names, optional.newdata.names = testOptions$optional.newdata.names,
 												debug = testOptions$debug)
 	}
@@ -1037,7 +2499,8 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 										print.summary = TRUE, print.detail = TRUE, 
 										digits = 4, 
 										optional.data.names = c(), optional.newdata.names = c(),
-										either.side = TRUE, 
+										either.side = TRUE,
+										sigma.symbol = 'σ',
 										debug = FALSE)
 {
 		# if ((missing(object)) | (!inherits(object, "qcc"))) 
@@ -1139,11 +2602,11 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			
 			if(length(beyond_limits) > 0)
 			{
-				BSkyFormat(paste("Beyond", object$nsigmas, "σ limits - violating samples (", paste(violations$beyond.limits.named.indices, collapse=', '), ")"))
+				BSkyFormat(paste("Beyond", object$nsigmas, sigma.symbol, "limits - violating samples (", paste(violations$beyond.limits.named.indices, collapse=', '), ")"))
 			}
 			else
 			{
-				BSkyFormat(paste("Beyond", object$nsigmas, "σ limits - no violating sample found"))
+				BSkyFormat(paste("Beyond", object$nsigmas, sigma.symbol, "limits - no violating sample found"))
 			}
 			
 			if(length(selcted_tests) > 0)
@@ -1178,11 +2641,11 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			{
 				if(length(beyond_limits) > 0)
 				{
-					BSkyFormat(paste("Beyond", object$nsigmas, "σ limits - violating samples (", paste(violations$beyond.limits.named.indices, collapse=', '), ")"))
+					BSkyFormat(paste("Beyond", object$nsigmas, sigma.symbol, "limits - violating samples (", paste(violations$beyond.limits.named.indices, collapse=', '), ")"))
 				}
 				else
 				{
-					BSkyFormat(paste("Beyond", object$nsigmas, "σ limits - no violating sample found"))
+					BSkyFormat(paste("Beyond", object$nsigmas, sigma.symbol, "limits - no violating sample found"))
 				}
 			}
 			
@@ -1190,7 +2653,7 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			
 			if(test1)
 			{
-				BSkyFormat(paste("Test 1: One point more than", one.point.k.stdv, "σ from center line"))
+				BSkyFormat(paste("Test 1: One point more than", one.point.k.stdv, sigma.symbol, "from center line"))
 				if(length(violators$beyond.kdev.one.point.index) == 1)
 				{
 				  cat("\nonly sample", dimnames(violators$beyond.kdev.one.point.index)[[2]], ">",one.point.k.stdv,"standard deviation from the center line\n")
@@ -1267,7 +2730,7 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			
 			if(test5)
 			{
-				BSkyFormat(paste("Test 5:", k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points more than 2σ from the center line (same side)"))
+				BSkyFormat(paste("Test 5:", k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points more than 2",sigma.symbol,"from the center line (same side)"))
 				if(length(violators$beyond.plusone.2dev.above.indices) > 0)
 				{
 					cat("\n",k.plusone.run.beyond.2dev, "out of", k.plusone.run.beyond.2dev, "+ 1 points > 2 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.plusone.2dev.above.indices)[[2]], ")\n")
@@ -1290,7 +2753,7 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			
 			if(test6)
 			{
-				BSkyFormat(paste("Test 6:", k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points more than 1σ from the center line (same side)"))
+				BSkyFormat(paste("Test 6:", k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points more than 1",sigma.symbol,"from the center line (same side)"))
 				if(length(violators$beyond.plusone.1dev.above.indices) > 0)
 				{
 					cat("\n",k.plusone.run.beyond.1dev, "out of", k.plusone.run.beyond.1dev, "+ 1 points > 1 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.plusone.1dev.above.indices)[[2]], ")\n")
@@ -1315,7 +2778,7 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			{
 				if(either.side == TRUE)
 				{
-					BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1σ of center line (either side)"))
+					BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1", sigma.symbol, "of center line (either side)"))
 					if(length(violators$within.1dev.above.indices) > 0)
 					{
 						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation on either side of the center line  - violating samples (", dimnames(violators$within.1dev.above.indices)[[2]], ")\n")
@@ -1335,7 +2798,7 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 				}
 				else
 				{
-					BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1σ of center line (on the same side)"))
+					BSkyFormat(paste("Test 7:", k.run.within.1dev, "points in a row within 1", sigma.symbol, "of center line (on the same side)"))
 					if(length(violators$within.1dev.above.indices) > 0)
 					{
 						cat("\n",k.run.within.1dev, "points in a row, within 1 standard deviation above the center line  - violating samples (", dimnames(violators$within.1dev.above.indices)[[2]], ")\n")
@@ -1361,7 +2824,7 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 			{
 				if(either.side == TRUE)
 				{
-					BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1σ from center line (either side)"))
+					BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1", sigma.symbol, "from center line (either side)"))
 					if(length(violators$beyond.1dev.above.indices) > 0)
 					{
 						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation on either side of the center line  - violating samples (", dimnames(violators$beyond.1dev.above.indices)[[2]], ")\n")
@@ -1381,7 +2844,7 @@ test.special.causes <- function(object, test1 = FALSE, one.point.k.stdv = 3,
 				}
 				else
 				{
-					BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1σ from center line (on the same side)"))
+					BSkyFormat(paste("Test 8:", k.run.beyond.1dev, "points in a row more than 1", sigma.symbol, "from center line (on the same side)"))
 					if(length(violators$beyond.1dev.above.indices) > 0)
 					{
 						cat("\n",k.run.beyond.1dev, "points in a row, beyond 1 standard deviation above the center line  - violating samples (", dimnames(violators$beyond.1dev.above.indices)[[2]], ")\n")
@@ -1967,14 +3430,14 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 								phases.data.list = list(), phase.names = c(), 
 								type = "xbar", chart.title.name = c(), size.title = c(), xlab = c(), ylab = c(),
                                 nsigmas = 3, confidence.level= NA, std.dev = NA, 
-								additional.sigma.lines = c(), spec.limits = list(lsl=c(), usl= c()),
+								additional.sigma.lines = c(), additional.spec.lines = c(), additional.spec.lines_label = c("Spec"), spec.limits = list(lsl=c(), usl= c()),
 								digits =2, 
 								print.stats = FALSE, print.test.summary = FALSE, print.test.detail = FALSE,
 								print.qcc.object.summary = FALSE,
 								mark.test.number = TRUE,
+								sigma.symbol = 'σ',
 								restore.par = TRUE, extend.plot.range =c(NA,NA))
 {
-
 	if (missing(data)) 
         stop("data is required")
 	
@@ -2278,7 +3741,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	
 	axes.las = 0
 	
-	ylim.range = range(all.statistics, all.limits, all.center, Reduce(c, spec.limits), na.rm = TRUE) 
+	ylim.range = range(all.statistics, all.limits, all.center, Reduce(c, spec.limits), additional.spec.lines, na.rm = TRUE) 
 	
 	if(!is.na(extend.plot.range[1]) && extend.plot.range[1] < ylim.range[1]) ylim.range[1] = extend.plot.range[1]
 	if(!is.na(extend.plot.range[2]) && extend.plot.range[2] > ylim.range[2]) ylim.range[2] = extend.plot.range[2]
@@ -2327,7 +3790,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
     mtext(main.title, side = 3, line = top.line, font = par("font.main"), 
         cex = qcc.options("cex"), col = par("col.main"))
 		
-	if(length(spec.limits) > 0 && !is.null(spec.limits$lsl))
+	if(length(spec.limits) > 0 && !is.null(spec.limits$lsl) && !is.na(spec.limits$lsl))
 	{
 		abline(h = spec.limits$lsl, lty = 3, lwd = 2, col = gray(0.3))
 		
@@ -2340,7 +3803,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 					cex = par("cex") * 0.8)     # Size
 	}
 	
-	if(length(spec.limits) > 0 && !is.null(spec.limits$usl))
+	if(length(spec.limits) > 0 && !is.null(spec.limits$usl) && !is.na(spec.limits$usl))
 	{
 		abline(h = spec.limits$usl, lty = 3, lwd = 2, col = gray(0.3))
 		
@@ -2630,6 +4093,22 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 				}
 			}
 			
+			if(length(additional.spec.lines) > 0)
+			{
+				for(x in 1:length(additional.spec.lines))
+				{
+						warn.lcl = unique(additional.spec.lines[x])
+						warn.lcl.label = additional.spec.lines_label
+						
+						segments(x0= length(cum.indices), y0=warn.lcl, x1= length(cum.indices) + length(stats), y1= warn.lcl, lty = 3, col= 'black') #x0, y0, x1 = x0, y1 = y0
+						
+						text(x = length(cum.indices)+length(stats)/8, y = warn.lcl, label = paste(warn.lcl.label,"\n",round(warn.lcl,digits),sep=""),
+								col = gray(0.3),   # Color of the text
+								font = 2,      # Bold face
+								cex = par("cex") * 0.8)     # Size
+				}
+			}
+			
 			if(zero.or.one.phase == FALSE)
 			{
 				center.label = paste("CL.",i, sep="")
@@ -2873,7 +4352,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 						summary(object.list[[x]])
 					}
 					
-					get.print.violation.indices(object.list[[x]], print.summary = print.test.summary, print.detail = print.test.detail)
+					get.print.violation.indices(object.list[[x]], print.summary = print.test.summary, print.detail = print.test.detail, sigma.symbol = sigma.symbol)
 				}
 			}
 		}
@@ -2889,6 +4368,7 @@ print.qcc.spc.phases <- function (qcc.spc.phases.obects = list(), qcc.objects = 
 									digits = 2, 
 									phase.names = c(),
 									stat.table.name = "Summary Stats",
+									sigma.symbol = 'σ',
 									chart.title.name = c())
 {
 
@@ -2966,7 +4446,7 @@ print.qcc.spc.phases <- function (qcc.spc.phases.obects = list(), qcc.objects = 
 						summary(object.list[[x]])
 					}
 					
-					get.print.violation.indices(object.list[[x]], print.summary = print.test.summary, print.detail = print.test.detail)
+					get.print.violation.indices(object.list[[x]], print.summary = print.test.summary, print.detail = print.test.detail, sigma.symbol = sigma.symbol)
 				}
 			}
 		}

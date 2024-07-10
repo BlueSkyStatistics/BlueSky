@@ -65,13 +65,23 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 			{
 				BSkyBlankDSColNameClassList <<- list()
 				BSkyBlankDSColNameLevelsList <<- list()
+				BSkyblankDSallColAttr <<- list()
 				blankDScolumnnames <<-NULL
 				blankDSrowcount <<- eval(parse(text=paste('nrow(',datasetname,')',sep='')))
 				blankDScolremoved <<- 0 #no. of empty cols deleted from the say Dataset1
 				#28Jun2023 backup: save all col-names and col-class in a temp BSkyColNameClassList variable
 				blankDScolumnnames <<- eval(parse(text=paste('colnames(',datasetname,')',sep='')))
+
 				for(colname in blankDScolumnnames) # save column name with the class
 				{
+					colIndex <- BSkyValidateColumn(datasetname, colname)	
+					if(colIndex > 0)
+					{
+						bskyattrs <- BSkyAttributesBackup(colIndex, datasetname)
+						eval(parse(text=paste('BSkyblankDSallColAttr$',colname,' <<- bskyattrs' ,sep='')))
+						# BSkyblankDSallColAttr <<- append(BSkyblankDSallColAttr, list(bskyattrs))
+					}
+
 					columnclass = eval(parse(text=paste('class(',datasetname,'$',colname,')',sep='')))
 					eval(parse(text=paste('BSkyBlankDSColNameClassList$',colname,' <<- columnclass' ,sep='')))
 					if("factor" %in% columnclass)
@@ -256,6 +266,17 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 							else
 								eval(parse(text=paste('attr(',datasetname,',"misvals") <- c(',colmisatt,')')))
 							# cat("done!@")
+
+			#put back col attributes of remaining col (after cleanup of empty ones)
+			#this may not require col-name to fetch details from backup because cleaned DS start from 0,0 to all filled cells (say 2,5)
+			#if there is a scenario in future to even drop empty cols in between the filled ones then we must use col=name
+			colIndex <- BSkyValidateColumn(datasetname, coluname)	
+			if(colIndex > 0) #this may not require col-name to fetch details from backup because cleaned DS start from 0,0 to all filled cells
+			{
+				# bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
+				bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',coluname, sep='')))
+				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+			}							
 						}
 
 						#cat("\nCreating Extra attributes for new DS. ")
@@ -403,8 +424,10 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 	colmlevels=""
     if (addCols > 0) {
 		rowcount = blankDSrowcount
+		idx = 0
 		for( cname in blankDScolumnnames)
 		{
+			idx = idx + 1
 			colmclass = eval(parse(text=paste('BSkyBlankDSColNameClassList$',cname, sep=''))) 
 			if("factor" %in% colmclass)
 			{
@@ -475,6 +498,15 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 				# print("Class:")
 				# print(eval(parse(text = paste('class(',datasetname,'$',cname,')', sep=''))))
 
+			}
+
+			#put back col attributes
+			colIndex <- idx #BSkyValidateColumn(datasetname, cname)	#
+			if(colIndex > 0)
+			{
+				# bskyattrs <- BSkyblankDSallColAttr[[colIndex]]
+				bskyattrs = eval(parse(text=paste('BSkyblankDSallColAttr$',cname, sep='')))
+				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
 			}
 		}
 
