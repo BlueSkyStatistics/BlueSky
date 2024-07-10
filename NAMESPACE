@@ -262,3 +262,5 @@ export(BSkySplitCollapseDatasetWithRepeatingColumns, BSkyInAppBMDScriptExecution
 export(BSkyMultipleEditDataGrid)
 
 export(backupAllColAttr, restoreAllColAttr)
+
+export(BSkySetDecimalMarker, BSkyGetDecimalMarker, BSkySetDisplayMarker, BSkyGetDisplayMarker)
