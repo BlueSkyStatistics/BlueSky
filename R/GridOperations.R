@@ -106,53 +106,29 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 		#### Processing colceldata  ####	##Put following checks everywhere
 		if(colIndex > 0)
 		{
-			 ###As per UI datagrid requirement colceldata should be numeric always.
-			#if(!is.na(as.numeric(colceldata)))
-			#{
-				#colceldata=as.numeric(colceldata)# converting "2" to 2
-			#}
-			#else if(is.character(colceldata))
-			#{
-				#colceldata = BSkyGetLevelIndex(colIndex, colceldata, DataSetIndex)
-				#if(colceldata == 0)
-					#colceldata <- NA
-			#}
-			#else
-			#{
-				#colceldata <- NA
-				#cat("\nError: colceldata is non-numeric!\n")			
-			#}
-		
-
-			## Find length(no.) of levels. If its greater than 0 then its factor. OR we can directly do is.factor()
-			#if(!is.na(colceldata) && length(levels(uadatasets$lst[[DataSetIndex]][,colIndex]))>0)#if true colIndex is factor and non-NA
-			#{
-				#if(colceldata <= length(levels(uadatasets$lst[[DataSetIndex]][,colIndex])))
-				#{
-					### Now get correct level coressponding to colceldata (only for factor cols)
-					### basically converting numeric value of level to coressponding string.
-					### eg.. convert 1 to "Male"
-					#colceldata <- levels(uadatasets$lst[[DataSetIndex]][,colIndex])[colceldata]
-				#}
-				#else
-				#{
-					#cat("\nError: Not a valid factor level! Converting to NA.\n")
-					#colceldata <- NA
-				#}
-			#}
 
 					classOfCol =eval(parse(text=paste(  "class(", datasetname, "$",colname, ")")))
 					if("numeric" %in% classOfCol)
 					{			
 						#cat("\nEdit Numeric cell.")
 						 #cat(paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- as.numeric(",colceldata,")"))
-						eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.numeric(",colceldata,")")))#. <<- to <-
+						if(!is.na(suppressWarnings(as.numeric(colceldata))) ){
+							eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.numeric(",colceldata,")")))#. <<- to <-
+						}
+						else {
+							cat(paste0("\nValue entered ", colceldata," - is invalid type for the dataset column of type ",classOfCol,"\n"))
+						}
 						# for factor: uadatasets$lst[[1]][,2][[2]]<- "Male" or NA
 						# cat("\nTesting2.")
 					}
 					else if("integer" %in% classOfCol)
 					{			
-						eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.integer(",colceldata,")")))#. <<- to <-
+						if(!is.na(suppressWarnings(as.integer(colceldata))) ){
+							eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.integer(",colceldata,")")))#. <<- to <-
+						}
+						else {
+							cat(paste0("\nValue entered ", colceldata," - is invalid type for the dataset column of type ",classOfCol,"\n"))
+						}						
 					}		
 					else if("character" %in% classOfCol)
 					{			
@@ -212,6 +188,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 					}
 					else if("logical" %in% classOfCol)
 					{
+						valid=true
 						if(is.na(colceldata) )
 						{
 							colceldata = NA
@@ -226,9 +203,16 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 						}
 						else
 						{
+							valid = false
 							colceldata = NA
 						}
-						eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- (",colceldata,")", sep='')))
+
+						if(valid){ #!is.na(suppressWarnings(as.logical(colceldata))) ){
+							eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- (",colceldata,")", sep='')))
+						}
+						else {
+							cat(paste0("\nValue entered ", colceldata," - is invalid type for the dataset column of type ",classOfCol,"\n"))
+						}
 					}				
 					else
 					{			
