@@ -282,6 +282,46 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
     data = NA, dataSetNameOrIndex = "mtcars")
 {
   
+  	deciCh = '.'
+	groupingChar = ''
+
+	##reading global value for decimal and display markers
+	decimarker = BSkyGetDecimalMarker()
+	dispmarker = BSkyGetDisplayMarker()
+	globalmarkersset = FALSE
+	if(decimarker!="" || dispmarker!="")
+	{
+		globalmarkersset = TRUE
+	}
+
+	if(decimarker!="")
+	{
+		deciCh = decimarker
+	}
+
+	if(dispmarker!="")
+	{
+		groupingChar = dispmarker
+	}
+
+	if(!globalmarkersset)
+	{
+		localeRes = Sys.getlocale("LC_COLLATE")
+		if(localeRes == "German_Italy.1252" ||
+		localeRes == "German_Liechtenstein.1252" ||
+		localeRes == "German_Luxembourg.1252" ||
+		localeRes == "German_Austria.1252" ||
+		localeRes == "German_Switzerland.1252" ||
+		localeRes == "German_Germany.1252" || 
+		localeRes == "German_Belgium.1252")
+		{
+			
+			deciCh = ','
+			groupingChar = '.'
+		} 
+	}
+
+
   # Get system information
 	sys_info <- Sys.info()
 	
@@ -309,10 +349,17 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	} else 
 	{
 	#print("The clipboard is not empty.")
-	tabular_data <- read.delim("clipboard", header = FALSE, stringsAsFactors = FALSE)
+	# tabular_data <- read.delim("clipboard", header = FALSE, stringsAsFactors = FALSE) ## num becomes string "50.000,50"
+
+	templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
+	## clipboard data is tab separated
+	tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale) #delim = '\t', 
+	## run for each column to get desired encoded data
+	tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
+
 	noOfRows =nrow(tabular_data)
 	noOfCols =ncol(tabular_data)
-	 data = as.character(as.matrix(tabular_data))
+	data = as.character(t(as.matrix(tabular_data)))
 	validData =TRUE
 	}
   
@@ -329,11 +376,19 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
   print("The clipboard is empty.")
   return(invisible("The clipboard is empty."))
 } else {
-  tabular_data <- read.delim(pipe("pbpaste"), header = FALSE, stringsAsFactors = FALSE)
+#   tabular_data <- read.delim(pipe("pbpaste"), header = FALSE, stringsAsFactors = FALSE)
+
+	clipboardEncoding = ""  ## get it from clipboard somehow.
+	templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
+	## clipboard data is tab separated
+	tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale) #delim = '\t',
+	## run for each column to get desired encoded data
+	tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
+	
 	noOfRows =nrow(tabular_data)
 	noOfCols =ncol(tabular_data)
-	 data = as.character(as.matrix(tabular_data))
-  validData =TRUE
+	data = as.character(t(as.matrix(tabular_data)))
+  	validData =TRUE
 }
 
   #print("The operating system is macOS.")
