@@ -16,7 +16,7 @@
 #
 #Example: UAreadCSV("C:/Data/test.csv", "mycsv", Header=TRUE, replace=FALSE)
 ###################################################################################################################
-UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,character.to.factor=FALSE, sepCh=',', deciCh='.')
+UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,character.to.factor=FALSE, sepCh=',', deciCh='.', groupingChar='')
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -59,7 +59,7 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		# uadatasets$lst <- c(uadatasets$lst, list(read.csv(csvfilename, header=Header)))
 		options(readr.show_types = FALSE) 
 		#R command to open data file //, show_col_types = FALSE
-		corecommand= paste('readr::read_delim(file=\'',csvfilename,'\', col_names =',Header,',delim=\'',sepCh,'\')', sep='')
+		corecommand= paste('readr::read_delim(file = \'',csvfilename,'\', col_names = ',Header,',delim = \'',sepCh,'\', locale = locale(decimal_mark = \'',deciCh,'\', grouping_mark = \'',groupingChar,'\'))', sep='')
 		
 		#reset global error-warning flag
 		eval(parse(text="bsky_opencommand_execution_an_exception_occured = FALSE"), envir=globalenv())
@@ -67,6 +67,10 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		tryCatch({		
 				withCallingHandlers({		
 					eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')',sep=''))) 
+					if(!Header){
+						eval( parse(text=paste('.GlobalEnv$',datasetname,' <- data.frame(lapply(.GlobalEnv$', datasetname,', function(x) iconv(x)))',sep=''))) 
+						#tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
+					}
 				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
 		

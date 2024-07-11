@@ -233,7 +233,7 @@ BSkyEmpty <-function(datasetName ,noOfRows,noOfCols)
 #' BSkyloadDataset(fullpathfilename=fullpathfilename, filetype <- 'XLS', worksheetName = 'Sheet1', datasetName <- 'exceldata')
 #' BSkyLoadRefresh(exceldata)
 BSkyloadDataset <-function(fullpathfilename,  filetype, worksheetName=NULL, replace_ds=FALSE, 
-load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', datasetName, encoding=NULL, maxFactor=BSkyGetMaxFactor() )
+load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FALSE, trimSPSStrailing=FALSE, sepChar=',', deciChar='.', groupingChar='', datasetName, encoding=NULL, maxFactor=BSkyGetMaxFactor() )
 {
 
 	BSkyFunctionInit()
@@ -281,7 +281,7 @@ load.missing = FALSE, csvHeader=TRUE,character.to.factor=FALSE, isBasketData=FAL
 			}
 			else if(filetype == "CSV" || filetype == "TXT"){
 
-				success = UAreadCSV(fullpathfilename, datasetname, Header=csvHeader, replace=replace_ds, character.to.factor=character.to.factor, sepCh=sepChar, deciCh=deciChar)
+				success = UAreadCSV(fullpathfilename, datasetname, Header=csvHeader, replace=replace_ds, character.to.factor=character.to.factor, sepCh=sepChar, deciCh=deciChar, groupingChar=groupingChar)
 			}
 			else if(filetype == "DBF"){
 				success = UAreadDBF(fullpathfilename, datasetname,replace=replace_ds)
