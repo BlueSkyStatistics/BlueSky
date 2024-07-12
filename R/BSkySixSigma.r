@@ -2034,12 +2034,14 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
 		#title <- paste("Overall Process Capability Analysis ( sample size of", max(sizes), ")\nfor", 
 		title <- paste("Overall Process Capability Analysis\nfor",
 			object$data.name)
+		StdDev_title = "Overall StdDev"
 	}
 	else
 	{
 		#title <- paste("Potential (Within) Process Capability Analysis ( sample size of", max(sizes), ")\nfor", 
 		title <- paste("Potential (Within) Process Capability Analysis\nfor",
 			object$data.name)
+		StdDev_title = "Within StdDev"
 	}
 	
     if (missing(spec.limits)) 
@@ -2190,7 +2192,7 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
             sep = ""), side = 1, line = top.line + 1, adj = 0, 
             at = at.col[1], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
-        mtext(paste("StdDev = ", signif(std.dev, digits), 
+        mtext(paste(StdDev_title," = ", signif(std.dev, digits), 
             sep = ""), side = 1, line = top.line + 2, adj = 0, 
             at = at.col[1], font = qcc.options("font.stats"), 
             cex = par("cex") * qcc.options("cex.stats"))
@@ -2305,7 +2307,7 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
             formatC("LSL = ", width = 10), ifelse(is.na(LSL), 
                 "", formatC(signif(LSL, digits = digits), 
                   flag = "-")), "\n", sep = ""))
-        cat(paste(formatC("StdDev = ", width = 16), formatC(signif(std.dev, 
+        cat(paste(formatC(StdDev_title," = ", width = 16), formatC(signif(std.dev, 
             digits = digits), width = 12, flag = "-"), 
             formatC("USL = ", width = 10), ifelse(is.na(USL), 
                 "", formatC(signif(USL, digits = digits), 
