@@ -26,7 +26,21 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	success= -1
 	logflag=FALSE
-	
+	German =FALSE
+
+	## IF German
+	localeRes = Sys.getlocale("LC_COLLATE")
+	if(localeRes == "German_Italy.1252" ||
+	localeRes == "German_Liechtenstein.1252" ||
+	localeRes == "German_Luxembourg.1252" ||
+	localeRes == "German_Austria.1252" ||
+	localeRes == "German_Switzerland.1252" ||
+	localeRes == "German_Germany.1252" || 
+	localeRes == "German_Belgium.1252")
+	{
+		German = TRUE
+	} 
+
 	##for testing UI app when exception occurs in R
 	# if(success==0) 
 	# {
@@ -67,6 +81,10 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		tryCatch({		
 				withCallingHandlers({		
 					eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')',sep=''))) 
+					if(!Header && German){
+						eval( parse(text=paste('.GlobalEnv$',datasetname,' <- data.frame(lapply(.GlobalEnv$', datasetname,', function(x) iconv(x)))',sep=''))) 
+						#tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
+					}
 				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
 		
