@@ -67,10 +67,6 @@ UAreadCSV <- function(csvfilename, datasetname, Header=TRUE, replace=FALSE,chara
 		tryCatch({		
 				withCallingHandlers({		
 					eval( parse(text=paste('.GlobalEnv$',datasetname,' <- as.data.frame( ',corecommand,')',sep=''))) 
-					if(!Header){
-						eval( parse(text=paste('.GlobalEnv$',datasetname,' <- data.frame(lapply(.GlobalEnv$', datasetname,', function(x) iconv(x)))',sep=''))) 
-						#tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
-					}
 				}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
 		
