@@ -112,7 +112,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 					{			
 						#cat("\nEdit Numeric cell.")
 						 #cat(paste(datasetname,"[,",colIndex,"][[",rowindex,"]] <<- as.numeric(",colceldata,")"))
-						if(!is.na(suppressWarnings(as.numeric(colceldata))) ){
+						if(!is.na(suppressWarnings(as.numeric(colceldata))) || is.na(colceldata)){
 							eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.numeric(",colceldata,")")))#. <<- to <-
 						}
 						else {
@@ -123,7 +123,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 					}
 					else if("integer" %in% classOfCol)
 					{			
-						if(!is.na(suppressWarnings(as.integer(colceldata))) ){
+						if(!is.na(suppressWarnings(as.integer(colceldata)))  || is.na(colceldata)){
 							eval(parse(text=paste(datasetname,"[",rowindex,",",colIndex,"]  <- as.integer(",colceldata,")")))#. <<- to <-
 						}
 						else {
@@ -445,13 +445,16 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
             dataSetNameOrIndex, "[,", startCol, "])")))
         if ("numeric" %in% classOfVariable || "integer" %in%
             classOfVariable) {
-            every_column_temp <- every_column
-            empty_string_count <- sum(nchar(every_column) ==
-                0)
+			
+			 every_column_temp <- every_column 
+			 every_column_na_removed = every_column[!is.na(every_column)]
+            empty_string_count <- sum(nchar(every_column_na_removed) ==
+                0 )
             every_column = suppressWarnings(as.numeric(every_column))
-            empty_numeric_count <- sum(is.na(every_column) ==
+              empty_numeric_count <- sum(is.na(every_column) ==
                 TRUE)
-          	
+			
+                    	
           
           
             if (empty_string_count != empty_numeric_count) {
