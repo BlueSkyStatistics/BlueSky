@@ -944,6 +944,29 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 ###################
 #MSA Gage Analysis
 ###################
+
+BSkyReComputeGageRRWithHistStddev <- function(GageRRTableObj, StudyVarTableObj)
+{
+	GageRRTableObj[,c("VarComp")] = (StudyVarTableObj[,c("StdDev")])^2
+	GageRRTableObj[,c("%Contrib")] = (GageRRTableObj[,c("VarComp")]/GageRRTableObj[c("Total Variation"),1])*100
+	return(invisible(GageRRTableObj))
+}
+
+BSkyEstimateProcVarWithHistStddev <- function(tableObj, histStdev, gageRRTotalVariation, sigma, tolerance){
+			if(histStdev > tableObj[1,1]){
+				tableObj[c("Part-To-Part"),1] = sqrt(histStdev^2 - tableObj[c("Total Gage R&R"),1]^2)
+				tableObj[c("Total Variation"),1] = gageRRTotalVariation
+				tableObj[c("Part-To-Part"),2] = tableObj[c("Part-To-Part"),1]*sigma
+				tableObj[c("Total Variation"),2] = tableObj[c("Total Variation"),1]*sigma
+				tableObj[,3] = (tableObj[,2]/tableObj[c("Total Variation"),2])*100
+				
+				if(!is.na(tolerance)){
+					tableObj[,4] = (tableObj[,2]/tolerance)*100
+				}
+			}
+			invisible(return(tableObj))
+}
+
 ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tolerance = usl -
     lsl, data, main = "Six Sigma Gage R&R Study", sub = "", alphaLim = 0.05,
     errorTerm = "interaction", digits = 4, method = "crossed",
@@ -1119,8 +1142,7 @@ ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tole
         else {
             #print(varComp[, 3:5])
         }
-        cat(paste("\nNumber of Distinct Categories =", ncat,
-            "\n"))
+        #cat(paste("\nNumber of Distinct Categories =", ncat,"\n"))
     }
     else if (method == "nested") {
         if (b == 1) {
@@ -1201,8 +1223,7 @@ ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tole
         else {
             #print(varComp[, 3:5])
         }
-        cat(paste("\nNumber of Distinct Categories =", ncat,
-            "\n"))
+        #cat(paste("\nNumber of Distinct Categories =", ncat,"\n"))
         pint <- 0
     }
     if (print_plot) {	
@@ -1307,11 +1328,14 @@ ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tole
         grid::popViewport()
 		
 		
-		SixSigma:::.ss.prepCanvas(paste(paste0(part, ":", appr, " Interaction"), "(", main,")"), sub)
-		vp.plots <- grid::viewport(name = "plots4", layout = grid::grid.layout(1,1))
+		#SixSigma:::.ss.prepCanvas(paste(paste0(part, ":", appr, " Interaction"), "(", main,")"), sub)
+		#vp.plots <- grid::viewport(name = "plots4", layout = grid::grid.layout(1,1))
 		
         if (method == "crossed") {
 			
+			SixSigma:::.ss.prepCanvas(paste(paste0(part, ":", appr, " Interaction"), "(", main,")"), sub)
+			vp.plots <- grid::viewport(name = "plots4", layout = grid::grid.layout(1,1))
+		
 			vp.Interact <- grid::viewport(name = "Interact",
                 layout.pos.row = 1, layout.pos.col = 1)
 				

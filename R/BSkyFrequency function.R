@@ -131,10 +131,12 @@ BSkyFrequency <- function (data = NULL, vars = NULL, order_by = c("freq","var","
         
 		if(order_by[1] == "var")
 		{
-			if(is.factor(BSky_Variable_List[[i]])) BSky_Variable_List[[i]] = as.character(BSky_Variable_List[[i]])
+			if(is.factor(BSky_Variable_List[[i]])) 
+				BSky_Variable_List[[i]] = as.character(BSky_Variable_List[[i]])
 			BSky_Variable_List[[i]] = BSky_Variable_List[[i]][order(BSky_Variable_List[[i]], decreasing =decreasing)]
+			BSky_Variable_List[[i]] = factor(BSky_Variable_List[[i]], levels = unique(BSky_Variable_List[[i]]))
 		}
-		
+
 		freq = as.data.frame(table(BSky_Variable_List[[i]], useNA = "always"))
       	percent = as.data.frame(prop.table(table(BSky_Variable_List[[i]],useNA = "always")))
         percent$Freq = percent$Freq * 100
