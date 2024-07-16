@@ -339,7 +339,7 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	if (os_type == "Windows") 
 	{
 	#print("The operating system is Windows.")
-	library(clipr)
+	library(clipr, quietly = TRUE)
 	# Read clipboard content
 	clipboard_content <- read_clip()
 	# Check if the clipboard is empty
