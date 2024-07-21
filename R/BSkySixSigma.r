@@ -1,4 +1,264 @@
 
+###########################################################################
+# calculate p values with bootstrap technique for distribution fit analysis 
+###########################################################################
+
+BSkyBootstrapDistFitPvalue <- function(data, fitdist, fitname, boost_niter = 600, gofstat_result=c())
+{
+		  # xname <- deparse(substitute(x))
+		  # stopifnot(is.numeric(x))
+		  # x <- as.vector(x)
+		  # n <- length(x)
+		  # F0 <- goftest:::getCdf(null)
+		  # print(F0)
+		  # print(class(F0))
+		  # U <- F0(x, ...)
+		  # if(any(U < 0 | U > 1))
+			# stop("null distribution function returned values outside [0,1]")
+	
+	p_values = c()
+	bootstrap_ks_p.value_corrected = c("")
+	bootstrap_ad_p.value_corrected = c("")
+	bootstrap_cvm_p.value_corrected = c("")
+	
+	vec_length = length(as.numeric(data))
+	
+	param = coef(fitdist)
+	#print(str(param))
+	# Create formatted strings for each name-value pair
+	param_string <- paste(names(param), " = ", param, collapse=", ")
+	
+	if(fitdist$distname == 'norm')
+	{
+		ad_test_result = nortest::ad.test(x = data)
+		observed_ad_stat = ad_test_result$statistic
+		observed_ad_p.value = ad_test_result$p.value
+	}
+	else
+	{
+		ad_test_result = eval(parse(text=paste("goftest::ad.test(x = data,", paste0("\"p",fitdist$distname,"\""), ",", param_string, ")")))
+		observed_ad_stat <- ad_test_result$statistic
+		observed_ad_p.value <- ad_test_result$p.value
+	}
+	
+	cvm_test_result = eval(parse(text=paste("goftest::cvm.test(x = data,", paste0("\"p",fitdist$distname,"\""), ",", param_string, ")")))
+	observed_cvm_stat <- cvm_test_result$statistic
+	observed_cvm_p.value <- cvm_test_result$p.value
+	
+	ks_test_result = eval(parse(text=paste("stats::ks.test(x = data,", paste0("\"p",fitdist$distname,"\""), ",", param_string, ")")))
+	observed_ks_stat <- ks_test_result$statistic
+	observed_ks_p.value <- ks_test_result$p.value
+	
+	# Perform the parametric bootstrap
+	set.seed(123)
+	#n_bootstrap <- boost_niter  # Number of bootstrap samples
+	bootstrap_ad_stats <- numeric(boost_niter)
+	bootstrap_ad_p.value <- numeric(boost_niter)
+	
+	bootstrap_cvm_stats <- numeric(boost_niter)
+	bootstrap_cvm_p.value <- numeric(boost_niter)
+	
+	bootstrap_ks_stats <- numeric(boost_niter)
+	bootstrap_ks_p.value <- numeric(boost_niter)
+	
+	#cat("\n Number of bootstrap iiteration used: ", boost_niter, "\n")
+	for (i in 1:boost_niter) {
+		# Generate a bootstrap sample from the fitted distribution for a given <distname>
+		#bootstrap_sample <- rweibull(length(adtestdata$light), shape = shape_param, scale = scale_param)
+		#print(paste0("r", fitdist$distname, "(", vec_length, ",", param_string, ")"))
+		bootstrap_sample <- eval(parse(text=paste0("r", fitdist$distname, "(", vec_length, ",", param_string, ")")))
+
+		# Refit the distribution to the bootstrap sample for a given <distname>
+		bootstrap_fit <- suppressWarnings(fitdist(as.numeric(bootstrap_sample), fitdist$distname, method = fitdist$method))
+		bootstrap_fit_param = coef(bootstrap_fit)
+		#print(str(bootstrap_fit_param))
+		
+		# Create formatted strings for each name-value pair
+		bootstrap_fit_param_string <- paste(names(bootstrap_fit_param), " = ", bootstrap_fit_param, collapse=", ")
+
+		# Perform the Anderson-Darling test on the bootstrap sample
+		bootstrap_ad_test = eval(parse(text=paste("goftest::ad.test(x = bootstrap_sample,", paste0("\"p",fitdist$distname,"\""), ",", bootstrap_fit_param_string, ")")))
+		bootstrap_ad_stats[i] <- bootstrap_ad_test$statistic
+		bootstrap_ad_p.value [i] <- bootstrap_ad_test$p.value
+		
+		bootstrap_cvm_test = eval(parse(text=paste("goftest::cvm.test(x = bootstrap_sample,", paste0("\"p",fitdist$distname,"\""), ",", bootstrap_fit_param_string, ")")))
+		bootstrap_cvm_stats[i] <- bootstrap_cvm_test$statistic
+		bootstrap_cvm_p.value [i] <- bootstrap_cvm_test$p.value
+		
+		bootstrap_ks_test = eval(parse(text=paste("stats::ks.test(x = bootstrap_sample,", paste0("\"p",fitdist$distname,"\""), ",", bootstrap_fit_param_string, ")")))
+		bootstrap_ks_stats[i] <- bootstrap_ks_test$statistic
+		bootstrap_ks_p.value [i] <- bootstrap_ks_test$p.value
+	}
+
+	if(fitdist$distname == 'norm')
+	{
+		bootstrap_ad_stats_corrected = observed_ad_p.value 
+		bootstrap_ad_p.value_corrected = observed_ad_p.value
+	}
+	else
+	{
+		#cat("\nInitial observed_ad_stat: ", observed_ad_stat, "and observed_ad_p.value: ", observed_ad_p.value, "\n") 
+		# Calculate the corrected p-values from ad.test and cvm.test
+		bootstrap_ad_stats_corrected <- mean(bootstrap_ad_stats >= observed_ad_stat)
+		bootstrap_ad_p.value_corrected <- mean(bootstrap_ad_p.value <= observed_ad_p.value)
+		#cat("\nCorrected ad_stat: ", bootstrap_ad_stats_corrected, "and ad_p.value: ", bootstrap_ad_p.value_corrected , "\n")
+	}
+	
+	#cat("\nInitial observed_cvm_stat: ", observed_cvm_stat, "and observed_cvm_p.value: ", observed_cvm_p.value, "\n")
+	# Calculate the p-value
+	bootstrap_cvm_stats_corrected <- mean(bootstrap_cvm_stats >= observed_cvm_stat)
+	bootstrap_cvm_p.value_corrected <- mean(bootstrap_cvm_p.value <= observed_cvm_p.value)
+	#cat("\nCorrected cvm_stat: ", bootstrap_cvm_stats_corrected, "and cvm_p.value: ", bootstrap_cvm_p.value_corrected, "\n")
+	
+	#cat("\nInitial observed_ks_stat: ", observed_ks_stat, "and observed_ks_p.value: ", observed_ks_p.value, "\n")
+	# Calculate the p-value
+	bootstrap_ks_stats_corrected <- mean(bootstrap_ks_stats >= observed_ks_stat)
+	bootstrap_ks_p.value_corrected <- mean(bootstrap_ks_p.value <= observed_ks_p.value)
+	#cat("\nCorrected ks_stat: ", bootstrap_ks_stats_corrected, "and ks_p.value: ", bootstrap_ks_p.value_corrected, "\n")
+	
+	initia_p_values = c(ks_p.value = observed_ks_p.value, cvm_p.value = observed_cvm_p.value, ad_p.value = observed_ad_p.value)
+	p_values = c(ks_p.value = bootstrap_ks_p.value_corrected, cvm_p.value = bootstrap_cvm_p.value_corrected, ad_p.value = bootstrap_ad_p.value_corrected)
+	#BSkyFormat(data.frame(rbind(initia_p_values, p_values)))
+	
+	return(invisible(p_values))
+}
+
+
+BSkyGetDisttestPvalues <- function(data, fitdist, fitname, boost_niter = 600, gofstat_result)
+{
+	p_values = c()
+	
+	ks_result = list()
+	cvm_result = list()
+	ad_result = list()
+	
+	param = coef(fitdist)
+	#print(str(param))
+	# Create formatted strings for each name-value pair
+	param_string <- paste(names(param), " = ", param, collapse=", ")
+	#print(param_string)
+	
+	#cat(paste0("\\"n",fitdist$distname,"\\""))
+	#cat(paste("ks.test(x = data,", paste0("\\"n",fitdist$distname,"\\""), ",", param_string, ")"))
+		
+	#if(gofstat_result$kstest != "not computed")
+	{
+		#ks_result <- ks.test(x, "pnorm", mean = mean(x), sd = sd(x), exact = TRUE)
+		#ks_result = eval(parse(text=paste("stats::ks.test(x = data,", paste0("\\"p",fitdist$distname,"\\""), ",", param_string, ")")))
+		#ks_result = eval(parse(text=paste("stats::ks.test(x = data,", paste0("\\"p",fitdist$distname,"\\""),")")))
+		#print(ks_result1)
+		#print(ks_result)
+		#p_values = c(p_values, signif(ks_result$p.value,4))
+	}
+	#else
+	#{
+	#	p_values = c(p_values, "")
+	#}
+	
+	#if(gofstat_result$cvmtest != "not computed")
+	{
+		#cvm_result = eval(parse(text=paste("cvm.test(x = data,",  "\\"pnorm\\",", param_string, ")")))
+		#cvm_result = eval(parse(text=paste("goftest::cvm.test(x = data,", paste0("\\"p",fitdist$distname,"\\""), ",", param_string, ")")))
+		#p_values = c(p_values, cvm_result$p.value)
+	}
+	#else
+	#{
+	#	p_values = c(p_values, "")
+	#}
+	
+	#if(gofstat_result$adtest != "not computed")
+	{
+		#ad_result = eval(parse(text=paste("ad.test(x = data,",  "\\"pnorm\\",", param_string, ")")))
+		#ad_result = eval(parse(text=paste("goftest::ad.test(x = data,", paste0("\\"p",fitdist$distname,"\\""), ",", param_string, ")")))
+		#p_values = c(p_values, ad_result$p.value)
+		corrected_p_values = BSkyBootstrapDistFitPvalue(data, fitdist, fitname, boost_niter = boost_niter)
+		p_values = c(p_values, corrected_p_values)
+	}
+	#else
+	#{
+	#	p_values = c(p_values, "")
+	#}
+		
+	p_values_df = data.frame(p.value = p_values) #, ncol = 1, nrow = 3) 
+	
+	#print(ks_result)
+	#print(cvm_result)
+	#print(ad_result)
+	
+	#print(bsky_multi_fittest_pvalues)
+	
+	return(invisible(p_values_df))
+}
+
+
+BSkyDistgofStatFormat <- function(data, dist_test_list = list(), fitname_list = c(), boost_niter = 600, shoChiqTest = FALSE, showCompareTablesOnly = TRUE)
+{
+	if(length(dist_test_list) > 0)
+	{
+			gofstat_comp = fitdistrplus::gofstat(dist_test_list, fitnames = fitname_list)
+		
+			if(length(fitname_list) == 1)
+			{
+				if(!is.null(gofstat_comp$ad) || !is.null(gofstat_comp$cvm) || !is.null(gofstat_comp$ks))
+				{
+					if((length(fitname_list) == 1) && fitname_list == 'normal')
+					{
+						ad_test_result = nortest::ad.test(x = data)
+						gofstat_comp$ad = ad_test_result$statistic
+					}
+					
+					gofstat_comp_stat = rbind(gofstat_comp$ks, gofstat_comp$cvm, gofstat_comp$ad)
+					row.names(gofstat_comp_stat) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
+					.GlobalEnv$bsky_multi_fittest_stat = cbind(.GlobalEnv$bsky_multi_fittest_stat, gofstat_comp_stat)
+					
+					p_values_df = BSkyGetDisttestPvalues(data = data, fitdist = dist_test_list, fitname = fitname_list[1], gofstat_result = gofstat_comp)
+					.GlobalEnv$bsky_multi_fittest_pvalues = cbind(.GlobalEnv$bsky_multi_fittest_pvalues, p_values_df)
+					
+					gofstat_comp_stat = cbind(gofstat_comp_stat, p_values_df)
+					if(showCompareTablesOnly == FALSE)
+						BSkyFormat(gofstat_comp_stat, outputTableRenames="Goodness-of-fit statistics", perTableFooter =c("Signf level = 0.05"))
+				}
+				else
+				{
+					cat("\n All tests Kolmogorov-Smirnov, Cramer-von Mises, and Anderson-Darling failed for distribution: ", fitname_list, "\n")
+				}
+				
+				if(shoChiqTest == TRUE && showCompareTablesOnly == FALSE)
+				{
+					BSkyFormat(with(gofstat_comp, list(chisq=chisq, chisqbreaks=chisqbreaks, chisqpvalue = chisqpvalue, chisqdf=chisqdf,chisqtable = (gofstat_comp$chisqtable))), outputTableRenames="Goodness-of-fit (Chi-squared test)")
+				}
+			}
+			else
+			{
+				#gofstat_comp_stat_test = rbind(gofstat_comp$kstest, gofstat_comp$cvmtest, gofstat_comp$adtest)
+				#row.names(gofstat_comp_stat_test) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
+				
+				row.names(.GlobalEnv$bsky_multi_fittest_stat) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
+				names(.GlobalEnv$bsky_multi_fittest_stat) = fitname_list
+				
+				row.names(.GlobalEnv$bsky_multi_fittest_pvalues) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
+				names(.GlobalEnv$bsky_multi_fittest_pvalues) = fitname_list
+				
+				BSkyFormat(.GlobalEnv$bsky_multi_fittest_stat, outputTableRenames="Goodness-of-fit statistics")
+				BSkyFormat(.GlobalEnv$bsky_multi_fittest_pvalues, outputTableRenames="Goodness-of-fit p_values")
+				
+				if(shoChiqTest == TRUE)
+				{
+					BSkyFormat(with(gofstat_comp, list(chisq=chisq, chisqbreaks=chisqbreaks, chisqpvalue = chisqpvalue, chisqdf=chisqdf,chisqtable = (gofstat_comp$chisqtable))), outputTableRenames="Goodness-of-fit (Chi-squared test)")
+				}
+			}
+			
+			# #if(length(fitname_list) == 1 && (fitname_list[1] == "poisson" || fitname_list[1] == "nbinom"))
+			# if(length(fitname_list) > 1 && showCompareTablesOnly == TRUE)
+				# BSkyFormat(gofstat_comp, outputTableRenames="Goodness-of-fit statistics")
+		
+		gofstat_comp_criterion = rbind(gofstat_comp$aic, gofstat_comp$bic)
+		row.names(gofstat_comp_criterion) = c("Akaike's Information Criterion (AIC)", "Bayesian Information Criterion (BIC)")
+		if(length(fitname_list) > 1) #&& showCompareTablesOnly == TRUE)
+			BSkyFormat(gofstat_comp_criterion, outputTableRenames="Goodness-of-fit criteria")	
+	}
+}
+
 #########################
 # Generate a random seed
 #########################
