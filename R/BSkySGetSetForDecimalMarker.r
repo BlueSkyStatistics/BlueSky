@@ -1,3 +1,30 @@
+#Global Setting for delim character marker for csv file read and cut/paste data
+BSkySetDelimMarker <- function(delimMarker = '') 
+{	
+	if(exists("uadatasets.sk"))
+	{
+		uadatasets.sk$BSkyDelimMarker = delimMarker[1]
+	}
+	
+	# Just a dummy return 
+	return(invisible(delimMarker[1]))
+}
+
+# 07/08/24
+#Get the Global Setting for delim character marker for csv file read and cut/paste data
+BSkyGetDelimMarker <- function()
+{
+	delimMarker = ''
+	
+	if(exists("uadatasets.sk") && exists("BSkyDelimMarker", env=uadatasets.sk))
+	{
+		delimMarker = uadatasets.sk$BSkyDelimMarker[1]
+	}
+	
+	#return the actual delim marker character that is currently set (from the triple dot setting options UI)
+	return(invisible(delimMarker))
+}
+
 # 07/08/24
 #Global Setting for decimal character marker for csv file read and cut/paste data
 BSkySetDecimalMarker <- function(decimalMarker = '') 
