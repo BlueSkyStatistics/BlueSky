@@ -328,12 +328,21 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	# Check the operating system
 	os_type <- sys_info['sysname']
 	
-	if (!is.na(data))
+		 # if (!is.na(data))
+		# {
+			 # validData =TRUE
+		 # }
+	 
+	 if (length(data) ==1 && is.na(data))
 	{
-		validData =TRUE
+	validData =FALSE
+	} else {
+	validData =TRUE
 	}
 	
-	if (is.na(data))
+	
+	
+	if (length(data) ==1 && is.na(data))
 	{
 
 	if (os_type == "Windows") 
@@ -344,16 +353,53 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	clipboard_content <- read_clip()
 	# Check if the clipboard is empty
 	if (is.null(clipboard_content) || clipboard_content == "") {
-	print("The clipboard is empty.")
+	print("The clipboard is still being prepared or is empty. Please wait a few seconds and retry the paste or try copying again before pasting.")
 	return(invisible("The clipboard is empty."))
 	} else 
 	{
 	#print("The clipboard is not empty.")
 	# tabular_data <- read.delim("clipboard", header = FALSE, stringsAsFactors = FALSE) ## num becomes string "50.000,50"
-
+	delimiter =BSkyGetDelimMarker()
 	templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
 	## clipboard data is tab separated
-	tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale) #delim = '\t', 
+	#tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale) #delim = '\t', 
+	
+	tabular_data =NULL
+tabular_data <- tryCatch({
+  # Try to execute func1
+  #tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale)
+  if (delimiter == "")
+  {
+   readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale)
+   } else {
+   readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale, delim = delimiter)
+   }
+  
+}, error = function(e) {
+  # If an error occurs in func1, try to execute func2
+  tryCatch({
+    #tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, delim = '\n', locale =  templocale)
+    readr::read_delim(readr::clipboard(), col_names = FALSE, delim = '\n', locale =  templocale)
+       
+  }, error = function(e2) {
+    # Handle the error if func2 also fails
+    "error"
+    
+  })
+})
+
+if ("character" %in% class(tabular_data))
+{
+    if (tabular_data =="error")
+	{
+	return (invisible("The paste failed as we could not guess the character that separates variables/rows from your data, please examine the data you want to paste and manually specify the delimited in the Triple dot>Settings>Misc. We have already tried the newline character i.e. \\n without success."))
+	}
+}
+if (base::is.null(tabular_data))
+{
+    return (invisible("Something went wrong with realing from the clipboard and a NULL was returned"))
+}	
+	
 	## run for each column to get desired encoded data
 	tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
 
