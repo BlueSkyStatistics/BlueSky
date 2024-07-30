@@ -6018,6 +6018,7 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 		BSkyFormat(line_breakdown_RcommandString)
 	}
 	
+	#cat("\nBSky Graphics Dir", graphicsDir, "\n")
 	if(additionalBskyEvalDebug == TRUE)
 	{
 		cat("\nselectionStartpos ", selectionStartpos, "selectionEndpos ", selectionEndpos, "nchar(RcommandString) ", nchar(RcommandString))
