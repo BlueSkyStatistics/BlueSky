@@ -48,6 +48,7 @@ BSkySaveProjectSpace <- function(save = "all", filedir='C:/Users/User/Downloads'
 
 BSkyLoadProjectSpace <- function(load = "all", filedir='C:/Users/User/Downloads')
 {
+	currentGraphicsDir = BSkyGetGraphicsDirPath()
 	if(load == "all") 
 	{
 		if(!file.exists(paste(filedir,"bsky_env1.RData", sep='/')))
@@ -114,4 +115,5 @@ BSkyLoadProjectSpace <- function(load = "all", filedir='C:/Users/User/Downloads'
 		
 		#BSkyFormat(paste("Datasets loaded succesfully from", filedir))
 	}	
+	invisible(return(BSkySetGraphicsDirPath(currentGraphicsDir)))
 }
