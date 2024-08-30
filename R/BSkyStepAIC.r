@@ -249,10 +249,10 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	modclass = eval(parse(text=paste('class(',modelname,')', collapse='', sep='')))
 	
 	##08Mar2017 if modclass has multiple classes
-	if(length(modclass)>1)
-	{
-		modclass = modclass[1] # just using first item for now so that I can test.
-	}
+	# if(length(modclass)>1)
+	# {
+		# modclass = modclass[1] # just using first item for now so that I can test.
+	# }
 	
 	#various messages. Will be chosen to combined in some order for SUCCESS and FAILURE
 	successMsg1='SUCCESS: The variables used to create the model are present in the active dataset.'
@@ -262,7 +262,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	failureMsg2=' variables are not found ].'
 	
 	modelselmsg =  paste0('\n -Currently selected model:  ', modelname, sep='')
-	modelclasmsg =  paste0('\n -Model Class:  ', modclass, sep='')
+	modelclasmsg =  paste0('\n -Model Class:  ', paste(modclass, collapse=","), sep='')
 	datasetmsg =  paste0('\n -Currently selected dataset:  ', curdatasetname, sep='')
 	informationalMessage ="\nInformational Message: If you see errors below, validate that the model was built with na.action =na.exclude or simply remove NAs and rebuild the model and re-run the analysis. See Variables>Missing Values>Remove NAs to remove missing values\n\n"
 
@@ -303,7 +303,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 		#also find dependentvar
 		dependentvar <-  eval( parse(text=paste('as.character(',modelname,'$call$formula[[2]])',sep='')))
 	}
-	else if (modclass =="train")
+	else if ("train" %in% modclass)
 	{
 	 dependentvar <- getModelDependentVariable(modelname)
     modelvars <- list()
@@ -384,7 +384,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	}
 
 	####### CHECK IF CURRENT DATASET AND THE DATASET USED FOR CREATING THE MODEL ARE SAME OR NOT. THEY MUST BE SAME. ########
-	if(datasetSameCheck && modclass != "train")
+	if(datasetSameCheck && modclass != "train")  
 	{
 		#We set the attribute datasetName only on models of class lm
 		#Models of class glm also list lm in the class	

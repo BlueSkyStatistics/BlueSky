@@ -105,12 +105,12 @@ predictPrerequisiteCP <-function (modelname, curdatasetname,BSkySurvival = FALSE
 	failureMsg1 = "ERROR: The predictor variables that the model requires for scoring are not available in the current dataset. \nOne or more of the variables [ "
     failureMsg2 = "  ] are not found."
 	
-    modelselmsg = paste0("\\n -Currently selected model:  ", modelname, 
+    modelselmsg = paste0("\n -Currently selected model:  ", modelname, 
         sep = "")
-    modelclasmsg = paste0("\\n -Model Class:  ", modclass, sep = "")
-    datasetmsg = paste0("\\n -Currently selected dataset:  ", 
+    modelclasmsg = paste0("\n -Model Class:  ", modclass, sep = "")
+    datasetmsg = paste0("\n -Currently selected dataset:  ", 
         curdatasetname, sep = "")
-    finalmsg = paste ("\\nNOTE: The variable names in the dataset you are trying to score must match the variable names of the dataset you used to build the model.\n")
+    finalmsg = paste ("\nNOTE: The variable names in the dataset you are trying to score must match the variable names of the dataset you used to build the model.\n")
     dependentvar = character(0)
     dependentvar <- getModelDependentVariable(modelname)
     modelvars <- list()
@@ -126,9 +126,9 @@ predictPrerequisiteCP <-function (modelname, curdatasetname,BSkySurvival = FALSE
     vardiff <- list()
     j = 1
     vrlst <- paste(modelvars, collapse = ", ", sep = ",")
-    dependentvarmsg = paste("\\n -Dependent variable of the selected model:  ", 
+    dependentvarmsg = paste("\n -Dependent variable of the selected model:  ", 
         dependentvar, sep = "")
-    independentvarmsg = paste("\\n -Independent variables of the selected model:  ", 
+    independentvarmsg = paste("\n -Independent variables of the selected model:  ", 
         vrlst, sep = "")
     commonMsg = paste(modelselmsg, modelclasmsg, datasetmsg, 
         dependentvarmsg, independentvarmsg, sep = "")
@@ -1315,7 +1315,7 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 			# #BSkyRawPredictions <- summary(survfit(CoxRegModel1, newdata=mockstudy), time=c(500, 1000))$surv
 			
 			#BSKyMarkerForMissing <- eval(parse (text = paste ("which(is.na(", tmpstr2, "))")))
-				predictionProbs <- eval(parse(text =paste("summary(survival::survfit(", modelname, ", newdata =", 
+				predictionProbs <- eval(parse(text =paste("summary(survfit(", modelname, ", newdata =", 
                                              tmpstr2, "),time =",
 													deparse(substitute(BSkyTime)),")$surv"))) 
 			BSKyMarkerForMissing =eval(parse(text =paste("stats::na.action(stats::na.exclude(", tmpstr2, "))") ))
@@ -2171,10 +2171,9 @@ else if (modclass == "coxph" && (dependentclass == "numeric"|| dependentclass ==
 		predictions = base::ifelse(predictionProbs[[i]] >= 0.5, 1, 0)
 		#There is only a single column in the data frame
 		predictionProbs[[i]] = round(predictionProbs[[i]], digits = noofDigitsToRound)
-		# We are NOT saving predictions
-		#aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_", BSkyTime[i], "<<-predictions", sep = "")
-		#eval(parse(text = aa))
-		aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_Surv_", BSkyTime[i], "<<-predictionProbs[[", i, "]]", sep = "")
+		aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_", BSkyTime[i], "<<-predictions", sep = "")
+		eval(parse(text = aa))
+		aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_Prob_", BSkyTime[i], "<<-predictionProbs[[", i, "]]", sep = "")
 		eval(parse(text = aa))
 	}
     predictions = base::ifelse(predictionProbs[[1]] >= 0.5, 1, 0)
