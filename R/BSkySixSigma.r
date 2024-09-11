@@ -3710,9 +3710,234 @@ violating.runs.indices <- function (object,
     return(invisible(violators))
 }
 
+BSkySimpleTimeSeriesPlot <- function(valuesToPlot = NA, dateMarks = NA,  timeUnitsStr = c(), ylab = NA, xlab = NA, main = NA, numTicks = 10)
+{
+	if(is.na(valuesToPlot) || is.na(dateMarks))
+	{
+		cat("\nError: either the values to plot or the date variable or both are NAs\n")
+		invisible(Return(list()))
+	}
+	
+	date.var = as.Date(dateMarks, format="%m-%d")
+	
+	plot(date.var, valuesToPlot, type="o", xlab=if(is.na(xlab)) "Date" else xlab, ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
+	axis(1, at = date.var, labels = format(date.var, "%m-%d"))
+	
+	# The following code is NOT is use - it is kept for future consideration
+	if(FALSE)
+	{
 
+		# Determine the range of the dates
+		date_range = range(date.var)
+
+		# Calculate the total number of days in the range
+		total_days = as.numeric(diff(date_range))
+
+		# Decide on a reasonable number of ticks (e.g., around 10)
+		num_ticks <- numTicks
+
+		plot(date.var, valuesToPlot, type="o", xlab=if(is.na(xlab)) "Date" else xlab, ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
+			
+		if(length(trimws(timeUnitsStr)) == 0)
+		{
+			# Calculate the step size in days
+			step_size <- total_days / num_ticks
+
+			# Create a sequence for the x-axis ticks
+			tick_positions <- seq(date_range[1], date_range[2], by = step_size)
+			
+			#axis.Date(1, at=seq(min(date.var ), max(date.var )), format="%m-%d")
+			axis.Date(1, at=tick_positions, format="%m-%d")
+		}
+		else
+		{
+			# Create a sequence for the x-axis ticks
+			tick_positions = seq(date_range[1], date_range[2], by = timeUnitsStr)
+			
+			if(length(tick_positions) < 2)
+			{
+				cat("\nDate unit gouping (", timeUnitsStr, ") chosen is out of range. Default date grouping is calculared instead for x-axis tick marks\n")
+				
+				# Calculate the step size in days
+				step_size <- total_days / num_ticks
+
+				# Create a sequence for the x-axis ticks
+				tick_positions <- seq(date_range[1], date_range[2], by = step_size)
+			}
+			else
+			{
+				# Check if the end date is in the sequence
+				if (date_range[2] != tail(tick_positions, n = 1)) {
+				  # If the end date is not in the sequence, append it
+				  tick_positions = c(tick_positions, date_range[2])
+				}
+			}
+			
+			axis.Date(1, at=tick_positions, format="%m-%d")
+		}
+	}
+}
+
+BSkySubstituteAxisMarksWithDates <- function(origAxisMarks = NA, dateMarks = NA, timeUnitsStr = c(), numTicks = 10)
+{
+	adjustedEndFlag = FALSE
+	
+	if(is.na(origAxisMarks) || is.na(dateMarks))
+	{
+		cat("\nError: either original tickmarks or the datetickmars or both are NA. No conversion of the axis tick maark is performed\n")
+		invisible(Return(list()))
+	}
+	
+	date.var = as.Date(dateMarks, format="%m-%d")
+	
+	# print(date.var)
+	# print(str(origAxisMarks))
+	# print(origAxisMarks)
+
+	# Determine the range of the dates
+	date_range = range(date.var)
+
+	# Calculate the total number of days in the range
+	total_days = as.numeric(diff(date_range))
+
+	# Decide on a reasonable number of ticks (e.g., around 10)
+	num_ticks <- numTicks
+
+	if(length(trimws(timeUnitsStr)) == 0)
+	{
+		# Calculate the step size in days
+		step_size <- total_days / num_ticks
+
+		# Create a sequence for the x-axis ticks
+		tick_positions <- seq(date_range[1], date_range[2], by = step_size)
+	}
+	else
+	{
+		# Function to calculate the extra date
+		calculate_extra_date_NOT_IN_USE <- function(last_date, interval_string) {
+		  # Extract numeric value and unit
+		  interval_parts <- strsplit(interval_string, " ")[[1]]
+		  number <- as.numeric(interval_parts[1])
+		  unit <- interval_parts[2]
+
+		  # Add the correct amount to the last date
+		  extra_date <- switch(unit,
+							   "day" = last_date + days(number),
+							   "week" = last_date + weeks(number),
+							   "month" = last_date + months(number),
+							   "quarter" = last_date + months(3 * number),
+							   "year" = last_date + years(number),
+							   stop("Unsupported interval unit")
+		  )
+		  
+		  return(extra_date)
+		}
 		
+		# Create a sequence for the x-axis ticks
+		tick_positions = seq(date_range[1], date_range[2], by = timeUnitsStr)
+		
+		if(length(tick_positions) < 2)
+		{
+			cat("\nDate unit gouping (", timeUnitsStr, ") chosen is out of range. Default date grouping is calculared instead for x-axis tick marks\n")
+			
+			# Calculate the step size in days
+			step_size <- total_days / num_ticks
+
+			# Create a sequence for the x-axis ticks
+			tick_positions <- seq(date_range[1], date_range[2], by = step_size)
+		}
+		else
+		{
+			# Identify the highest date in the generated sequence
+			highest_date = max(tick_positions)
+
+			# Calculate the total time span of the original date range
+			total_range = as.numeric(date_range[2] - date_range[1])
+
+			# Calculate the time span covered by the highest generated date
+			covered_range = as.numeric(highest_date - date_range[1])
+
+			# Calculate the proportion covered
+			proportion_covered = covered_range / total_range
+			
+			# print(total_range)
+			# print(covered_range)
+			# print(highest_date)
+			# print(date_range[2])
+			# print(date_range[1])
+			# cat("\nproportion_covered: ", proportion_covered*100, "\n")
+			
+			# Calculate the extra date
+			#extra_date = calculate_extra_date(tick_positions[length(tick_positions)], timeUnitsStr)
+			
+			# Append the extra date to the sequence
+			#tick_positions = c(tick_positions, extra_date)
+			
+			# Check if the end date is in the sequence
+			if (date_range[2] != tail(tick_positions, n = 1)) {
+			  # If the end date is not in the sequence, append it
+			  tick_positions = c(tick_positions, date_range[2])
+			  adjustedEndFlag = TRUE
+			}
+		}
+	}
+	
+	#print(tick_positions)
+
+	# Choose a reference date to align the tick_positions with all.indices
+	#reference_date <- tick_positions[1] #as.Date("2024-01-01")
+
+	# Convert tick_positions dates to corresponding numeric positions
+	#tick_positions_as_integers <- as.numeric(tick_positions - reference_date) + 1
+
+	n = length(tick_positions) # Number of evenly spaced points
+	
+	all.indices.range = range(origAxisMarks)
+	start <- all.indices.range[1]
+	end <- all.indices.range[2]
+	
+	if(adjustedEndFlag == FALSE)
+	{
+		adjusted_end <- end
+		
+		# Create the integer sequence for tick positions
+		tick_positions_as_integers = seq(from = start, to = adjusted_end, length.out = n)
+	}
+	else
+	{
+		#sorted_origAxisMarks <- sort(origAxisMarks, decreasing = TRUE)
+		
+		index_limit <- ceiling(length(origAxisMarks) * proportion_covered)
+		# print(length(origAxisMarks))
+		# print(index_limit)
+		
+		# Select all values up to this index
+		#selected_values <- origAxisMarks[1:index_limit]
+		
+		#adjusted_end <- sorted_origAxisMarks[2] 
+		adjusted_end <- origAxisMarks[index_limit] 
+		
+		# Generate up to the second-to-last position
+		tick_positions_as_integers <- seq(from = start, to = adjusted_end, length.out = n-1)
+		
+		# Adjust the last integer to be exactly at the end
+		tick_positions_as_integers <- c(tick_positions_as_integers, end)
+	}
+	
+	#print(tick_positions_as_integers)
+	
+	invisible(return(list(tickPositionAsInteger = tick_positions_as_integers, tickPositionAsDates = tick_positions)))
+	
+	# # Add the x-axis with the calculated tick positions
+	# axis.Date(1, at=tick_positions, format="%m-%d", las = axes.las,labels = c(all.samples.names, newdata))
+
+	# Manually add custom x-axis with date labels
+	#axis(1, at = tick_positions_as_integers, labels = format(tick_positions, "%m-%d"), las = axes.las)
+}
+
+
 plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(), newdata.name = c(), newsizes = c(), 
+								date.var = NA, time.unit.str = c(), num.ticks = 10,
 								phases.data.list = list(), phase.names = c(), 
 								type = "xbar", chart.title.name = c(), size.title = c(), xlab = c(), ylab = c(),
                                 nsigmas = 3, confidence.level= NA, std.dev = NA, 
@@ -4045,7 +4270,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	
 	if(length(xlab) == 0)
 	{
-		xlab = "Group"
+		xlab = if(is.na(date.var[1])) "Group" else "Date"
 	}
 	
 	if(length(ylab) == 0)
@@ -4063,7 +4288,9 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
     #axis(1, at = all.indices, las = axes.las, 
 	#	labels = if (is.null(names(all.statistics))) as.character(all.indices) else names(all.statistics))
 	
-	axis(1, at = all.indices, las = axes.las, labels = c(all.samples.names, newdata)) #all.samples
+	# 082724 - needed for adding date values on the x-axis for all Shewhart charts 
+	#Delay adding x-axis tick maarks - see axis(1,... moved to a later stage
+	#axis(1, at = all.indices, las = axes.las, labels = c(all.samples.names, newdata)) #all.samples
 		
     axis(2, las = axes.las)
 	
@@ -4576,6 +4803,31 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 			cum.indices = c(cum.indices, indices)
 		}
 	}
+	
+	if(is.na(date.var[1]))
+	{
+		axis(1, at = all.indices, las = axes.las, labels = c(all.samples.names, newdata)) #all.samples
+	}
+	else
+	{
+		my_dates = as.Date(date.var, format = "%m-%d")
+		my_dates = my_dates[1:length(all.indices)]
+		#axis.Date(1, at = my_dates, las = 1, format = "%m-%d")
+		axis(1, at = all.indices, labels = format(my_dates, "%m-%d"), las = axes.las)
+		
+		# x_axis_tick_marks = BSkySubstituteAxisMarksWithDates(origAxisMarks = all.indices, dateMarks = date.var, timeUnitsStr = time.unit.str, numTicks = num.ticks)
+		
+		# if(length(x_axis_tick_marks) == 2)
+		# {
+			# # Manually add custom x-axis with date labels
+			# axis(1, at = x_axis_tick_marks$tickPositionAsInteger, labels = format(x_axis_tick_marks$tickPositionAsDates, "%m-%d"), las = axes.las)
+		# }
+		# else
+		# {
+			# axis(1, at = all.indices, las = axes.las, labels = c(all.samples.names, newdata)) #all.samples
+		# }
+	}
+	
 	
 	if(length(phase.names) > 0) 
 	{
