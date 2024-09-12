@@ -264,3 +264,4 @@ export(BSkyMultipleEditDataGrid)
 export(backupAllColAttr, restoreAllColAttr)
 
 export(BSkySetDecimalMarker, BSkyGetDecimalMarker, BSkySetDisplayMarker, BSkyGetDisplayMarker)
+export(BSkyNormalApprox)
