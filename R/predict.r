@@ -547,7 +547,7 @@ AddPredictColToDataset <- function(predictor, newcolname, datasetname)
 #' @return
 #'
 #' @examples
-BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALSE, level =.95, datasetname='Dataset4',BSkySurvival = FALSE, BSkySurvivalType ="ML", BSkyTime ="" ) 
+BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALSE, level =.95, datasetname='Dataset4',BSkySurvival = FALSE, BSkySurvivalType ="ML", BSkyTime ="", predinterval = FALSE) 
 {
     
 	#Logistic regression family
@@ -665,12 +665,27 @@ BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALS
 	#Handles model class gbm for boosted trees, glmnet, , blasso, c5.0Tree, dnn, rpart, adaboost
 	if (modclass == "train" ) 
 	{
+		# Prediction with confidence interval
+		#conf_interval <- predict(model, newdata = new_data, interval = "confidence")
+		# Prediction with prediction interval
+		#pred_interval <- predict(model, newdata = new_data, interval = "prediction")
+
 		#Added by Aaron 09/04/2020
 		##This saves the confidence intervals of the predictions for models created with Model Tuning
 		if ("lm" %in% classOfFinalModel  && confinterval == TRUE)
 		{
 		predictions <- eval(parse(text = paste("predict(", modelname, 
             "$finalModel,", tmpstr2, ", interval =\"prediction\", level=" ,level, " )", collapse = "", sep = "")))
+		
+		#predictions_conf_int <- eval(parse(text = paste("predict(", modelname, 
+        #    "$finalModel,", tmpstr2, ", interval =\"confidence\", level=" ,level, " )", collapse = "", sep = "")))
+		
+		#cat("\nfrom here 1\n")
+		#cat(paste("predict(", modelname, 
+        #    ",", tmpstr2, ", interval =\"prediction\", level=" ,level, " )", collapse = "", sep = ""))
+		#cat("\n")
+		#print(predictions_conf_int[2:3])
+		#predictions = cbind(predictions, predictions_conf_int[2:3])
 		}
 		else
 		{
@@ -1284,9 +1299,16 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 		if (confinterval == TRUE)
 		{
 		#predict(model, newdata = new.speeds, interval = "prediction")
-		 predictions <- eval(parse(text = paste("predict(", modelname, 
+		predictions <- eval(parse(text = paste("stats::predict(", modelname, 
             ",", tmpstr2, ", interval =\"prediction\", level=" ,level, " )", collapse = "", sep = "")))
 		
+		predictions_conf_int <- eval(parse(text = paste("stats::predict(", modelname, 
+            ",", tmpstr2, ", interval =\"confidence\", level=" ,level, " )", collapse = "", sep = "")))
+		
+		#print(predictions_conf_int[,c(2:3)])
+		predictions = cbind(predictions_conf_int, PI_lwr = predictions[,2], PI_upr = predictions[,3])
+		
+		dimnames(predictions)[[2]] = c(paste0("Fit_",level*100), "CI_lwr", "CI_upr", "PI_lwr", "PI_upr")
 		}
 		else
 		{
@@ -2138,17 +2160,18 @@ else if (modclass == "rsnns" && (dependentclass == "factor"|| dependentclass == 
 			ll <- length(nm)
 			for (i in 1:ll) 
 			{
-				aa <- paste(datasetname, "$", prefix, "_", depvar ,nm[i], 
+				aa <- paste(datasetname, "$", prefix, "_", depvar, "_", nm[i], 
 					"<<-df[[", i, "]]", sep = "")
 				eval(parse(text = aa))
 			}
 			predictionsSaved = TRUE
-			predictions =df$fit
+			#predictions = df$fit
+			predictions = df[,1]
 		}
 		else
 		{
 		predictions = round (predictions,noofDigitsToRound) 
-		aa <- paste(datasetname, "$", prefix, "_" , depvar, "_Predictions<<-predictions", 
+		aa <- paste(datasetname, "$", prefix, "_" , depvar, "_Fit<<-predictions", 
 			sep = "")
 		eval(parse(text = aa))
 		predictionsSaved = TRUE
