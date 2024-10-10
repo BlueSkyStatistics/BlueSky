@@ -44,7 +44,7 @@ twoPropTestBothSamplesSingleColMini <- function(dataset, col1_name, col2_name,p=
   base::colnames(testMethodMatrix) ="Test details"
   BSkyFormat(testMethodMatrix)
 
-  BSky2SampleProportionMT( x1, x2,n1,n2, p=0, alternate="two.sided", conf.level=0.95, testMethod ="Estimate proportions separately")
+  BSky2SampleProportionMT( x1, x2,n1,n2, p, alternate, conf.level, testMethod, FALSE)
 
 }
 
@@ -56,10 +56,10 @@ twoPropTestBothSamplesSingleColMini <- function(dataset, col1_name, col2_name,p=
 
 
 
-BSky2SampleProportionMT <- function( x1, x2,n1,n2, p=0, alternate="two.sided", conf.level=0.95, testMethod ="Estimate proportions separately")
+BSky2SampleProportionMT <- function( x1, x2,n1,n2, p=0, alternate="two.sided", conf.level=0.95, testMethod ="Estimate proportions separately", generateDetails =TRUE)
 {
 	
-  warningForPooledEstimateNotUsed = FALSE
+	warningForPooledEstimateNotUsed = FALSE
   	p_null <- p # hypothesized proportion (p0)
   	alpha = 1-conf.level
 	z_value=0
@@ -69,6 +69,21 @@ BSky2SampleProportionMT <- function( x1, x2,n1,n2, p=0, alternate="two.sided", c
     # Observed difference
 	p_hat <- p1-p2
     #Proportion test to calculate the confidence interval
+	
+	if (generateDetails)
+	{
+		 #eventString = base::paste("Event: ", col1_name, " = ", most_frequent_col1_value, "                             ",sep ="" )
+		proportion1String = "p1: proportion where Sample 1 = Event"
+		proportion2String = "p2: proportion where Sample 2 = Event"
+		differenceString = "Difference: p1-p2" 
+  
+		  testMethodMatrix = base::matrix(c( proportion1String, proportion2String, differenceString), nrow = 3, ncol = 1)
+		  base::colnames(testMethodMatrix) ="Test details"
+		  BSkyFormat(testMethodMatrix)
+	}
+	
+	
+	
 	res <- prop.test(x = c(x1, x2), n = c(n1, n2), correct=FALSE,alternative=alternate, conf.level=conf.level)
     #  prop.test(x = c(x1, x2), n = c(n1, n2), correct=FALSE,alternative=alternate, conf.level=conf.level)
 	ci_lower = round (res$conf.int[1], digits =BSkyGetDecimalDigitSetting())
@@ -153,7 +168,7 @@ BSky2SampleProportionMT <- function( x1, x2,n1,n2, p=0, alternate="two.sided", c
     {  
         # Perform Fisher's Exact Test
       	contingency_table = base::matrix( c(x1, x2, n1-x1, n2-x2),nrow = 2, ncol = 2,byrow=TRUE)
-        fisher_test_result <- fisher.test(contingency_table)
+        fisher_test_result <- stats::fisher.test(contingency_table)
         result_stats_df <- data.frame(Column1 =c("Normal approximation", "Fisher's exact"), Column2 =c(z_value, NA ), Column3 =c(p_value, fisher_test_result$p.value))
         base::colnames(result_stats_df) <- c("Method", "Z-value","P-Value" )
     } else    {

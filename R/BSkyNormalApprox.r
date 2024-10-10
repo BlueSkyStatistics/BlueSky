@@ -43,7 +43,7 @@ BSkyNormalApprox <- function( x, n, p, alternative="two.sided", conf.level=0.95)
 	  statistic = c("number of sucesses" =x),  # Test statistic (Z-value)
 	  p.value = p_value,           # P-value of the test
 	  parameter = c("number of trials" = n),        # Sample size
-	  estimate = c("probability of success" = p_hat), # Estimated proportion
+	  estimate = c("Sample p" = p_hat), # Estimated proportion
 	  null.value = c(proportion = p_null), # Null hypothesis proportion
 	  alternative = alternative,   # Type of alternative hypothesis
 	  method = "1-sample proportion test", # Test method
