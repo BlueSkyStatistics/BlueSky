@@ -819,9 +819,11 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 		dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
 		dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
 		dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
+		# dataset_names = trimws(gsub('name:|["()]','',dataset_names))
+		# dataset_names = dataset_names[1]
 		
-		#cat("\nBefore removing unwanted dataset names\n")
-		#print(dataset_names)
+		# cat("\nBefore removing unwanted dataset names\n")
+		# print(dataset_names)
 		
 		discard_df_freq = BSkyInAppScriptExtractDialogDataset(rmd_text)
 		
@@ -873,7 +875,7 @@ BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(
 		# Convert the combined list to JSON format
 		json_data <- toJSON(datasetname, pretty = TRUE, auto_unbox = TRUE)
 
-		#print(json_data)
+		# print(json_data)
 		
 		# Write the JSON data to a file
 		write(json_data, json_output_file_path)
