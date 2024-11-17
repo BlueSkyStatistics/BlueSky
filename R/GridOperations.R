@@ -1245,30 +1245,30 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                 "Columns", "Role","DateFormat")
 				#Added by Aaron 06/25/2020 passed string below
             if (rdatatype == "character") {
-                pval <- list(newcolname, rdatatype, newcolname,
+                pval <- list(newcolname, rdatatype, "",
                   NULL, "none", "Left", "String", FALSE, 4, 0,
                   8, "Input", "")
             }
             else if (rdatatype == "double") {
-                pval <- list(newcolname, rdatatype, newcolname,
+                pval <- list(newcolname, rdatatype, "",
                   NULL, "none", "Left", "Scale", FALSE, 4, 0, 8,
                   "Input", "")
             }
 			 else if (rdatatype == "POSIXct") {
-                pval <- list(newcolname, rdatatype, newcolname,
+                pval <- list(newcolname, rdatatype, "",
                   NULL, "none", "Left", "Date", FALSE, 4, 0, 8,
                   "Input", DateFormat)
             }
 			else if (rdatatype == "factor")
 			{
-			pval <- list(newcolname, rdatatype, newcolname,
+			pval <- list(newcolname, rdatatype, "",
 							  "", "none", "Left", "Nominal", FALSE, 4, 0, 8,
 							  "Input", "")
 			}
 			#Added by Aaron 06/25/2020 passed Ordinal below
 			else if (rdatatype == "ordered")
 			{
-			pval <- list(newcolname, rdatatype, newcolname,
+			pval <- list(newcolname, rdatatype, "",
 							  "", "none", "Left", "Ordinal", FALSE, 4, 0, 8,
 							  "Input", "")
 			}
