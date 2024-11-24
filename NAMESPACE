@@ -265,3 +265,6 @@ export(backupAllColAttr, restoreAllColAttr)
 
 export(BSkySetDecimalMarker, BSkyGetDecimalMarker, BSkySetDisplayMarker, BSkyGetDisplayMarker)
 export(BSkyNormalApprox,BSky2SampleProportionMT,twoPropTestBothSamplesSingleColMini)
+
+export(BSkyTwoPropTestSingleColMini)
+export(BSkyUnusualObs)
