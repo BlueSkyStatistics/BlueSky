@@ -1354,6 +1354,49 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 		}
 	}
     
+	else if(modclass =='flexsurvreg') 
+	{
+	
+		if (BSkySurvival == TRUE && BSkySurvivalType =="CL")
+		{
+			
+			# print((text =paste("summary(", modelname, ", newdata =", 
+                                             # tmpstr2, ",t =",
+													# deparse(substitute(BSkyTime)),")")))
+													
+			surv_predictionProbs <- eval(parse(text =paste("summary(", modelname, ", newdata =", 
+                                             tmpstr2, ",t =",
+													deparse(substitute(BSkyTime)),")"))) 
+			#BSKyMarkerForMissing =eval(parse(text =paste("stats::na.action(stats::na.exclude(", tmpstr2, "))") ))
+			#	predictionProbs = base::t(predictionProbs)
+			
+			# Here is the trick: give the "bad" vector a class
+
+			#class(BSKyMarkerForMissing) <- "exclude"
+			#predictionProbs <- stats::napredict(BSKyMarkerForMissing, predictionProbs)
+			
+			# Function to reorganize a single data frame
+			reorganize_df <- function(df) {
+			  df %>%
+				pivot_longer(cols = -time, names_to = "metric", values_to = "value") %>%
+				unite(temp, metric, time, sep = "") %>%
+				pivot_wider(names_from = temp, values_from = value)
+			}
+
+			# Apply transformation to each element in the list
+			surv_result = as.data.frame(bind_rows(lapply(surv_predictionProbs, reorganize_df), .id = "group"))[,c(-1)]
+			fail_result = 1 - surv_result
+			names(surv_result) = paste0("Surv_",names(surv_result))
+			names(fail_result) = paste0("Fail_",names(surv_result))
+			predictionProbs = cbind(surv_result, fail_result)
+		}
+		else
+		{
+			 predictionProbs <- eval(parse(text = paste("predict(", modelname, 
+            ",", tmpstr2, ", type=\"survival\")", collapse = "", sep = "")))
+		}
+	}
+    
 	else {
         predictions <- eval(parse(text = paste("predict(", modelname, 
             ",", tmpstr2, ")", collapse = "", sep = "")))
@@ -2204,6 +2247,47 @@ else if (modclass == "coxph" && (dependentclass == "numeric"|| dependentclass ==
 	ROC = TRUE
 	predictionsSaved = TRUE
 }
+
+else if (modclass == "flexsurvreg")
+{
+	#BSkyFormat(predictionProbs)
+	#BSkyFormat(eval(parse(text=(paste(datasetname)))))
+	#print(prefix)
+	
+	if(trimws(prefix) == '')
+	{
+		#print(paste(datasetname, "<<-", "cbind(", datasetname, ", predictionProbs)"))
+		eval(parse(text=(paste(datasetname, "<<-", "cbind(", datasetname, ", predictionProbs)"))))
+		#BSkyFormat(eval(parse(text=(paste(datasetname)))))
+	}
+	else
+	{
+		names(predictionProbs) = paste0(paste0(prefix,"_"),names(predictionProbs))
+		#print(paste(datasetname, "<<-", "cbind(", datasetname, ", predictionProbs)"))
+		eval(parse(text=(paste(datasetname, "<<-", "cbind(", datasetname, ", predictionProbs)"))))
+		#BSkyFormat(eval(parse(text=(paste(datasetname)))))
+	}
+	
+    # ll <- ncol(predictionProbs )
+    # for (i in 1:ll) 
+    # {
+		# # #There is only a single column in the data frame
+		# # predictions[[i]] = round(predictions[[i]], digits = noofDigitsToRound)
+		# # aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_", BSkyTime[i], "<<-predictions[[", i, "]]", sep = "")
+		# # eval(parse(text = aa))
+		# predictions = base::ifelse(predictionProbs[[i]] >= 0.5, 1, 0)
+		# #There is only a single column in the data frame
+		# predictionProbs[[i]] = round(predictionProbs[[i]], digits = noofDigitsToRound)
+		# aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_", BSkyTime[i], "<<-predictions", sep = "")
+		# eval(parse(text = aa))
+		# aa <- paste(datasetname, "$", prefix, "_",eval(parse(text=depvar))[1],"_Prob_", BSkyTime[i], "<<-predictionProbs[[", i, "]]", sep = "")
+		# eval(parse(text = aa))
+	# }
+    predictions = predictionProbs
+	ROC = FALSE
+	predictionsSaved = TRUE
+}
+
 
 	
 	#Added by Aaron 5/16/2020
