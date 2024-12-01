@@ -1,4 +1,4 @@
-BSkyUnusualObs <- function(model)
+BSkyUnusualObs <- function(model, depVarValues, depVarName)
 {
   # Residuals
   BSkyResiduals <- stats::residuals(model)
@@ -27,6 +27,7 @@ BSkyUnusualObs <- function(model)
   # Combine diagnostics into a table
   BSkyDiagnostics <- data.frame(
     Observation = 1:length(BSkyResiduals),
+	depVarValues,
     Residuals = BSkyResiduals,
     Std_Residuals = BSkyStdResiduals,
     Fitted = BSkyFitted,
@@ -34,6 +35,7 @@ BSkyUnusualObs <- function(model)
     Leverage = BSkyLeverage
   )
 
+	names(BSkyDiagnostics) = c("Observation", depVarName,"Residuals","Std_Residuals","Fitted", "Cooks_Distance","Leverage")
   # Flag unusual observations
   BSkyDiagnostics$Outlier <- abs(BSkyDiagnostics$Std_Residuals) > 2
   BSkyDiagnostics$Influential <- BSkyDiagnostics$Cooks_Distance > 	BSkyThreshold
@@ -52,9 +54,9 @@ BSkyUnusualObs <- function(model)
   } else
   {
   #Display outliers
-  
+  displayColNames = c("Observation", depVarName,"Residuals","Std_Residuals","Fitted")
   BSkyFinalOutliers <- BSkyDiagnostics %>%
-    filter(Outlier) %>% select(Observation, Residuals, Std_Residuals, Fitted)
+    filter(Outlier) %>% select(all_of(displayColNames))
     if (nrow(BSkyFinalOutliers) ==0)
       {
       cat("\nThere are no outliers.")
@@ -64,8 +66,9 @@ BSkyUnusualObs <- function(model)
       }
 
   #Display influential points
+  influentialNames = c("Observation", depVarName,"Residuals","Std_Residuals","Fitted")
   BSkyFinalInfluential <- BSkyDiagnostics %>%
-    filter(Influential) %>% select(Observation, Residuals, Std_Residuals, Fitted)
+    filter(Influential) %>% select(all_of(displayColNames))
     if (nrow(BSkyFinalInfluential) ==0)
       {
       cat("\nThere are no influential points.")
@@ -77,7 +80,7 @@ BSkyUnusualObs <- function(model)
   #Display high leverage points
     
   BSkyFinalHighLeverage <- BSkyDiagnostics %>%
-    filter(High_Leverage) %>% select(Observation, Residuals, Std_Residuals, Fitted)
+    filter(High_Leverage) %>% select(all_of(displayColNames))
     if (nrow(BSkyFinalHighLeverage) ==0)
       {
       cat("\nThere are no high leverage points.")
