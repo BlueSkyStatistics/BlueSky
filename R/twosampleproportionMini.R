@@ -1,53 +1,39 @@
 # Define the function with column names as parameters
-twoPropTestBothSamplesSingleColMini <- function(dataset, col1_name, col2_name,p=0, alternate="two.sided", conf.level=0.95, testMethod ="Estimate proportions separately") {
-   # Use get() to retrieve the dataset object from the string
-  dataset <- base::get(dataset)[, c(col1_name, col2_name)]
-  # Step 1: Check if col1_name has exactly 2 unique values excluding NA
-  unique_col1 <- stats::na.omit(base::unique(dataset[[col1_name]]))
-  
-  if (base::length(unique_col1) != 2) {
-    stop(base::paste("Error:", col1_name, "does not have exactly 2 unique values (excluding NA)."))
-  }
-  
-  # Step 2: Find the unique value with the greatest proportion in col1_name
-  most_frequent_col1_value <- base::names(base::sort(base::table(dataset[[col1_name]]), decreasing = TRUE))[1]
-  
-  # Step 3: Check if col2_name has exactly 2 unique values excluding NA
-  unique_col2 <- stats::na.omit(base::unique(dataset[[col2_name]]))
-  
-  if (base::length(unique_col2) != 2) {
-    stop(base::paste("Error:", col2_name, "does not have exactly 2 unique values (excluding NA)."))
-  }
-  
-  # Step 4: Tabulate col1_name against col2_name
-  tab <- base::table(dataset[[col1_name]], dataset[[col2_name]])
-  
-  # Step 5: Calculate column percentages for the row corresponding to the most frequent value of col1_name
-  most_frequent_row =1
-  other_row =2
-  if (base::rownames(tab)[1] !=most_frequent_col1_value)
-  {
-    most_frequent_row = 2
-    other_row =1
-  }
-  x1 = tab[most_frequent_row,1]
-  x2 = tab[most_frequent_row,2]
-  n1 = tab[most_frequent_row,1] + tab[other_row,1]
-  n2 = tab[most_frequent_row,2] + tab[other_row,2]
-  
-  eventString = base::paste("Event: ", col1_name, " = ", most_frequent_col1_value, "                             ",sep ="" )
-  proportion1String = base::paste( "p1: proportion where ", col1_name, " =", most_frequent_col1_value, " and ", col2_name, " = ",base::colnames(tab)[1] )
-   proportion2String = base::paste( "p2: proportion where ", col1_name, " =", most_frequent_col1_value, " and ", col2_name, " = ",base::colnames(tab)[2] )
-  differenceString = base::paste("Difference: p1-p2 = ", p, sep="") 
-  
-  testMethodMatrix = base::matrix(c(eventString, proportion1String, proportion2String, differenceString), nrow = 4, ncol = 1)
-  base::colnames(testMethodMatrix) ="Test details"
-  BSkyFormat(testMethodMatrix)
-
-  BSky2SampleProportionMT( x1, x2,n1,n2, p, alternate, conf.level, testMethod, FALSE)
-
+twoPropTestBothSamplesSingleColMini <- function (dataset, col1_name, col2_name, p = 0, alternate = "two.sided",
+    conf.level = 0.95, testMethod = "Estimate proportions separately")
+{
+    dataset <- base::get(dataset)[, c(col1_name, col2_name)]
+    unique_col1 <- stats::na.omit(base::unique(dataset[[col1_name]]))
+    if (base::length(unique_col1) != 2) {
+        stop(base::paste("Error:", col1_name, "does not have exactly 2 unique values (excluding NA)."))
+    }
+    most_frequent_col1_value <- base::names(base::sort(base::table(dataset[[col1_name]]),
+        decreasing = TRUE))[1]
+    unique_col2 <- stats::na.omit(base::unique(dataset[[col2_name]]))
+    if (base::length(unique_col2) != 2) {
+        stop(base::paste("Error:", col2_name, "does not have exactly 2 unique values (excluding NA)."))
+    }
+    col1Values = dataset[, c(col1_name)]
+    col2Values = dataset[, c(col2_name)]
+    x1 <- base::sum(col1Values == most_frequent_col1_value, na.rm = TRUE)
+    x2 = base::sum(col2Values == most_frequent_col1_value, na.rm = TRUE)
+    n1 = length(na.omit(col1Values))
+    n2 = length(na.omit(col2Values))
+    eventString = base::paste("Event: ", col1_name, " = ", most_frequent_col1_value,
+        "                             ", sep = "")
+    proportion1String = base::paste("p1: proportion where ",
+        col1_name, " =", most_frequent_col1_value)
+    proportion2String = base::paste("p2: proportion where ",
+        col2_name, " =", most_frequent_col1_value)
+    differenceString = base::paste("Difference: p1-p2 = ", p,
+        sep = "")
+    testMethodMatrix = base::matrix(c(eventString, proportion1String,
+        proportion2String, differenceString), nrow = 4, ncol = 1)
+    base::colnames(testMethodMatrix) = "Test details"
+    BSkyFormat(testMethodMatrix)
+    BSky2SampleProportionMT(x1, x2, n1, n2, p, alternate, conf.level,
+        testMethod, FALSE)
 }
-
 # Example usage:
 # df <- data.frame(column1 = c(1, 1, 2, 2, NA), column2 = c("A", "B", "A", "B", "A"))
 # result <- process_data(df, "column1", "column2")
