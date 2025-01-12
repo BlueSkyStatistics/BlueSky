@@ -956,7 +956,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 
 					coluname = eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']')))
 					currentval = eval(parse(text=paste('attr(',datasetname,', "misvals_',coluname,'")',sep='' )))
-					if(is.null(currentval) || currentval=="")
+					if((length(currentval)<=1) && (is.null(currentval) || currentval==""))
 					{
 						colmisatt <- eval(parse(text=paste('list(type="none", value="")')))					
 						eval(parse(text=paste('setattr(x=',datasetname,', name= "misvals_',coluname,'",value= colmisatt )',sep='' )))#attr for Dataset$colname
@@ -1585,7 +1585,7 @@ UAgetColProperties <- function(dataSetNameOrIndex, colNameOrIndex, asClass=TRUE,
 					missings <- UAgetColMissing(datasetname, colNameOrIndex,isDSValidated=isDSValidated)
 					# print("\nFetched Missing:-\n")
 					# print(missings)
-					if(!(is.null(missings) || missings==""))
+					if((length(missings)>=1) && !(is.null(missings[1]) || missings[1]==""))
 					{
 						#colname <- names(acc[colNameOrIndex])
 						#colMissing <- eval(parse(text=paste('missings$',colName,'$value',sep='')))
