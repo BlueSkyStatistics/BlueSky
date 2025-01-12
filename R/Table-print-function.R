@@ -4041,23 +4041,25 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	# if groupByColumnObjects list is not empty, check whether all columns passed in groupByColumnObjects are of factor type 
 	# all(as.character(lapply(groupByColumnObjects, is.factor))== TRUE) - if result is false, then return back from this function 
 	
-	
+	cat("\nm here 1:\n")
 	stripped_data = data
 	statFunctionList = stats
-	
-	if(length(additionalStats) > 0 && trimws(additionalStats) == "") additionalStats = c()
-	
+	print(additionalStats)
+	print(trimws(additionalStats))
+	if(length(additionalStats) > 0 && trimws(additionalStats)[1] == "") additionalStats = c()
+	cat("\nm here 1a:\n")
 	if(!is.null(data))
 	{
 		if(class(data)[1] != "character")
 		{
+		cat("\nm here 1b:\n")
 			dataset_name_str = deparse(substitute(data))
 			
 			if(dataset_name_str == ".")
 			{
 				dataset_name_str = "data" 
 			}
-			
+			cat("\nm here 1c:\n")
 			#print(head(data))
 		}
 		else
@@ -4078,7 +4080,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		stripped_data = Dataset[names(datasetColumnObjects)]
 		dataset_name_str = datasetName
 	}
-	
+	cat("\nm here 2:\n")
 	
 	if(length(groupByColumnObjects) == 0 && !is.null(data))
 	{
@@ -4102,7 +4104,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		}
 	}
 	
-	
+	cat("\nm here 3:\n")
 	if(length(datasetColumnObjects) == 0 && !is.null(data))
 	{
 		col_names = dimnames(stripped_data)[[2]]
@@ -4167,7 +4169,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 
 	temp_statFunctionList = statFunctionList 
 	stat_methods = c()
-	
+	cat("\nm here 4:\n")
 	if(length(statFunctionList) > 0)
 	{			
 		master_stat_func_list = c("min", "max", "mean", "median", "sum", "sd", "stderror", "skew", "mad", "kurtos", "iqr", "quantiles")
@@ -4254,15 +4256,15 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		# newly added on 6/27/15
 		if(!is.na(statFunctionList["sum"]) && statFunctionList["sum"]==TRUE) stat_methods = c(stat_methods, "sum") 
 	}
-	
-	if(length(additionalStats) > 0 && !is.na(additionalStats)) 
+	cat("\nm here 5:\n")
+	if(length(additionalStats) > 0) ## && !is.na(additionalStats)) 
 	{
 		stat_methods = c(stat_methods, additionalStats) 
 	}
 		
 	stat_methods = unique(stat_methods) #stat_methods[!duplicated(stat_methods)]
 	
-	
+	cat("\nm here 10:\n")
 	#print(stat_methods)
 	
 	statFunctionList = stat_methods

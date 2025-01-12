@@ -32,10 +32,10 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	# cat("\n Parameters passed to BSkyFrequency1\n")
 	# print(match.call())
 	# cat("\n")
-	
-	# print(class(obj))
+	cat("\nI m here 0:\n")
+	 print(class(obj))
 	# print(obj)
-	
+	# print(length(obj))
 	colLabelOutput = colLabelOutput 
 	datasetName = datasetName
 	merged_col_top_header = c()
@@ -46,11 +46,12 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		cat("\n NULL or NA object cannot be formatted \n")
 		return(invisible(list()))
 	}
-	else if((class(obj) %in% c("data.frame", "matrix")) && (dim(obj)[1] == 0 || dim(obj)[2] == 0))
+	else if((class(obj)[1] %in% c("data.frame", "matrix")) && (dim(obj)[1] == 0 || dim(obj)[2] == 0))
 	{
 		cat("\n The data frame or the matrix cannot be formatted because the number of rows or the number of columns is zero\n")
 		return(invisible(list()))
 	}
+	
 	##############################################################################################
 	# set the BSkySetKableAndRmarkdownFormatting() environment only once if BSky package is loaded
 	# out of the BSky native app environment e.g. BSky package is loaded into Rstudio
@@ -140,10 +141,10 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		doLatexFormatting = FALSE
 		doRmarkdownFormatting = FALSE
 	}
-	
+	cat("\nI m here 1:\n")
 	#BSkyGetTableDisplayLimits ()
-	
-	if(is.null(maxOutputTables) || maxOutputTables == 0)
+
+	if(is.null(maxOutputTables) || maxOutputTables$maxOutputTables == 0)
 	{
 		maxOutputTables = 99
 	}
@@ -151,8 +152,8 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	{
 		maxOutputTables = as.numeric(maxOutputTables[[1]]) 
 	}
-	
-	if(is.null(maxRowLimit) || maxRowLimit == 0)
+	cat("\nI m here 2:\n")
+	if(is.null(maxRowLimit) || maxRowLimit$maxRowLimit == 0)
 	{
 		maxRowLimit = 2000
 	}
@@ -160,8 +161,8 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	{
 		maxRowLimit = as.numeric(maxRowLimit[[2]]) 
 	}
-	
-	if(is.null(maxColLimit) || maxColLimit == 0)
+	cat("\nI m here 3:\n")
+	if(is.null(maxColLimit) || maxColLimit$maxColLimit == 0)
 	{
 		maxColLimit = 99
 	}
@@ -170,7 +171,7 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		maxColLimit = as.numeric(maxColLimit[[3]]) 
 	}
 	
-	
+	cat("\nI m here 4:\n")
 	BSkyFormat_output = NULL
 	
 	# cat("\n<br> SK -1 Before BSkyFormat2() <br>\n")
@@ -209,12 +210,13 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	obj = BSkyFormatBSkyOneSampleTtest(obj)
 	obj = BSkyFormatBSkyIndSampleTtest(obj)
 	obj = BSkyFormatBSkyCrossTable(obj)
-	
+	cat("\nI m here 5:\n")
 	##############################################################################################
 	# check for the "psych" class for summary analysis object from psych::describe()
 	###############################################################################################
 	if(class(obj)[1] == "psych")
 	{
+	cat("\nI m here 6:\n")
 		obj = as.data.frame(obj)
 		
 		if(singleTableOutputHeader == "")
@@ -228,6 +230,7 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	###############################################################################################
 	else if(class(obj)[1] == "summary.manova")
 	{
+	cat("\nI m here 7:\n")
 		obj = BSky.print.summary.manova(obj)
 		
 		
@@ -264,7 +267,7 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		
 	}
 	
-	
+	cat("\nI m here 8:\n")
 	# changing bSkyFormatAppRequest=bSkyFormatAppRequest to bSkyFormatAppRequest= FALSE which is the default value(this is to preseve the table footers attributes within BSkyFormat2) 
 	BSkyFormat_output = BSkyFormat2(obj, silentFormatting = silentFormatting, bSkyFormatAppRequest= FALSE, bSkyReturnObj = bSkyReturnObj, ftable_change_variable_order =ftable_change_variable_order, sublist_length =sublist_length, remove_rows_with_zero_count= remove_rows_with_zero_count , no_row_column_headers=no_row_column_headers, decimalDigitsRounding=decimalDigitsRounding, engNotationSetting = engNotationSetting, singleTableOutputHeader = singleTableOutputHeader, isRound = isRound, coefConfInt = coefConfInt, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())
 	
@@ -399,7 +402,7 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 			}
 		}
 	
-	
+	cat("\nI m here 9:\n")
 		####################################################
 		#Print BSkyFormat2 tables with a for() loop
 		####################################################
@@ -1296,6 +1299,7 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 						}
 						else if(equationInputObj == TRUE)
 						{
+						cat("\nwe are here\n")
 							table_already_printed_to_sync_file = TRUE
 							
 							if(doLatexFormatting == FALSE)
