@@ -16,7 +16,7 @@ BSkyVersion<-function(fulldetails=TRUE)
 {
 	bskyver= "Version: 9.13"
 	bskydate="Date: 2025-01-16"
-	bskytime="12:00PM"
+	bskytime="11:00PM"
 
 
 	if(fulldetails)
