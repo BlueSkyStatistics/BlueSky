@@ -1290,7 +1290,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 						}
 						else if(equationInputObj == TRUE)
 						{
-						cat("\nwe are here\n")
 							table_already_printed_to_sync_file = TRUE
 							
 							if(doLatexFormatting == FALSE)
