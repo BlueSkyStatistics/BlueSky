@@ -21,7 +21,7 @@ BSkyUnusualObs <- function (model, depVarValues, depVarName)
         BSkyThreshold
     BSkyDiagnostics$High_Leverage <- BSkyDiagnostics$Leverage >
         2 * mean(BSkyLeverage)
-    BSkyDiagnostics <- BSkyDiagnostics %>% filter(!is.na(BSkyResiduals) &
+    BSkyDiagnostics <- BSkyDiagnostics %>% dplyr::filter(!is.na(BSkyResiduals) &
         !is.na(BSkyStdResiduals) & !is.na(BSkyFitted))
     if (nrow(BSkyDiagnostics) == 0) {
         cat("There are no unusual observations")
@@ -29,7 +29,7 @@ BSkyUnusualObs <- function (model, depVarValues, depVarName)
     else {
         displayColNames = c("Observation", depVarName, "Residuals",
             "Std_Residuals", "Fitted")
-        BSkyFinalOutliers <- BSkyDiagnostics %>% filter(Outlier)      
+        BSkyFinalOutliers <- BSkyDiagnostics %>% dplyr::filter(Outlier)      
       BSkyFinalOutliers <-BSkyFinalOutliers[,displayColNames]
       
         if (nrow(BSkyFinalOutliers) == 0) {
@@ -41,7 +41,7 @@ BSkyUnusualObs <- function (model, depVarValues, depVarName)
         }
         influentialNames = c("Observation", depVarName, "Residuals",
             "Std_Residuals", "Fitted")
-        BSkyFinalInfluential <- BSkyDiagnostics %>% filter(Influential)
+        BSkyFinalInfluential <- BSkyDiagnostics %>% dplyr::filter(Influential)
         BSkyFinalInfluential <-    BSkyFinalInfluential[,displayColNames]
         if (nrow(BSkyFinalInfluential) == 0) {
             cat("\nThere are no influential points.")
@@ -51,7 +51,7 @@ BSkyUnusualObs <- function (model, depVarValues, depVarName)
             BSkyFormat(BSkyFinalInfluential, singleTableOutputHeader = "Influential points")
         }
         
-      BSkyFinalHighLeverage <- BSkyDiagnostics %>% filter(High_Leverage)
+      BSkyFinalHighLeverage <- BSkyDiagnostics %>% dplyr::filter(High_Leverage)
       
       BSkyFinalHighLeverage <- BSkyFinalHighLeverage[,displayColNames]
       
