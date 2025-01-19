@@ -220,7 +220,7 @@ BSkyDistgofStatFormat <- function(data, dist_test_list = list(), fitname_list = 
 				}
 				else
 				{
-					cat("\n All tests Kolmogorov-Smirnov, Cramer-von Mises, and Anderson-Darling failed for distribution: ", fitname_list, "\n")
+					BSkyFormat(paste("All tests Kolmogorov-Smirnov, Cramer-von Mises, and Anderson-Darling failed for distribution: ", fitname_list))
 				}
 				
 				if(shoChiqTest == TRUE && showCompareTablesOnly == FALSE)
@@ -229,15 +229,24 @@ BSkyDistgofStatFormat <- function(data, dist_test_list = list(), fitname_list = 
 				}
 			}
 			else
-			{
-				#gofstat_comp_stat_test = rbind(gofstat_comp$kstest, gofstat_comp$cvmtest, gofstat_comp$adtest)
-				#row.names(gofstat_comp_stat_test) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
+			{	
+				##gofstat_comp_stat_test = rbind(gofstat_comp$kstest, gofstat_comp$cvmtest, gofstat_comp$adtest)
+				##row.names(gofstat_comp_stat_test) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
 				
-				row.names(.GlobalEnv$bsky_multi_fittest_stat) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
-				names(.GlobalEnv$bsky_multi_fittest_stat) = fitname_list
+				#row.names(.GlobalEnv$bsky_multi_fittest_stat) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
+				#names(.GlobalEnv$bsky_multi_fittest_stat) = fitname_list
 				
-				row.names(.GlobalEnv$bsky_multi_fittest_pvalues) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
-				names(.GlobalEnv$bsky_multi_fittest_pvalues) = fitname_list
+				#row.names(.GlobalEnv$bsky_multi_fittest_pvalues) = c("Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling")
+				#names(.GlobalEnv$bsky_multi_fittest_pvalues) = fitname_list
+				if(nrow(.GlobalEnv$bsky_multi_fittest_stat) == nrow(.GlobalEnv$bsky_multi_fittest_pvalues))
+				{
+					row.names(.GlobalEnv$bsky_multi_fittest_pvalues) = row.names(.GlobalEnv$bsky_multi_fittest_stat)
+				}
+				
+				if(dim(.GlobalEnv$bsky_multi_fittest_stat)[2] == dim(.GlobalEnv$bsky_multi_fittest_pvalues)[2])
+				{
+					dimnames(.GlobalEnv$bsky_multi_fittest_pvalues)[[2]] = dimnames(.GlobalEnv$bsky_multi_fittest_stat)[[2]]
+				}
 				
 				BSkyFormat(.GlobalEnv$bsky_multi_fittest_stat, outputTableRenames="Goodness-of-fit statistics")
 				BSkyFormat(.GlobalEnv$bsky_multi_fittest_pvalues, outputTableRenames="Goodness-of-fit p_values")
@@ -3718,7 +3727,8 @@ BSkySimpleTimeSeriesPlot <- function(valuesToPlot = NA, dateMarks = NA,  timeUni
 		invisible(Return(list()))
 	}
 	
-	date.var = as.Date(dateMarks, format="%m-%d")
+	#date.var = as.Date(dateMarks, format="%m-%d")
+	date.var = as.Date(dateMarks)
 	
 	plot(date.var, valuesToPlot, type="o", xlab=if(is.na(xlab)) "Date" else xlab, ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
 	axis(1, at = date.var, labels = format(date.var, "%m-%d"))
