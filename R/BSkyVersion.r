@@ -15,8 +15,8 @@
 BSkyVersion<-function(fulldetails=TRUE)
 {
 	bskyver= "Version: 9.13"
-	bskydate="Date: 2025-01-19"
-	bskytime="11:00AM"
+	bskydate="Date: 2025-01-20"
+	bskytime="02:00PM"
 
 
 	if(fulldetails)
@@ -100,7 +100,7 @@ BSkyVersion<-function(fulldetails=TRUE)
 		Filter(file.exists, candidates)
 	}
 	else {
-		details = paste(bskyver,'\n', bskydate,'\n', bskytime, sep='')
+		details = paste(bskyver,'\n', bskydate,'\n', bskytime, '\n\nR:\n',R.Version()$version.string,sep='')
 		return(invisible(details))
 	}
 }
