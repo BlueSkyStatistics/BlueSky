@@ -1710,7 +1710,7 @@ ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tole
 ############################
 #Process Capability Analysis
 ############################
-process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(), spec.limits, target, 
+process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(), spec.limits, target, spec.vlines = c(), spec.vlines.names = c(),
     breaks = "scott", add.stats = TRUE, print = TRUE, capability.type = "overall", digits = getOption("digits"), 
     restore.par = TRUE) 
 {
@@ -1720,7 +1720,15 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
         stop("A non-normal function name is missing")
     # if (missing(args)) || (length(args)==0)) 
         # stop("Parameter for the non-normal function is missing")
-		
+	
+	if(length(spec.vlines) == 1 && trimws(spec.vlines)[1] == ''){
+		spec.vlines = c()
+	}
+	
+	if(length(spec.vlines.names) == 1 && trimws(spec.vlines.names)[1] == ''){
+		spec.vlines.names = c()
+	}
+	
     x <- as.vector(data)
     x <- x[!is.na(x)]
 	
@@ -1870,7 +1878,7 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
 	#ylim = range(0,1)
 	
 	
-    xlim <- range(x, USL, LSL, target, na.rm = TRUE)
+    xlim <- range(x, USL, LSL, target, spec.vlines, na.rm = TRUE)
     #xlim <- xlim + diff(xlim) * c(-0.1, 0.1)
     xx <- seq(min(xlim), max(xlim), length = 250)
 	
@@ -1885,7 +1893,10 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
     oldpar <- par(no.readonly = TRUE)
     if (restore.par) 
         on.exit(par(oldpar))
-    mar <- c(4.1, 2.1, 3.6, 2.1)
+		
+	#mar <- c(bottom, left, top, right)
+    #mar <- c(4.1, 2.1, 3.6, 2.1)
+	mar <- c(4.1, 2.1, 4.3, 2.1)
     #par(bg = qcc.options("bg.margin"), cex = oldpar$cex * 
 	par(cex = oldpar$cex *
         qcc.options("cex"), mar = if (add.stats) 
@@ -1914,6 +1925,21 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
         text(target, usr[4], "Target", pos = 3, offset = 0.2, 
             cex = 0.8, xpd = TRUE)
     }
+	
+	if(length(spec.vlines) > 0){
+		no_spec_vlines = length(spec.vlines)
+		no_spec_vlines_names = length(spec.vlines.names)
+		for(vlines in 1:no_spec_vlines){
+			abline(v = spec.vlines[vlines], col = 2, lty = 2, lwd = 2)
+			if(no_spec_vlines_names >= vlines){
+			text(spec.vlines[vlines], usr[4], paste0(spec.vlines.names[vlines],"\n",spec.vlines[vlines]), pos = 3, offset = 0.2, 
+					cex = 0.8, xpd = TRUE)
+			}else{
+				text(spec.vlines[vlines], usr[4], paste0(spec.vlines[vlines]), pos = 3, offset = 0.2, 
+					cex = 0.8, xpd = TRUE)
+			}
+		} 
+	}
 	
 	if (add.stats) {
         plt <- par()$plt
@@ -2305,7 +2331,7 @@ process.capability.nonNormal <- function (data, data.name = c(), fun_name = c(),
 
 
 
-process.capability.enhanced <- function (object, spec.limits, target, std.dev, nsigmas, confidence.level = 0.95, 
+process.capability.enhanced <- function (object, spec.limits, target, spec.vlines = c(), spec.vlines.names = c(), std.dev, nsigmas, confidence.level = 0.95, 
     breaks = "scott", add.stats = TRUE, print = TRUE, capability.type = "potential", digits = getOption("digits"), 
     restore.par = TRUE) 
 {
@@ -2313,6 +2339,15 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
         stop("an object of class 'qcc' is required")
     if (!(object$type == "xbar" | object$type == "xbar.one")) 
         stop("Process Capability Analysis only available for charts type \"xbar\" and \"xbar.one\" charts")
+	
+	if(length(spec.vlines) == 1 && trimws(spec.vlines)[1] == ''){
+		spec.vlines = c()
+	}
+	
+	if(length(spec.vlines.names) == 1 && trimws(spec.vlines.names)[1] == ''){
+		spec.vlines.names = c()
+	}
+	
     x <- as.vector(object$data)
     x <- x[!is.na(x)]
     sizes <- object$sizes
@@ -2417,7 +2452,7 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
     obs.LSL <- round(sum(x < LSL)/n * 100, digits)
     obs.USL <- round(sum(x > USL)/n * 100, digits)
 
-    xlim <- range(x, USL, LSL, target, na.rm = TRUE)
+    xlim <- range(x, USL, LSL, target, spec.vlines, na.rm = TRUE)
     xlim <- xlim + diff(xlim) * c(-0.1, 0.1)
     xx <- seq(min(xlim), max(xlim), length = 250)
     dx <- dnorm(xx, center, std.dev)
@@ -2443,7 +2478,11 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
     oldpar <- par(no.readonly = TRUE)
     if (restore.par) 
         on.exit(par(oldpar))
-    mar <- c(4.1, 2.1, 3.6, 2.1)
+   
+	#mar <- c(bottom, left, top, right)
+    #mar <- c(4.1, 2.1, 3.6, 2.1)
+	mar <- c(4.1, 2.1, 3.9, 2.1)
+	
     par(bg = qcc.options("bg.margin"), cex = oldpar$cex * 
         qcc.options("cex"), mar = if (add.stats) 
         pmax(mar, c(8.6 + is.null(center) * -1, 0, 0, 0))
@@ -2469,6 +2508,22 @@ process.capability.enhanced <- function (object, spec.limits, target, std.dev, n
         text(target, usr[4], "Target", pos = 3, offset = 0.2, 
             cex = 0.8, xpd = TRUE)
     }
+	
+	if(length(spec.vlines) > 0){
+		no_spec_vlines = length(spec.vlines)
+		no_spec_vlines_names = length(spec.vlines.names)
+		for(vlines in 1:no_spec_vlines){
+			abline(v = spec.vlines[vlines], col = 2, lty = 2, lwd = 2)
+			if(no_spec_vlines_names >= vlines){
+			text(spec.vlines[vlines], usr[4], paste0(spec.vlines.names[vlines], "\n", spec.vlines[vlines]), pos = 3, offset = 0.2, 
+					cex = 0.8, xpd = TRUE)
+			}else{
+				text(spec.vlines[vlines], usr[4], paste0(spec.vlines[vlines]), pos = 3, offset = 0.2, 
+					cex = 0.8, xpd = TRUE)
+			}
+		} 
+	}
+	
     lines(xx, dx, lty = 2)
     if (add.stats) {
         plt <- par()$plt
@@ -3951,7 +4006,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 								phases.data.list = list(), phase.names = c(), 
 								type = "xbar", chart.title.name = c(), size.title = c(), xlab = c(), ylab = c(),
                                 nsigmas = 3, confidence.level= NA, std.dev = NA, 
-								additional.sigma.lines = c(), additional.spec.lines = c(), additional.spec.lines_label = c("Spec"), spec.limits = list(lsl=c(), usl= c()),
+								additional.sigma.lines = c(), additional.spec.lines = c(), additional.spec.lines_label = c(), spec.limits = list(lsl=c(), usl= c()),
 								digits =2, 
 								print.stats = FALSE, print.test.summary = FALSE, print.test.detail = FALSE,
 								print.qcc.object.summary = FALSE,
@@ -3961,6 +4016,14 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 {
 	if (missing(data)) 
         stop("data is required")
+	
+	if(length(additional.spec.lines) == 1 && trimws(additional.spec.lines)[1] == ''){
+		additional.spec.lines = c()
+	}
+	
+	if(length(additional.spec.lines_label) == 1 && trimws(additional.spec.lines_label)[1] == ''){
+		additional.spec.lines_label = c()
+	}
 	
 	orig_type = type[1]
 	if(type[1] == 'MR')
@@ -4616,16 +4679,23 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 				}
 			}
 			
-			if(length(additional.spec.lines) > 0)
+			if(length(additional.spec.lines) > 0 && trimws(additional.spec.lines)[1]!='')
 			{
+				no_additional.spec.lines_label = length(additional.spec.lines_label)
+				
 				for(x in 1:length(additional.spec.lines))
 				{
 						warn.lcl = unique(additional.spec.lines[x])
-						warn.lcl.label = additional.spec.lines_label
+						
+						if(no_additional.spec.lines_label >= x){
+							warn.lcl.label = paste(additional.spec.lines_label[x],"\n",round(warn.lcl,digits),sep="") 
+						}else {
+							warn.lcl.label = paste0(round(warn.lcl,digits),"\n") #paste0(additional.spec.lines[x])
+						}
 						
 						segments(x0= length(cum.indices), y0=warn.lcl, x1= length(cum.indices) + length(stats), y1= warn.lcl, lty = 3, col= 'black') #x0, y0, x1 = x0, y1 = y0
 						
-						text(x = length(cum.indices)+length(stats)/8, y = warn.lcl, label = paste(warn.lcl.label,"\n",round(warn.lcl,digits),sep=""),
+						text(x = length(cum.indices)+length(stats)/8, y = warn.lcl, label = warn.lcl.label,
 								col = gray(0.3),   # Color of the text
 								font = 2,      # Bold face
 								cex = par("cex") * 0.8)     # Size
