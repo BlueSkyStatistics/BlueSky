@@ -3776,7 +3776,8 @@ violating.runs.indices <- function (object,
 
 BSkySimpleTimeSeriesPlot <- function(valuesToPlot = NA, dateMarks = NA,  timeUnitsStr = c(), ylab = NA, xlab = NA, main = NA, numTicks = 10)
 {
-	if(is.na(valuesToPlot) || is.na(dateMarks))
+	#if(is.na(valuesToPlot) || is.na(dateMarks))
+	if ( ((is.null(valuesToPlot) || (is.null(dim(valuesToPlot)) && length(valuesToPlot) == 1 && is.na(valuesToPlot))) ) || (is.null(dateMarks) || (is.null(dim(dateMarks)) && length(dateMarks) == 1 && is.na(dateMarks))) )
 	{
 		cat("\nError: either the values to plot or the date variable or both are NAs\n")
 		invisible(Return(list()))
@@ -3847,7 +3848,8 @@ BSkySubstituteAxisMarksWithDates <- function(origAxisMarks = NA, dateMarks = NA,
 {
 	adjustedEndFlag = FALSE
 	
-	if(is.na(origAxisMarks) || is.na(dateMarks))
+	# if(is.na(origAxisMarks) || is.na(dateMarks))
+	if ( ((is.null(origAxisMarks) || (is.null(dim(origAxisMarks)) && length(origAxisMarks) == 1 && is.na(origAxisMarks))) ) || (is.null(dateMarks) || (is.null(dim(dateMarks)) && length(dateMarks) == 1 && is.na(dateMarks))) )
 	{
 		cat("\nError: either original tickmarks or the datetickmars or both are NA. No conversion of the axis tick maark is performed\n")
 		invisible(Return(list()))

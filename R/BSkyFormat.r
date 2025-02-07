@@ -40,7 +40,8 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	merged_col_top_header = c()
 	tableCaption = c("")	
 	
-	if(is.null(obj) || (length(obj) == 1 && is.na(obj)))
+	#if(is.null(obj) || (length(obj) == 1 && is.na(obj)))
+	if (is.null(obj) || (is.null(dim(obj)) && length(obj) == 1 && is.na(obj)))
 	{
 		cat("\n NULL or NA object cannot be formatted \n")
 		return(invisible(list()))

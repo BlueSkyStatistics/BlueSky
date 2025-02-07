@@ -95,7 +95,7 @@ export(	BSkyTest1,	BSkyTest2,	BSkyTest3,	BSkyTest4)
 
 export(ExtractDatasetNameFromGlobal, bsky.trim.leading, bsky.trim.trailing, bsky.trim)
 
-export(confint, format.perc, confint.lm , confint.glm, confint.nls, confint.default)
+export(format.perc, confint.default)
 
 export(BSkyReadTransactions)
 
