@@ -333,7 +333,8 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 			 # validData =TRUE
 		 # }
 	 
-	 if (length(data) ==1 && is.na(data))
+	#  if (length(data) ==1 && is.na(data))
+	if (is.null(data) || (is.null(dim(data)) && length(data) == 1 && is.na(data)))
 	{
 	validData =FALSE
 	} else {
@@ -341,8 +342,8 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	}
 	
 	
-	
-	if (length(data) ==1 && is.na(data))
+	# if (length(data) ==1 && is.na(data))
+	if (is.null(data) || (is.null(dim(data)) && length(data) == 1 && is.na(data)))
 	{
 
 	if (os_type == "Windows") 
@@ -352,7 +353,7 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	# Read clipboard content
 	clipboard_content <- read_clip()
 	# Check if the clipboard is empty
-	if (is.null(clipboard_content) || clipboard_content == "") {
+	if (is.null(clipboard_content) || length(clipboard_content)==0 || all(clipboard_content == "") ){
 	print("The clipboard is still being prepared or is empty. Please wait a few seconds and retry the paste or try copying again before pasting.")
 	return(invisible("The clipboard is empty."))
 	} else 
