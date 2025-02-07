@@ -38,7 +38,8 @@ BSkyDOECreateFactorListParam <- function(factor_dataframe= NULL, factor_names = 
 {
 	return_val = list()
 	
-	if(!is.null(factor_dataframe) && !is.na(factor_dataframe) && (class(factor_dataframe) %in% c("data.frame", "matrix")))
+	# if(!is.null(factor_dataframe) && !is.na(factor_dataframe) && (class(factor_dataframe) %in% c("data.frame", "matrix")))
+	if(!is.null(factor_dataframe) && (class(factor_dataframe) %in% c("data.frame", "matrix")))
 	{
 		if(!is.null(factor_names) && length(factor_names) > 0)
 		{
