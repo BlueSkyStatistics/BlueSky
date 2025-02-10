@@ -1438,7 +1438,8 @@ BSkySetDataFrameSplit <- function(col.names, datasetnameorindex, removeall.split
 	
 		withCallingHandlers(
 		{
- if(!is.na(col.names) && length(col.names) > 0) #not NA and there is alteast one col name.
+ # if(!is.na(col.names) && length(col.names) > 0) #not NA and there is alteast one col name.
+ if (length(col.names) > 0 && !(is.null(dim(col.names)) && length(col.names) == 1 && is.na(col.names))  )
  {
 	 #cat("\nSetting-Split:\n")
 	# UAsetDataframeSplit(col.names, datasetnameorindex)
@@ -1448,7 +1449,7 @@ BSkySetDataFrameSplit <- function(col.names, datasetnameorindex, removeall.split
  {
 	 #cat("\n Removing-Split:\n")
 	# UAremoveDataframeSplit( col.names, removeall.splits=TRUE, datasetnameorindex)
-	if(removeall.splits || is.null(col.names) || is.na(col.names) || length(col.names)==0)
+	if(removeall.splits || is.null(col.names) || length(col.names)==0 || is.na(col.names) )
 		removeallsplits = TRUE
 	UAremoveDataframeSplitProp(dataSetNameOrIndex=datasetnameorindex, colNames=col.names, removeAllSplits=removeallsplits)
 }
