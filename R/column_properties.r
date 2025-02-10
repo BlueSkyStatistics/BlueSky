@@ -195,7 +195,7 @@ BSkyRemoveAllSplits<-function(datasetname)
 	 #cat("\nBSkyRemoveAllSplits: DFsplitcolnames::")
 	 #print(colNames)
 	 #cat("\nUnsetting Splits if any(remove all splits):")
-	if(!(is.null(colNames)) && nchar(colNames) > 0)    #!(is.null(colNames)) || !(is.na(colNames)) || length(colNames) > 0)
+	if(!(is.null(colNames)) && all(nchar(colNames) > 0))    #!(is.null(colNames)) || !(is.na(colNames)) || length(colNames) > 0)
 	{					
 		#cat("\nStarting loop!")
 		for(i in 1:length(colNames))
@@ -247,7 +247,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 					# cat("Col not found!")
 				# }		
 			
-				if(removeAllSplits || is.null(colNames) || is.na(colNames) || length(colNames)==0)
+				if(removeAllSplits || is.null(colNames) || length(colNames)==0 || is.na(colNames) )
 				{
 					#cat("\nRemoving all splits..")
 					BSkyRemoveAllSplits(datasetname)
