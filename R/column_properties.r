@@ -1730,11 +1730,11 @@ UAsetColProperties <- function(dataSetNameOrIndex, colNameOrIndex, propertyName,
 	BSkyWarnMsg = paste("UAsetColProperties: Warning setting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable :", paste(colNameOrIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 			if(!is.null(datasetname))
 			{		
-colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
+				colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
 				{
@@ -2023,11 +2023,11 @@ BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex)
 	BSkyWarnMsg = paste("BSkyMakeColumnNumeric: Warning setting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable :", paste(colNameOrIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 			if(!is.null(datasetname))
 			{		
-colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
+	colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
 				{

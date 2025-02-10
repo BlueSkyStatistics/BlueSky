@@ -89,7 +89,7 @@ BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataS
 		{
 	rowlist <- ""
 	##cat("\nFinding DataSet \n")		
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 	
 	#set rowindex
 	if(rowindex >= 0)
