@@ -268,3 +268,4 @@ export(BSkyNormalApprox,BSky2SampleProportionMT,twoPropTestBothSamplesSingleColM
 
 export(BSkyTwoPropTestSingleColMini)
 export(BSkyUnusualObs)
+export(BSkyExportOutputPro)
