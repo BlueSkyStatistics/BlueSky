@@ -32,25 +32,26 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	# cat("\n Parameters passed to BSkyFrequency1\n")
 	# print(match.call())
 	# cat("\n")
-	
 	# print(class(obj))
 	# print(obj)
-	
+	# print(length(obj))
 	colLabelOutput = colLabelOutput 
 	datasetName = datasetName
 	merged_col_top_header = c()
 	tableCaption = c("")	
 	
-	if(is.null(obj) || (length(obj) == 1 && is.na(obj)))
+	#if(is.null(obj) || (length(obj) == 1 && is.na(obj)))
+	if (is.null(obj) || (is.null(dim(obj)) && length(obj) == 1 && is.na(obj)))
 	{
 		cat("\n NULL or NA object cannot be formatted \n")
 		return(invisible(list()))
 	}
-	else if((class(obj) %in% c("data.frame", "matrix")) && (dim(obj)[1] == 0 || dim(obj)[2] == 0))
+	else if((class(obj)[1] %in% c("data.frame", "matrix")) && (dim(obj)[1] == 0 || dim(obj)[2] == 0))
 	{
 		cat("\n The data frame or the matrix cannot be formatted because the number of rows or the number of columns is zero\n")
 		return(invisible(list()))
 	}
+	
 	##############################################################################################
 	# set the BSkySetKableAndRmarkdownFormatting() environment only once if BSky package is loaded
 	# out of the BSky native app environment e.g. BSky package is loaded into Rstudio
@@ -140,10 +141,10 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		doLatexFormatting = FALSE
 		doRmarkdownFormatting = FALSE
 	}
-	
+
 	#BSkyGetTableDisplayLimits ()
-	
-	if(is.null(maxOutputTables) || maxOutputTables == 0)
+
+	if(is.null(maxOutputTables) || maxOutputTables$maxOutputTables == 0)
 	{
 		maxOutputTables = 99
 	}
@@ -151,8 +152,8 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	{
 		maxOutputTables = as.numeric(maxOutputTables[[1]]) 
 	}
-	
-	if(is.null(maxRowLimit) || maxRowLimit == 0)
+
+	if(is.null(maxRowLimit) || maxRowLimit$maxRowLimit == 0)
 	{
 		maxRowLimit = 2000
 	}
@@ -160,8 +161,8 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	{
 		maxRowLimit = as.numeric(maxRowLimit[[2]]) 
 	}
-	
-	if(is.null(maxColLimit) || maxColLimit == 0)
+
+	if(is.null(maxColLimit) || maxColLimit$maxColLimit == 0)
 	{
 		maxColLimit = 99
 	}
@@ -169,7 +170,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	{
 		maxColLimit = as.numeric(maxColLimit[[3]]) 
 	}
-	
 	
 	BSkyFormat_output = NULL
 	
@@ -209,7 +209,7 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	obj = BSkyFormatBSkyOneSampleTtest(obj)
 	obj = BSkyFormatBSkyIndSampleTtest(obj)
 	obj = BSkyFormatBSkyCrossTable(obj)
-	
+
 	##############################################################################################
 	# check for the "psych" class for summary analysis object from psych::describe()
 	###############################################################################################
@@ -263,7 +263,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		
 		
 	}
-	
 	
 	# changing bSkyFormatAppRequest=bSkyFormatAppRequest to bSkyFormatAppRequest= FALSE which is the default value(this is to preseve the table footers attributes within BSkyFormat2) 
 	BSkyFormat_output = BSkyFormat2(obj, silentFormatting = silentFormatting, bSkyFormatAppRequest= FALSE, bSkyReturnObj = bSkyReturnObj, ftable_change_variable_order =ftable_change_variable_order, sublist_length =sublist_length, remove_rows_with_zero_count= remove_rows_with_zero_count , no_row_column_headers=no_row_column_headers, decimalDigitsRounding=decimalDigitsRounding, engNotationSetting = engNotationSetting, singleTableOutputHeader = singleTableOutputHeader, isRound = isRound, coefConfInt = coefConfInt, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn())
@@ -399,7 +398,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 			}
 		}
 	
-	
 		####################################################
 		#Print BSkyFormat2 tables with a for() loop
 		####################################################
@@ -450,7 +448,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		# print(outputTableIndex_names)
 		# cat("\n========================================\n")
 		
-		
 		if(length(outputTableIndex) > 0)
 		{	
 			if(num_tables < length(outputTableIndex))
@@ -489,7 +486,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		# print(outputTableIndex_names)
 		# print(num_tables)
 		# cat("\n========================================\n")
-		
 		if(num_tables > maxOutputTables) 
 		{
 			num_tables = maxOutputTables
@@ -499,7 +495,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 		outputColumnIndex_names = names(outputColumnIndex)
 		outputColumnRenames_names = names(outputColumnRenames)
 		outputColumnRenamesRow_names = names(outputColumnRenamesRow)
-		
 		
 		################################################################################################
 		#Process renaming the tables as passed through singleTableOutputHeader and/or outputTableRenames
@@ -2068,7 +2063,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 					# y1[1]
 				}
 		}
-		
 		#Print (to sync) file all the BSky and R error and warning msgs captured in the BSky return structure reurned from BSkyFormat2() 
 		if(doKableFormatting == TRUE && doLatexFormatting == FALSE)
 		{
@@ -2093,7 +2087,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 					{
 						cat("<br>")
 					}
-					
 					if(("RMsg") %in%  names(BSkyFormat_output$tables[[last_table_index]]$metadatatable[[ewtablemsgs]]))
 					{
 						if(doRmarkdownFormatting == TRUE)
@@ -2108,21 +2101,18 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 				}
 			}
 		}
-		
 		if(exists("uadatasets.sk") && exists("holdBSkyFormatObjectNew", env=uadatasets.sk) && !is.null(uadatasets.sk$holdBSkyFormatObjectNew))
 		{
 			latest_bsky_obj_index = length(uadatasets.sk$holdBSkyFormatObjectNew)
 			BSkyFormat_output$nooftables = length(BSkyFormat_output$tables)
 			uadatasets.sk$holdBSkyFormatObjectNew[[latest_bsky_obj_index]] = list(list(type=c("BSkyFormat"), object = BSkyFormat_output))
 		}
-		
 		if(exists("uadatasets.sk") && exists("holdBSkyFormatObject", env=uadatasets.sk) && !is.null(uadatasets.sk$holdBSkyFormatObject))
 		{
 			latest_bsky_obj_index = length(uadatasets.sk$holdBSkyFormatObject)
 			BSkyFormat_output$nooftables = length(BSkyFormat_output$tables)
 			uadatasets.sk$holdBSkyFormatObject[[latest_bsky_obj_index]] = BSkyFormat_output ## fix to clean up - unintentionally this became list within list -> list(BSkyFormat_output)
 		}
-		
 		
 		if(getNonRenderedTables == TRUE && doKableFormatting == TRUE)
 		{
@@ -2159,7 +2149,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 					{
 						cat("<br>")
 					}
-					
 					if(("RMsg") %in%  names(BSkyFormat_output$tables[[last_table_index]]$metadatatable[[ewtablemsgs]]))
 					{
 						if(doRmarkdownFormatting == TRUE)
@@ -2173,7 +2162,6 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 				}
 			}
 		}
-		
 		return(invisible(BSkyFormat_output))
 	}
 }

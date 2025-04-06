@@ -686,17 +686,27 @@ BSkyPredict <-function(modelname='multinom',prefix='multinom', confinterval=FALS
 		#cat("\n")
 		#print(predictions_conf_int[2:3])
 		#predictions = cbind(predictions, predictions_conf_int[2:3])
+		#Adden by Aaron 02/02/2025
+		# when confidence interval was TRUE the error Error: 'length = 2' in coercion to 'logical(1)'
+		# was returned as the code predictionsclass =class(predictions) returned a vector with 2 values matrix and array
+		#
+		predictionsclass =class(predictions[,1])
 		}
 		else
 		{
 		predictions <- eval(parse(text = paste("predict(", modelname, 
 		",", tmpstr2, ")", collapse = "", 
 		sep = "")))
+		#Adden by Aaron 02/02/2025
+		# when confidence interval was TRUE the error Error: 'length = 2' in coercion to 'logical(1)'
+		# was returned as the code predictionsclass =class(predictions) returned a vector with 2 values matrix and array
+		# Just brought line below into the else part
+		predictionsclass =class(predictions)
 		
 		}
 		
 			
-		predictionsclass =class(predictions)
+		
 				
 	#######
         if ((predictionsclass == "factor" || predictionsclass ==  "ordered" || predictionsclass == "logical" )&& ( classOfFinalModel !="ranger"))
@@ -1266,7 +1276,13 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
         predictions <- eval(parse(text = paste("predict(", modelname, 
             ",", tmpstr2, ",type =\"raw\")", collapse = "", sep = "")))
 			  predictions =as.numeric(predictions)
-
+		## Added Aaron 01/25/2025
+		##neuralnets does not return a model of class nnet hence below is not valid
+		##Model fitting neuralnets in R 4.4 is returning a matrix
+		# if ("matrix" %in% class(predictions))
+        # {
+         # predictions = predictions[,1] 
+        # }
         
     }
 
@@ -1400,6 +1416,13 @@ else	if (modclass == "xgb.Booster" && (dependentclass == "factor" || dependentcl
 	else {
         predictions <- eval(parse(text = paste("predict(", modelname, 
             ",", tmpstr2, ")", collapse = "", sep = "")))
+			
+		## Added Aaron 01/25/2025
+		##Model fitting neuralnets in R 4.4 is returning a matrix
+		if ("matrix" %in% class(predictions) )
+        {
+         predictions = predictions[,1] 
+        }
     }
 	
 
@@ -2768,7 +2791,10 @@ BSkyConfusionMatrix<-function (modelname, showConfusionMatrix = FALSE, predictio
                 colnames(accuracyKappaStats) <- c("Values")
                 BSkyFormat(as.matrix(accuracyKappaStats), singleTableOutputHeader = "Accuracy and Kappa Statistics")
                 additionalStats <- as.matrix(bskyconfmatrix$byClass)
-                if ((class(dependentvariable) == "factor" && nlevels(dependentvariable) <= 2) || class(dependentvariable) == "logical") {
+                ## Added Aaron 01/25/2025
+				## Error: 'length = 2' in coercion to 'logical(1)' was returned by colnames(additionalStats) <- c("Values")
+				## The above was an issue when scoring ordinal regression models
+                if (( "factor" %in% class(dependentvariable) && nlevels(dependentvariable) <= 2) ||  "logical" %in% class(dependentvariable)) {
                   colnames(additionalStats) <- c("Values")
                   
                 }

@@ -4041,12 +4041,11 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 	# if groupByColumnObjects list is not empty, check whether all columns passed in groupByColumnObjects are of factor type 
 	# all(as.character(lapply(groupByColumnObjects, is.factor))== TRUE) - if result is false, then return back from this function 
 	
-	
 	stripped_data = data
 	statFunctionList = stats
-	
-	if(length(additionalStats) > 0 && trimws(additionalStats) == "") additionalStats = c()
-	
+	# print(additionalStats)
+	# print(trimws(additionalStats))
+	if(length(additionalStats) > 0 && trimws(additionalStats)[1] == "") additionalStats = c()
 	if(!is.null(data))
 	{
 		if(class(data)[1] != "character")
@@ -4057,7 +4056,6 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 			{
 				dataset_name_str = "data" 
 			}
-			
 			#print(head(data))
 		}
 		else
@@ -4078,7 +4076,6 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		stripped_data = Dataset[names(datasetColumnObjects)]
 		dataset_name_str = datasetName
 	}
-	
 	
 	if(length(groupByColumnObjects) == 0 && !is.null(data))
 	{
@@ -4101,7 +4098,6 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 			stripped_data = data[, !(names(data) %in% c(group_by_col_names))] # group_by_col_names includes columns and additional .rows column
 		}
 	}
-	
 	
 	if(length(datasetColumnObjects) == 0 && !is.null(data))
 	{
@@ -4167,7 +4163,7 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 
 	temp_statFunctionList = statFunctionList 
 	stat_methods = c()
-	
+
 	if(length(statFunctionList) > 0)
 	{			
 		master_stat_func_list = c("min", "max", "mean", "median", "sum", "sd", "stderror", "skew", "mad", "kurtos", "iqr", "quantiles")
@@ -4254,14 +4250,12 @@ BSkySummaryStats <-function(data = NULL, datasetColumnObjects=list(), groupByCol
 		# newly added on 6/27/15
 		if(!is.na(statFunctionList["sum"]) && statFunctionList["sum"]==TRUE) stat_methods = c(stat_methods, "sum") 
 	}
-	
-	if(length(additionalStats) > 0 && !is.na(additionalStats)) 
+	if(length(additionalStats) > 0) ## && !is.na(additionalStats)) 
 	{
 		stat_methods = c(stat_methods, additionalStats) 
 	}
 		
 	stat_methods = unique(stat_methods) #stat_methods[!duplicated(stat_methods)]
-	
 	
 	#print(stat_methods)
 	

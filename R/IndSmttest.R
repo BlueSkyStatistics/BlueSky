@@ -552,13 +552,13 @@ uaindsmttest <-function (cindex, uavarindex, groupindex, noofvars, uaopt1pass = 
                         uatemp <- t.test(eval(uadatasets$temppairs[p]) ~ 
                           eval(uadatasets$temppairs[p + 1]), 
                           alternative = uaopt1pass, conf.level = uacipass, 
-                          paired = uatyoftestpass, var.equal = uavarequal)
+                           var.equal = uavarequal)
                       }
                     }
                     else {
                       uatemp <- t.test(eval(uadatasets$temppairs[p]) ~ 
                         eval(uadatasets$temppairs[p + 1]), alternative = uaopt1pass, 
-                        conf.level = uacipass, paired = uatyoftestpass, 
+                        conf.level = uacipass, 
                         var.equal = uavarequal)
                     }
                   }, warning = UAwarnHandlerFn)
