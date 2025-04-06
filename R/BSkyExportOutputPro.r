@@ -27,7 +27,7 @@ BSkyExportOutputPro <- function(pandocPath, exportDirPath, exportFilename, expor
 				bsky_orig_BSkyGetKableAndRmarkdownFormatting = BSkyGetKableAndRmarkdownFormatting();
 				bsky_orig_BSkyKabletableStylingOptions = uadatasets.sk$BSkyKabletableStylingOptions;
 
-				if(exportFormat == 'HTML'){
+				if(exportFormat == 'HTML' || exportFormat == 'DOCX'){ # DOCX requires HTML
 					output_html = rmarkdown::render(RMDfilename, output_format = c("html_document"));
 					success = TRUE
 				}
