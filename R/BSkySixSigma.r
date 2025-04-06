@@ -3774,19 +3774,40 @@ violating.runs.indices <- function (object,
     return(invisible(violators))
 }
 
-BSkySimpleTimeSeriesPlot <- function(valuesToPlot = NA, dateMarks = NA,  timeUnitsStr = c(), ylab = NA, xlab = NA, main = NA, numTicks = 10)
+BSkySimpleTimeSeriesPlot <- function(valuesToPlot = NA, dateMarks = NA,  dateTimeFormat = c(), xAxisTickmarksCount = 10, xAxisLabelAngle =30, timeUnitsStr = c(), ylab = NA, xlab = NA, main = NA, numTicks = 10)
 {
-	if(is.na(valuesToPlot) || is.na(dateMarks))
+	#if(is.na(valuesToPlot) || is.na(dateMarks))
+	if ( ((is.null(valuesToPlot) || (is.null(dim(valuesToPlot)) && length(valuesToPlot) == 1 && is.na(valuesToPlot))) ) || (is.null(dateMarks) || (is.null(dim(dateMarks)) && length(dateMarks) == 1 && is.na(dateMarks))) )
 	{
 		cat("\nError: either the values to plot or the date variable or both are NAs\n")
 		invisible(Return(list()))
 	}
 	
 	#date.var = as.Date(dateMarks, format="%m-%d")
-	date.var = as.Date(dateMarks)
+	#date.var = as.Date(dateMarks)
+	date.var = as.POSIXct(dateMarks)
 	
-	plot(date.var, valuesToPlot, type="o", xlab=if(is.na(xlab)) "Date" else xlab, ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
-	axis(1, at = date.var, labels = format(date.var, "%m-%d"))
+	#plot(date.var, valuesToPlot, type="o", xlab=if(is.na(xlab)) "Date" else xlab, ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
+	plot(date.var, valuesToPlot, type="o", xlab= "", ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
+	
+	#axis(1, at = date.var, labels = format(date.var, "%m-%d"))
+	#axis(1, at = date.var, labels = date.var)
+	# Add x-axis ticks without labels
+	#axis(1, at = date.var, labels = FALSE)
+
+	# Add rotated labels using text()
+	#text(x = date.var, y = par("usr")[3] - 0.5, labels = date.var, srt = 45, adj = 1, xpd = TRUE)
+	
+	# Select a subset of dates to avoid crowding
+	tick_positions <- pretty(date.var, n = xAxisTickmarksCount)  # Choose approximately 5 evenly spaced dates
+
+	# Add x-axis ticks and labels at selected positions
+	#axis(1, at = tick_positions, labels = format(tick_positions, "%Y-%m-%d"))
+	axis(1, at = tick_positions, tck = -0.03, lwd.ticks = 1, labels = FALSE)
+	
+	# Optional: Rotate text if needed
+	text(x = tick_positions, y = par("usr")[3] - 0.5, labels = format(tick_positions, dateTimeFormat),
+		 srt = xAxisLabelAngle, adj = 1, xpd = TRUE)
 	
 	# The following code is NOT is use - it is kept for future consideration
 	if(FALSE)
@@ -3847,7 +3868,8 @@ BSkySubstituteAxisMarksWithDates <- function(origAxisMarks = NA, dateMarks = NA,
 {
 	adjustedEndFlag = FALSE
 	
-	if(is.na(origAxisMarks) || is.na(dateMarks))
+	# if(is.na(origAxisMarks) || is.na(dateMarks))
+	if ( ((is.null(origAxisMarks) || (is.null(dim(origAxisMarks)) && length(origAxisMarks) == 1 && is.na(origAxisMarks))) ) || (is.null(dateMarks) || (is.null(dim(dateMarks)) && length(dateMarks) == 1 && is.na(dateMarks))) )
 	{
 		cat("\nError: either original tickmarks or the datetickmars or both are NA. No conversion of the axis tick maark is performed\n")
 		invisible(Return(list()))
@@ -4002,7 +4024,7 @@ BSkySubstituteAxisMarksWithDates <- function(origAxisMarks = NA, dateMarks = NA,
 
 
 plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(), newdata.name = c(), newsizes = c(), 
-								date.var = NA, time.unit.str = c(), num.ticks = 10,
+								orig.data.timeseries = NA, date.var = NA, dateTimeFormat = c(), xAxisTickmarksCount = 10, xAxisLabelAngle =30, plot.timeseries = FALSE, time.unit.str = c(), num.ticks = 10,
 								phases.data.list = list(), phase.names = c(), 
 								type = "xbar", chart.title.name = c(), size.title = c(), xlab = c(), ylab = c(),
                                 nsigmas = 3, confidence.level= NA, std.dev = NA, 
@@ -4016,6 +4038,8 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 {
 	if (missing(data)) 
         stop("data is required")
+		
+	orig_data.name = data.name
 	
 	if(length(additional.spec.lines) == 1 && trimws(additional.spec.lines)[1] == ''){
 		additional.spec.lines = c()
@@ -4343,7 +4367,8 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	
 	if(length(xlab) == 0)
 	{
-		xlab = if(is.na(date.var[1])) "Group" else "Date"
+		#xlab = if(is.na(date.var[1])) "Group" else "Date"
+		xlab = if(is.na(date.var[1])) "Group" else ""
 	}
 	
 	if(length(ylab) == 0)
@@ -4890,10 +4915,66 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	}
 	else
 	{
-		my_dates = as.Date(date.var, format = "%m-%d")
+		if(trimws(dateTimeFormat) == '') dateTimeFormat = '%m-%d %H:%M:%S'
+		
+		orig_my_dates = as.POSIXct(date.var)
+		my_dates = sort(orig_my_dates)
+		
+		#cat("length of all indices ", length(all.indices), "\n")
+		#print(all.indices)
+		
+		
 		my_dates = my_dates[1:length(all.indices)]
-		#axis.Date(1, at = my_dates, las = 1, format = "%m-%d")
-		axis(1, at = all.indices, labels = format(my_dates, "%m-%d"), las = axes.las)
+		#axis(1, at = all.indices, labels = format(my_dates, dateTimeFormat), las = axes.las)
+		
+		# Select a subset of dates to avoid crowding
+		
+		# I think sort() is not needed as all.indices is already in sorted accending order 
+		all.indices = sort(all.indices) 
+		
+		# Step 1: Get tick positions from indices
+		tick_positions_indices <- pretty(all.indices, n = xAxisTickmarksCount)
+		#tick_positions_indices = c(tick_positions_indices, min(all.indices), max(all.indices))
+		#tick_positions_indices = sort(unique(tick_positions_indices))
+		
+
+		# Step 2: Map tick_positions_indices to corresponding dates
+		tick_positions_dates <- my_dates[match(tick_positions_indices, all.indices)]
+		
+		axis(1, at = tick_positions_indices, tck = -0.03, lwd.ticks = 1, labels = FALSE, las = axes.las)
+		
+		text(x = tick_positions_indices, y = par("usr")[3] - 0.5, labels = format(tick_positions_dates, dateTimeFormat),
+			 srt = xAxisLabelAngle, adj = 1, xpd = TRUE)
+		
+		if(plot.timeseries == TRUE)
+		{
+			# Time Series Plot
+		
+			# Save the current background color
+			original_bg <- par("bg")
+
+			# Set the background to white
+			par(bg = "white")
+			
+			
+			# Sorting based on orig_my_dates
+			sorted_indices <- order(orig_my_dates)  # Get sorted order based on dates
+			orig.data.timeseries_sorted <- orig.data.timeseries[sorted_indices]  # Reorder abc
+			orig_my_dates_sorted <- orig_my_dates[sorted_indices]  # Reorder xyz
+
+			plot(orig_my_dates_sorted, orig.data.timeseries_sorted, type="o", xlab= "", ylab=orig_data.name, main= paste("Time Series Plot for", orig_data.name), xaxt="n")
+			
+			# Add x-axis ticks and labels at selected positions
+			axis(1, at = tick_positions_dates, tck = -0.03, lwd.ticks = 1, labels = FALSE)
+			
+			# Optional: Rotate text if needed
+			text(x = tick_positions_dates, y = par("usr")[3] - 0.5, labels = format(tick_positions_dates, dateTimeFormat),
+				 srt = xAxisLabelAngle, adj = 1, xpd = TRUE)
+				 
+			# Restore the original background color
+			par(bg = original_bg)
+		}
+			 
 		
 		# x_axis_tick_marks = BSkySubstituteAxisMarksWithDates(origAxisMarks = all.indices, dateMarks = date.var, timeUnitsStr = time.unit.str, numTicks = num.ticks)
 		
