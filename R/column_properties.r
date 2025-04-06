@@ -195,7 +195,7 @@ BSkyRemoveAllSplits<-function(datasetname)
 	 #cat("\nBSkyRemoveAllSplits: DFsplitcolnames::")
 	 #print(colNames)
 	 #cat("\nUnsetting Splits if any(remove all splits):")
-	if(!(is.null(colNames)) && nchar(colNames) > 0)    #!(is.null(colNames)) || !(is.na(colNames)) || length(colNames) > 0)
+	if(!(is.null(colNames)) && all(nchar(colNames) > 0))    #!(is.null(colNames)) || !(is.na(colNames)) || length(colNames) > 0)
 	{					
 		#cat("\nStarting loop!")
 		for(i in 1:length(colNames))
@@ -247,7 +247,7 @@ datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 					# cat("Col not found!")
 				# }		
 			
-				if(removeAllSplits || is.null(colNames) || is.na(colNames) || length(colNames)==0)
+				if(removeAllSplits || is.null(colNames) || length(colNames)==0 || is.na(colNames) )
 				{
 					#cat("\nRemoving all splits..")
 					BSkyRemoveAllSplits(datasetname)
@@ -956,7 +956,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 
 					coluname = eval(parse(text=paste('colnames(',datasetname,')[',colIndex,']')))
 					currentval = eval(parse(text=paste('attr(',datasetname,', "misvals_',coluname,'")',sep='' )))
-					if(is.null(currentval) || currentval=="")
+					if((length(currentval)<=1) && (is.null(currentval) || currentval==""))
 					{
 						colmisatt <- eval(parse(text=paste('list(type="none", value="")')))					
 						eval(parse(text=paste('setattr(x=',datasetname,', name= "misvals_',coluname,'",value= colmisatt )',sep='' )))#attr for Dataset$colname
@@ -1585,7 +1585,7 @@ UAgetColProperties <- function(dataSetNameOrIndex, colNameOrIndex, asClass=TRUE,
 					missings <- UAgetColMissing(datasetname, colNameOrIndex,isDSValidated=isDSValidated)
 					# print("\nFetched Missing:-\n")
 					# print(missings)
-					if(!(is.null(missings) || missings==""))
+					if((length(missings)>=1) && !(is.null(missings[1]) || missings[1]==""))
 					{
 						#colname <- names(acc[colNameOrIndex])
 						#colMissing <- eval(parse(text=paste('missings$',colName,'$value',sep='')))
@@ -1730,11 +1730,11 @@ UAsetColProperties <- function(dataSetNameOrIndex, colNameOrIndex, propertyName,
 	BSkyWarnMsg = paste("UAsetColProperties: Warning setting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable :", paste(colNameOrIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 			if(!is.null(datasetname))
 			{		
-colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
+				colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
 				{
@@ -2023,11 +2023,11 @@ BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex)
 	BSkyWarnMsg = paste("BSkyMakeColumnNumeric: Warning setting col properties : ", "DataSetName :", dataSetNameOrIndex," ", "Variable :", paste(colNameOrIndex, collapse = ","),sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	
-datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
 
 			if(!is.null(datasetname))
 			{		
-colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
+	colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
 				{
