@@ -3787,6 +3787,8 @@ BSkySimpleTimeSeriesPlot <- function(valuesToPlot = NA, dateMarks = NA,  dateTim
 	#date.var = as.Date(dateMarks)
 	date.var = as.POSIXct(dateMarks)
 	
+	if(length(dateTimeFormat) ==0 || trimws(dateTimeFormat) == '') dateTimeFormat = '%m-%d %H:%M:%S'
+	
 	#plot(date.var, valuesToPlot, type="o", xlab=if(is.na(xlab)) "Date" else xlab, ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
 	plot(date.var, valuesToPlot, type="o", xlab= "", ylab=if(is.na(ylab)) "Value" else ylab, main= if(is.na(main)) "Time Series Plot of Value" else main, xaxt="n")
 	
@@ -4915,7 +4917,7 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 	}
 	else
 	{
-		if(trimws(dateTimeFormat) == '') dateTimeFormat = '%m-%d %H:%M:%S'
+		if(length(dateTimeFormat) ==0 || trimws(dateTimeFormat) == '') dateTimeFormat = '%m-%d %H:%M:%S'
 		
 		orig_my_dates = as.POSIXct(date.var)
 		my_dates = sort(orig_my_dates)
@@ -4956,11 +4958,25 @@ plot.qcc.spc.phases <- function(data, data.name = c(), sizes = c(), newdata=c(),
 			# Set the background to white
 			par(bg = "white")
 			
-			
-			# Sorting based on orig_my_dates
-			sorted_indices <- order(orig_my_dates)  # Get sorted order based on dates
-			orig.data.timeseries_sorted <- orig.data.timeseries[sorted_indices]  # Reorder abc
-			orig_my_dates_sorted <- orig_my_dates[sorted_indices]  # Reorder xyz
+				
+			if(is.na(orig.data.timeseries[1]))
+			{
+				if(length(data) < (length(orig_my_dates) - 1))
+				{
+					orig_my_dates = orig_my_dates[-1]
+				}
+				# Sorting based on orig_my_dates
+				sorted_indices = order(orig_my_dates)  # Get sorted order based on dates
+				orig.data.timeseries_sorted = data[sorted_indices]
+				orig_my_dates_sorted <- orig_my_dates[sorted_indices]  
+			}
+			else
+			{
+				# Sorting based on orig_my_dates
+				sorted_indices = order(orig_my_dates)  # Get sorted order based on dates
+				orig.data.timeseries_sorted = orig.data.timeseries[sorted_indices]  
+				orig_my_dates_sorted = orig_my_dates[sorted_indices]  
+			}
 
 			plot(orig_my_dates_sorted, orig.data.timeseries_sorted, type="o", xlab= "", ylab=orig_data.name, main= paste("Time Series Plot for", orig_data.name), xaxt="n")
 			
