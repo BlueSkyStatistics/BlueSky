@@ -27,10 +27,11 @@ BSkyExportOutputPro <- function(pandocPath, exportDirPath, exportFilename, expor
 				bsky_orig_BSkyGetKableAndRmarkdownFormatting = BSkyGetKableAndRmarkdownFormatting();
 				bsky_orig_BSkyKabletableStylingOptions = uadatasets.sk$BSkyKabletableStylingOptions;
 
-				if(exportFormat == 'HTML' || exportFormat == 'DOCX'){ # DOCX requires HTML
+				# DOCX, PDF requires HTML so no need of 'if' because it is always needed
+				#if(exportFormat == 'HTML' || exportFormat == 'DOCX'){ 
 					output_html = rmarkdown::render(RMDfilename, output_format = c("html_document"));
 					success = TRUE
-				}
+				#}
 
 				# Use do.call to unpack the list of four values and pass arguments in the correct order automatically
 				do.call(BSkySetKableAndRmarkdownFormatting, unname(bsky_orig_BSkyGetKableAndRmarkdownFormatting));
