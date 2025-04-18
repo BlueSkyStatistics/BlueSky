@@ -30,7 +30,7 @@ BSkyExportOutputPro <- function(pandocPath, exportDirPath, exportFilename, expor
 				# DOCX, PDF requires HTML so no need of 'if' because it is always needed
 				#if(exportFormat == 'HTML' || exportFormat == 'DOCX'){ 
 					output_html = rmarkdown::render(RMDfilename, output_format = c("html_document"));
-					success = TRUE
+				#	success = TRUE
 				#}
 
 				# Use do.call to unpack the list of four values and pass arguments in the correct order automatically
@@ -42,7 +42,8 @@ BSkyExportOutputPro <- function(pandocPath, exportDirPath, exportFilename, expor
 					success = TRUE
 				}
 				if(exportFormat == 'PDF'){
-					pagedown::chrome_print(HTMLfilename);
+					Sys.setenv(R_HOME = normalizePath(Sys.getenv("R_HOME")) )
+					pagedown::chrome_print(input = HTMLfilename) # , wait = 10, timeout = 300);
 					success = TRUE
 				}
 				if(exportFormat == 'PPTX'){
