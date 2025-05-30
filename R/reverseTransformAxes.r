@@ -11,3 +11,19 @@ log10_reverse_trans <- scales::trans_new(
   inverse = function(x) 10^(-x),
   domain = c(1e-100, Inf)
 )
+
+
+
+log2_reverse_trans <- scales::trans_new(
+  name = "log2-reverse",
+  transform = function(x) -log2(x),
+  inverse = function(x) 2^(-x),
+  domain = c(2^-100, Inf)  # or c(.Machine$double.eps, Inf) for numerical stability
+)
+
+log2_trans <- scales::trans_new(
+  name = "log2",
+  transform = function(x) log2(x),
+  inverse = function(x) 2^x,
+  domain = c(.Machine$double.eps, Inf)  # avoid log2(0) or negatives
+)
