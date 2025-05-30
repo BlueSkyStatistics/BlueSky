@@ -1,4 +1,4 @@
-BSkyExportOutputPro <- function(pandocPath, exportDirPath, exportFilename, exportFormat) #
+BSkyExportOutputPro <- function(pandocPath, RMDpath, exportDirPath, exportFilename, exportFormat) #
 {
 	BSkyFunctionInit()
 	
@@ -14,7 +14,8 @@ BSkyExportOutputPro <- function(pandocPath, exportDirPath, exportFilename, expor
 				#Check pandoc path. This is in JS code
 				
 				##normalizePath(file.path("folder", "subfolder", "file.txt"), mustWork = FALSE)
-				RMDfilename = normalizePath(file.path(exportDirPath, paste(exportFilename, ".Rmd", sep='')), mustWork = FALSE)
+				RMDfilename = normalizePath(file.path(RMDpath, paste(exportFilename, ".Rmd", sep='')), mustWork = FALSE)
+				#RMDfilename = normalizePath(file.path(exportDirPath, "temp", paste(exportFilename, ".Rmd", sep='')), mustWork = FALSE)
 				HTMLfilename = normalizePath(file.path(exportDirPath, paste(exportFilename, ".html", sep='')), mustWork = FALSE)
 				DOCXfilename = paste(exportFilename, ".docx", sep='')			
 			
@@ -29,7 +30,8 @@ BSkyExportOutputPro <- function(pandocPath, exportDirPath, exportFilename, expor
 
 				# DOCX, PDF requires HTML so no need of 'if' because it is always needed
 				#if(exportFormat == 'HTML' || exportFormat == 'DOCX'){ 
-					output_html = rmarkdown::render(RMDfilename, output_format = c("html_document"));
+					#output_html = rmarkdown::render(RMDfilename, output_format = c("html_document"));
+					output_html = rmarkdown::render(RMDfilename, output_format = c("html_document"), output_file = HTMLfilename);
 				#	success = TRUE
 				#}
 
