@@ -367,27 +367,33 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	
 	tabular_data =NULL
 tabular_data <- tryCatch({
-  # Try to execute func1
-  #tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale)
-  if (delimiter == "")
-  {
-   readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale)
-   } else {
-   readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale, delim = delimiter)
-   }
-  
-}, error = function(e) {
-  # If an error occurs in func1, try to execute func2
-  tryCatch({
-    #tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, delim = '\n', locale =  templocale)
-    readr::read_delim(readr::clipboard(), col_names = FALSE, delim = '\n', locale =  templocale)
-       
-  }, error = function(e2) {
-    # Handle the error if func2 also fails
-    "error"
-    
-  })
-})
+                  if (delimiter == "") {
+				   readr::read_delim(readr::clipboard(), col_names = FALSE,
+                      delim = "\t", locale = templocale, skip_empty_rows = FALSE)
+                   
+                  }
+                  else {
+                    readr::read_delim(readr::clipboard(), col_names = FALSE,
+                      locale = templocale, delim = delimiter)
+                  }
+                }, error = function(e) {
+                  tryCatch({
+                     readr::read_delim(readr::clipboard(), col_names = FALSE,
+                      locale = templocale, skip_empty_rows = FALSE)
+                  }, error = function(e2) {
+                   
+                    tryCatch({
+                    readr::read_delim(readr::clipboard(), col_names = FALSE,
+                      delim = "\n", locale = templocale, skip_empty_rows = FALSE)
+                  }, error = function(e2) {
+                   
+                    "error"
+                   
+                   
+                   
+                  })  
+                  })
+                })
 
 if ("character" %in% class(tabular_data))
 {
