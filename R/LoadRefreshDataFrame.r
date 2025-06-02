@@ -325,9 +325,10 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 #' @examples 
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyLoadRefresh('df')
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid = TRUE, 
+
+BSkyLoadRefresh <- function(bskyDatasetName, load.dataframe = TRUE, load.UIgrid = TRUE, 
     isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor = BSkyGetMaxFactor(), 
-    createAttr = TRUE) 
+    createAttr = TRUE, digits = NULL) 
 {
     isdataframe = FALSE
     isdesign = FALSE
@@ -510,21 +511,20 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid
         }
 		#Added by Aaron
 		
-		colcount = eval(parse(text =paste("ncol(.GlobalEnv$", bskyDatasetName, ")", sep ="")))
-		for (i in 1:colcount) {
-				colclass = eval(parse(text =paste("class(.GlobalEnv$", bskyDatasetName, "[," ,i, "])", sep ="")))
-				if ("numeric" %in% colclass ) {
-                 
-                    eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, "[," ,i, "]", "<- round(.GlobalEnv$", bskyDatasetName, "[," ,i, "], digits = BSkyGetDecimalDigitSetting())", sep = "")))
-                  
-                }
-            }
+		if(!is.null(digits)){
+			colcount = eval(parse(text =paste("ncol(.GlobalEnv$", bskyDatasetName, ")", sep ="")))
+			for (i in 1:colcount) {
+					colclass = eval(parse(text =paste("class(.GlobalEnv$", bskyDatasetName, "[," ,i, "])", sep ="")))
+					if ("numeric" %in% colclass ) {
+						eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, "[," ,i, "]", "<- round(.GlobalEnv$", bskyDatasetName, "[," ,i, "], digits = digits)", sep = "")))
+					}
+				}
+		}
 		
 		
         if (FALSE) {
             colcount = eval(parse(text = paste("ncol(", bskyDatasetName, 
                 ")")))
-				
 		
             for (i in 1:colcount) {
                 coluname = eval(parse(text = paste("colnames(.GlobalEnv$", 
@@ -542,12 +542,10 @@ BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid
                 }
 
             }
-			
-			
-			
         }
     }
 }
+
 
 
 BSkyRemoveRefreshDataframe <- function(dframe)
