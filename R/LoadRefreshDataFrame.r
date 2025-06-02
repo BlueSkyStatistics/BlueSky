@@ -325,319 +325,228 @@ BSkyLoadRefreshDataframe <- function(dframe, load.dataframe = TRUE)
 #' @examples 
 #' df <-data.frame(A=c(1,2,3), B=c(4,5,6), C=c(6,7,8))
 #' BSkyLoadRefresh('df')
-BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid = TRUE, isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor=BSkyGetMaxFactor(), createAttr=TRUE)## change this to a string parameter from a dataset object 
+BSkyLoadRefresh <- function (bskyDatasetName, load.dataframe = TRUE, load.UIgrid = TRUE, 
+    isRmarkdownOutputOn = BSkyIsRmarkdownOutputOn(), maxFactor = BSkyGetMaxFactor(), 
+    createAttr = TRUE) 
 {
-	isdataframe=FALSE
-	isdesign=FALSE
-	ists=FALSE
-	isPkgLoaded = FALSE
-	isexists = FALSE
-	error = FALSE
-	pkgname = c()
-	dsname = c()
-	pkgEnv = c()
-	ischar = is.character(bskyDatasetName) 
-	originalDatasetname = bskyDatasetName
-	
-	#for FALSE we can just return from the function.
-	if(!load.dataframe)
-	{
-		return(invisible())
-	}
-	#print(originalDatasetname)
-	#print(class(originalDatasetname))
-	if(ischar)## is argument a character. If not we print error in the sink and exit
-	{
-		hasPkgname = grepl("::", bskyDatasetName)
+    isdataframe = FALSE
+    isdesign = FALSE
+    ists = FALSE
+    isPkgLoaded = FALSE
+    isexists = FALSE
+    error = FALSE
+    pkgname = c()
+    dsname = c()
+    pkgEnv = c()
+    ischar = is.character(bskyDatasetName)
+    originalDatasetname = bskyDatasetName
+    if (!load.dataframe) {
+        return(invisible())
+    }
+    if (ischar) {
+        hasPkgname = grepl("::", bskyDatasetName)
+        if (hasPkgname) {
+            arr = strsplit(bskyDatasetName, "::")
+            pkgname = arr[[1]][1]
+            dsname = arr[[1]][2]
+            isPkgLoaded = pkgname %in% (.packages())
+            if (!isPkgLoaded) {
+                cat("\n")
+                cat("Package ")
+                cat(pkgname)
+                cat(" not loaded. Use library(packageName) to load the package.")
+                error = TRUE
+                invisible()
+            }
+            pkgEnv = eval(parse(text = paste("as.environment(\"package:", 
+                pkgname, "\")", sep = "")))
+            isexists = eval(parse(text = paste("exists(\"", dsname, 
+                "\", where=pkgEnv, inherits=FALSE)", sep = "")))
+            if (isexists) {
+                isdataframe = eval(parse(text = paste("\"data.frame\" %in% c(class(", 
+                  pkgname, "::", dsname, "))", sep = "")))
+                isdesign = eval(parse(text = paste("\"design\" %in% c(class(", 
+                  pkgname, "::", dsname, "))", sep = "")))
+                if (isdataframe && isdesign) {
+                  eval(parse(text = paste(".GlobalEnv$", dsname, 
+                    " <- (", pkgname, "::", dsname, ")", sep = "")))
+                  bskyDatasetName = dsname
+                }
+                else if (isdataframe) {
+                  eval(parse(text = paste(".GlobalEnv$", dsname, 
+                    " <- as.data.frame(", pkgname, "::", dsname, 
+                    ")", sep = "")))
+                  bskyDatasetName = dsname
+                }
+                else {
+                  ists = eval(parse(text = paste("\"ts\" %in% c(class(", 
+                    pkgname, "::", dsname, "))", sep = "")))
+                  if (ists) {
+                    eval(parse(text = paste(".GlobalEnv$", dsname, 
+                      " <- as.data.frame(", pkgname, "::", dsname, 
+                      ")", sep = "")))
+                    bskyDatasetName = dsname
+                  }
+                }
+            }
+            else {
+                cat("\n")
+                cat("Dataset ")
+                cat(dsname)
+                cat(" is not found in the package ")
+                cat(pkgname)
+                error = TRUE
+                invisible()
+            }
+        }
+        else {
+            inGlobalEnv = eval(parse(text = paste("exists(\"", 
+                bskyDatasetName, "\", where=globalenv(), inherits=FALSE)", 
+                sep = "")))
+            if (inGlobalEnv) {
+                isdataframe = eval(parse(text = paste("\"data.frame\" %in% c(class(", 
+                  bskyDatasetName, "))", sep = "")))
+                isdesign = eval(parse(text = paste("\"design\" %in% c(class(", 
+                  bskyDatasetName, "))", sep = "")))
+                ists = eval(parse(text = paste("\"ts\" %in% c(class(", 
+                  bskyDatasetName, "))", sep = "")))
+                if (isdesign && isdataframe) {
+                  eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, 
+                    " <- (", bskyDatasetName, ")", sep = "")))
+                }
+                else if (ists || isdataframe) {
+                  eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, 
+                    " <- as.data.frame(", bskyDatasetName, ")", 
+                    sep = "")))
+                }
+                if (!isdataframe && !ists) {
+                  cat("\n")
+                  cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame (or ts) object as a character string) or the object referenced is not an object of class data.frame (or ts)")
+                  cat("\nCorrect syntax is:")
+                  cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame (or ts)")
+                  cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame (or ts) from a specific R package")
+                  error = TRUE
+                  invisible()
+                }
+            }
+            else {
+                isexists = eval(parse(text = paste("exists(\"", 
+                  bskyDatasetName, "\")", sep = "")))
+                if (isexists) {
+                  eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, 
+                    " <- ", bskyDatasetName, sep = "")))
+                  isdataframe = eval(parse(text = paste("\"data.frame\" %in% c(class(", 
+                    bskyDatasetName, "))", sep = "")))
+                  isdesign = eval(parse(text = paste("\"design\" %in% c(class(", 
+                    bskyDatasetName, "))", sep = "")))
+                  ists = eval(parse(text = paste("\"ts\" %in% c(class(", 
+                    bskyDatasetName, "))", sep = "")))
+                  if (isdesign && isdataframe) {
+                    eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, 
+                      " <- (", bskyDatasetName, ")", sep = "")))
+                  }
+                  else if (ists) {
+                    eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, 
+                      " <- as.data.frame(", bskyDatasetName, 
+                      ")", sep = "")))
+                  }
+                  if (!isdataframe && !ists) {
+                    cat("\n")
+                    cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame (or ts) object as a character string) or the object referenced is not an object of class data.frame (or ts)")
+                    cat("\nCorrect syntax is:")
+                    cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame (or ts)")
+                    cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame (or ts) from a specific R package")
+                    error = TRUE
+                    invisible()
+                  }
+                }
+                else {
+                  cat("\n")
+                  cat("Dataset ")
+                  cat(bskyDatasetName)
+                  cat(" cannot be found. Please check the spelling of the dataset name or load the package containing the dataset")
+                  error = TRUE
+                  invisible()
+                }
+            }
+        }
+    }
+    hasrows = FALSE
+    rowcount = eval(parse(text = paste("nrow(.GlobalEnv$", bskyDatasetName, 
+        ")", sep = "")))
+    if (rowcount > 0) {
+        hasrows = TRUE
+    }
+    else {
+        cat("\nERROR: The data frame '")
+        cat(bskyDatasetName)
+        cat("' has zero rows, hence it will not be loaded in the datagrid")
+        error = TRUE
+        invisible()
+    }
+    if (load.dataframe && !error) {
+        if (isRmarkdownOutputOn == FALSE && load.UIgrid == TRUE) {
+            cat("\n")
+            print("BSkyDataGridRefresh")
+        }
+        if (load.UIgrid == TRUE) {
+            if (!exists("holdBSkyFormatObjectNew", env = uadatasets.sk) || 
+                is.null(uadatasets.sk$holdBSkyFormatObjectNew)) {
+                uadatasets.sk$holdBSkyFormatObjectNew = list(list(type = c("BSkyDataGridRefresh"), 
+                  object = c(bskyDatasetName)))
+            }
+            else {
+                uadatasets.sk$holdBSkyFormatObjectNew = c(uadatasets.sk$holdBSkyFormatObjectNew, 
+                  list(list(type = c("BSkyDataGridRefresh"), 
+                    object = c(bskyDatasetName))))
+            }
+        }
+        datasetname <- BSkyValidateDataset(bskyDatasetName)
+        if (is.null(datasetname)) {
+            uadatasets$name <- c(uadatasets$name, bskyDatasetName)
+        }
+        if (createAttr) {
+            UAcreateExtraAttributes(bskyDatasetName, "RDATA")
+        }
+		#Added by Aaron
 		
-		if(hasPkgname)#package name is passed
-		{
-			arr = strsplit(bskyDatasetName, "::")
-			pkgname = arr[[1]][1]
-			dsname = arr[[1]][2]
-			
-			isPkgLoaded = pkgname %in% (.packages())
-			
-			if(!isPkgLoaded)# if packge is not loaded
-			{
-				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-				cat("Package ")
-				cat(pkgname)
-				cat(" not loaded. Use library(packageName) to load the package.")
-				error=TRUE
-				invisible()				
-			}
-			
-			pkgEnv = eval(parse(text=paste('as.environment("package:',pkgname,'")', sep='')))
-			
-			isexists = eval(parse(text=paste('exists("',dsname,'", where=pkgEnv, inherits=FALSE)', sep='' )))# DS exists in the pkg.
-			
-			if(isexists)
-			{
-				# dsclass = eval(parse(text=paste('"class(',pkgname,'::',dsname,')',sep='')))
-				# if( length(dsclass) > 1)
-				# {
-					#check if data.frame
-					# isdataframe = "data.frame" %in% dsclass
-					 isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',pkgname,'::',dsname,'))',sep='')))
-					# if(isdataframe)
-					# {
-						# eval(parse(text=paste('"class(',pkgname,'::',dsname,')',sep='')))
-					# }
-				# }
-				isdesign = eval(parse(text=paste('"design" %in% c(class(',pkgname,'::',dsname,'))',sep='')))#for DoE
-				if(isdataframe && isdesign)#DoE
-				{
-					eval( parse(text=paste('.GlobalEnv$',dsname,' <- (',pkgname,'::',dsname,')',sep='')))##make a copy in globalEnv
-					#dsname = 'mtcars'
-					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
-				}				
-				else if(isdataframe)
-				{
-					eval( parse(text=paste('.GlobalEnv$',dsname,' <- as.data.frame(',pkgname,'::',dsname,')',sep='')))##make a copy in globalEnv
-					#dsname = 'mtcars'
-					bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
-				}
-				else 
-				{
-					#lets check if it is a "ts" object, if it is, we try to convert it to data.frame object.
-					ists = eval(parse(text=paste('"ts" %in% c(class(',pkgname,'::',dsname,'))',sep='')))	
-					if(ists)
-					{
-						##make it a data.frame and also make a copy in globalEnv
-						eval( parse(text=paste('.GlobalEnv$',dsname,' <- as.data.frame(',pkgname,'::',dsname,')',sep='')))
-						#dsname = 'mtcars'						
-						bskyDatasetName=dsname #overwrite bskyDatasetName as it may still have 'datasets::mtcars'
-					}
-				}
-			}
-			else
-			{
-				cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-				cat("Dataset ")
-				cat(dsname)
-				cat(" is not found in the package ")
-				cat(pkgname)	
-				error= TRUE
-				invisible()
-			}
-			
-		}
-		else#package name is not passed so, whatever is passed should be considered as a datasetname in global env.
-		{
-			inGlobalEnv = eval( parse(text=paste('exists("',bskyDatasetName,'", where=globalenv(), inherits=FALSE)',sep='')))
-			# if dataset is not found in the Global environment then we should not go searching it 
-			# because same named datasets can be found in multiple packages. And user may get confused if we load
-			# the first one we found. So we simply error out. User is supposed to pass package name to avoid ambiguity
-			if(inGlobalEnv)
-			{
-				isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
-
-				isdesign = eval(parse(text=paste('"design" %in% c(class(',bskyDatasetName,'))',sep=''))) # for DoE
+		colcount = eval(parse(text =paste("ncol(.GlobalEnv$", bskyDatasetName, ")", sep ="")))
+		for (i in 1:colcount) {
+				colclass = eval(parse(text =paste("class(.GlobalEnv$", bskyDatasetName, "[," ,i, "])", sep ="")))
+				if ("numeric" %in% colclass ) {
+                 
+                    eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, "[," ,i, "]", "<- round(.GlobalEnv$", bskyDatasetName, "[," ,i, "], digits = BSkyGetDecimalDigitSetting())", sep = "")))
+                  
+                }
+            }
+		
+		
+        if (FALSE) {
+            colcount = eval(parse(text = paste("ncol(", bskyDatasetName, 
+                ")")))
 				
-				#check if it is a "ts" object
-				ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
+		
+            for (i in 1:colcount) {
+                coluname = eval(parse(text = paste("colnames(.GlobalEnv$", 
+                  bskyDatasetName, ")[", i, "]", sep = "")))
+                colclass = eval(parse(text = paste("class(.GlobalEnv$", 
+                  bskyDatasetName, "$", coluname, ")", sep = "")))
+                if ("factor" %in% colclass) {
+                  lvlcount = eval(parse(text = paste("length(levels(.GlobalEnv$", 
+                    bskyDatasetName, "$", coluname, "))", sep = "")))
+                  if (lvlcount > maxFactor) {
+                    eval(parse(text = paste(".GlobalEnv$", bskyDatasetName, 
+                      "$", coluname, "<- as.character(.GlobalEnv$", 
+                      bskyDatasetName, "$", coluname, ")", sep = "")))
+                  }
+                }
 
-				if(isdesign && isdataframe)
-				{
-					##make it a data.frame and also make a copy in globalEnv
-					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- (',bskyDatasetName,')',sep='')))
-				}				
-				else if(ists || isdataframe)#DoE
-				{
-					##make it a data.frame and also make a copy in globalEnv
-					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
-				}				
-				
-				if ( !isdataframe  && !ists ) #not a data.frame (and ts) and the object exists
-				{
-					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-					cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame (or ts) object as a character string) or the object referenced is not an object of class data.frame (or ts)")
-					cat("\nCorrect syntax is:")
-					cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame (or ts)")
-					cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame (or ts) from a specific R package")
-					error= TRUE
-					invisible()
-				}
-				
-			}
-			else
-			{
-				isexists = eval(parse(text=paste('exists("'  ,bskyDatasetName,'")', sep='' )))# DS exists in the pkg.
-				if (isexists)
-				{
-					eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- ',bskyDatasetName,sep='')))##make a copy in globalEnv
-					#dsname = 'mtcars'
-					isdataframe = eval(parse(text=paste('"data.frame" %in% c(class(',bskyDatasetName,'))',sep='')))
-
-					isdesign = eval(parse(text=paste('"design" %in% c(class(',bskyDatasetName,'))',sep='')))
-					
-					#check if it is a "ts" object
-					ists = eval(parse(text=paste('"ts" %in% c(class(',bskyDatasetName,'))',sep='')))
-
-					if(isdesign && isdataframe)#DoE
-					{
-						eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- (',bskyDatasetName,')',sep='')))
-					}					
-					else if(ists)
-					{
-						##make it a data.frame and also make a copy in globalEnv
-						eval( parse(text=paste('.GlobalEnv$',bskyDatasetName,' <- as.data.frame(',bskyDatasetName,')',sep='')))
-					}					
-					
-					if ( !isdataframe && !ists ) #not a data.frame or ts and the object exists
-					{
-						cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-						cat("Syntax error (BSkyLoadRefresh expects the name of the data.frame (or ts) object as a character string) or the object referenced is not an object of class data.frame (or ts)")
-						cat("\nCorrect syntax is:")
-						cat("\n\tBSkyLoadRefresh('dataframe-name') #load an object of class data.frame (or ts)")
-						cat("\n\tBSkyLoadRefresh('packageName::dataframe-name') #load an object of class data.frame (or ts) from a specific R package")
-						error= TRUE
-						invisible()
-					}
-					
-				}
-				else
-				{
-					cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-					cat("Dataset ")
-					cat(bskyDatasetName)
-					cat(" cannot be found. Please check the spelling of the dataset name or load the package containing the dataset")
-					error= TRUE
-					invisible()
-				
-				}
-				
-			}
+            }
 			
-		}
-	}
-	
-	hasrows=FALSE
-	##Check if number of rows is greater than zero. Can't rely on column count because col count was greater than zero in subset-ed dataset that had no rows.
-	rowcount = eval( parse(text=paste('nrow(.GlobalEnv$',bskyDatasetName,')',sep='')))
-	if(rowcount>0)
-	{
-		hasrows = TRUE
-	}
-	else 
-	{
-		# The data frame 'bskyDatasetName' has zero rows, hence it will not be loaded in the datagrid
-		cat("\nERROR: The data frame '") # forcing a new line in case someone created a cat() without a trailing new line
-		cat(bskyDatasetName)
-		cat("' has zero rows, hence it will not be loaded in the datagrid")
-		error= TRUE
-		invisible()	
-	}
-	
-	if(load.dataframe && !error)
-	{
-		# first check the whether the dataset exsits in the uadatasets list - if so no processing of the dataset is needed - Anil needs to verify this 
-		# if the dataset name does not exist in the uadatasets, then do all prep (attrbutes, variables, etc) the dataset and add to the uadatasets
-		
-		#Following block is added by Anil. 28Nov2020
-		#curidx <- UAgetIndexOfDataSet(bskyDatasetName) #strip out .GlobalEnv$ from the bskyDatasetName and then looks in to uadatasets$name
-		#if(curidx == -1)
-		#{
-			#BSky.LoadRefresh.Dataframe(bskyDatasetName)#This is what we call from C# behind the scenes if the memory dataframe is a new one.
-		#}
-		
-		##get dataframe object from the dataframename
-		#dframeobj = eval( parse(text=paste('as.data.frame(.GlobalEnv$',bskyDatasetName,')',sep='')))
-		##we can put dframeobj object=c(dframeobj)in the Sanjay's code below or we can just put the name object=c(bskyDatasetName)
-		##if we put object then python gets the object directly. 
-		##if we put name then python code must know that its a name and get object of that name from R memory and then process it.
-
-		# if((exists("uadatasets.sk") && exists("BSkyKableFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyKableFormatting == FALSE))
-		# {
-			# doKableFormatting = FALSE
-		# }
-		# else
-		# {
-			# doKableFormatting = TRUE
 			
-			# if((exists("uadatasets.sk") && exists("BSkyRmarkdownFormatting", env=uadatasets.sk) && uadatasets.sk$BSkyRmarkdownFormatting == FALSE))
-			# {
-				# doRmarkdownFormatting = FALSE
-			# }
-			# else
-			# {
-				# doRmarkdownFormatting = TRUE
-			# }
 			
-			# isRmarkdownOutputOn = doRmarkdownFormatting
-		# }
-		
-		# after the above processing do the following 
-		# if(isRmarkdownOutputOn == FALSE && trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
-		if(isRmarkdownOutputOn == FALSE && load.UIgrid == TRUE)
-		{
-			cat("\n") # forcing a new line in case someone created a cat() without a trailing new line
-			#print("Entered")
-			#print(originalDatasetname)
-			print("BSkyDataGridRefresh")
-		}
-		###################################################################################
-		#11/24/20 - The following code is for creating an in memory queue instead of a sync file to signal the new (Python, etc) application tier
-		####################################################################################
-		
-		#if(trimws(originalDatasetname)!= "bsky_piped_temp_dataset")
-		if(load.UIgrid == TRUE)
-		{
-			if(!exists("holdBSkyFormatObjectNew", env=uadatasets.sk) || is.null(uadatasets.sk$holdBSkyFormatObjectNew))
-			{
-				uadatasets.sk$holdBSkyFormatObjectNew = list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName)))
-			}
-			else
-			{
-				uadatasets.sk$holdBSkyFormatObjectNew = c(uadatasets.sk$holdBSkyFormatObjectNew, list(list(type=c("BSkyDataGridRefresh"), object=c(bskyDatasetName))))
-			}
-		}
-		
-		###### 23 Jan 2021 ### Add dataset in uadataset$name if it is not in the list ######
-		datasetname <- BSkyValidateDataset(bskyDatasetName)
-		if(is.null(datasetname))
-		{
-			uadatasets$name <- c(uadatasets$name, bskyDatasetName)
-		}
-		if(createAttr)
-		{
-			UAcreateExtraAttributes(bskyDatasetName, "RDATA")
-		}
-		
-
-		# if maxFactor = -1 then we do not convert factor col to character
-		# if maxFactor is a positive integer and factor columns has levels more than maxFactor we convert this col to character.
-		
-		## 09Oct2022 
-		## we do not put maaxFactor limit to RDATA and RDA files while opening the file. 
-		## Here we are mostly dealing with memory dataset. 
-		## Say I loaded a RDATA file with a col having factor levels more the the maxFactor setting
-		## because we do not restrict RData we load that col as factor (and not make it char)
-		## now user made a copy of this dataset (in R Editor) and loadRefresh' this memory dataset
-		## will load and the factor col turns to character because of the following code. User may get
-		## confused why the factor to character conversion happened. 
-		## So we should comment the code below (or make that IF FALSE)
-		if(FALSE) ## (maxFactor > 0 ) ##
-		{
-			# columns having more than 30 factors are converted back to character
-			colcount = eval(parse(text=paste('ncol(',bskyDatasetName,')')))
-			for(i in 1:colcount)
-			{
-				coluname = eval(parse(text=paste('colnames(.GlobalEnv$',bskyDatasetName,')[',i,']',sep='')))
-				colclass = eval(parse(text=paste('class(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='')))
-
-				if("factor" %in% colclass)
-				{
-					lvlcount = eval(parse(text=paste('length(levels(.GlobalEnv$',bskyDatasetName,'$',coluname,'))',sep='')))
-					if(lvlcount > maxFactor)
-					{
-						eval(parse(text=paste('.GlobalEnv$',bskyDatasetName,'$',coluname,'<- as.character(.GlobalEnv$',bskyDatasetName,'$',coluname,')',sep='' )))
-					}
-				}
-			}
-		}
-	}
+        }
+    }
 }
 
 
