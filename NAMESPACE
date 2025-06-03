@@ -269,3 +269,4 @@ export(BSkyNormalApprox,BSky2SampleProportionMT,twoPropTestBothSamplesSingleColM
 export(BSkyTwoPropTestSingleColMini)
 export(BSkyUnusualObs)
 export(BSkyExportOutputPro)
+export(log_reverse_trans, log10_reverse_trans)
