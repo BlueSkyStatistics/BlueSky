@@ -30,7 +30,7 @@ importMSSQLDBList <- function(server="localhost", database, user=NULL, password=
 				password = xor_deobfuscatestring(password, key = 42)
 			}
 			con = NULL
-print("S1b")			
+			
 			# List available drivers
 			drivers <- odbc::odbcListDrivers()$name
 
@@ -46,7 +46,6 @@ print("S1b")
 
 				if(WinLogin)#if windows login used
 				{				
-print("S5")				
 					con <- DBI::dbConnect(odbc::odbc(),
 					Driver = sql_driver, #"ODBC Driver 17 for SQL Server", #
 					Server = server,
@@ -55,7 +54,6 @@ print("S5")
 				}
 				else
 				{
-				print("S6")
 					con <- dbConnect(odbc::odbc(),
 						Driver   = sql_driver,
 						Server   = server,
