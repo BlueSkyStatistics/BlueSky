@@ -97,7 +97,7 @@ importMSSQLDBList <- function(server="localhost", database, user=NULL, password=
 		}
 }
 
-getTableRowColCount <- function(table_name, schema_name="dbo")
+getTableRowColCount <- function(server="localhost", database, tablename, user=NULL, password=NULL, port=1433, WinLogin=TRUE, schema_name="dbo")
 {
 	BSkyFunctionInit()
 	
@@ -111,27 +111,82 @@ getTableRowColCount <- function(table_name, schema_name="dbo")
 	
 		withCallingHandlers({
 		
-			#table_name <- "YourTable"
-			#schema_name <- "dbo"
+			#create Connection
+			library(DBI)
+			library(odbc)
 
-			# Get row count
-			row_count_query <- sprintf("SELECT COUNT(*) AS row_count FROM [%s].[%s];", schema_name, table_name)
-			row_count <- dbGetQuery(con, row_count_query)$row_count
+			if(!is.null(password) && stringr::str_trim(password)!="")
+			{
 
-			# Get column count
-			col_count_query <- sprintf("
-			  SELECT COUNT(*) AS column_count
-			  FROM INFORMATION_SCHEMA.COLUMNS
-			  WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA = '%s';", table_name, schema_name)
-			col_count <- dbGetQuery(con, col_count_query)$column_count
+				password = xor_deobfuscatestring(password, key = 42)
+			}
+			con = NULL
+			
+			# List available drivers
+			drivers <- odbc::odbcListDrivers()$name
 
-			# Display
-			#cat(sprintf("Table [%s.%s] has %d rows and %d columns.\n", schema_name, table_name, row_count, col_count))
+			# Try to find a SQL Server driver
+			sql_driver <- drivers[grepl("Driver", drivers, ignore.case = TRUE)][1]
+
+			# Check if found
+			if (is.na(sql_driver)) {
+				print("No SQL Server ODBC driver found. Please install 'ODBC Driver 17/18 for SQL Server'.")
+			}
+			else
+			{
+
+				if(WinLogin)#if windows login used
+				{				
+					con <- DBI::dbConnect(odbc::odbc(),
+					Driver = sql_driver, #"ODBC Driver 17 for SQL Server", #
+					Server = server,
+					Database = database,
+					Trusted_Connection = "Yes")
+				}
+				else
+				{
+					con <- dbConnect(odbc::odbc(),
+						Driver   = sql_driver,
+						Server   = server,
+						Database = database, 
+						UID      = user,
+						PWD      = password,
+						Port     = port)		
+				}
+				
+				## get row/col count for the table of the database
+				#table_name <- "YourTable"
+				#schema_name <- "dbo"
+
+				# Get row count
+				row_count_query <- sprintf("SELECT COUNT(*) AS row_count FROM [%s].[%s];", schema_name, tablename)
+				row_count <- dbGetQuery(con, row_count_query)$row_count
+
+				# Get column count
+				col_count_query <- sprintf("
+				  SELECT COUNT(*) AS column_count
+				  FROM INFORMATION_SCHEMA.COLUMNS
+				  WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA = '%s';", tablename, schema_name)
+				col_count <- dbGetQuery(con, col_count_query)$column_count
+
+				# Display
+				#cat(sprintf("Table [%s.%s] has %d rows and %d columns.\n", schema_name, tablename, row_count, col_count))				
+
+				if(exists("con") && inherits(con, "DBIConnection") && DBI::dbIsValid(con)) 
+				{
+					print("Closing Dbase connection..")
+					dbDisconnect(con)
+				}				
+			}		
+
 		
 		
 		}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
-		invisible(list(row_count = row_count,column_count = col_count)) #print(dims$row_count) print(dims$column_count)
+		
+		#invisible(list(row_count = row_count,column_count = col_count)) #print(dims$row_count) print(dims$column_count)
+		
+		invisible(paste(row_count,':',col_count, sep=''))
 }
 
 
@@ -182,6 +237,9 @@ importMSSQLtable <- function(server="localhost", database, tablename, user=NULL,
 						PWD      = password,
 						Port     = port)		
 				}
+				
+				#query = paste("SELECT * FROM ', tablename,'", sep='') #you can execute query provided by user but
+				# sanitize it otherwise user may send some delete type of query.
 				
 				if(exists("con") && inherits(con, "DBIConnection") && DBI::dbIsValid(con)) 
 				{
