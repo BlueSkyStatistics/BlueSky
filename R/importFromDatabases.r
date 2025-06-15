@@ -207,7 +207,10 @@ importMSSQLtable <- function(server="localhost", database, tablename, user=NULL,
 		withCallingHandlers({
 			library(DBI)
 			library(odbc)
-
+			if(!is.null(password) && stringr::str_trim(password)!="")
+			{
+				password = xor_deobfuscatestring(password, key = 42)
+			}
 			con = NULL
 			# List available drivers
 			drivers <- odbc::odbcListDrivers()$name
