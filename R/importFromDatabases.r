@@ -2,7 +2,10 @@
 xor_deobfuscatestring <- function(encoded, key = 42) {
   obfuscated <- rawToChar(base64enc::base64decode(encoded))
   int_vals <- utf8ToInt(obfuscated)
-  rawToChar(as.raw(bitwXor(int_vals, key)))
+  #rawToChar(as.raw(bitwXor(int_vals, key)))
+  
+  #safe_password <- "{raw_password}"  #this will support @, ;, or =
+  paste("{",rawToChar(as.raw(bitwXor(int_vals, key))),"}", sep='')
 }
 
 #xor_deobfuscate("Gx0aGxwbGBkUExEYExc=", key = 42)  # Example
