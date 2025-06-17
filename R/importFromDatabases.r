@@ -88,16 +88,28 @@ importMSSQLDBList <- function(server="localhost", database, user=NULL, password=
 				}				
 			}
 		}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
-	}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
 		
-		if(!is.null(tables_df))
-		{
-			invisible(tables_df[,2])
-		}
-		else
-		{
-			invisible(data.frame())
-		}
+	}, error = function(e) {
+  		msg <- conditionMessage(e)
+  		print(paste("Database error message:", msg, sep=''))
+		dbDisconnect(con)
+	})
+
+	BSkyFunctionWrapUp()
+
+	if(!is.null(tables_df))
+	{
+		print("Returning DBase table list")
+		invisible(tables_df[,2])
+	}
+	else
+	{
+		BSkyErrMsg =paste("Import MSSQL: bla bla blah ")
+		warning("Import MSSQL: bal bal bal bla bla blah ")	
+		BSkyStoreApplicationWarnErrMsg(warning, BSkyErrMsg)
+		invisible(data.frame())
+	}
+	
 }
 
 getTableRowColCount <- function(server="localhost", database, tablename, user=NULL, password=NULL, port=1433, WinLogin=TRUE, schema_name="dbo")
@@ -185,10 +197,14 @@ getTableRowColCount <- function(server="localhost", database, tablename, user=NU
 		
 		
 		}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
-		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		}, error = function(e) {
+  			msg <- conditionMessage(e)
+  			print(paste("Database error message:", msg, sep=''))
+			dbDisconnect(con)
+		})
 		
 		#invisible(list(row_count = row_count,column_count = col_count)) #print(dims$row_count) print(dims$column_count)
-		
+		BSkyFunctionWrapUp()
 		invisible(paste(row_count,':',col_count, sep=''))
 }
 
@@ -259,7 +275,13 @@ importMSSQLtable <- function(server="localhost", database, tablename, user=NULL,
 			}
 		
 		}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
-		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)		
+		}, error = function(e) {
+  			msg <- conditionMessage(e)
+  			print(paste("Database error message:", msg, sep=''))
+			dbDisconnect(con)
+		})	
+
+		BSkyFunctionWrapUp()	
 		invisible()
 }
 
