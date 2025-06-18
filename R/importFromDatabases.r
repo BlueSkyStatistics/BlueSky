@@ -1,5 +1,6 @@
 
 xor_deobfuscatestring <- function(encoded, key = 42) {
+	key = dbkinr/7
   obfuscated <- rawToChar(base64enc::base64decode(encoded))
   int_vals <- utf8ToInt(obfuscated)
   #rawToChar(as.raw(bitwXor(int_vals, key)))
