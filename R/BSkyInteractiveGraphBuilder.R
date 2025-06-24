@@ -745,6 +745,13 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				updateCheckboxInput(session, "jitter", value = FALSE)
 			}
 			
+			updateNumericInput(session, "x_angle", value = 0)
+			updateNumericInput(session, "y_angle", value = 0)
+
+			updateTextInput(session, "plot_title", value = "")
+			updateTextInput(session, "x_axis_label", value = "")
+			updateTextInput(session, "y_axis_label", value = "")
+  
 			updateSelectInput(session, "filter_columns", selected = character(0))
 
 			#Reset the current selection print output
@@ -790,6 +797,13 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			# updateTextInput(session, "vlines", value = "")
 			# updateTextInput(session, "vline_labels", value = "")
 			# }
+			
+			updateNumericInput(session, "x_angle", value = 0)
+			updateNumericInput(session, "y_angle", value = 0)
+
+			updateTextInput(session, "plot_title", value = "")
+			updateTextInput(session, "x_axis_label", value = "")
+			updateTextInput(session, "y_axis_label", value = "")
 
 			# Reset internal values that trigger plot and debug logic
 			verbatimTextOutput("debug_text")
