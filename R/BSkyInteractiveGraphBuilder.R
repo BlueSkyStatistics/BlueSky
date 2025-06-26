@@ -42,6 +42,12 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			  max-height: 90vh;
 			  overflow-y: auto;
 			  padding-right: 10px;
+			} 
+			
+			#download-options-sidebar-scroll { 
+			  max-height: 90vh;
+			  overflow-y: auto;
+			  padding-right: 10px;
 			}
 			
 			#data-filter-sidebar-scroll {
@@ -166,6 +172,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							hr()
                           )
 					),
+					
 					# ---- Tab 2: Themes & Options ----
 					tabPanel("Themes & Options",
 					  div(
@@ -201,8 +208,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 						hr(),
 						
 						# Slant Angles for Axis Text
-						numericInput("x_angle", "Angle to slant x-axis text values (degrees - default 0 for no slanting):", value = 0, min = 0, max = 90, step = 5),
-						numericInput("y_angle", "Angle to slant y-axis text values (degrees - default 0 for no slanting):", value = 0, min = 0, max = 90, step = 5),
+						numericInput("x_angle", "Angle to slant x-axis text values (degrees - default 0 for no slanting):", value = 0, min = 0, max = 360, step = 5),
+						numericInput("y_angle", "Angle to slant y-axis text values (degrees - default 0 for no slanting):", value = 0, min = 0, max = 360, step = 5),
 
 						hr(),
 						
@@ -212,6 +219,50 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 						textInput("y_axis_label", "Y-axis Label (optional):", ""),
 
 						hr(),
+						
+						selectInput("axis_date_format", "Date Format for Date/Time axis",
+						  choices = c("", 
+								  "%Y-%m-%d (fullyear-month-day)" = "%Y-%m-%d", 
+					              "%m-%d-%Y (month-day-fullyear)" = "%m-%d-%Y", 
+								  "%d-%m-%Y (day-month-fullyear)" = "%d-%m-%Y", 
+								  "%Y-%m (fullyear-month)" = "%Y-%m", 
+								  "%m-%Y (month-fullyear)" = "%m-%Y", 
+								  "%m-%d (month-day)" = "%m-%d", 
+								  "%d-%m (day-month)" = "%d-%m",
+								  "%b-%d (short month name-day of the month)" = "%b-%d", 
+								  "%d-%b (day of the month-short month name)" = "%d-%b",
+								  "%m (month only as number)" = "%m",
+								  "%b (month only as short month name)" = "%b",
+								  "%B (month only as full month name)" = "%B",
+								  "%Y (year only as four digit year)" = "%Y",
+								  "%y (year only as two digit year)" = "%y",
+								  "%d (day only as zero-padded number)" = "%d",
+								  "%a (weekday short name)" = "%a",
+								  "%A (weekday full name)" = "%A"
+							),
+							 selected = ""
+						),
+						hr(),
+						selectInput("axis_time_format", "Time Format for Date/Time axis",
+						  choices = c("", 
+								  "%H:%M", 
+								  "%H:%M:%S", 
+								  "%H"
+							),
+							 selected = ""
+						),
+						hr(),
+						hr(),
+						hr(),
+						hr()
+					  )
+					),
+
+					# ---- Tab 3: Data filters ----
+					tabPanel("Download Options",
+					  div(
+					    id = "download-options-sidebar-scroll",
+						#style = "height: 100%; display: flex; flex-direction: column;",
 						# tags$h2("Static Labels"),
 						# tags$p("This is a simple paragraph label."),
 						# tags$strong("This is a bold label."),
@@ -230,13 +281,33 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 						  selected = "csv", inline = TRUE
 						)
 					  ),
-					  hr(),
-					  hr()
+					  
+					  # Default width = 8, height = 6, dpi = 300
+					    hr(),
+						tags$strong("The following options are only applicable for the downloaded plot image"),
+						hr(),
+						numericInput("downloaded_plot_width", "Downloaded plot width", value = 8, min = 0.1), #, step = 0.1)
+						numericInput("downloaded_plot_height", "Downloaded plot height", value = 6, min = 0.1), #, step = 0.1)
+						#textInput("downloaded_plot_width", "Downloaded plot width", "8"),
+						#textInput("downloaded_plot_height", "Downloaded plot height", "6"),
+						selectInput(
+							inputId = "downloaded_plot_height_width_units",
+							label = "Downloaded plot width height unit",
+							choices = c("in", "cm", "mm", "px"),
+							selected = "in"
+						),
+						#textInput("downloaded_plot_resolution", "Downloaded plot resolution (dpi)", "300"),
+						#textInput("downloaded_plot_scale", "Downloaded plot scale", "1"),
+						numericInput("downloaded_plot_resolution", "Downloaded plot resolution (dpi)", value = 300, min = 0.1), #, step = 0.1)
+						numericInput("downloaded_plot_scale", "Downloaded plot scale", value = 1, min = 0.1), #, step = 0.1)
+						
+						hr(),
+						hr()
 					  )
 					),
-
-					# ---- Tab 3: Data filters ----
-					tabPanel("Data filters",
+					
+					# ---- Tab 4: Data filters ----
+					tabPanel("Data Filters",
 					  div(
 					    id = "data-filter-sidebar-scroll",
 						#style = "height: 100%; display: flex; flex-direction: column;",
@@ -254,7 +325,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 						hr()
 					  )
 					)
-				
+
                )
 
 			)
@@ -906,8 +977,18 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		})
 
 		output$filter_column_selector <- renderUI({
-		selectizeInput("filter_columns", paste0("Choose one or more variables (after clicking on the empty box below) to filter the currently selected dataset ( ", input$dataset,  " ) before using it for plotting. The selection of variable filters, if any, will be removed automatically whenever the dataset selected in the Plots tab changes"),
-					   choices = names(current_data()), multiple = TRUE)
+		#selectizeInput("filter_columns", paste0("currently selected dataset: ", input$dataset, hr(), "Choose one or more variables (after clicking on the empty box below) to filter the currently selected dataset before using the filtered data for plotting. The selection of variable filters, if any, will be removed automatically whenever the dataset selected in the Plots tab changes"),
+		#	choices = names(current_data()), multiple = TRUE)   
+			selectizeInput(
+			  "filter_columns",
+			  label = HTML(paste0(
+				"Currently selected dataset: <strong>", input$dataset, "</strong><br><br>",
+				"Choose one or more variables (after clicking on the empty box below) to filter the dataset before plotting.<br><br>",
+				"Any filter selection will be removed automatically if you change the dataset"
+			  )),
+			  choices = names(current_data()), 
+			  multiple = TRUE
+			)
 		})
 
 		output$filters_ui <- renderUI({
@@ -1178,7 +1259,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			# Get and check chosen directory
 			dir <- chosen_dir()
 			if (is.null(dir) || !nzchar(dir)) {
-				showNotification("Please choose a directory (see under 'Themes and Options' tab) to save the file.", type = "error")
+				showNotification("Please choose a directory (see under 'Download Options' tab) to save the file.", type = "error")
 				return()
 			}
 
@@ -1226,7 +1307,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			} else {
 			  # Tooltip shown if button should be disabled
 			  tags$div(
-				title = "Select a directory under Themes and Options tab to enable the download button",
+				title = "Select a directory under Download Options tab to enable the download button",
 				downloadButton("download_plot", "Download Plot", disabled = TRUE)
 			  )
 			},
@@ -1234,7 +1315,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			selectInput(
 			  inputId = "image_format",
 			  label = "",
-			  choices = c("PNG" = "png", "PDF" = "pdf", "SVG" = "svg", "JPEG" = "jpeg"),
+			  choices = c("PNG" = "png", "JPEG" = "jpeg", "SVG" = "svg", "TIFF" = "tiff", "PDF" = "pdf", "BMP" = "bmp", "EPS" = "eps"),  #"ps", "tex" (pictex) 
 			  selected = "png",
 			  width = "100px"
 			)
@@ -1250,8 +1331,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				}
 				# This specifies the default filename for the user's download
 				ext <- input$image_format
-				#paste0("Bsky_Graph_Builder_plot_", Sys.Date(), ".", ext)
-				paste0(input$plot_type,"_",input$dataset, "_", Sys.Date(), ".", input$image_format)
+				#paste0("Bsky_Graph_Builder_plot_", Sys.Date(), ".", ext) #format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+				#paste0(input$plot_type,"_",input$dataset, "_", Sys.Date(), ".", input$image_format)
+				paste0(input$plot_type,"_",input$dataset, "_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".", input$image_format)
 			},
 			content = function(file) {
 				# Check if the plot is available
@@ -1267,7 +1349,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				# Get and check chosen directory
 				dir <- chosen_dir()
 				if (is.null(dir) || !nzchar(dir)) {
-					showNotification("Please choose a directory (see under 'Themes and Options' tab) to save the plot", type = "error")
+					showNotification("Please choose a directory (see under 'Download Options' tab) to save the plot", type = "error")
 					
 					# Write dummy empty content to file to avoid error
 					write("No directory selected", file)
@@ -1290,12 +1372,20 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				#path <- file.path(dir, file_name)
 
 				# Construct the full file path for saving on the server
-				file_path <- file.path(dir, paste0(input$plot_type,"_",input$dataset, "_", Sys.Date(), ".", input$image_format))
+				#file_path <- file.path(dir, paste0(input$plot_type,"_",input$dataset, "_", Sys.Date(), ".", input$image_format))
+				file_path <- file.path(dir, paste0(input$plot_type,"_",input$dataset, "_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".", input$image_format))
 
 				# Try saving file
 				tryCatch({
 					# Save the plot to the specified directory on the server
-					ggsave(file_path, plot = current_plot_obj(), width = 8, height = 6, dpi = 300, device = input$image_format)
+					# Default width = 8, height = 6, units = "in", dpi = 300, scale = 1
+					ggsave(file_path, plot = current_plot_obj(), 
+										width = input$downloaded_plot_width, 
+										height = input$downloaded_plot_height, 
+										dpi = input$downloaded_plot_resolution, 
+										units = input$downloaded_plot_height_width_units,
+										scale = input$downloaded_plot_scale, 
+										device = input$image_format)
 
 					# Copy the saved file to the temporary file provided by downloadHandler
 					file.copy(file_path, file, overwrite = TRUE)
@@ -1894,20 +1984,71 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			p <- p + scale_x_continuous(breaks = scales::pretty_breaks(n = 10))
 		}
 		
+		# if (inherits(current_data()[[input$x_var]], "Date")) {
+		  # p <- p + scale_x_date(date_labels = input$axis_date_format, breaks = scales::pretty_breaks(n = 10))
+		# } else if (inherits(current_data()[[input$x_var]], "POSIXct")) {
+		  # p <- p + scale_x_datetime(date_labels = paste(input$axis_date_format, input$axis_time_format), breaks = scales::pretty_breaks(n = 10))
+		# }
+		
 		if (inherits(current_data()[[input$x_var]], "Date")) {
-		  p <- p + scale_x_date(breaks = scales::pretty_breaks(n = 10))
+		  if (nzchar(input$axis_date_format)) {
+			p <- p + scale_x_date(
+			  date_labels = input$axis_date_format,
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  } else {
+			p <- p + scale_x_date(
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  }
 		} else if (inherits(current_data()[[input$x_var]], "POSIXct")) {
-		  p <- p + scale_x_datetime(breaks = scales::pretty_breaks(n = 10))
+		  if (nzchar(input$axis_date_format) || nzchar(input$axis_time_format)) {
+			combined_format <- trimws(paste(input$axis_date_format, input$axis_time_format))
+			p <- p + scale_x_datetime(
+			  date_labels = combined_format,
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  } else {
+			p <- p + scale_x_datetime(
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  }
 		}
+
 		
 		if (input$y_scale == "continuous" && input$y_var != "" && is.numeric(bsky_temp_df[[input$y_var]])) {
 			p <- p + scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
 		}
 		
+		# if (inherits(current_data()[[input$y_var]], "Date")) {
+		  # p <- p + scale_y_date(breaks = scales::pretty_breaks(n = 10))
+		# } else if (inherits(current_data()[[input$y_var]], "POSIXct")) {
+		  # p <- p + scale_y_datetime(breaks = scales::pretty_breaks(n = 10))
+		# }
+		
 		if (inherits(current_data()[[input$y_var]], "Date")) {
-		  p <- p + scale_y_date(breaks = scales::pretty_breaks(n = 10))
+		  if (nzchar(input$axis_date_format)) {
+			p <- p + scale_y_date(
+			  date_labels = input$axis_date_format,
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  } else {
+			p <- p + scale_y_date(
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  }
 		} else if (inherits(current_data()[[input$y_var]], "POSIXct")) {
-		  p <- p + scale_y_datetime(breaks = scales::pretty_breaks(n = 10))
+		  if (nzchar(input$axis_date_format) || nzchar(input$axis_time_format)) {
+			combined_format <- trimws(paste(input$axis_date_format, input$axis_time_format))
+			p <- p + scale_y_datetime(
+			  date_labels = combined_format,
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  } else {
+			p <- p + scale_y_datetime(
+			  breaks = scales::pretty_breaks(n = 10)
+			)
+		  }
 		}
 		
 
