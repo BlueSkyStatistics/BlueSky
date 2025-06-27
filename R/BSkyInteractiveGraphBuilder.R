@@ -403,6 +403,12 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			stopApp()
 		})
 		
+		# Keep session alive
+		observe({
+		invalidateLater(5 * 60 * 1000, session)  # every 5 minute
+		cat("Session ping to keep alive\n")
+		})
+		
 		###########################################################################
 		
 		current_plot_obj <- reactiveVal(NULL)  # holder
@@ -1220,7 +1226,10 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		})
 		
 		output$clicked_rows_label <- renderText({
-			n <- length(selected_ids())
+			df <- filtered_data()  # This is to create a reactive dependency to update the n 
+			sel_rows <- df[df$row_id %in% selected_ids(), ]
+			#n <- length(selected_ids())
+			n = nrow(sel_rows)
 			paste0("Dataset (", input$dataset, " ) Rows of the Clicked Points (", n, ") ")
 		})
 
@@ -1650,9 +1659,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 			# Identify outliers
 			plot_df <- bsky_temp_df %>%
-			  filter(!is.na(.data[[input$x_var]]), !is.na(.data[[input$y_var]])) %>%
-			  group_by(across(all_of(input$x_var))) %>%
-			  mutate(
+			  dplyr::filter(!is.na(.data[[input$x_var]]), !is.na(.data[[input$y_var]])) %>%
+			  dplyr::group_by(across(all_of(input$x_var))) %>%
+			  dplyr::mutate(
 				q1 = quantile(.data[[input$y_var]], 0.25, na.rm = TRUE),
 				q3 = quantile(.data[[input$y_var]], 0.75, na.rm = TRUE),
 				iqr = q3 - q1,
@@ -1660,11 +1669,11 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				upper = q3 + 1.5 * iqr,
 				is_outlier = (.data[[input$y_var]] < lower) | (.data[[input$y_var]] > upper)
 			  ) %>%
-			  ungroup()
+			  dplyr::ungroup()
 
 			# Split into main + outliers
-			outlier_df <- plot_df %>% filter(is_outlier)
-			non_outlier_df <- plot_df %>% filter(!is_outlier)
+			outlier_df <- plot_df %>% dplyr::filter(is_outlier)
+			non_outlier_df <- plot_df %>% dplyr::filter(!is_outlier)
 
 			# Base plot with boxplot
 			if (input$group_var != "") {
