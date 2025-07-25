@@ -17,6 +17,8 @@ blankDScolremoved <<- 0
 #bskyCurrentDatasetSplitSliceObj <- NULL
 .onLoad<-function(libname, pkgname)
 {
+require(Rmisc)  # this is loaded because Rmisc implicitly loads plyr pkg. plyr pkg must be loaded before dplyr otherwise it maskes dplyr.  
+require(ggpubr) # this is loaded because ggpubr implicitly loads plyr pkg. plyr pkg must be loaded before dplyr otherwise it maskes dplyr.
 require(data.table)
 require(kableExtra)
 require(dplyr)
