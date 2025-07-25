@@ -272,3 +272,5 @@ export(BSkyExportOutputPro)
 export(log_reverse_trans, log10_reverse_trans)
 export(xor_deobfuscatestring, importMSSQLDBList, importMSSQLtable)
 export(BSkyGraphBuilderSubprocLaunchMain)
+export(BSkySetLibLoadMsgPrintSetting, BSkyGetLibLoadMsgPrintSetting)
+
