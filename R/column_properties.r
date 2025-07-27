@@ -2013,7 +2013,7 @@ colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
 }
 
 #11Oct2017 To make any column numeric(i.e. double)
-BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex)
+BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex,removeCommas=FALSE, removePeriods =FALSE, replaceCommaWithPeriod =FALSE)
 {
 
 	BSkyFunctionInit()
@@ -2027,14 +2027,14 @@ BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex)
 
 			if(!is.null(datasetname))
 			{		
-	colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
+				colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)			
 				#Error: dataSetName and colname not found
 				if(colIndex > 0)  ##There is no check for property name. As, from UI noboby can send invalid property name
 				{
 					bskyattrs <- BSkyAttributesBackup(colIndex, datasetname) ## backup existing attributes
 					
-					isfactor = eval(parse(text=paste('is.factor(',datasetname,'$',colNameOrIndex,')', sep='')))
-					if(isfactor)
+					variableClass = eval(parse(text=paste('class(',datasetname,'$',colNameOrIndex,')', sep='')))
+					if("factor" %in% variableClass)
 					{
 						# this can be used if levels are numeric-strings like
 						# ("3.4","5","9") and we want the same numbers after conversion i.e. 3.4, 5, 9
@@ -2061,19 +2061,93 @@ BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex)
 						#{
 							#eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(as.factor(',datasetname,'$',colNameOrIndex,'))', sep='')))
 						#}
+						BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
+					} else if ("character" %in% variableClass)
+					{
+						var_expr <- paste(datasetname, "$", colNameOrIndex, sep = "")
+						var_data <- eval(parse(text = var_expr))
+						cleaned_data =var_data
+						#removing white spaces
+						cleaned_data <- gsub("\\s+", "", cleaned_data)
+						
+						if (removeCommas || removePeriods || replaceCommaWithPeriod)
+						{
+							cleaned_data =var_data
+							
+							if (removePeriods)
+							{
+								cleaned_data <- gsub("\\.", "", cleaned_data)         # remove dots used as thousand separators
+							}
+							
+							if (replaceCommaWithPeriod)
+							{
+							
+							cleaned_data <- gsub(",", ".", cleaned_data)    # replace , with periods
+							
+							}
+							
+							if (removeCommas)
+							{
+								cleaned_data <- gsub(",", "", cleaned_data)    # remove ,
+							} 
+										
+						} else
+						{
+						
+							current_locale <- Sys.getlocale("LC_NUMERIC")
+				  
+							# Define a list of European locales with comma decimal separator
+							european_locales <- c(
+							  "de_DE", "fr_FR", "it_IT", "es_ES", "nl_NL", "fr_BE", "fr_CH", 
+							  "de_AT", "pt_PT", "no_NO", "sv_SE", "fi_FI", "da_DK", "ru_RU",
+							  "el_GR", "tr_TR", "pt_BR", "es_AR"
+							)
+				  
+							# Check if current locale matches any European-style locale
+							is_european_locale <- any(sapply(european_locales, function(loc) grepl(loc, current_locale)))
+				  
+							if (is_european_locale) 
+							{
+								message("European number format detected. Converting...")
+								# Remove thousands separators and replace decimal comma with period
+								cleaned_data <- gsub("\\.", "", cleaned_data)         # remove dots used as thousand separators
+								cleaned_data <- gsub(",", ".", cleaned_data)    # replace comma with dot for decimal
+							} else
+							{
+							   #Remove commas and whitespace
+								cleaned_data <- stringr::str_trim(gsub(",", "", cleaned_data), side = "both")
+							}
+						}					
+						numeric_data <- suppressWarnings(as.numeric(cleaned_data))							   
+						# If any cleaned values are still non-numeric, throw an error
+						if (any(is.na(numeric_data) & !is.na(cleaned_data))) 
+						{
+							BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+							bad_vals <- var_data[is.na(numeric_data) & !is.na(cleaned_data)]
+							
+							non_na_values <- bad_vals[!is.na(bad_vals)]
+							BSkyErrMsg <-paste("BSkyMakeColumnNumeric: Conversion failed for variable '", colNameOrIndex,
+									   "' in dataset '", sub("^\\.GlobalEnv\\$", "", datasetname), "'. The following entries (up to 10) cannot be converted into numeric: ",
+									   paste(unique(head(non_na_values, 10)), collapse = ", "), sep = "")
+							warning(	BSkyErrMsg)	   
+									   
+						} else {
+
+							# Assign the cleaned numeric values back to the dataset
+							assign_expr <- paste(datasetname, "$", colNameOrIndex, " <- numeric_data", sep = "")
+							eval(parse(text = assign_expr))
+							BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+						}
 					}
-					else {
-						# eval(parse(text=paste(datasetname,'[,',colIndex,'] <<- factor(',datasetname,'[,',colIndex,'])', sep='')))
-						eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(',datasetname,'$',colNameOrIndex,')', sep='')))# <<- to <- coz .GlobalEnv
-					}
-					BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
-				}
-				else
+							
+				} else 
 				{
+			
 					# cat("\nError: Cannot set col property. Col not found\n")
 					BSkyErrMsg =paste("BSkyMakeColumnNumeric: Cannot set col property. Col not found."," Col Name:", colNameOrIndex)
 					warning("BSkyMakeColumnNumeric: Cannot set col property. Col not found.")
-				}				
+			
+				}
 			}
 			else
 			{

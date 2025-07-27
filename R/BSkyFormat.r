@@ -7656,6 +7656,8 @@ BSkyRcommandErrWarnHandler <- function(m)
 	else if("warning" %in% attr(m, "class"))
 	{
 		message("Warning: ", as.character(m$message))
+		## Added on 06/29/25 to stop R default behavior (i.e. double printing of the warning message from within warning(..msgs...)
+		invokeRestart("muffleWarning")
 	}
 	else
 	{
