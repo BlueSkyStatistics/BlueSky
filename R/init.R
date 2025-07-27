@@ -17,6 +17,8 @@ blankDScolremoved <<- 0
 #bskyCurrentDatasetSplitSliceObj <- NULL
 .onLoad<-function(libname, pkgname)
 {
+require(Rmisc)  # this is loaded because Rmisc implicitly loads plyr pkg. plyr pkg must be loaded before dplyr otherwise it maskes dplyr.  
+require(ggpubr) # this is loaded because ggpubr implicitly loads plyr pkg. plyr pkg must be loaded before dplyr otherwise it maskes dplyr.
 require(data.table)
 require(kableExtra)
 require(dplyr)
@@ -54,7 +56,7 @@ uadatasets$split <<-FALSE
 uadatasets$logindex<<-1
 uadatasets.sk <<- new.env(parent=environment(.onLoad))
 BSKY.replaceSplChars <<- FALSE
-uadatasets.sk$BSkySigfColPatterns =c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)")
+uadatasets.sk$BSkySigfColPatterns =c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)", "adj.p-value", "adj.p.value")
 }
 
 
