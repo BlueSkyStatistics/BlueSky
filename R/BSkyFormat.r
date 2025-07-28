@@ -7149,6 +7149,20 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 		
 		if(isCommentOrBlankLine == FALSE && isHelpCommand == FALSE && isPkgInstallCommand == FALSE)
 		{
+			if(!BSkyGetLibLoadMsgPrintSetting()){
+				# Added on 07/28/25 by SK to suppress all mesages from loading libraries
+				# Replace `library(...)` or `require(...)` with wrapped suppress call
+				#cat("\nBefore\n")
+				#cat(parsed_Rcommands[[i]], "\n")
+				parsed_Rcommands[[i]] <- gsub(
+				  pattern = "\\b(library|require)\\s*\\(([^\\)]+)\\)",
+				  replacement = "suppressPackageStartupMessages(suppressMessages(suppressWarnings(\\1(\\2))))",
+				  x = parsed_Rcommands[[i]]
+				)
+				#cat("\nAfter\n")
+				#cat(parsed_Rcommands[[i]], "\n")
+			}
+			
 			tryCatch({
 					withCallingHandlers({
 							withAutoprint({{eval(parse(text = parsed_Rcommands[[i]]), envir=globalenv())}}, print. = TRUE, echo = FALSE, deparseCtrl=c("keepInteger", "showAttributes", "keepNA"), keep.source=TRUE)
