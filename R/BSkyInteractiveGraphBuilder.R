@@ -2141,7 +2141,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 					
 					ggplotly(p, tooltip = "text") %>%
 						  style(customdata = bsky_temp_df$row_id, traces = 1) %>%
-							layout(dragmode = "select")
+							 plotly::layout(dragmode = "select")
 				}else{
 					ggplotly(p)
 				}
