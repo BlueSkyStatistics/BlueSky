@@ -24,6 +24,14 @@ importMSSQLDBList <- function(server="localhost", database, user=NULL, password=
 	tryCatch({
 	
 		withCallingHandlers({
+
+			if (Sys.getenv("ODBCSYSINI", unset = "") == "") { # only run if not set. i.e. run only first time in each session.
+				if(grepl("x86_64", R.version$arch)){ #only for Mac-Intel. Must be executed before loading "odbc"
+					Sys.setenv(ODBCSYSINI = "/usr/local/etc")
+					Sys.setenv(ODBCINSTINI = "odbcinst.ini")
+					Sys.setenv(DYLD_LIBRARY_PATH = "/usr/local/lib")
+				}
+			}
 			
 			library(DBI)
 			library(odbc)
