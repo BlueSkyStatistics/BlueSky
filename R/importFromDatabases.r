@@ -286,5 +286,10 @@ importMSSQLtable <- function(server="localhost", database, tablename, user=NULL,
 		invisible()
 }
 
-
+importDriverList <- function(){
+	drivers <- odbc::odbcListDrivers()
+	unique_drivers <- unique(drivers$name)
+	# sorted: unique_drivers_sorted <- sort(unique_drivers)
+	invisible(unique_drivers)
+}
 
