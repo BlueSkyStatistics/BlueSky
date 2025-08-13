@@ -12,7 +12,7 @@ xor_deobfuscatestring <- function(encoded, key = 42) {
 #xor_deobfuscate("Gx0aGxwbGBkUExEYExc=", key = 42)  # Example
 
 
-importMSSQLDBList <- function(server="localhost", database, user=NULL, password=NULL, port=1433, WinLogin=TRUE)
+importMSSQLDBList <- function(driver = NA, server="localhost", database, user=NULL, password=NULL, port=1433, WinLogin=TRUE)
 {
 	BSkyFunctionInit()
 	
@@ -44,10 +44,11 @@ importMSSQLDBList <- function(server="localhost", database, user=NULL, password=
 			con = NULL
 			
 			# List available drivers
-			drivers <- odbc::odbcListDrivers()$name
+			# drivers <- odbc::odbcListDrivers()$name
 
 			# Try to find a SQL Server driver
-			sql_driver <- drivers[grepl("Driver", drivers, ignore.case = TRUE)][1]
+			# sql_driver <- drivers[grepl("Driver", drivers, ignore.case = TRUE)][1]
+			sql_driver = driver
 
 			# Check if found
 			if (is.na(sql_driver)) {
@@ -113,15 +114,15 @@ importMSSQLDBList <- function(server="localhost", database, user=NULL, password=
 	}
 	else
 	{
-		BSkyErrMsg =paste("Import MSSQL: bla bla blah ")
-		warning("Import MSSQL: bal bal bal bla bla blah ")	
+		BSkyErrMsg =paste("Import MSSQL: empty table list ")
+		warning("Import MSSQL: empty table list ")	
 		BSkyStoreApplicationWarnErrMsg(warning, BSkyErrMsg)
 		invisible(data.frame())
 	}
 	
 }
 
-getTableRowColCount <- function(server="localhost", database, tablename, user=NULL, password=NULL, port=1433, WinLogin=TRUE, schema_name="dbo")
+getTableRowColCount <- function(driver = NA, server="localhost", database, tablename, user=NULL, password=NULL, port=1433, WinLogin=TRUE, schema_name="dbo")
 {
 	BSkyFunctionInit()
 	
@@ -147,10 +148,11 @@ getTableRowColCount <- function(server="localhost", database, tablename, user=NU
 			con = NULL
 			
 			# List available drivers
-			drivers <- odbc::odbcListDrivers()$name
+			#drivers <- odbc::odbcListDrivers()$name
 
 			# Try to find a SQL Server driver
-			sql_driver <- drivers[grepl("Driver", drivers, ignore.case = TRUE)][1]
+			#sql_driver <- drivers[grepl("Driver", drivers, ignore.case = TRUE)][1]
+			sql_driver = driver
 
 			# Check if found
 			if (is.na(sql_driver)) {
@@ -218,7 +220,7 @@ getTableRowColCount <- function(server="localhost", database, tablename, user=NU
 }
 
 
-importMSSQLtable <- function(server="localhost", database, tablename, user=NULL, password=NULL, port=1433, WinLogin=TRUE, datasetname)
+importMSSQLtable <- function(driver = NA, server="localhost", database, tablename, user=NULL, password=NULL, port=1433, WinLogin=TRUE, datasetname)
 {
 	BSkyFunctionInit()
 	
@@ -238,11 +240,12 @@ importMSSQLtable <- function(server="localhost", database, tablename, user=NULL,
 			}
 			con = NULL
 			# List available drivers
-			drivers <- odbc::odbcListDrivers()$name
+			#drivers <- odbc::odbcListDrivers()$name
 
 			# Try to find a SQL Server driver
-			sql_driver <- drivers[grepl("Driver", drivers, ignore.case = TRUE)][1]
+			#sql_driver <- drivers[grepl("Driver", drivers, ignore.case = TRUE)][1]
 			#matched <- drivers$name[grepl("SQL Server", drivers$name, ignore.case = TRUE)]
+			sql_driver = driver
 			
 			# Check if found
 			if (is.na(sql_driver)) {
@@ -294,5 +297,47 @@ importMSSQLtable <- function(server="localhost", database, tablename, user=NULL,
 		invisible()
 }
 
+importDriverList <- function(){
 
+	BSkyFunctionInit()
+
+	BSkyErrMsg = paste("importDriverList: Error importing odbc driver list : ",sep="")
+	BSkyWarnMsg = paste("importDriverList: Warning importing odbc driver list : ",sep="")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+	success = FALSE
+	unique_drivers = NULL
+	tryCatch({
+
+	withCallingHandlers({  
+
+		library(DBI)
+		library(odbc)	
+		drivers <- odbc::odbcListDrivers()
+		unique_drivers <- unique(drivers$name)
+		# sorted: unique_drivers_sorted <- sort(unique_drivers)
+		#invisible(unique_drivers)
+
+	}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+	}, error = function(e) {
+		msg <- conditionMessage(e)
+		print(paste("ODBC driver list error message:", msg, sep=''))
+		dbDisconnect(con)
+	})	
+
+	BSkyFunctionWrapUp()	
+
+	if(!is.null(unique_drivers))
+	{
+		print("Returning ODBC driver list")
+		invisible(unique_drivers)
+	}
+	else
+	{
+		BSkyErrMsg =paste("Importing empty ODBC driver list")
+		warning("Importing ODBC driver list")	
+		BSkyStoreApplicationWarnErrMsg(warning, BSkyErrMsg)
+		invisible(data.frame())
+	}
+
+}
 
