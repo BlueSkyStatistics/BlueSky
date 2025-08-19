@@ -251,6 +251,16 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							),
 							 selected = ""
 						),
+						# selectInput("legends_pos", "Show Legends and if so, position of Legends",
+						  # choices = c(
+								  # "Right" = "right", 
+								  # "Left" = "left", 
+								  # "Top" = "top",
+								  # "Bottom" = "bottom",
+								  # "Do not show" = "none"
+							# ),
+							 # selected = "top"
+						# ),
 						hr(),
 						hr(),
 						hr(),
@@ -548,9 +558,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			  cat("Current Selections:\n")
 			  cat("plot_type =", input$plot_type)
 			  cat(", dataset =", input$dataset, "\n")
-			  cat(", dataset_class =", class(df), "\n")
+			  #cat(", dataset_class =", class(df), "\n")
 
-			  if (!is.null(input$x_var) && input$x_var != "" && input$x_var %in% names(df)) {
+			  if (!is.null(input$x_var) && input$x_var != "" && input$x_var %in% names(df)&& !(input$plot_type %in% c("pie"))) {
 				cat("x_variable =", input$x_var, ", x_type =", class(df[[input$x_var]]),"\n")
 				if (is.numeric(df[[input$x_var]])) {
 				  cat("  x_min =", min(df[[input$x_var]], na.rm = TRUE),
@@ -572,7 +582,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				}
 			  }
 
-			  if (!is.null(input$y_var) && input$y_var != "" && input$y_var %in% names(df)) {
+			  if (!is.null(input$y_var) && input$y_var != "" && input$y_var %in% names(df) && !(input$plot_type %in% c("histogram", "bar", "dot", "pie"))) {
 				cat("y_variable =", input$y_var, ", y_type =", class(df[[input$y_var]]),"\n")
 				if (is.numeric(df[[input$y_var]])) {
 				  cat("  y_min =", min(df[[input$y_var]], na.rm = TRUE),
@@ -765,10 +775,17 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		output$x_scale_ui <- renderUI({
 		  req(input$plot_type)
 		  if (input$plot_type %in% c("dot", "pie")) return(NULL)
-		  selectInput("x_scale", 
-					  "X Axis Scale", 
-					  choices = c("continuous", "log10", "log2", "log"), 
-					  selected = "continuous")
+		  selectInput(
+				"x_scale", 
+				"X Axis Scale", 
+				choices = c(
+				  "Do not transform" = "continuous",
+				  "Log10" = "log10",
+				  "Log2" = "log2",
+				  "Log" = "log"
+				),
+				selected = "continuous"
+			)	
 		})
 
 		output$y_scale_ui <- renderUI({
@@ -776,7 +793,12 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  if (input$plot_type %in% c("dot", "pie")) return(NULL)
 		  selectInput("y_scale", 
 					  "Y Axis Scale", 
-					  choices = c("continuous", "log10", "log2", "log"), 
+					  choices = c(
+						  "Do not transform" = "continuous",
+						  "Log10" = "log10",
+						  "Log2" = "log2",
+						  "Log" = "log"
+						), 
 					  selected = "continuous")
 		})
 
@@ -1789,6 +1811,10 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			)
 		}
 
+		#if (input$group_var != "" && input$legends_pos !="right") {
+			#p = p + theme(legend.position = input$legends_pos)
+		#}
+		
 		#######################################################################
 		# Facet variable management if specified. if specified Facet Wrap takes 
 		# precedence and Facet row and column will be ignored
