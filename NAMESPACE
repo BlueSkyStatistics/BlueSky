@@ -272,7 +272,7 @@ export(BSkyExportOutputPro)
 export(log_reverse_trans, log10_reverse_trans)
 
 
-export(getRFunctionNames, get_all_function_signatures_name_values,get_signatures_from_env_returns_vector ,get_signatures_from_env_returns_name_values  )
+export(getRFunctionNames, get_all_function_signatures_name_values,get_signatures_from_env_returns_name_values,BSkyLoadedPackages  )
 
 export(xor_deobfuscatestring, importMSSQLDBList, importMSSQLtable)
 export(BSkyGraphBuilderSubprocLaunchMain)
