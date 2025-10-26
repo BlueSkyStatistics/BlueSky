@@ -349,7 +349,17 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 	if (os_type == "Windows") 
 	{
 	#print("The operating system is Windows.")
-	library(clipr, quietly = TRUE)
+	# library(clipr, quietly = TRUE)
+	if(!BSkyGetLibLoadMsgPrintSetting())
+	{
+		suppressPackageStartupMessages(
+			suppressMessages(
+				suppressWarnings(
+					library(clipr, quietly = TRUE)
+				)
+			)
+		)
+	}
 	# Read clipboard content
 	clipboard_content <- read_clip()
 	# Check if the clipboard is empty
@@ -369,22 +379,22 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 tabular_data <- tryCatch({
                   if (delimiter == "") {
 				   readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      delim = "\t", locale = templocale, skip_empty_rows = FALSE)
+                      delim = "\t", locale = templocale, skip_empty_rows = FALSE, show_col_types = FALSE)
                    
                   }
                   else {
                     readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      locale = templocale, delim = delimiter)
+                      locale = templocale, delim = delimiter, show_col_types = FALSE)
                   }
                 }, error = function(e) {
                   tryCatch({
                      readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      locale = templocale, skip_empty_rows = FALSE)
+                      locale = templocale, skip_empty_rows = FALSE, show_col_types = FALSE)
                   }, error = function(e2) {
                    
                     tryCatch({
                     readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      delim = "\n", locale = templocale, skip_empty_rows = FALSE)
+                      delim = "\n", locale = templocale, skip_empty_rows = FALSE, show_col_types = FALSE)
                   }, error = function(e2) {
                    
                     "error"
@@ -434,7 +444,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
 	clipboardEncoding = ""  ## get it from clipboard somehow.
 	templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
 	## clipboard data is tab separated
-	tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale) #delim = '\t',
+	tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale, show_col_types = FALSE) #delim = '\t',
 	## run for each column to get desired encoded data
 	tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
 	

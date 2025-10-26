@@ -71,6 +71,26 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			  border-radius: 0;
 			  overflow-x: auto;
 			}
+			
+			/* Force radio button label + choices aligned horizontally */
+			.shiny-input-radiogroup.inline {
+			  display: flex;
+			  align-items: center; /* aligns title and buttons to the same vertical baseline */
+			  gap: 10px; /* optional: spacing between title and first choice */
+			}
+
+			.shiny-input-radiogroup.inline .shiny-options-group {
+			  display: flex;
+			  align-items: center; /* keeps all choices aligned with the title */
+			  margin: 0; /* remove extra spacing */
+			  padding: 0;
+			}
+
+			.shiny-input-radiogroup.inline .radio {
+			  margin: 0 8px 0 0; /* space between choices */
+			  padding: 0;
+			}
+			
 		  "))
 		),
 
@@ -89,11 +109,29 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
                                     # box-shadow: 2px 2px 5px rgba(0,0,0,0.3);"
                  # )
                # ),
-			   
-			  style = "display: flex; flex-direction: column; height: 100vh; padding-bottom: 0;",
+				style = "display: flex; flex-direction: column; height: 100vh; padding-bottom: 0;",
 			  
-			  # Quit Button stays top
-			  div(
+			  # Top bar: Quit Button and Plot Engine Selection
+			div(
+				style = "display: flex; justify-content: space-between; align-items: center; margin: 0 0 10px 0;",
+				  
+				div(
+				  style = "display: flex; align-items: center; gap: 10px;",
+				  #tags$label("Choose plot canvas:", style = "margin: 0; font-weight: bold;"),
+				  tags$label(
+					"Plot canvas:",
+					style = "margin: 0; font-weight: bold; position: relative; top: -7px;" # move up 3px
+				  ),
+				  radioButtons(
+					inputId = "plot_engine",
+					label = NULL,  # suppress default label
+					choices = c("plotly (mouseover)" = "plotly", "ggplot (static)" = "ggplot"),
+					selected = "plotly",
+					inline = TRUE
+				  )
+				),
+			  
+				# Quit Button stays top
 				style = "text-align: right; margin: 0;",
 				actionButton(
 				  "quit_app",
@@ -118,7 +156,14 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
                             "))
                               ),
 
-                              selectInput("plot_type", "Select Plot Type:",
+							# radioButtons(
+							  # "plot_engine", "Choose plot type:",
+							  # choices = c("ggplot", "plotly"),
+							  # selected = "plotly"
+							# ),
+							# hr(),
+							
+                            selectInput("plot_type", "Select Plot Type:",
 							  choices = c("Scatter" = "scatter", "Line" = "line", "Boxplot" = "box",
 										  "Histogram" = "histogram", "Bar" = "bar", "Dot" = "dot", "Pie" = "pie"),
 							  selected = "scatter"
@@ -142,6 +187,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							div(style = "margin-left: 30px;", uiOutput("smooth_confInt_ui")),
 
 							hr(),
+							uiOutput("dot_plot_point_size"),
+							uiOutput("dot_plot_stack_up_ratio"),
 
 							uiOutput("facet_row_ui"),
 							uiOutput("facet_col_ui"),
@@ -242,7 +289,6 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							),
 							 selected = ""
 						),
-						hr(),
 						selectInput("axis_time_format", "Time Format for Date/Time axis",
 						  choices = c("", 
 								  "%H:%M", 
@@ -251,6 +297,20 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							),
 							 selected = ""
 						),
+						hr(),
+						selectInput("legends_pos", "Show Legends and if so, position of Legends",
+						  choices = c(
+								  "Right" = "right", 
+								  "Left" = "left", 
+								  "Top" = "top",
+								  "Bottom" = "bottom",
+								  "Do not show" = "none"
+							),
+							 selected = "right"
+						),
+						hr(),
+						hr(),
+						hr(),
 						hr(),
 						hr(),
 						hr(),
@@ -300,7 +360,12 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 						#textInput("downloaded_plot_scale", "Downloaded plot scale", "1"),
 						numericInput("downloaded_plot_resolution", "Downloaded plot resolution (dpi)", value = 300, min = 0.1), #, step = 0.1)
 						numericInput("downloaded_plot_scale", "Downloaded plot scale", value = 1, min = 0.1), #, step = 0.1)
-						
+						textInput("downloaded_plot_background_color", "Downloaded plot background color (e.g., white, transparent, grey95)", "white"),
+						#hr(),
+						tags$strong("Downloaded plot dimensions in pixels"),
+						textOutput("calculated_dimensions"),
+						hr(),
+						hr(),
 						hr(),
 						hr()
 					  )
@@ -333,7 +398,16 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
     ),
 
 	mainPanel(
-		plotlyOutput("plot", height = paste0(graph_area_height,"px")), #"600px" 
+		#plotlyOutput("plot", height = paste0(graph_area_height,"px")), #"600px" 
+		conditionalPanel(
+			condition = "input.plot_engine == 'ggplot'",
+			plotOutput("ggplot_canvas", height = paste0(graph_area_height, "px"))
+		),
+		conditionalPanel(
+			condition = "input.plot_engine == 'plotly'",
+			plotlyOutput("plotly_canvas", height = paste0(graph_area_height, "px"))
+		),
+  
 		tags$div( # Container for the flex items
 			style = "display: flex; justify-content: flex-end; align-items: center;", # Align download elements to the right and center vertically
 			tags$div( # Container for conditional header (left-aligned)
@@ -391,6 +465,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 
 	server <- function(input, output, session) {
+	
+		#bsky_temp_df_global = NULL
 		
 		# This handles manual X click on browser window/tab to close
 		session$onSessionEnded(function() {
@@ -407,6 +483,42 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		observe({
 		invalidateLater(5 * 60 * 1000, session)  # every 5 minute
 		cat("Session ping to keep alive\n")
+		})
+		
+		###########################################################################
+		# Show the calculated downloaded image dimension in pixels 
+		###########################################################################
+		output$calculated_dimensions <- renderText({
+			  req(input$downloaded_plot_width, input$downloaded_plot_height, 
+				  input$downloaded_plot_resolution, input$downloaded_plot_scale,
+				  input$downloaded_plot_height_width_units)
+
+			  # effective size after scaling
+			  width_eff  <- input$downloaded_plot_width  * input$downloaded_plot_scale
+			  height_eff <- input$downloaded_plot_height * input$downloaded_plot_scale
+
+			  if (input$downloaded_plot_height_width_units %in% c("in", "cm", "mm")) {
+				# Convert everything to inches before applying dpi
+				width_in <- switch(input$downloaded_plot_height_width_units,
+								   "in" = width_eff,
+								   "cm" = width_eff / 2.54,
+								   "mm" = width_eff / 25.4)
+				height_in <- switch(input$downloaded_plot_height_width_units,
+									"in" = height_eff,
+									"cm" = height_eff / 2.54,
+									"mm" = height_eff / 25.4)
+
+				px_w <- round(width_in  * input$downloaded_plot_resolution)
+				px_h <- round(height_in * input$downloaded_plot_resolution)
+
+				paste0("Effective size: ", round(width_in, 2), "x", round(height_in, 2), " inch @ ",
+					   input$downloaded_plot_resolution, " dpi\n",
+					   " = ", px_w, "x", px_h, " Pixel")
+			  } else if (input$downloaded_plot_height_width_units == "px") {
+				px_w <- round(width_eff)
+				px_h <- round(height_eff)
+				paste0("Pixel dimensions: ", px_w, "x", px_h, " (resolution field ignored)")
+			  }
 		})
 		
 		###########################################################################
@@ -471,14 +583,26 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		###########################################################################
 		
 		# Setup for shinyFiles directory selection
-		shinyDirChoose(input, "directory", roots = c(home = normalizePath("~")), session = session)
+		roots <- c(home = normalizePath("~"), root = "/")  # adjust for Windows if needed
+		
+		#shinyDirChoose(input, "directory", roots = c(home = normalizePath("~")), session = session)
+		#shinyDirChoose(input, "directory", roots = list(home = normalizePath("~"), root = "/"), session = session, defaultRoot = "home")
+		#shinyDirChoose(input, "directory", roots = c(root = "/"), session = session)
+		shinyDirChoose(input, "directory", roots = roots, session = session, defaultRoot = "home")
+		#shinyFileChoose(input, "directory", roots = roots, session = session, defaultRoot = "home", selectFolder = TRUE)
+		#shinyFileChoose(input, "directory", roots = c(home = normalizePath("~")), session = session, selectFolder = TRUE)
+
 
 		chosen_dir <- reactiveVal(NULL)
 
 		observeEvent(input$directory, {
 		  if (!is.integer(input$directory)) {
-			path <- parseDirPath(c(home = normalizePath("~")), input$directory)
+			#path <- parseDirPath(c(home = normalizePath("~")), input$directory)
+			path <- parseDirPath(roots, input$directory)
 			chosen_dir(path)
+			
+			#path <- parseFilePaths(c(home = normalizePath("~")), input$directory)
+			#chosen_dir(as.character(path$datapath))  # extract actual folder path
 		 }
 		})
 
@@ -548,15 +672,16 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			  cat("Current Selections:\n")
 			  cat("plot_type =", input$plot_type)
 			  cat(", dataset =", input$dataset, "\n")
-			  cat(", dataset_class =", class(df), "\n")
+			  #cat(", dataset_class =", class(df), "\n")
 
-			  if (!is.null(input$x_var) && input$x_var != "" && input$x_var %in% names(df)) {
+			  if (!is.null(input$x_var) && input$x_var != "" && input$x_var %in% names(df)&& !(input$plot_type %in% c("pie"))) {
 				cat("x_variable =", input$x_var, ", x_type =", class(df[[input$x_var]]),"\n")
 				if (is.numeric(df[[input$x_var]])) {
-				  cat("  x_min =", min(df[[input$x_var]], na.rm = TRUE),
-					  ", x_max =", max(df[[input$x_var]], na.rm = TRUE),
-					  ", x_mean =", mean(df[[input$x_var]], na.rm = TRUE),
-					  ", x_stdDev =", sd(df[[input$x_var]], na.rm = TRUE),
+				  cat("  x_min =", round(min(df[[input$x_var]], na.rm = TRUE),4),
+					  ", x_max =", round(max(df[[input$x_var]], na.rm = TRUE),4),
+					  ", x_mean =", round(mean(df[[input$x_var]], na.rm = TRUE),4),
+					  ", x_median =", round(median(df[[input$x_var]], na.rm = TRUE),4),
+					  ", x_stdDev =", round(sd(df[[input$x_var]], na.rm = TRUE),4),
 					  ", x_obs =", length(df[[input$x_var]]),
 					  ", x_NAs =", sum(is.na(df[[input$x_var]])), "\n")
 				} else if (is.character(df[[input$x_var]])|| is.factor(df[[input$x_var]])) {
@@ -572,13 +697,15 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				}
 			  }
 
-			  if (!is.null(input$y_var) && input$y_var != "" && input$y_var %in% names(df)) {
+			  #if (!is.null(input$y_var) && input$y_var != "" && input$y_var %in% names(df) && !(input$plot_type %in% c("histogram", "bar", "dot", "pie"))) {
+			  if (!is.null(input$y_var) && input$y_var != "" && input$y_var %in% names(df) && !(input$plot_type %in% c("histogram", "dot", "pie"))) {
 				cat("y_variable =", input$y_var, ", y_type =", class(df[[input$y_var]]),"\n")
 				if (is.numeric(df[[input$y_var]])) {
-				  cat("  y_min =", min(df[[input$y_var]], na.rm = TRUE),
-					  ", y_max =", max(df[[input$y_var]], na.rm = TRUE),
-					  ", y_mean =", mean(df[[input$y_var]], na.rm = TRUE),
-					  ", y_stdDev =", sd(df[[input$y_var]], na.rm = TRUE),
+				  cat("  y_min =", round(min(df[[input$y_var]], na.rm = TRUE),4),
+					  ", y_max =", round(max(df[[input$y_var]], na.rm = TRUE),4),
+					  ", y_mean =", round(mean(df[[input$y_var]], na.rm = TRUE),4),
+					  ", y_median =", round(median(df[[input$y_var]], na.rm = TRUE),4),
+					  ", y_stdDev =", round(sd(df[[input$y_var]], na.rm = TRUE),4),
 					  ", y_obs =", length(df[[input$y_var]]),
 					  ", y_NAs =", sum(is.na(df[[input$y_var]])), "\n")
 				} else if (is.character(df[[input$y_var]])|| is.factor(df[[input$y_var]])) {
@@ -765,10 +892,17 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		output$x_scale_ui <- renderUI({
 		  req(input$plot_type)
 		  if (input$plot_type %in% c("dot", "pie")) return(NULL)
-		  selectInput("x_scale", 
-					  "X Axis Scale", 
-					  choices = c("continuous", "log10", "log2", "log"), 
-					  selected = "continuous")
+		  selectInput(
+				"x_scale", 
+				"X Axis Scale", 
+				choices = c(
+				  "Do not transform" = "continuous",
+				  "Log10" = "log10",
+				  "Log2" = "log2",
+				  "Log" = "log"
+				),
+				selected = "continuous"
+			)	
 		})
 
 		output$y_scale_ui <- renderUI({
@@ -776,10 +910,26 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  if (input$plot_type %in% c("dot", "pie")) return(NULL)
 		  selectInput("y_scale", 
 					  "Y Axis Scale", 
-					  choices = c("continuous", "log10", "log2", "log"), 
+					  choices = c(
+						  "Do not transform" = "continuous",
+						  "Log10" = "log10",
+						  "Log2" = "log2",
+						  "Log" = "log"
+						), 
 					  selected = "continuous")
 		})
 
+		output$dot_plot_point_size <- renderUI({
+		  req(input$plot_type)
+		  if (!input$plot_type %in% c("dot")) return(NULL)
+		  numericInput("dot_plot_point_size", "Size of dot points", value = 1, min = 1) #, step = 0.1)
+		})
+		
+		output$dot_plot_stack_up_ratio <- renderUI({
+		  req(input$plot_type)
+		  if (!input$plot_type %in% c("dot")) return(NULL)
+		  numericInput("dot_plot_stack_up_ratio", "Spread the stacked points vertically", value = 4, min = 1) #, step = 0.1)
+		})
 	  
 		# Trigger the following code whenever a dataset selection change occurs from the dataset selection dropdown
 		observeEvent(input$dataset, {
@@ -926,7 +1076,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				}
 				
 				
-				if (var_id %in% c("y_var") && (input$plot_type %in% c("histogram", "bar", "dot"))) {
+				#if (var_id %in% c("y_var") && (input$plot_type %in% c("histogram", "bar", "dot"))) {
+				if (var_id %in% c("y_var") && (input$plot_type %in% c("histogram", "dot"))) {
 				  return(NULL)
 				}
 				
@@ -935,7 +1086,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				}
 				
 				if (var_id %in% c("hlines", "hline_labels")) {
-					if (!(input$plot_type %in% c("scatter", "line", "box"))) {
+					#if (!(input$plot_type %in% c("scatter", "line", "box"))) {
+					if (!(input$plot_type %in% c("scatter", "line", "box", "bar", "histogram"))) {
 					  return(NULL)
 					} else {
 					  return(textInput(var_id, label))
@@ -1394,6 +1546,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 										dpi = input$downloaded_plot_resolution, 
 										units = input$downloaded_plot_height_width_units,
 										scale = input$downloaded_plot_scale, 
+										 bg     = ifelse(is.null(input$downloaded_plot_background_color) || input$downloaded_plot_background_color == "", 
+												  "white", 
+												  input$downloaded_plot_background_color),
 										device = input$image_format)
 
 					# Copy the saved file to the temporary file provided by downloadHandler
@@ -1419,7 +1574,10 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 	# or renderPlot({ ggplot(...) }) (for ggplot2 plots).
 	# observeEvent(list(input$dataset, input$plot_type), 
 	##########################################################
-	  output$plot <- renderPlotly({
+	  #output$plot <- renderPlotly({
+	  base_plot <- reactive({
+		#bsky_temp_df_global = NULL
+		
 		#bsky_temp_df <- filtered_data()
 		clicked_df <- clicked_points()
 
@@ -1432,7 +1590,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		#if (facet_resetting()) return(NULL)  # skip plotting during reset
 		#req(!facet_resetting())
 		
-		if (input$plot_type %in% c("scatter", "line", "histogram", "bar", "box","dot")) {
+		#if (input$plot_type %in% c("scatter", "line", "histogram", "bar", "box","dot")) {
+		if (input$plot_type %in% c("scatter", "line", "histogram", "bar","dot")) {
 		  req(input$x_var)
 		}
 		if (input$plot_type %in% c("scatter", "line", "box")) {
@@ -1449,8 +1608,16 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		
 		
 		if (input$plot_type %in% c("scatter", "line", "histogram","bar","box","dot")) {
-			aes_args <- list(x = as.name(input$x_var))
-			if (input$y_var != "" && !(input$plot_type %in% c("histogram", "bar", "dot")) ) aes_args$y <- as.name(input$y_var)
+			#aes_args <- list(x = as.name(ifelse(input$plot_type %in% c("box") && (is.null(input$x_var) || input$x_var == "") "", input$x_var)))
+			aes_args <- list(
+			  x = if (input$plot_type %in% c("box") && (is.null(input$x_var) || input$x_var == "")) {
+				""
+			  } else {
+				as.name(input$x_var)
+			  }
+			)
+			#if (input$y_var != "" && !(input$plot_type %in% c("histogram", "bar", "dot")) ) aes_args$y <- as.name(input$y_var)
+			if (input$y_var != "" && !(input$plot_type %in% c("histogram", "dot")) ) aes_args$y <- as.name(input$y_var)
 			if (input$group_var != "" && !(input$plot_type %in% c("dot"))) aes_args$color <- as.name(input$group_var)
 			
 
@@ -1658,18 +1825,34 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			jitter_spread_width_val <- input$jitter_spread_width %||% 0.2
 
 			# Identify outliers
-			plot_df <- bsky_temp_df %>%
-			  dplyr::filter(!is.na(.data[[input$x_var]]), !is.na(.data[[input$y_var]])) %>%
-			  dplyr::group_by(across(all_of(input$x_var))) %>%
-			  dplyr::mutate(
-				q1 = quantile(.data[[input$y_var]], 0.25, na.rm = TRUE),
-				q3 = quantile(.data[[input$y_var]], 0.75, na.rm = TRUE),
-				iqr = q3 - q1,
-				lower = q1 - 1.5 * iqr,
-				upper = q3 + 1.5 * iqr,
-				is_outlier = (.data[[input$y_var]] < lower) | (.data[[input$y_var]] > upper)
-			  ) %>%
-			  dplyr::ungroup()
+			if (is.null(input$x_var) || input$x_var == "") {
+				bsky_x_var = "" #NULL
+				plot_df <- bsky_temp_df %>%
+				  dplyr::filter(!is.na(.data[[input$y_var]])) %>%
+				  dplyr::mutate(
+					q1 = quantile(.data[[input$y_var]], 0.25, na.rm = TRUE),
+					q3 = quantile(.data[[input$y_var]], 0.75, na.rm = TRUE),
+					iqr = q3 - q1,
+					lower = q1 - 1.5 * iqr,
+					upper = q3 + 1.5 * iqr,
+					is_outlier = (.data[[input$y_var]] < lower) | (.data[[input$y_var]] > upper)
+				  ) %>%
+				  dplyr::ungroup()
+			}else{
+				bsky_x_var = input$x_var
+				plot_df <- bsky_temp_df %>%
+				  dplyr::filter(!is.na(.data[[input$x_var]]), !is.na(.data[[input$y_var]])) %>%
+				  dplyr::group_by(across(all_of(input$x_var))) %>%
+				  dplyr::mutate(
+					q1 = quantile(.data[[input$y_var]], 0.25, na.rm = TRUE),
+					q3 = quantile(.data[[input$y_var]], 0.75, na.rm = TRUE),
+					iqr = q3 - q1,
+					lower = q1 - 1.5 * iqr,
+					upper = q3 + 1.5 * iqr,
+					is_outlier = (.data[[input$y_var]] < lower) | (.data[[input$y_var]] > upper)
+				  ) %>%
+				  dplyr::ungroup()
+			}
 
 			# Split into main + outliers
 			outlier_df <- plot_df %>% dplyr::filter(is_outlier)
@@ -1689,7 +1872,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			if (change_outlier_points_red && nrow(outlier_df) > 0) {
 			  p <- p + geom_point(
 				data = outlier_df,
-				aes_string(x = input$x_var, y = input$y_var),
+				#aes_string(x = input$x_var, y = input$y_var),
+				aes_string(x = ifelse(bsky_x_var == '',1,bsky_x_var), y = input$y_var),
 				color = "red",
 				size = 2,
 				inherit.aes = FALSE
@@ -1704,7 +1888,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 					data = non_outlier_df,
 					width = jitter_spread_width_val, 
 					alpha = 0.5,
-					aes_string(x = input$x_var, y = input$y_var, color = input$group_var),
+					#aes_string(x = input$x_var, y = input$y_var, color = input$group_var),
+					aes_string(x = ifelse(bsky_x_var == '',1,bsky_x_var), y = input$y_var, color = input$group_var),
 					inherit.aes = FALSE
 				  )
 				} else {
@@ -1712,10 +1897,35 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 					data = non_outlier_df,
 					width = jitter_spread_width_val, 
 					alpha = 0.5,
-					aes_string(x = input$x_var, y = input$y_var),
+					#aes_string(x = input$x_var, y = input$y_var),
+					aes_string(x = ifelse(bsky_x_var == '',1,bsky_x_var), y = input$y_var),
 					inherit.aes = FALSE
 				  )
 				}
+			}
+			
+			if(input$plot_engine != "plotly"){
+				p = p + stat_summary(
+						fun.data = function(y) {
+						data.frame(
+						y = c(median(y), quantile(y, probs = 0.25), quantile(y, probs = 0.75)),
+						label = c(
+						paste(round(median(y), 2)),
+						paste(round(quantile(y, probs = 0.25), 2)),
+						paste(round(quantile(y, probs = 0.75), 2))
+						)
+						)
+						},
+						geom = "text",
+						#aes(label = ..label..), 
+						# aes(label = after_stat(label), y = after_stat(y)),  # map both y and label
+						aes(label = after_stat(label)),
+						position = position_dodge(width = 0.2), #0.75
+						hjust = -0.5,
+						vjust = -0.5,
+						color = "black",
+						size = 4
+					)
 			}
 		  }
 		  
@@ -1724,7 +1934,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			p <- p + geom_histogram(na.rm = TRUE, bins = 9, aes_string(fill = input$group_var), 
 									alpha = 0.7, position = pos_type)
 		  } else {
-			p <- p + geom_histogram(na.rm = TRUE, bins = 9, fill = "#06b7db", alpha = 0.7)
+			p <- p + geom_histogram(na.rm = TRUE, bins = 9, fill = "#87CEEB", alpha = 0.7) ##87CEEB "#06b7db" #ADD8E6
 		  }
 
 		} else if (plot_type == "line") {
@@ -1738,13 +1948,45 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  }
 
 		} else if (plot_type == "bar") {
-		  if (input$group_var != "") {
-			p <- p + geom_bar(na.rm = TRUE, aes_string(fill = input$group_var), position = pos_type)
+		  # if (input$group_var != "") {
+			# p <- p + geom_bar(na.rm = TRUE, aes_string(fill = input$group_var), position = pos_type)
+		  # } else {
+			# p <- p + geom_bar(na.rm = TRUE, fill = "#06b7db")
+		  # }
+		  
+		  if (!is.null(input$y_var) && input$y_var != "") {
+			# Case 1: x + y (+ group optional) → geom_col
+			if (input$group_var != "") {
+			  p <- p + geom_col(
+				aes_string(fill = input$group_var),
+				position = pos_type,
+				na.rm = TRUE
+			  )
+			} else {
+			  p <- p + geom_col(
+				fill = "#87CEEB", #"#06b7db"
+				position = pos_type,
+				na.rm = TRUE
+			  )
+			}
 		  } else {
-			p <- p + geom_bar(na.rm = TRUE, fill = "#06b7db")
+			# Case 2: x only (+ group optional) → geom_bar (counts)
+			if (input$group_var != "") {
+			  p <- p + geom_bar(
+				aes_string(fill = input$group_var),
+				position = pos_type,
+				na.rm = TRUE
+			  )
+			} else {
+			  p <- p + geom_bar(
+				fill = "#87CEEB", #"#06b7db"
+				position = pos_type,
+				na.rm = TRUE
+			  )
+			}
 		  }
 
-		}else if (plot_type == "dot") {
+		}else if (plot_type == "dot") { #dot_plot_point_size dot_plot_stack_up_ratio
 			  #req(input$x_var)
 			  #stackratio_spread_points = ifelse(input$stackratio != '', as.numeric(input$stackratio), 4) 
 			  #jitter_width <- input$jitter_spread_width %||% 0.2 stackratio
@@ -1755,13 +1997,13 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			  #showNotification(paste("Stack Ratio Slider Value2:", input$stackratio), type = "message")
 			  
 			  if(input$group_var != ""){
-				p <- p + geom_dotplot(aes_string(fill = input$group_var), method = "histodot", binwidth = 0.1, stackdir = "up", dotsize = 0.8, binaxis = "x", stackratio = stackratio_spread_points, color = NA)
-			  } else {
-				p <- p + geom_dotplot(method = "histodot", binwidth = 0.1, stackdir = "up", dotsize = 0.8, binaxis = "x", stackratio = stackratio_spread_points)
+				p <- p + geom_dotplot(aes_string(fill = input$group_var), method = "histodot", binwidth = 0.1, stackdir = "up", dotsize =input$dot_plot_point_size, binaxis = "x", stackratio = input$dot_plot_stack_up_ratio, color = NA)
+			 } else {
+				p <- p + geom_dotplot(method = "histodot", binwidth = 0.1, stackdir = "up", dotsize = input$dot_plot_point_size, binaxis = "x", stackratio = input$dot_plot_stack_up_ratio)
 			  }
 			  
 			  p <- p +
-			  scale_x_continuous(breaks = pretty(bsky_temp_df[[input$x_var]], n = 10)) +  # More x ticks
+			  scale_x_continuous(breaks = pretty(bsky_temp_df[[input$x_var]], n = 10), labels = scales::number_format()) +  # More x ticks
 			  scale_y_continuous(NULL, breaks = NULL) +  # Removes y-axis title and ticks
 			  theme(
 				axis.text.y = element_blank(),           # Removes y-axis labels
@@ -1774,20 +2016,57 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			#bsky_temp_df <- get(input$dataset)
 			bsky_temp_df <- filtered_data()
 			
+			# pie_df <- bsky_temp_df %>%
+			  # dplyr::count(!!sym(input$group_var)) %>%
+			  # dplyr::mutate(!!input$group_var := as.factor(!!sym(input$group_var)))
+			  
 			pie_df <- bsky_temp_df %>%
 			  dplyr::count(!!sym(input$group_var)) %>%
-			  dplyr::mutate(!!input$group_var := as.factor(!!sym(input$group_var)))
-
-			return(
-				plot_ly(
-				  data = pie_df,
-				  labels = ~get(input$group_var),
-				  values = ~n,
-				  type = 'pie'
-				) #%>%
-				  #layout(title = paste("Pie Chart of", input$group_var))
-			)
+			  dplyr::mutate(
+				!!input$group_var := as.factor(!!sym(input$group_var)),
+				perc = n / sum(n) * 100,
+				label = paste0(n, " (", round(perc, 1), "%)")
+			  )
+			  
+			p = ggplot(pie_df, aes(x = "", y = n, fill = !!sym(input$group_var))) +
+					geom_col(width = 1, color = "white") +
+					coord_polar(theta = "y") +
+					geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 4) +
+					theme_void() +   # remove axes and background
+					theme(legend.title = element_blank()) #+
+					#labs(title = paste("Pie Chart of", input$group_var))
+					
+			p <- p + ggtitle(paste("Pie Chart of", input$group_var))+
+							theme(plot.title = element_text(hjust = 0.5)) #hjust = 0 → left, 0.5 → center, 1 → right
 		}
+
+		####################################################################################
+		#Legends position management - works only for ggplot canvas and not for plotly canvas
+		#Plotly ingores legend.position completely
+		#####################################################################################
+		
+		#if (input$group_var != "" && input$legends_pos !="right") {
+		#	p = p + theme(legend.position = input$legends_pos)
+		#}
+		
+		p = p + theme(
+		  legend.position = input$legends_pos,
+		  legend.text = element_text(size = 12),
+		  legend.title = element_text(size = 13, face = "bold"),
+		  legend.key.width = unit(1.5, "cm"),
+		  legend.key.height = unit(0.6, "cm")
+		)
+		
+		# if (input$legends_pos %in% c("top", "bottom")) {
+		  # p = p + theme(
+			# legend.box = "horizontal"
+		  # )
+		# }
+		
+		# p = p + theme(
+		  # legend.box.margin = margin(5, 5, 5, 5),
+		  # legend.box.spacing = unit(0.5, "cm")
+		# )
 
 		#######################################################################
 		# Facet variable management if specified. if specified Facet Wrap takes 
@@ -1827,7 +2106,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  if(length(labels) > length(coords)) labels = labels[1:length(coords)]
 		  data.frame(
 			y = coords,
-			label = if (length(labels) < length(coords)) {
+			label = if(length(labels) == 0){
+				c(rep("",length(coords)))
+			}else if (length(labels) < length(coords)) {
 			  c(labels, coords[(length(labels) + 1):length(coords)])
 			} else {
 			  labels
@@ -1847,7 +2128,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  if(length(labels) > length(coords)) labels = labels[1:length(coords)]
 		  data.frame(
 			x = coords,
-			label = if (length(labels) < length(coords)) {
+			label = if(length(labels) == 0){
+				c(rep("",length(coords)))
+			}else if (length(labels) < length(coords)) {
 			  c(labels, coords[(length(labels) + 1):length(coords)])
 			} else {
 			  labels
@@ -1862,22 +2145,42 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 		if(current_hlines() != "" || current_vlines() != "")
 		{
-			if (!is.null(input$x_var) && input$x_var !='' && !is.null(input$y_var) && input$y_var !='' &&((!is.null(hlines()) && nrow(hlines()) > 0))||(!is.null(vlines()) && nrow(vlines()) > 0)) {
+			#if (!is.null(input$x_var) && input$x_var !='' && !is.null(input$y_var) && input$y_var !='' &&((!is.null(hlines()) && nrow(hlines()) > 0))||(!is.null(vlines()) && nrow(vlines()) > 0)) {
+			if (((!is.null(hlines()) && nrow(hlines()) > 0))||(!is.null(vlines()) && nrow(vlines()) > 0)) {
 				x_range <- NULL
 				y_range <- NULL
 
 				# Check if x_var is numeric
-				is_x_numeric <- !inherits(current_data()[[input$x_var]], c("Date", "POSIXct", "factor", "character"))
+				if (!is.null(input$x_var) && input$x_var !=''){
+					is_x_numeric <- !inherits(current_data()[[input$x_var]], c("Date", "POSIXct", "factor", "character"))
+				}else{
+					is_x_numeric = TRUE
+				}
 
 				# Check if y_var is numeric
-				is_y_numeric <- !inherits(current_data()[[input$y_var]], c("Date", "POSIXct", "factor", "character"))
+				if(!is.null(input$y_var) && input$y_var !=''){
+					is_y_numeric <- !inherits(current_data()[[input$y_var]], c("Date", "POSIXct", "factor", "character"))
+				}else{
+					is_y_numeric = TRUE
+				}
 
 				# Calculate x_range and y_range for numeric variables
 				if (is_x_numeric) {
-				x_range <- range(plot_data[[input$x_var]], na.rm = TRUE)
+					if (!is.null(input$x_var) && input$x_var !=''){
+						x_range <- range(plot_data[[input$x_var]], na.rm = TRUE)
+					}else{
+						#x_range = c(1,1)
+						x_range = NULL
+					}
 				}
 				if (is_y_numeric) {
-				y_range <- range(plot_data[[input$y_var]], na.rm = TRUE)
+					if(!is.null(input$y_var) && input$y_var !=''){
+						y_range <- range(plot_data[[input$y_var]], na.rm = TRUE)
+					}else{
+						#y_range = c(0, max(hlines()$y, na.rm = TRUE)) #sum(!is.na(plot_data[[input$x_var]])))
+						#y_range = c(0, Inf)
+						y_range = NULL
+					}
 				}
 
 				# Handle horizontal lines if y is numeric
@@ -1899,7 +2202,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 								}
 					
 					y_coords <- hlines()$y
-					y_range[2] <- max(y_range[2], max(y_coords, na.rm = TRUE))
+					if(!is.null(y_range)){
+						y_range[2] <- max(y_range[2], max(y_coords, na.rm = TRUE))
+					}
 						
 					for (i in seq_len(nrow(hlines()))) {
 					  p <- p + 
@@ -1908,7 +2213,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 								 #x = if (!is.null(x_range)) x_range[2] else Inf,
 								 x = x_val,
 								 y = y_coords[i], 
-								 label = hlines()$label[i], 
+								 label = paste(y_coords[i], "\n", hlines()$label[i]), 
 								 hjust = -0.1, vjust = -0.5)
 					}
 				}
@@ -1932,7 +2237,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 								}
 						
 					x_coords <- vlines()$x
-					x_range[2] <- max(x_range[2], max(x_coords, na.rm = TRUE))
+					if(!is.null(x_range)){
+						x_range[2] <- max(x_range[2], max(x_coords, na.rm = TRUE))
+					}
 
 					for (i in seq_len(nrow(vlines()))) {
 					  p <- p + 
@@ -1941,8 +2248,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 								 x = x_coords[i], 
 								 #y = if (!is.null(y_range)) y_range[2] else Inf,
 								 y = y_val,
-								 label = vlines()$label[i], 
-								 hjust = -0.1, vjust = -0.5)
+								 label = paste(x_coords[i], "\n", vlines()$label[i]), 
+								 hjust = -0.3, vjust = 0.8)
 					}
 				}
 
@@ -2061,7 +2368,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		}
 		
 
-		if (input$plot_type %in% c("scatter", "line", "histogram","bar","box", "dot")){
+		if (input$plot_type %in% c("scatter", "line", "histogram","bar","box", "dot", "pie")){
 			if(!is.null(p)){
 				# Apply themes 
 				
@@ -2124,6 +2431,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 					current_plot_obj(p)
 				})
 
+			if(FALSE){
 				if (input$plot_type %in% c("scatter")){
 					#plotly_obj <- ggplotly(p, tooltip = "text", source = "myplot") %>%
 					#	plotly::style(customdata = bsky_temp_df$row_id, traces = 1)
@@ -2139,15 +2447,78 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 					# ggplotly(p) %>% layout(dragmode = "select")
 					# or use dragmode = "lasso"
 					
+					
 					ggplotly(p, tooltip = "text") %>%
 						  style(customdata = bsky_temp_df$row_id, traces = 1) %>%
-							layout(dragmode = "select")
+							 plotly::layout(dragmode = "select")
 				}else{
 					ggplotly(p)
 				}
 			}
+			
+			if(input$plot_engine == "plotly" && input$plot_type %in% c("pie")){
+				p = plot_ly(
+				  data = pie_df,
+				  labels = ~get(input$group_var),
+				  values = ~n,
+				  type = 'pie'
+				) %>%
+				layout(
+					title = list(
+					  text = paste("Pie Chart of", input$group_var),
+					  x = 0.5,   # centers the title
+					  xanchor = "center",
+					  yanchor = "top"
+					)
+				)
+				
+				#layout(title = paste("Pie Chart of", input$group_var))
+				#return(p)
+			}
+			
+			#bsky_temp_df_global = bsky_temp_df
+			return(p) #return the final ggplot object (unless plotly pie chart)
+			
+			}
 		}
 	  })
+	  
+		# ggplot output (static)
+		output$ggplot_canvas <- renderPlot({
+			req(base_plot())
+			
+			# # Save current global settings
+			# old_theme <- theme_get()
+			# old_point_defaults <- GeomPoint$default_aes
+			# old_text_defaults  <- GeomText$default_aes
+
+			# # Apply your overrides
+			# theme_update(text = element_text(size = 16))
+			# update_geom_defaults("point", list(size = 4))
+			# update_geom_defaults("text",  list(size = 6))
+
+			# # ... user plots here ...
+
+			# # Reset to original
+			# theme_set(old_theme)
+			# update_geom_defaults("point", old_point_defaults)
+			# update_geom_defaults("text",  old_text_defaults)
+			
+			base_plot()
+		})
+
+		# plotly output (interactive)
+		output$plotly_canvas <- renderPlotly({
+			req(base_plot())
+			#ggplotly(base_plot())
+			if (input$plot_type %in% c("scatter")){
+				ggplotly(base_plot(), tooltip = "text") %>%
+							  #style(customdata = bsky_temp_df_global$row_id, traces = 1) %>%
+								layout(dragmode = "lasso")
+			}else{
+				ggplotly(base_plot())
+			}
+		})
 
 	  # Export button to save the dataset if any filtering of columns applied to the selected dataset
 	  # output$export_data <- downloadHandler(

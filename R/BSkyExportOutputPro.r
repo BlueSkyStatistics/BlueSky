@@ -6,7 +6,8 @@ BSkyExportOutputPro <- function(pandocPath, RMDpath, exportDirPath, exportFilena
 	BSkyWarnMsg = paste("BSkyExportOutputPro: Warning exporting output : ",sep="")
 	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
 	success = FALSE
-
+	bsky_orig_BSkyGetKableAndRmarkdownFormatting = NULL
+	bsky_orig_BSkyKabletableStylingOptions = NULL
 	tryCatch({
 	
 			withCallingHandlers({
@@ -36,8 +37,10 @@ BSkyExportOutputPro <- function(pandocPath, RMDpath, exportDirPath, exportFilena
 				#}
 
 				# Use do.call to unpack the list of four values and pass arguments in the correct order automatically
-				do.call(BSkySetKableAndRmarkdownFormatting, unname(bsky_orig_BSkyGetKableAndRmarkdownFormatting));
-				uadatasets.sk$BSkyKabletableStylingOptions = bsky_orig_BSkyKabletableStylingOptions;
+				# Following 2 line moved inside finally, because even if the line above fails, I still need to execute
+				# these 2 lines.
+				# do.call(BSkySetKableAndRmarkdownFormatting, unname(bsky_orig_BSkyGetKableAndRmarkdownFormatting));
+				# uadatasets.sk$BSkyKabletableStylingOptions = bsky_orig_BSkyKabletableStylingOptions;
 
 				if(exportFormat == 'DOCX'){
 					rmarkdown::pandoc_convert(HTMLfilename, to = "docx", output = DOCXfilename);
@@ -54,7 +57,15 @@ BSkyExportOutputPro <- function(pandocPath, RMDpath, exportDirPath, exportFilena
 				}
 			
 			}, warning = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
-		}, error = BSkyOpenDatafileCommandErrWarnHandler, silent = TRUE)
+		}, error = BSkyOpenDatafileCommandErrWarnHandler, 
+		finally = {
+    		# This block will *always* run and restore values only if the vars are not null.
+			if(!(is.null(bsky_orig_BSkyGetKableAndRmarkdownFormatting) || is.null(bsky_orig_BSkyKabletableStylingOptions)))
+			{
+				do.call(BSkySetKableAndRmarkdownFormatting, unname(bsky_orig_BSkyGetKableAndRmarkdownFormatting));
+				uadatasets.sk$BSkyKabletableStylingOptions = bsky_orig_BSkyKabletableStylingOptions;
+			}
+	})
 		
 
 	BSkyFunctionWrapUp()	

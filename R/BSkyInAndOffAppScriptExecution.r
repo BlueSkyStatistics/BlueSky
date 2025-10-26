@@ -226,10 +226,16 @@ BSkySplitCollapseDatasetWithRepeatingColumns <- function(datasetNameStr = c(), r
 	return(invisible())
 }
 
-
-## 16Dec2023 
+## 12Dec2023 
 ## New function added for BlueSky script(exported from BSky app) automation 
-BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file = FALSE)
+BSkyScriptAutomationEngine <- function(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file)
+{
+	BSkyScriptAutomationInternalEngine(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file)
+}
+
+
+## 19Jul2025
+BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file = FALSE, debug = FALSE)
 { 
 	if (!dir.exists(bsky_script_system_dir)) 
 	{ 
@@ -237,14 +243,15 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 		return(invisible)
 	}
 	
+	
 	#####################################################################################################
 	# Setting up the output subdirectory to write HTML file names for every BlueSky Statistics Script run
 	#####################################################################################################
-	cur_timestamp = format(Sys.time(), "%Y%m%d_%H%M%S")
-	
-	BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp = cur_timestamp, init = TRUE)
-	
-	BSkySetGraphicsDirPath(bskyGraphicsDirPath = bsky_script_system_dir)
+	# Call Sys.time() once and store
+	cur_time <- Sys.time()
+	cur_timestamp = format(cur_time, "%Y%m%d_%H%M%S")
+	report_header_timestamp <- format(cur_time, "%Y/%m/%d %H:%M:%S")
+
 
 	Incoming_file_open_msg_log_dir = paste0(bsky_script_system_dir,"\\logs")
 	if (!dir.exists(Incoming_file_open_msg_log_dir)) 
@@ -252,6 +259,11 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 		# Create the directory if it does not exist
 		dir.create(Incoming_file_open_msg_log_dir)
 	}
+	
+	BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp = cur_timestamp, init = TRUE)
+	
+	BSkySetGraphicsDirPath(bskyGraphicsDirPath = bsky_script_system_dir)
+
 
 	if (!dir.exists(bsky_script_output_root_dir)) 
 	{
@@ -281,7 +293,7 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 					
 		for(input_dir in subdirectories)
 		{
-			#cat("\nprocessing input script directory:", input_dir, "\n")
+			cat("\nprocessing input script directory:", input_dir, "\n")
 			
 			bsky_script_output_dir = paste(bsky_script_output_root_dir, "\\", basename(input_dir), sep='')
 			
@@ -349,17 +361,27 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 										{
 											incoming_datafile_dir = input_dir
 										}
-										else
-										{
-											script_cfg_entry_index = grep("DatasetName_Used_In_The_Script", script_cfg_entries, ignore.case = TRUE)
-											if(length(script_cfg_entry_index) > 0)
-											{
-												if(length(grep("=", script_cfg_entries[script_cfg_entry_index[1]])) > 0)
-												{
-													script_dataset_name = trimws(strsplit(script_cfg_entries[script_cfg_entry_index[1]], "=")[[1]][2])
-												}
-											}
-										}
+										# else
+										# {
+											# script_cfg_entry_index = grep("DatasetName_Used_In_The_Script", script_cfg_entries, ignore.case = TRUE)
+											# if(length(script_cfg_entry_index) > 0)
+											# {
+												# if(length(grep("=", script_cfg_entries[script_cfg_entry_index[1]])) > 0)
+												# {
+													# script_dataset_name = trimws(strsplit(script_cfg_entries[script_cfg_entry_index[1]], "=")[[1]][2])
+												# }
+											# }
+										# }
+										
+										current_dataset_files_full_path = list.files(path = incoming_datafile_dir, pattern=".*.xlsx|.csv|.RData", ignore.case = TRUE, full.names = TRUE)
+										# Extract base file names
+										current_dataset_file_names_with_ext <- basename(current_dataset_files_full_path)
+										# Remove extensions
+										current_dataset_names = tools::file_path_sans_ext(current_dataset_file_names_with_ext)
+										current_dataset_names = paste0(current_dataset_names, "_Sheet1")
+										
+										cat("\n\nCurrent dataset names extracted from the dataset file names in script directory: ", input_dir,"\n")
+										print(current_dataset_names)
 									}
 								}
 							}
@@ -383,7 +405,14 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 				next #skip this iteration of subdirectory and move to the next subdirectory in the for loop 
 			}
 			
-			script_full_names = list.files(path = input_dir, pattern=paste0(".*", "script", ".*\\.Rmd$"), ignore.case = TRUE, full.names = TRUE)
+			#script_full_names = list.files(path = input_dir, pattern=paste0(".*", "script", ".*\\.Rmd$"), ignore.case = TRUE, full.names = TRUE)
+			#script_full_names = list.files(path = input_dir, pattern=".*.Bmd|.Rmd", ignore.case = TRUE, full.names = TRUE)
+			script_full_names <- list.files(
+								  path = input_dir,
+								  pattern = "\\.(Bmd|Rmd)$",
+								  ignore.case = TRUE,
+								  full.names = TRUE
+								)
 			
 			if(length(script_full_names) > 0)
 			{
@@ -394,33 +423,73 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 				script_file_name_without_ext = make.names(script_file_name_without_ext)
 				script_file_name_without_ext = gsub("\\.","_", script_file_name_without_ext)
 			
-				rmd_content = readLines(script_full_names[1], warn = FALSE)
+				#rmd_content = readLines(script_full_names[1], warn = FALSE)
+				
+				# Get the extension string
+				file_type = toupper(tools::file_ext(script_full_names[1]))
+				
+				if(file_type != "BMD" && file_type != "RMD") 
+				{ 
+					cat("\n", script_full_names, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
+					return(invisible)
+				}
+				
 
-				# Combine lines into a single string
-				rmd_text <- paste(rmd_content, collapse = "\n")
-
-				# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
-				code_chunks <- regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
-
-				# Remove the enclosures from each code chunk
-				code_chunks <- gsub("```\\{r\\}|```", "", code_chunks)
-				
-				# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
-				code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
-				extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
-				code_chunks_comments[1] = gsub('(```|\\{r\\})',"",substr(code_chunks_comments[1], sum(nchar(extract_first_comment)), nchar(code_chunks_comments[1])))
-				
-				# Remove the enclosures from each chunk comment
-				code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
-				
-				# For debugging
-				#print(code_chunks_comments)
-				
-				
 				if(process_script == TRUE && process_incoming_datafile == TRUE)
 				{
+					cat("\n\n calling BSkyStandaloneBMDScriptExecutionPrep with bsky_script_full_file_path: ", script_full_names, "\n")
+					code_chunk_and_chunk_title_list = BSkyStandaloneBMDScriptExecutionPrep(
+																 bsky_script_full_file_path = script_full_names, 
+																 bmd_output_file_path =c(), 
+																 currentDatasetName = current_dataset_names, 
+																 replaceOldDatasetName = c(), 
+																 currentColumnNames = c(), 
+																 replaceOldColumnNames = c(), 
+																 scriptSinkfile = FALSE, 
+																 expand_extraction = TRUE, 
+																 debug = FALSE)
+																 
+					
+					#cat("\n\n code_chunk_and_chunk_title_list from BSkyStandaloneBMDScriptExecutionPrep\n")
+					#print(code_chunk_and_chunk_title_list)
+					
+					code_chunks_comments = code_chunk_and_chunk_title_list$chunk_title
+					code_chunks = code_chunk_and_chunk_title_list$chunk_code
+
+
 					bsky_script_output_subdir = paste(bsky_script_output_dir,"\\OutputFiles_", script_file_name_without_ext, "_", cur_timestamp, sep='')
-					bsky_script_output_file = paste(bsky_script_output_subdir,"\\","BSkyReport", "_", script_file_name_without_ext, "_", cur_timestamp, ".htm", sep='')
+					
+					#adj_output_file_name_dueto_260max_filename_limit = paste("BSkyReport", "_", script_file_name_without_ext, "_", cur_timestamp, ".htm", sep='')
+					# Build initial filename
+					max_path_length = 260 -1 # limitation in Windows for maximum file name character length allowed
+					base_file_prefix <- "BSkyReport_"
+					file_ext <- ".htm"
+					sep <- "_"
+
+					# Estimate fixed part length (everything except the variable part)
+					fixed_length <- nchar(file.path(bsky_script_output_subdir, base_file_prefix)) +
+									nchar(cur_timestamp) + nchar(file_ext) + nchar(sep) * 2  # 2 separators around script name 
+
+					# Allowed length for script_file_name_without_ext
+					remaining_length <- max_path_length - fixed_length
+
+					# Trim if necessary
+					trimmed_script_name <- script_file_name_without_ext
+					if (nchar(script_file_name_without_ext) > remaining_length) {
+					  trimmed_script_name <- substr(script_file_name_without_ext, 1, remaining_length)
+					}
+
+					# Construct final safe file name
+					adj_output_file_name_dueto_260max_filename_limit <- paste0(
+					  base_file_prefix,
+					  trimmed_script_name,
+					  sep,
+					  cur_timestamp,
+					  file_ext
+					)
+					
+					bsky_script_output_file = paste(bsky_script_output_subdir,"\\",adj_output_file_name_dueto_260max_filename_limit, sep='')
+					#cat("Ouput file name to be created: ", bsky_script_output_file, "\n")
 				
 					if (!dir.exists(bsky_script_output_subdir)) 
 					{
@@ -428,8 +497,19 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 						dir.create(bsky_script_output_subdir)
 					}
 					
+					
 					# Copy the pre section from the HTML template file into the output HTML file
-					file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), bsky_script_output_file)
+					if(!file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), bsky_script_output_file, overwrite = TRUE)){
+						cat("template_pre.html file copy failed", "\n")
+					}
+					
+					# Add some info as the report header
+					outputHTMLfileConn = file(bsky_script_output_file, "a")
+					html_output_report_header = paste("<div style=\"margin-left: 40px;\"> <p> <strong> BlueSky Statistics Report Generated from </strong><br> Script file: ", basename(script_full_names[1]), "<br> Time: ", report_header_timestamp, "<br> Dataset names found in the script: ", code_chunk_and_chunk_title_list$dataset_names, "<br> New Dataset used to run the script: ", paste(current_dataset_names, collapse=','),"</p></div><br>")
+					# Write the combined lines to a new file
+					writeLines(html_output_report_header, outputHTMLfileConn)
+					close(outputHTMLfileConn)
+					
 					
 					codeChunkNum = 0
 					list_script_dataset_full_file_paths = c()
@@ -449,7 +529,8 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 						############################################################
 						#sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
 						
-						sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''))
+						script_execution_sink_filename = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep='')
+						sink_file_conn = file(script_execution_sink_filename)
 						
 						# close the system level script files in bsky_script_system_dir\logs directory
 						#suppressWarnings(sink())
@@ -535,7 +616,7 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 						codeChunkNum = codeChunkNum + 1
 						
 						# Generate the HTML output file from the script
-						BSkyWriteKableHtmlOutput(datasetName = script_file_name_without_ext, dirName = bsky_script_output_subdir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = code_chunks_comments[codeChunkNum])
+						BSkyWriteKableHtmlOutput(datasetName = script_file_name_without_ext, dirName = bsky_script_output_subdir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = code_chunks_comments[codeChunkNum], sinkFilename = script_execution_sink_filename)
 					
 						# No incoming datafile is used - so no datafile to move
 						#file.copy(full_datafile_names[file_counter], paste(bsky_script_output_subdir,"\\", datafile_names[file_counter], sep=''))
@@ -587,7 +668,35 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 				else if(process_script == TRUE)
 				{
 					bsky_script_output_subdir = paste(bsky_script_output_dir,"\\OutputFiles_", script_file_name_without_ext, "_", cur_timestamp, sep='')
-					bsky_script_output_file = paste(bsky_script_output_subdir,"\\","BSkyReport", "_", script_file_name_without_ext, "_", cur_timestamp, ".htm", sep='')
+					#bsky_script_output_file = paste(bsky_script_output_subdir,"\\","BSkyReport", "_", script_file_name_without_ext, "_", cur_timestamp, ".htm", sep='')
+					
+					# Build initial filename
+					max_path_length = 260 -1 # limitation in Windows for maximum file name character length allowed
+					base_file_prefix <- "BSkyReport_"
+					file_ext <- ".htm"
+					sep <- "_"
+
+					# Estimate fixed part length (everything except the variable part)
+					fixed_length <- nchar(file.path(bsky_script_output_subdir, base_file_prefix)) +
+									nchar(cur_timestamp) + nchar(file_ext) + nchar(sep) * 2  # 2 separators around script name 
+
+					# Allowed length for script_file_name_without_ext
+					remaining_length <- max_path_length - fixed_length
+
+					# Trim if necessary
+					trimmed_script_name <- script_file_name_without_ext
+					if (nchar(script_file_name_without_ext) > remaining_length) {
+					  trimmed_script_name <- substr(script_file_name_without_ext, 1, remaining_length)
+					}
+
+					# Construct final safe file name
+					adj_output_file_name_dueto_260max_filename_limit <- paste0(
+					  base_file_prefix,
+					  trimmed_script_name,
+					  sep,
+					  cur_timestamp,
+					  file_ext
+					)
 				
 					if (!dir.exists(bsky_script_output_subdir)) 
 					{
@@ -596,7 +705,8 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 					}
 					
 					# Copy the pre section from the HTML template file into the output HTML file
-					file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), bsky_script_output_file)
+					#file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), bsky_script_output_file)
+					file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), adj_output_file_name_dueto_260max_filename_limit)
 					
 					codeChunkNum = 0
 					
@@ -614,7 +724,9 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 						############################################################
 						#sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
 						
-						sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''))
+						#sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''))
+						script_execution_sink_filename = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep='')
+						sink_file_conn = file(script_execution_sink_filename)
 						
 						####################################################
 						# close the bsky_script_system_dir\logs sink files()
@@ -657,7 +769,7 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 						codeChunkNum = codeChunkNum + 1
 						
 						# Generate the HTML output file from the script
-						BSkyWriteKableHtmlOutput(datasetName = script_file_name_without_ext, dirName = bsky_script_output_subdir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = code_chunks_comments[codeChunkNum])
+						BSkyWriteKableHtmlOutput(datasetName = script_file_name_without_ext, dirName = bsky_script_output_subdir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = code_chunks_comments[codeChunkNum], sinkFilename = script_execution_sink_filename)
 					
 						# No incoming datafile is used - so no datafile to move
 						#file.copy(full_datafile_names[file_counter], paste(bsky_script_output_subdir,"\\", datafile_names[file_counter], sep=''))
@@ -691,275 +803,85 @@ BSkyScriptAutomationInternalEngine <- function(bsky_script_input_root_dir, bsky_
 }
 
 
-## 12Dec2023 
-## New function added for BlueSky script(exported from BSky app) automation 
-BSkyScriptAutomationEngine <- function(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file)
-{
-	BSkyScriptAutomationInternalEngine(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file)
-}
-
-
-BSkyInAppScriptExtractDialogDataset <- function(rmd_text)
-{
-	# Define a function to extract "id" and "dataset" values from a string
-	extract_values_fn <- function(str) {
-	  id_match = regmatches(str, regexpr('id: "\\w+"', str))  # Extract "id" match
-	  dataset_match = regmatches(str, regexpr('dataset: "\\w+"', str))  # Extract "dataset" match
-	  
-	  if (length(id_match) > 0 && length(dataset_match) > 0) {
-		id = gsub('id: "|"', '', id_match)  # Extract "id" value
-		dataset = gsub('dataset: "|"', '', dataset_match)  # Extract "dataset" value
-		return(c(id = id, dataset = dataset))
-	  } else {
-		return(c(id = NA, dataset = NA))
-	  }
+BSkyStandaloneBMDScriptExecutionPrep <- function(bsky_script_full_file_path, bmd_output_file_path =c(), currentDatasetName = c(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), scriptSinkfile = FALSE, expand_extraction = TRUE, debug = FALSE)
+{ 
+	#debug = TRUE
+	
+	if (!file.exists(bsky_script_full_file_path)) 
+	{ 
+		cat("\n", bsky_script_full_file_path, "- BlueSky script file not found", "..exiting..\n")
+		return(invisible)
 	}
 	
-	dialog_pattern = 'dialog:.*\\n.*\\n\\s*dataset:\\s*"([^"]+)"'
-	dialog_db = regmatches(rmd_text, gregexpr(dialog_pattern, rmd_text,perl = TRUE))[[1]]
-	#print(dialog_db)
-
-	# Apply the extract_values_fn function to each element of the string array
-	result = sapply(dialog_db, extract_values_fn)
-
-	# Create a data frame from the extracted values
-	df = data.frame(t(result))
+	# Get the extension string
+	file_type = toupper(tools::file_ext(bsky_script_full_file_path))
 	
-	#BSkyFormat(df)
-	
-	dataset_name_to_discard_df_freq = NULL
-	
-	dataset_name_to_discard = c("reRunOutput", "loadDatasetFromPackage", "saveAModel", "loadAModel")
-	
-	if(any(df$id %in% dataset_name_to_discard))
-	{
-		dataset_name_to_discard_df = df[(df$id %in% dataset_name_to_discard), ]
-		row.names(dataset_name_to_discard_df) = c()
-		
-		dataset_name_to_discard_df_freq = data.frame(table(dataset_name_to_discard_df$dataset))
-		#BSkyFormat(dataset_name_to_discard_df_freq)
+	if(file_type != "BMD" && file_type != "RMD") 
+	{ 
+		cat("\n", bsky_script_full_file_path, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
+		return(invisible)
 	}
 	
-	return(invisible(dataset_name_to_discard_df_freq))
-}
-
-
-BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(), json_output_file_path =c(), rmd_text=c(), file_type = "BMD", debug = FALSE)
-{
-	if(length(rmd_text) == 0)
+	if(file_type == "BMD")
 	{
-		if (!file.exists(bsky_script_full_file_path)) 
-		{ 
-			cat("\n", bsky_script_full_file_path, "- BlueSky script file not found", "..exiting..\n")
-			return(invisible)
-		}
-		
-		# Get the extension string
-		file_type = toupper(tools::file_ext(bsky_script_full_file_path))
-		
-		if(file_type != "BMD" && file_type != "RMD") 
-		{ 
-			cat("\n", bsky_script_full_file_path, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
-			return(invisible)
-		}
-		
-		if(file_type == "BMD")
-		{
-			# Load the 'readr' package for reading lines from files
-			suppressMessages(require(readr))
-			
-			# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
-			zip_file_path = bsky_script_full_file_path
-			script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
-			
-			# Open a connection to the zip file
-			zip_connection = unz(zip_file_path, script_file_name_without_ext)
-			
-			# Read the lines from the text file inside the zip
-			rmd_content = read_lines(zip_connection)
-			
-			# Close the zip connection
-			#close(zip_connection)
-		}
-		else
-		{
-			rmd_content = readLines(bsky_script_full_file_path, warn = FALSE)
-		}
+		# Load the 'readr' package for reading lines from files
+		suppressMessages(require(readr))
 
-		# Combine lines into a single string
-		rmd_text = paste(rmd_content, collapse = "\n")
-		
-		######################
-		# SK for testing only 
-		######################
-		
+		# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
+		zip_file_path = bsky_script_full_file_path
+		script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
+
+		# Open a connection to the zip file
+		zip_connection = unz(zip_file_path, script_file_name_without_ext)
+
+		# Read the lines from the text file inside the zip
+		rmd_content = read_lines(zip_connection)
+
+		# Close the zip connection
+		#close(zip_connection)
+	}
+	else
+	{
+		rmd_content = readLines(bsky_script_full_file_path, warn = FALSE)
+	}
+
+
+	# Combine lines into a single string
+	rmd_text = paste(rmd_content, collapse = "\n")
+	
+	dataset_names = c()
+	
+	if(file_type == "BMD")
+	{
 		#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
-		#desired_blocks <- regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+		#desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
 		desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
 		#print(desired_blocks)
 		
 		# Combine lines into a single string
-		desired_blocks = paste(desired_blocks, collapse = "\n")
-		
-		rmd_text = desired_blocks
-		##########################
-		##########################
-	}
+		rmd_text <- paste(desired_blocks, collapse = "\n")
 
-	if(file_type == "BMD")
-	{
-		#cat(rmd_text)
-		
-		#dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
-		#dataset_names_pattern = '(\\bdataset:\\s*"([^"]+)")|(\\bdataset:[^)]+)'
-		#dataset_names_pattern = 'dataset:\\s*"([^"]+)"|\\bdataset:[^)]+'
-		 #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
-		#dataset_names_pattern =  '\\(dataset:([^)"\\n]+)\\)'
-		
-		dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
-		dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
-		dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
-		# dataset_names = trimws(gsub('name:|["()]','',dataset_names))
-		# dataset_names = dataset_names[1]
-		
-		# cat("\nBefore removing unwanted dataset names\n")
-		# print(dataset_names)
-		
-		discard_df_freq = BSkyInAppScriptExtractDialogDataset(rmd_text)
-		
-		if(!is.null(discard_df_freq))
-		{
-			for(i in 1:dim(discard_df_freq)[1])
-			{
-				# Find the indices of the occurrences of the string to remove
-				indices_to_remove = which(dataset_names == discard_df_freq[i,1])
 
-				# Check if the number of occurrences to remove is less than or equal to the actual occurrences
-				if (discard_df_freq[i,2] <= length(indices_to_remove)) {
-					# Remove the specified number of occurrences
-					dataset_names = dataset_names[-indices_to_remove[1:discard_df_freq[i,2]]]
-				} else {
-					# If the number of occurrences to remove is greater than the actual occurrences, print a warning
-					print("Number of occurrences of dataset names to remove exceeds the actual occurrences")
-				}
-			}
-		}
+		# Extract all text between "```{dialog}", "```{console}" and "```" for all occurrences (including the enclosures)
+		dialog_console_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
 		
-		#cat("\nAfter removing unwanted dataset names\n")
-		#print(dataset_names)
+		# Extract all text between "```{dialog}" and "```" for all occurrences (including the enclosures)
+		dialog_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```", rmd_text))[[1]]
 		
-		dataset_names = sort(unique(dataset_names))
-	}
+		# Extract all text between "```{console}" and "```" for all occurrences (including the enclosures)
+		console_blocks = regmatches(rmd_text, gregexpr("```\\{console\\}(.*?)```", rmd_text))[[1]]
+		
+		# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
+		code_chunks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
+
+		# Remove the enclosures from each code chunk
+		code_chunks = gsub("```\\{r\\}|```", "", code_chunks)
 	
-	if(length(json_output_file_path) == 0)
-	{
-		return(invisible(dataset_names))
-	}
-	else
-	{
-		# Suppress warnings and info messages for require()
-		suppressMessages(require(jsonlite))
-		
-		if (!file.exists(json_output_file_path)) 
-		{
-			#print(json_output_file_path)
-			# json_file_conn = file.create(json_output_file_path)
-			# close(json_file_conn)
-			#09Apr24 Anil commented above code because of error below
-			#Error: no applicable method for 'close' applied to an object of class "logical"
-			#instead used following code and it worked
-			file.create(json_output_file_path)
-		}
-		
-		datasetname = list(datasetname = dataset_names)
-		# Convert the combined list to JSON format
-		json_data <- toJSON(datasetname, pretty = TRUE, auto_unbox = TRUE)
-
-		# print(json_data)
-		
-		# Write the JSON data to a file
-		write(json_data, json_output_file_path)
-
-		#return(invisible())
-		#return(invisible(dataset_names))
-	}
-}
-
-
-BSkyInAppScriptExecutionEngine.Retired <- function(bsky_script_full_file_path, json_output_file_path =c(), currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), expand_extraction = TRUE, debug = FALSE)
-{ 
-	if (!file.exists(bsky_script_full_file_path)) 
-	{ 
-		cat("\n", bsky_script_full_file_path, "- BlueSky script file not found", "..exiting..\n")
-		return(invisible)
-	}
-	
-	# Get the extension string
-	file_type = toupper(tools::file_ext(bsky_script_full_file_path))
-	
-	if(file_type != "BMD" && file_type != "RMD") 
-	{ 
-		cat("\n", bsky_script_full_file_path, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
-		return(invisible)
-	}
-	
-	if(file_type == "BMD")
-	{
-		# Load the 'readr' package for reading lines from files
-		suppressMessages(require(readr))
-
-		# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
-		zip_file_path = bsky_script_full_file_path
-		script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
-
-		# Open a connection to the zip file
-		zip_connection = unz(zip_file_path, script_file_name_without_ext)
-
-		# Read the lines from the text file inside the zip
-		rmd_content = read_lines(zip_connection)
-
-		# Close the zip connection
-		#close(zip_connection)
-	}
-	else
-	{
-		rmd_content = readLines(bsky_script_full_file_path, warn = FALSE)
-	}
-
-	# Combine lines into a single string
-	rmd_text = paste(rmd_content, collapse = "\n")
-	
-	######################
-	# SK for testing only 
-	######################
-	
-	#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
-	#desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
-	desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
-	#print(desired_blocks)
-	
-	# Combine lines into a single string
-	desired_blocks <- paste(desired_blocks, collapse = "\n")
-	
-	rmd_text = desired_blocks
-
-	##########################
-	##########################
-
-	# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
-	code_chunks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
-
-	# Remove the enclosures from each code chunk
-	code_chunks = gsub("```\\{r\\}|```", "", code_chunks)
-	
-	if(file_type == "BMD")
-	{
 		# Extract lines that start with '#'
 		#code_chunks_comments = grep("^#", rmd_content, value = TRUE)
 
 		# Define the regular expression pattern to match everything after "output_title: and within ```console block"
 		#title_pattern = '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
-		
 		#title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
 		title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
 		
@@ -971,10 +893,17 @@ BSkyInAppScriptExecutionEngine.Retired <- function(bsky_script_full_file_path, j
 		#code_chunks_comments = gsub('"', '', code_chunks_comments)
 		code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )|(\\{console\\})', '', code_chunks_comments)
 		
+		#cat("List of code_chunks_comments\n")
+		#print(code_chunks_comments)
+		
 		# Define the regular expression pattern with exact case matching for "dataset"
 		#dataset_name_and_console_comment_pattern <- '(dataset:\\s*"([^"]+)")|(```\\{console\\}(.*?)```)'
 		dataset_name_and_console_comment_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))|(```\\{console\\}(.*?)```)'
 		datasets_names_and_console_comments = regmatches(rmd_text, gregexpr(dataset_name_and_console_comment_pattern, rmd_text))[[1]]
+		
+		datasets_names_and_console_comments = datasets_names_and_console_comments[datasets_names_and_console_comments != "dataset: \n          "]
+		#cat("List of datasets_names_and_console_comments\n")
+		#print(datasets_names_and_console_comments)
 		
 		# #dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
 		# #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
@@ -982,391 +911,27 @@ BSkyInAppScriptExecutionEngine.Retired <- function(bsky_script_full_file_path, j
 		# dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
 		# dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
 		
-		dataset_names = BSkyInAppScriptExtractOldDatasetList(rmd_text = rmd_text, file_type = file_type)
+		#dataset_names = BSkyInAppScriptExtractOldDatasetList(rmd_text = rmd_text, file_type = file_type)
+		dataset_names =  BSkyStandaloneScriptExtractDialogDataset(rmd_text = rmd_text)
 		
-		if(length(code_chunks) > length(code_chunks_comments))
-		{
-			#Extract "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
-			dialog_console_r_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
-			
-			if(debug)
-			{
-				cat("\nnumber of ```r code blocks\n")
-				print(length(code_chunks))
-				cat("\nnumber of code titles\n")
-				print(length(code_chunks_comments))
-				cat("\nnumber of blocks - dialog,r,console blocks\n")
-				print(length(dialog_console_r_blocks))
-			
-				BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
-				BSkyFormat(dialog_console_r_blocks)
-			}
-			
-			code_chunks_comments_modified = c()
-			datasets_names_and_console_comments_modified = c()
-			
-			multiple_r_blocks_found = FALSE
-			k = 1
-			
-			for(j in 1:length(dialog_console_r_blocks))
-			{	
-				if(trimws(dialog_console_r_blocks[j]) == "```{r}")
-				{
-					if(multiple_r_blocks_found == TRUE)
-					{
-						#Seccond or more continuous occurance of a ```r block for a given dialog block
-						code_chunks_comments_modified = c(code_chunks_comments_modified, "BSky_NO_TITLE")
-						datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "BSky_NO_TITLE")	
-					}
-					else
-					{
-						#First occurance of a ```r block - do nothing 
-						multiple_r_blocks_found = TRUE
-					}
-				}
-				else if(trimws(dialog_console_r_blocks[j]) == "```{dialog}" || trimws(dialog_console_r_blocks[j]) == "```{console}")
-				{
-					code_chunks_comments_modified = c(code_chunks_comments_modified, code_chunks_comments[k])
-					datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, datasets_names_and_console_comments[k])
-					
-					k = k+1
-					multiple_r_blocks_found = FALSE
-				}
-				else
-				{
-					cat("\n","UNNOWN BLOCK==",trimws(dialog_console_r_blocks[j]),"==","\n")
-				}
-			}
-			
-			if(debug)
-			{
-				BSkyFormat(cbind(code_chunks_comments_modified,datasets_names_and_console_comments_modified))
-			}
-			code_chunks_comments = code_chunks_comments_modified
-			datasets_names_and_console_comments = datasets_names_and_console_comments_modified
-		}	
-	}
-	else
-	{
-		# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
-		code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
-		extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
-		code_chunks_comments[1] = gsub('(```|\\{r\\})',"",substr(code_chunks_comments[1], sum(nchar(extract_first_comment)), nchar(code_chunks_comments[1])))
-		
-		# Remove the enclosures from each chunk comment
-		code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
-		#code_chunks_comments = gsub('(\n)|(#\\s+)', '', code_chunks_comments)
-		code_chunks_comments = gsub('(\\s\n)|(\n)|(#\\s)', '', code_chunks_comments)
-	}
-	
-	
-	# For debugging
-	# cat("\nCODE CHUNK COMMENTS\n")
-	# print(code_chunks_comments)
-	# cat("\ndatasets_names_and_console_comments\n")
-	# print(datasets_names_and_console_comments)
-	if(debug)
-	{
-		BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
-		cat("\nDATASET NAMES\n")
+		cat("\nList of unique dataset names found in BMD\n")
+		print(unique(dataset_names))
+		cat("List of all dataset names found in BMD\n")
 		print(dataset_names)
-		#return()
-	}
-	
-	if(is.null(replaceOldDatasetName) || length(replaceOldDatasetName) == 0 || (length(replaceOldDatasetName) == 1 && trimws(replaceOldDatasetName) == ""))
-	{
-		old_dataset_name = dataset_names
-	}
-	else
-	{
-		old_dataset_name = replaceOldDatasetName
-	}
-	
-	if(debug)
-	{
-		cat("\nFinal list of old dataset names extracted from the script code\n")
-		print(old_dataset_name)
-		cat("\n")
-	}
-	
-	print_dataset_info_flag = TRUE
-	code_chunk_list = list()
-	
-	num_subs = min(length(old_dataset_name), length(currentDatasetName))
-	final_dataset_names = currentDatasetName[1:	num_subs]	
-	if(length(old_dataset_name) > num_subs)
-		final_dataset_names = c(final_dataset_names, old_dataset_name[(num_subs+1):length(old_dataset_name)])
-	
-	if(debug)
-	{
-		cat("\nFinal list of dataset names to be used in script code\n")
-		print(final_dataset_names)
-		cat("\n")
-	}
-					
-	codeChunkNum = 0
-	codeChunkCommentNum = 0
-	
-	for (chunk in code_chunks) 
-	{	
-		codeChunkCommentNum = codeChunkCommentNum + 1 
 		
-		if(regexpr(paste0("BSkyInAppScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else if(regexpr(paste0("BSkyInAppScriptExtractOldDatasetList", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else if(regexpr(paste0("\nBSkyloadDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else if(regexpr(paste0("\nBSkyLoadRpkgDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else
-		{
-			codeChunkNum = codeChunkNum + 1
-			
-			chunk_modified = chunk
-			
-			if(!is.null(currentDatasetName) && !is.na(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName[1]) != "")
-			{
-				if(!is.null(old_dataset_name) && !is.na(old_dataset_name) && length(old_dataset_name) > 0 && trimws(old_dataset_name[1]) != "")
-				{	
-					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
-					{
-						print_dataset_info_flag = FALSE
-						if(identical(trimws(old_dataset_name), trimws(currentDatasetName)))
-						{
-							cat("\nThe Active Dataset", currentDatasetName, ", the same name as the dataset used",old_dataset_name, "in the script\n")
-							cat("The script will be run with the original Dataset",old_dataset_name,"(i.e., no dataset replacement will be performed in the script)\n\n")
-						}
-						else
-						{
-							cat("\nThe script will be run after replacing the Dataset:", old_dataset_name, "with the Dataset:",currentDatasetName,"\n")
-						}
-					}
-					
-					if(!identical(trimws(old_dataset_name), trimws(currentDatasetName)))
-					{
-						num_subs = min(length(old_dataset_name), length(currentDatasetName))
-						
-						for(sub in 1:num_subs)
-						{
-							if(!identical(trimws(old_dataset_name[sub]), trimws(currentDatasetName[sub])))
-							{
-								chunk_modified = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = chunk_modified)
-								datasets_names_and_console_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = datasets_names_and_console_comments[codeChunkCommentNum])
-							
-							# cat("\nOLD DB: ", old_dataset_name[sub], "\n") 
-							# cat("\nNEW DB: ", currentDatasetName[sub], "\n")
-							# cat("\nBefore Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
-								code_chunks_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = code_chunks_comments[codeChunkCommentNum])
-							#cat("\nAfter Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")		
-							}
-						}
-					}
-				}
-				else if(length(old_dataset_name) == 0 || is.na(old_dataset_name))
-				{
-					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
-					{
-						print_dataset_info_flag = FALSE
-						cat("\nUnable to determine the original Dataset name from the script. So, the script will be run with the original Dataset (i.e., no dataset replacement will be performed with",currentDatasetName,"in the script)","\n")
-					}
-				}
-			}
-			else
-			{
-				if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
-				{
-					print_dataset_info_flag = FALSE
-					
-					if(length(old_dataset_name) == 0)
-					{
-						cat("\nUnable to determine the original Dataset name from the script. Anyway, the script will be run with the original Dataset","\n")
-					}
-					else
-					{
-						cat("\nThe script will be run with the original Dataset (i.e., no dataset replacement will be performed):", old_dataset_name,"\n")
-					}
-				}
-			}
-			
-			if(debug)
-			{
-				cat("\nBefore: ",code_chunks_comments[codeChunkCommentNum],"\n")
-			}
-			
-			if(!(code_chunks_comments[codeChunkCommentNum] %in% c("Save Models to a file", "Load Models from a file")))
-			{
-				if((length(grep("dataset:", code_chunks_comments[codeChunkCommentNum])) == 0) && length(grep("dataset:", datasets_names_and_console_comments[codeChunkCommentNum])) > 0)
-				{
-					datasets_names_and_console_comments[codeChunkCommentNum] = gsub('"', '', datasets_names_and_console_comments[codeChunkCommentNum])	
-					code_chunks_comments[codeChunkCommentNum] = paste0(code_chunks_comments[codeChunkCommentNum], " (", datasets_names_and_console_comments[codeChunkCommentNum], ")")
-				}
-			}
-			
-			code_chunks_comment = paste0("Title:",code_chunks_comments[codeChunkCommentNum]) #Anil 10Apr24. used this instead of line abv for title
-			
-			if(debug)
-			{
-				cat("\nAfter: ",code_chunks_comment,"\n")
-			}
-			
-			code_chunk_list = c(code_chunk_list, chunk_header = list(code_chunks_comment))
-			#code_chunk_list = c(code_chunk_list, chunk_new_line = list("BSkyFormat('\n')")) #Anil 10Apr24. Now we have title, this is not needed
-			code_chunk_list = c(code_chunk_list, chunk_code = list(chunk_modified))
-		}
-	}
-	
-	if(length(json_output_file_path) == 0)
-	{
-		return(invisible(code_chunk_list))
-	}
-	else
-	{
-		# Suppress warnings and info messages for require()
-		suppressMessages(require(jsonlite))
+		#cat("\nnumber of ```r code blocks\n")
+		#print(length(code_chunks))
+		#cat("\nnumber of code titles\n")
+		#print(length(code_chunks_comments))
 		
-		#for(i in 1:length(code_chunk_list)){
-		# dump the values into json file 
-		#}
-		
-		if (!file.exists(json_output_file_path)) 
-		{
-			#print(json_output_file_path)
-			# json_file_conn = file.create(json_output_file_path)
-			# close(json_file_conn)
-			#09Apr24 Anil commented above code because of error below
-			#Error: no applicable method for 'close' applied to an object of class "logical"
-			#instead used following code and it worked
-			file.create(json_output_file_path)
-		}
-	
-		# Convert the combined list to JSON format
-		json_data <- toJSON(code_chunk_list, pretty = TRUE, auto_unbox = TRUE)
-
-		#print(json_data)
-		
-		# Write the JSON data to a file
-		write(json_data, json_output_file_path)
-
-		#return(invisible())
-		return(invisible(code_chunk_list))
-	}
-}
-
-
-BSkyInAppBMDScriptExecutionEngine <- function(bsky_script_full_file_path, bmd_output_file_path =c(), currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), scriptSinkfile = FALSE, expand_extraction = TRUE, debug = FALSE)
-{ 
-	if (!file.exists(bsky_script_full_file_path)) 
-	{ 
-		cat("\n", bsky_script_full_file_path, "- BlueSky script file not found", "..exiting..\n")
-		return(invisible)
-	}
-	
-	# Get the extension string
-	file_type = toupper(tools::file_ext(bsky_script_full_file_path))
-	
-	if(file_type != "BMD" && file_type != "RMD") 
-	{ 
-		cat("\n", bsky_script_full_file_path, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
-		return(invisible)
-	}
-	
-	if(file_type == "BMD")
-	{
-		# Load the 'readr' package for reading lines from files
-		suppressMessages(require(readr))
-
-		# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
-		zip_file_path = bsky_script_full_file_path
-		script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
-
-		# Open a connection to the zip file
-		zip_connection = unz(zip_file_path, script_file_name_without_ext)
-
-		# Read the lines from the text file inside the zip
-		rmd_content = read_lines(zip_connection)
-
-		# Close the zip connection
-		#close(zip_connection)
-	}
-	else
-	{
-		rmd_content = readLines(bsky_script_full_file_path, warn = FALSE)
-	}
-
-	# Combine lines into a single string
-	rmd_text = paste(rmd_content, collapse = "\n")
-	
-	######################
-	# SK for testing only 
-	######################
-	
-	#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
-	#desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
-	desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
-	#print(desired_blocks)
-	
-	# Combine lines into a single string
-	rmd_text <- paste(desired_blocks, collapse = "\n")
-
-	##########################
-	##########################
-
-	# Extract all text between "```{dialog}", "```{console}" and "```" for all occurrences (including the enclosures)
-	dialog_console_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
-	
-	# Extract all text between "```{dialog}" and "```" for all occurrences (including the enclosures)
-	dialog_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```", rmd_text))[[1]]
-	
-	# Extract all text between "```{console}" and "```" for all occurrences (including the enclosures)
-	console_blocks = regmatches(rmd_text, gregexpr("```\\{console\\}(.*?)```", rmd_text))[[1]]
-	
-	# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
-	code_chunks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
-
-	# Remove the enclosures from each code chunk
-	code_chunks = gsub("```\\{r\\}|```", "", code_chunks)
-	
-	if(file_type == "BMD")
-	{
-		# Extract lines that start with '#'
-		#code_chunks_comments = grep("^#", rmd_content, value = TRUE)
-
-		# Define the regular expression pattern to match everything after "output_title: and within ```console block"
-		#title_pattern = '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
-		
-		#title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
-		title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
-		
-		# Extract the desired string using regmatches and regexpr
-		code_chunks_comments = regmatches(rmd_text, gregexpr(title_pattern, rmd_text))[[1]]
-		
-		# Remove the "output_title: " prefix and extra enclosure " around 
-		#code_chunks_comments = gsub('output_title: ', '', code_chunks_comments) 
-		#code_chunks_comments = gsub('"', '', code_chunks_comments)
-		code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )|(\\{console\\})', '', code_chunks_comments)
-		
-		# Define the regular expression pattern with exact case matching for "dataset"
-		#dataset_name_and_console_comment_pattern <- '(dataset:\\s*"([^"]+)")|(```\\{console\\}(.*?)```)'
-		dataset_name_and_console_comment_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))|(```\\{console\\}(.*?)```)'
-		datasets_names_and_console_comments = regmatches(rmd_text, gregexpr(dataset_name_and_console_comment_pattern, rmd_text))[[1]]
-		
-		# #dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
-		# #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
-		# dataset_names_pattern =  'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
-		# dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
-		# dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
-		
-		dataset_names = BSkyInAppScriptExtractOldDatasetList(rmd_text = rmd_text, file_type = file_type)
-		
+		# Some of the dialog block has multiple ```r ... ` code blocks e.g., P-P plot
 		if(length(code_chunks) > length(code_chunks_comments))
 		{
 			#Extract "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
 			dialog_console_r_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+			
+			#cat("\nnumber of dialog_console_r_blocks\n")
+			#print(dialog_console_r_blocks)
 			
 			if(debug)
 			{
@@ -1395,8 +960,11 @@ BSkyInAppBMDScriptExecutionEngine <- function(bsky_script_full_file_path, bmd_ou
 					if(multiple_r_blocks_found == TRUE)
 					{
 						#Seccond or more continuous occurance of a ```r block for a given dialog block
-						code_chunks_comments_modified = c(code_chunks_comments_modified, "BSky_NO_TITLE")
-						datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "BSky_NO_TITLE")	
+						#code_chunks_comments_modified = c(code_chunks_comments_modified, "BSky_NO_TITLE")
+						#datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "BSky_NO_TITLE")
+						code_chunks_comments_modified = c(code_chunks_comments_modified, "")
+						datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "")
+						
 						dialog_console_blocks_modified = c(dialog_console_blocks_modified, "BSKY_NO_DIALOG_CONSOLE_BLOCK")
 					}
 					else
@@ -1424,13 +992,82 @@ BSkyInAppBMDScriptExecutionEngine <- function(bsky_script_full_file_path, bmd_ou
 			{
 				BSkyFormat(cbind(code_chunks_comments_modified,datasets_names_and_console_comments_modified))
 			}
+			
 			code_chunks_comments = code_chunks_comments_modified
 			datasets_names_and_console_comments = datasets_names_and_console_comments_modified
 			dialog_console_blocks = dialog_console_blocks_modified
+			
+			#cat("\nList of code_chunks_comments\n")
+			#print(code_chunks_comments)
+			#cat("List of datasets_names_and_console_comments\n")
+			#print(datasets_names_and_console_comments)
+			# cat("List of dialog_console_blocks\n")
+			# print(dialog_console_blocks)
 		}	
+	
 	}
 	else
 	{
+		if(FALSE)
+		{
+			# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
+			code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
+			extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
+			code_chunks_comments[1] = gsub('(```|\\{r\\})',"",substr(code_chunks_comments[1], sum(nchar(extract_first_comment)), nchar(code_chunks_comments[1])))
+			
+			# Remove the enclosures from each chunk comment
+			code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
+			#code_chunks_comments = gsub('(\n)|(#\\s+)', '', code_chunks_comments)
+			code_chunks_comments = gsub('(\\s\n)|(\n)|(#\\s)', '', code_chunks_comments)
+			
+			#dataset_names1 = gsub('Open dataset:', '', code_chunks_comments)
+			
+			#cat("\nList of dataset_names in RMD\n")
+			#print(dataset_names1)
+			
+			# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
+			code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
+			extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
+			code_chunks_comments[1] = gsub('(```|\\{r\\})',"",substr(code_chunks_comments[1], sum(nchar(extract_first_comment)), nchar(code_chunks_comments[1])))
+			
+			# Remove the enclosures from each chunk comment
+			code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
+			
+			cat("\nList of code_chunks_comments in RMD\n")
+			print(code_chunks_comments)
+		}
+		
+		
+		##########################################
+		# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
+		#code_chunks <- regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
+		
+		pattern <- paste0(
+		  "```\\{r\\}(.*?)```",
+		  "|", 
+		  "BSkyloadDataset\\(.*?\\)\\s*\\nBSkyLoadRefresh\\(.*?\\)\\s*\\n```"
+		)
+
+		matches <- gregexpr(pattern, rmd_text)
+		code_chunks <- regmatches(rmd_text, matches)[[1]]
+		
+		# Remove the enclosures from each code chunk
+		code_chunks <- gsub("```\\{r\\}|```", "", code_chunks)
+		
+		cat("\ncode_chunks\n")
+		print(code_chunks)
+		
+		library(stringr)
+
+		rmd_text <- str_replace_all(
+		  rmd_text,
+		  regex(
+			pattern = "(?s)(```\\{r)[^}]*\\}(\\s*BSkyloadDataset\\(.*?\\)\\s*BSkyLoadRefresh\\(.*?\\)\\s*```)",
+			ignore_case = TRUE
+		  ),
+		  replacement = "\\1}\\2"
+		)
+		
 		# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
 		code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
 		extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
@@ -1438,23 +1075,51 @@ BSkyInAppBMDScriptExecutionEngine <- function(bsky_script_full_file_path, bmd_ou
 		
 		# Remove the enclosures from each chunk comment
 		code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
-		#code_chunks_comments = gsub('(\n)|(#\\s+)', '', code_chunks_comments)
-		code_chunks_comments = gsub('(\\s\n)|(\n)|(#\\s)', '', code_chunks_comments)
+		code_chunks_comments <- trimws(gsub("\\n|#", "", code_chunks_comments))
+		
+		# Step 1: Match text between a standalone code fence and the next R chunk
+		#code_chunks_comments <- regmatches(rmd_text,gregexpr("```\\s*\\n(.*?)\\n```\\{r[^}]*\\}", rmd_text, perl = TRUE))[[1]]
+
+		# Step 2: Remove the outer backticks and chunk header part (cleaning)
+		#code_chunks_comments <- gsub("```\\s*\\n|\\n```\\{r[^}]*\\}", "", code_chunks_comments)
+
+		# Step 3: Remove newlines and # signs
+		#code_chunks_comments <- trimws(gsub("\\n|#", "", code_chunks_comments))
+
+		#For debugging
+		cat("\nList of code_chunks_comments in RMD\n")
+		print(code_chunks_comments)
+		
+		# Extract all strings that start with "Open dataset: "
+		matches <- regmatches(rmd_text, gregexpr("(?m)^# Open (dataset|Dataset): .*$", rmd_text, perl = TRUE))[[1]]
+
+		# Remove the prefix to get only the dataset names
+		dataset_names = sub("^# Open (dataset|Dataset):\\s*", "", matches) #sub("Open Dataset: ", "", matches)
+		
+		cat("\nList of # Open Dataset: matches found in RMD\n")
+		print(matches)
+		cat("\nList of unique datasets found in RMD\n")
+		print(unique(dataset_names))
+		cat("List of all dataset names found in RMD\n")
+		print(dataset_names)
+		
+		dataset_names = unique(dataset_names)
 	}
 	
 	
 	# For debugging
-	# cat("\nCODE CHUNK COMMENTS\n")
+	# cat("\n=====CODE CHUNK COMMENTS=====\n")
 	# print(code_chunks_comments)
 	# cat("\ndatasets_names_and_console_comments\n")
 	# print(datasets_names_and_console_comments)
-	if(debug)
-	{
-		BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
-		cat("\nDATASET NAMES\n")
-		print(dataset_names)
-		#return()
-	}
+	
+	# if(debug)
+	# {
+		# BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+		# cat("\nDATASET NAMES\n")
+		# print(dataset_names)
+		# #return()
+	# }
 	
 	if(is.null(replaceOldDatasetName) || length(replaceOldDatasetName) == 0 || (length(replaceOldDatasetName) == 1 && trimws(replaceOldDatasetName) == ""))
 	{
@@ -1473,7 +1138,7 @@ BSkyInAppBMDScriptExecutionEngine <- function(bsky_script_full_file_path, bmd_ou
 	}
 	
 	print_dataset_info_flag = TRUE
-	code_chunk_list = list()
+	code_chunk_list = list(chunk_title = character(), chunk_code = character(), dataset_names = c())
 	
 	num_subs = min(length(old_dataset_name), length(currentDatasetName))
 	final_dataset_names = currentDatasetName[1:	num_subs]	
@@ -1490,397 +1155,326 @@ BSkyInAppBMDScriptExecutionEngine <- function(bsky_script_full_file_path, bmd_ou
 	codeChunkNum = 0
 	codeChunkCommentNum = 0
 	
-	
-	for (chunk in code_chunks) 
-	{	
-		codeChunkCommentNum = codeChunkCommentNum + 1 
-		
-		if(regexpr(paste0("BSkyInAppScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else if(regexpr(paste0("BSkyInAppBMDScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else if(regexpr(paste0("BSkyInAppScriptExtractOldDatasetList", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else if(regexpr(paste0("\nBSkyloadDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else if(regexpr(paste0("\nBSkyLoadRpkgDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
-		{
-		}
-		else
-		{
-			codeChunkNum = codeChunkNum + 1
+	#if(num_subs > 0)
+	#{
+		for (chunk in code_chunks) 
+		{	
+			codeChunkCommentNum = codeChunkCommentNum + 1 
 			
-			chunk_modified = chunk
-			
-			if(!is.null(currentDatasetName) && !is.na(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName[1]) != "")
+			if(regexpr(paste0("BSkyInAppScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
 			{
-				if(!is.null(old_dataset_name) && !is.na(old_dataset_name) && length(old_dataset_name) > 0 && trimws(old_dataset_name[1]) != "")
-				{	
-					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
-					{
-						print_dataset_info_flag = FALSE
-						if(identical(trimws(old_dataset_name), trimws(currentDatasetName)))
+			}
+			else if(regexpr(paste0("BSkyInAppBMDScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+			{
+			}
+			else if(regexpr(paste0("BSkyInAppScriptExtractOldDatasetList", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+			{
+			}
+			#else if(regexpr(paste0("\nBSkyloadDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+			#{
+			#}
+			else if(regexpr(paste0("\nBSkyLoadRpkgDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+			{
+			}
+			else
+			{
+				codeChunkNum = codeChunkNum + 1
+				
+				chunk_modified = chunk
+				
+				#code_chunks_comment = paste0("Title:",code_chunks_comments[codeChunkCommentNum]) #Anil 10Apr24. used this instead of line abv for title
+				code_chunks_comment = code_chunks_comments[codeChunkCommentNum]
+				
+				if(!is.null(currentDatasetName) && !is.na(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName[1]) != "")
+				{
+					if(!is.null(old_dataset_name) && !is.na(old_dataset_name) && length(old_dataset_name) > 0 && trimws(old_dataset_name[1]) != "")
+					{	
+						if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
 						{
-							cat("\nThe Active Dataset", currentDatasetName, ", the same name as the dataset used",old_dataset_name, "in the script\n")
-							cat("The script will be run with the original Dataset",old_dataset_name,"(i.e., no dataset replacement will be performed in the script)\n\n")
-						}
-						else
-						{
-							cat("\nThe script will be run after replacing the Dataset:", old_dataset_name, "with the Dataset:",currentDatasetName,"\n")
-						}
-					}
-					
-					if(!identical(trimws(old_dataset_name), trimws(currentDatasetName)))
-					{
-						num_subs = min(length(old_dataset_name), length(currentDatasetName))
-						
-						for(sub in 1:num_subs)
-						{
-							if(!identical(trimws(old_dataset_name[sub]), trimws(currentDatasetName[sub])))
+							print_dataset_info_flag = FALSE
+							if(identical(trimws(old_dataset_name), trimws(currentDatasetName)))
 							{
-								chunk_modified = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = chunk_modified)
-								
-								dataset_name_pattern =  'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
-								dataset_name = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(dataset_name_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
-								dataset_name = trimws(gsub('dataset:|["()]','',dataset_name))
-								
-								#cat("\nBlock dataset name:",dataset_name, "\n")
-								
-								if(length(dataset_name) > 0 && dataset_name == old_dataset_name[sub])
+								cat("\nThe Active Dataset", currentDatasetName, ", the same name as the dataset used",old_dataset_name, "in the script\n")
+								cat("The script will be run with the original Dataset",old_dataset_name,"(i.e., no dataset replacement will be performed in the script)\n\n")
+							}
+							else
+							{
+								cat("\nThe script will be run after replacing the Dataset:", old_dataset_name, "with the Dataset:",currentDatasetName,"\n")
+							}
+						}
+						
+						if(!identical(trimws(old_dataset_name), trimws(currentDatasetName)))
+						{
+							num_subs = min(length(old_dataset_name), length(currentDatasetName))
+							
+							for(sub in 1:num_subs)
+							{
+								if(!identical(trimws(old_dataset_name[sub]), trimws(currentDatasetName[sub])))
 								{
-									datasets_names_and_console_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = datasets_names_and_console_comments[codeChunkCommentNum])
-									dialog_console_blocks[codeChunkCommentNum] = gsub(old_dataset_name[sub], currentDatasetName[sub], dialog_console_blocks[codeChunkCommentNum])
+									if(any(grepl("BSkyloadDataset", chunk_modified, fixed = TRUE)))
+									{
+										#if(!grepl("\nBSkyloadDataset", chunk_modified, fixed = TRUE))
+										{
+											chunk_modified = paste0("\n", chunk_modified)
+										}
+										#print(chunk_modified)
+										
+										if(regexpr(paste0("\nBSkyloadDataset", ".*"), trimws(chunk_modified,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+										{
+											chunk_modified <- sub("(fullpathfilename='.*[/\\\\])[^/\\\\]+?(\\.[^/\\\\']+')",
+															paste0("\\1", gsub("_Sheet1","",currentDatasetName[sub]), "\\2"),
+															chunk_modified)	
+										}
+									}
+									
+									chunk_modified = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = chunk_modified)
+									
+									#dataset_name_pattern =  'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
+									#dataset_name = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(dataset_name_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
+									#dataset_name = trimws(gsub('dataset:|["()]','',dataset_name))
+									
+									# cat("\n\n chunk_modified\n\n")
+									# print(chunk_modified)
+									
+									#cat("\n\nBlock dataset name:",dataset_name, "\n")
+									
+									
+									
+									#if(length(dataset_name) > 0 && dataset_name == old_dataset_name[sub])
+									#{
+										#datasets_names_and_console_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = datasets_names_and_console_comments[codeChunkCommentNum])
+										#dialog_console_blocks[codeChunkCommentNum] = gsub(old_dataset_name[sub], currentDatasetName[sub], dialog_console_blocks[codeChunkCommentNum])
+									
+										#cat("\nOLD DB: ", old_dataset_name[sub], "\n") 
+										#cat("\nNEW DB: ", currentDatasetName[sub], "\n")
+										#cat("\nBefore Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
+										code_chunks_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = code_chunks_comments[codeChunkCommentNum])
+										#cat("\nAfter Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
+									#}
+				
+									code_chunks_comment = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = code_chunks_comment)
+								}
+							}
+						}
+						
+						
+						if(file_type == "BMD"){
+							# Update the Dialog title to append with (datasetname) if it does not exist already
+							output_title_pattern = 'output_title: "[^"]+"'
+							output_title = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(output_title_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
+							
+							if(length(output_title) > 0)
+							{
+								# Extract dataset name (by now already updated with the new dataset) from the dialog definition 
+								#dialog_dataset_name_pattern =  "^\\s+dataset: \".*\"(?!\\s+output_title:)"				   
+								#dialog_dataset_name_pattern = "^\\s+dataset: \".*\"(?!(?:\\s+output_title:|\\s*\\(dataset:))"
+								dialog_dataset_name_pattern = "dataset: \"[^\\\"]+\""
+
+								dialog_dataset_name = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(dialog_dataset_name_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
+								dialog_dataset_name = trimws(gsub('dataset:|["()]','',dialog_dataset_name))
+							
+								# Extract the last occurance (datasetname) substring from the dialog title string if it exists 
+								extract_dataset_name_pattern <- "\\((.*?)\\)"
+								matches <- regmatches(output_title, gregexpr(extract_dataset_name_pattern, output_title))
 								
-									# cat("\nOLD DB: ", old_dataset_name[sub], "\n") 
-									# cat("\nNEW DB: ", currentDatasetName[sub], "\n")
-									# cat("\nBefore Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
-									code_chunks_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = code_chunks_comments[codeChunkCommentNum])
-									#cat("\nAfter Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
+								if(length(matches[[1]]) > 0)
+								{
+									last_occurrence_data_name <- tail(matches[[1]], 1)
+
+									# if last occurance (datasetname) substring does not exist in the dialog title, append (datasetname) to the dialog title
+									if(length(grep(dialog_dataset_name, last_occurrence_data_name)) == 0)
+									{
+										replacement_string = paste0("\\1\\2", " (", dialog_dataset_name, ")", "\\3")
+										dialog_console_blocks[codeChunkCommentNum] <- gsub("(output_title: \")([^\"]*)(\")", replacement_string , dialog_console_blocks[codeChunkCommentNum], perl = TRUE)
+									}
+								}
+								else
+								{
+									# (datasetname) substring does not exist in the dialog title, append (datasetname) to the dialog title
+									replacement_string = paste0("\\1\\2", " (", dialog_dataset_name, ")", "\\3")
+									dialog_console_blocks[codeChunkCommentNum] <- gsub("(output_title: \")([^\"]*)(\")", replacement_string , dialog_console_blocks[codeChunkCommentNum], perl = TRUE)
 								}
 							}
 						}
 					}
-					
-					# Update the Dialog title to append with (datasetname) if it does not exist already
-					output_title_pattern = 'output_title: "[^"]+"'
-					output_title = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(output_title_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
-					
-					if(length(output_title) > 0)
+					else if(length(old_dataset_name) == 0 || is.na(old_dataset_name))
 					{
-						# Extract dataset name (by now already updated with the new dataset) from the dialog definition 
-						#dialog_dataset_name_pattern =  "^\\s+dataset: \".*\"(?!\\s+output_title:)"				   
-						#dialog_dataset_name_pattern = "^\\s+dataset: \".*\"(?!(?:\\s+output_title:|\\s*\\(dataset:))"
-						dialog_dataset_name_pattern = "dataset: \"[^\\\"]+\""
-
-						dialog_dataset_name = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(dialog_dataset_name_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
-						dialog_dataset_name = trimws(gsub('dataset:|["()]','',dialog_dataset_name))
-					
-						# Extract the last occurance (datasetname) substring from the dialog title string if it exists 
-						extract_dataset_name_pattern <- "\\((.*?)\\)"
-						matches <- regmatches(output_title, gregexpr(extract_dataset_name_pattern, output_title))
-						
-						if(length(matches[[1]]) > 0)
+						if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
 						{
-							last_occurrence_data_name <- tail(matches[[1]], 1)
-
-							# if last occurance (datasetname) substring does not exist in the dialog title, append (datasetname) to the dialog title
-							if(length(grep(dialog_dataset_name, last_occurrence_data_name)) == 0)
-							{
-								replacement_string = paste0("\\1\\2", " (", dialog_dataset_name, ")", "\\3")
-								dialog_console_blocks[codeChunkCommentNum] <- gsub("(output_title: \")([^\"]*)(\")", replacement_string , dialog_console_blocks[codeChunkCommentNum], perl = TRUE)
-							}
-						}
-						else
-						{
-							# (datasetname) substring does not exist in the dialog title, append (datasetname) to the dialog title
-							replacement_string = paste0("\\1\\2", " (", dialog_dataset_name, ")", "\\3")
-							dialog_console_blocks[codeChunkCommentNum] <- gsub("(output_title: \")([^\"]*)(\")", replacement_string , dialog_console_blocks[codeChunkCommentNum], perl = TRUE)
+							print_dataset_info_flag = FALSE
+							cat("\nUnable to determine the original Dataset name from the script. So, the script will be run with the original Dataset (i.e., no dataset replacement will be performed with",currentDatasetName,"in the script)","\n")
 						}
 					}
 				}
-				else if(length(old_dataset_name) == 0 || is.na(old_dataset_name))
+				else
 				{
 					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
 					{
 						print_dataset_info_flag = FALSE
-						cat("\nUnable to determine the original Dataset name from the script. So, the script will be run with the original Dataset (i.e., no dataset replacement will be performed with",currentDatasetName,"in the script)","\n")
-					}
-				}
-			}
-			else
-			{
-				if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
-				{
-					print_dataset_info_flag = FALSE
-					
-					if(length(old_dataset_name) == 0)
-					{
-						cat("\nUnable to determine the original Dataset name from the script. Anyway, the script will be run with the original Dataset","\n")
-					}
-					else
-					{
-						cat("\nThe script will be run with the original Dataset (i.e., no dataset replacement will be performed):", old_dataset_name,"\n")
-					}
-				}
-			}
-			
-			if(debug)
-			{
-				cat("\nBefore: ",code_chunks_comments[codeChunkCommentNum],"\n")
-			}
-			
-			if(!(code_chunks_comments[codeChunkCommentNum] %in% c("Save Models to a file", "Load Models from a file")))
-			{
-				if((length(grep("dataset:", code_chunks_comments[codeChunkCommentNum])) == 0) && length(grep("dataset:", datasets_names_and_console_comments[codeChunkCommentNum])) > 0)
-				{
-					datasets_names_and_console_comments[codeChunkCommentNum] = gsub('"', '', datasets_names_and_console_comments[codeChunkCommentNum])	
-					code_chunks_comments[codeChunkCommentNum] = paste0(code_chunks_comments[codeChunkCommentNum], " (", datasets_names_and_console_comments[codeChunkCommentNum], ")")
-				}
-			}
-			
-			code_chunks_comment = paste0("Title:",code_chunks_comments[codeChunkCommentNum]) #Anil 10Apr24. used this instead of line abv for title
-			
-			if(debug)
-			{
-				cat("\nAfter: ",code_chunks_comment,"\n")
-			}
-			
-			#code_chunk_list = c(code_chunk_list, chunk_header = list(code_chunks_comment))
-			code_chunk_list = c(code_chunk_list, dialog_console = list(dialog_console_blocks[codeChunkCommentNum]))
-			#code_chunk_list = c(code_chunk_list, chunk_new_line = list("BSkyFormat('\n')")) #Anil 10Apr24. Now we have title, this is not needed
-			code_chunk_list = c(code_chunk_list, chunk_code = list(chunk_modified))
-		}
-	}
-	
-	oldGraphicsDirPath = BSkyGetGraphicsDirPath()
-	
-	tryCatch({
-        withCallingHandlers({
-		
-			if(length(code_chunk_list) > 1)
-			{
-				BSkyInAppBMDScriptExecuteRBlocks(bsky_script_system_dir = bmd_output_file_path, dialog_console_code_chunk_list = code_chunk_list, scriptSinkfile = scriptSinkfile, inAppScriptEnv = TRUE)
-			}
-            
-        }, warning = BSkyInAppBMDScriptExecuteErrWarnHandler, silent = TRUE)
-    }, error = BSkyInAppBMDScriptExecuteErrWarnHandler, silent = TRUE)
-	
-	
-	# Restore the graphics path for the App to execute normally when it returns from the BMD execution
-	BSkySetGraphicsDirPath(bskyGraphicsDirPath = oldGraphicsDirPath)
-	
-	# Close out sin() file
-	#suppressWarnings(sink())
-	suppressWarnings(sink(type = "output"))
-	suppressWarnings(sink(type = "message"))
-	
-	if(length(bmd_output_file_path) == 0)
-	{
-		return(invisible(code_chunk_list))
-	}
-	else
-	{
-		return(invisible())
-	}
-}
-
-
-BSkyInAppBMDScriptExecuteRBlocks <- function(bsky_script_system_dir, dialog_console_code_chunk_list, scriptSinkfile = FALSE, inAppScriptEnv = TRUE)
-{
-		if (!dir.exists(bsky_script_system_dir)) 
-		{ 
-			cat("\n", bsky_script_system_dir, "- BlueSKy temp script directory not found", "..exiting..\n")
-			return(invisible)
-		}
-		
-		if(inAppScriptEnv == TRUE)
-		{
-			bmd_script_working_dir = paste0(bsky_script_system_dir,"\\BlueSkyScript")
-			if (!dir.exists(bmd_script_working_dir)) 
-			{
-				# Create the directory if it does not exist
-				dir.create(bmd_script_working_dir)
-			}
-			
-			if (dir.exists(bmd_script_working_dir)) 
-			{
-				bsky_script_system_dir = bmd_script_working_dir
-			}
-		}
-		
-		if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
-		{
-			system_log_dir = paste0(bsky_script_system_dir,"\\logs")
-			if (!dir.exists(system_log_dir)) 
-			{
-				# Create the directory if it does not exist
-				dir.create(system_log_dir)
-			}
-		}
-		
-		# system_out_dir = paste0(bsky_script_system_dir,"\\out")
-		# if (!dir.exists(system_out_dir)) 
-		# {
-			# # Create the directory if it does not exist
-			# dir.create(system_out_dir)
-		# }
-	
-		#####################################################################################################
-		# Setting up the output directory to write HTML file names for every BlueSky Statistics Script run
-		#####################################################################################################
-		cur_timestamp = format(Sys.time(), "%Y%m%d_%H%M%S")
-		
-		if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
-		{
-			BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp = cur_timestamp, init = TRUE, inAppScriptEnv = inAppScriptEnv)
-		}
-		
-		oldGraphicsDirPath = BSkyGetGraphicsDirPath()
-		BSkySetGraphicsDirPath(bskyGraphicsDirPath = bsky_script_system_dir)
-		
-		
-		if(inAppScriptEnv == TRUE)
-		{
-			bsky_script_output_file = paste(bsky_script_system_dir,"\\","BSkyBMDOutput", sep='')
-		}
-		else
-		{
-			bsky_script_output_file = paste(bsky_script_system_dir,"\\","BSkyBMDOutput", "_", cur_timestamp, ".htm", sep='')
-		}
-		
-		writeLines("\n", bsky_script_output_file, sep = "\n") 
-		
-		codeChunkNum = 0
-
-		for (chunk in 1:length(dialog_console_code_chunk_list)) 
-		{	
-			outputBMDfileConn = file(bsky_script_output_file, "ab")
-					
-			if(names(dialog_console_code_chunk_list[chunk]) == "dialog_console")
-			{
-				if(dialog_console_code_chunk_list[[chunk]] != "BSKY_NO_DIALOG_CONSOLE_BLOCK")
-				{
-					# Write the combined lines to a new file
-					writeLines(dialog_console_code_chunk_list[[chunk]], outputBMDfileConn, sep = "\n")
-					#writeLines("\n", outputBMDfileConn, sep = "\n")
-				}
-				
-				close(outputBMDfileConn)
-			}
-			else if(names(dialog_console_code_chunk_list[chunk]) == "chunk_code")
-			{
-				# Write the combined lines to a new file
-				
-				#writeLines(paste("```{r}",dialog_console_code_chunk_list[chunk],"```"), outputBMDfileConn, sep = "\n")
-				writeLines("```{r}", outputBMDfileConn, sep = "\n")
-				writeLines(paste(dialog_console_code_chunk_list[chunk]), outputBMDfileConn, sep = "\n")
-				writeLines("```", outputBMDfileConn, sep = "\n")
-				
-				#writeLines("\n", outputBMDfileConn)
-				close(outputBMDfileConn)
-				
-				delete_left_over_sink_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg|.txt", ignore.case = TRUE, full.names = TRUE)
-				if(length(delete_left_over_sink_svgs) > 0)
-				{
-					unlink(delete_left_over_sink_svgs)
-				}
-					
-				############################################################
-				#  Open a sink file to redirect the stdout and stderr output
-				############################################################
-				#sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
-				
-				#sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
-				sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
-				
-				####################################################
-				# close the bsky_script_system_dir\logs sink files()
-				####################################################
-				#suppressWarnings(sink())
-				sink()
-				
-				sink(file = sink_file_conn, append = TRUE, type = c("output"), split = FALSE)
-				sink(file = sink_file_conn, append = TRUE, type = c("message"), split = FALSE)
 						
-				#######################################################################################
-				#  Open a SVG graphics device to collect the graphics files for each dataset processed
-				#######################################################################################
-				SvgFileName = "BSkyRplot%03d.svg"
-				#svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''), width=10, height=6)
-				#antialias = c("default", "none", "gray", "subpixel") pointsize = 12
-				svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''), width=par("din")[1], height=par("din")[2])
-				
-				
-				#cat("\n============\n", dialog_console_code_chunk_list[[chunk]], "\n====\n")
-				###################################################################################################
-				# Execute the script copied from BlueSky Statistics App as is without any dataset name substitution
-				###################################################################################################
-				cmd_execution_status = BSkyEvalRcommandForAppScript(RcommandString = dialog_console_code_chunk_list[[chunk]])
-				
-				#cat("\nCommand Execution Status : ", cmd_execution_status$executionStatus, "\n") if -1 that indicates failed execution 
-				
-				################################
-				# Close the SVG graphics device
-				################################
-				dev.off()
-				
-				##################################
-				#  Close the chunk level sink file 
-				##################################
-				#sink()
-				sink(type = "output")
-				sink(type = "message")
-		
-				close(sink_file_conn)
-				
-				#######################################################
-				# Open back the bsky_script_system_dir\logs sink files 
-				#######################################################
-				if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
-				{
-					BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp, inAppScriptEnv = TRUE)
+						if(length(old_dataset_name) == 0)
+						{
+							cat("\nUnable to determine the original Dataset name from the script. Anyway, the script will be run with the original Dataset","\n")
+						}
+						else
+						{
+							cat("\nThe script will be run with the original Dataset (i.e., no dataset replacement will be performed):", old_dataset_name,"\n")
+						}
+					}
 				}
 				
-				codeChunkNum = codeChunkNum + 1
-				
-				# Generate the HTML output file from the script
-				BSkyWriteKableHtmlOutput(datasetName = c(""), dirName = bsky_script_system_dir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = c(""), inAppScriptEnv = TRUE)
-			
-				# No incoming datafile is used - so no datafile to move
-				#file.copy(full_datafile_names[file_counter], paste(bsky_script_output_subdir,"\\", datafile_names[file_counter], sep=''))
-				#file.remove(full_datafile_names[file_counter])
-				
-				delete_left_over_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg", ignore.case = TRUE, full.names = TRUE)
-				if(length(delete_left_over_svgs) > 0)
+				if(debug)
 				{
-					unlink(delete_left_over_svgs)
+					cat("\nBefore: ",code_chunks_comments[codeChunkCommentNum],"\n")
 				}
+				
+				if(!(code_chunks_comments[codeChunkCommentNum] %in% c("Save Models to a file", "Load Models from a file")))
+				{
+					if(file_type == "BMD"){
+						if((length(grep("dataset:", code_chunks_comments[codeChunkCommentNum])) == 0) && length(grep("dataset:", datasets_names_and_console_comments[codeChunkCommentNum])) > 0)
+						{
+							# cat("\n\nIN BMD #######################\n")
+							# print(code_chunks_comments[codeChunkCommentNum])
+							# cat("\n Before\n")
+							# print(datasets_names_and_console_comments[codeChunkCommentNum])
+							datasets_names_and_console_comments[codeChunkCommentNum] = gsub('"', '', datasets_names_and_console_comments[codeChunkCommentNum])	
+							code_chunks_comments[codeChunkCommentNum] = paste0(code_chunks_comments[codeChunkCommentNum], " (", datasets_names_and_console_comments[codeChunkCommentNum], ")")
+							# cat("\n After\n")
+							# print(datasets_names_and_console_comments[codeChunkCommentNum])
+							# print(code_chunks_comments[codeChunkCommentNum])
+						}
+					}
+				}
+				
+				#cat("\n\n*******\n")
+				#print(code_chunks_comments[codeChunkCommentNum])
+				
+				#code_chunks_comment = paste0("Title:",code_chunks_comments[codeChunkCommentNum]) #Anil 10Apr24. used this instead of line abv for title
+				#code_chunks_comment = code_chunks_comments[codeChunkCommentNum]
+				
+				#code_chunks_comment = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = code_chunks_comment)
+				
+				#cat("\nAfter:\n")
+				#cat("\n\n*******\n")
+				#print(code_chunks_comment)
+				
+				
+				if(debug)
+				{
+					cat("\nAfter: ",code_chunks_comment,"\n")
+				}
+				
+				
+				#code_chunk_list = c(code_chunk_list, chunk_header = list(code_chunks_comment))
+				#code_chunk_list = c(code_chunk_list, dialog_console = list(dialog_console_blocks[codeChunkCommentNum]))
+				#code_chunk_list = c(code_chunk_list, chunk_new_line = list("BSkyFormat('\n')")) #Anil 10Apr24. Now we have title, this is not needed
+				#code_chunk_list = c(code_chunk_list, chunk_code = list(chunk_modified))
+				
+				code_chunk_list$chunk_title = c(code_chunk_list$chunk_title, code_chunks_comment)
+				code_chunk_list$chunk_code = c(code_chunk_list$chunk_code, chunk_modified)
 			}
 		}
+	# }
+	# else
+	# {
+		# cat("\nThe script will be run with the original Dataset (i.e., no dataset replacement will be performed in the script)\n\n")
+	# }
+	
+	# cat("\nFinal substituted chunks\n")
+	# cat("===========================\n")
+	# cat("code_chunk_list\n")
+	# print(code_chunk_list)
+	
+	# oldGraphicsDirPath = BSkyGetGraphicsDirPath()
+	
+	# tryCatch({
+        # withCallingHandlers({
 		
-		# Restore the graphics path for the App to execute normally when it returns from the BMD execution
-		BSkySetGraphicsDirPath(bskyGraphicsDirPath = oldGraphicsDirPath)
-		sink()
-		
-		require(zip)
-
-		# List of files to include in the zip archive
-		files_to_zip = bsky_script_output_file
-
-		# Name of the output zip file
-		zip_filename = paste0(files_to_zip, ".Bmd")
-		
-		#print(files_to_zip)
-		#print(zip_filename)
-
-		# Create the zip file
-		zip::zip(zip_filename, files = files_to_zip, mode = "cherry-pick")
+			# if(length(code_chunk_list) > 1)
+			# {
+				# BSkyInAppBMDScriptExecuteRBlocks(bsky_script_system_dir = bmd_output_file_path, dialog_console_code_chunk_list = code_chunk_list, scriptSinkfile = scriptSinkfile, inAppScriptEnv = TRUE)
+			# }
+            
+        # }, warning = BSkyInAppBMDScriptExecuteErrWarnHandler, silent = TRUE)
+    # }, error = BSkyInAppBMDScriptExecuteErrWarnHandler, silent = TRUE)
+	
+	
+	# # Restore the graphics path for the App to execute normally when it returns from the BMD execution
+	# BSkySetGraphicsDirPath(bskyGraphicsDirPath = oldGraphicsDirPath)
+	
+	# # Close out sin() file
+	# #suppressWarnings(sink())
+	# suppressWarnings(sink(type = "output"))
+	# suppressWarnings(sink(type = "message"))
+	
+	# if(length(bmd_output_file_path) == 0)
+	# {
+		# return(invisible(code_chunk_list))
+	# }
+	# else
+	# {
+		# return(invisible())
+	# }
+	
+	#cat("\n\nchunk_header in code_chunk_list\n\n")
+	#print(code_chunk_list$chunk_title)
+	
+	code_chunk_list$dataset_names = paste(unique(dataset_names), collapse=',')
+	
+	return(invisible(code_chunk_list))
 }
 
+
+BSkyStandaloneScriptExtractDialogDataset <- function(rmd_text)
+{
+	# Define a function to extract "id" and "dataset" values from a string
+	extract_values_fn <- function(str) {
+	  id_match = regmatches(str, regexpr('id: "\\w+"', str))  # Extract "id" match
+	  dataset_match = regmatches(str, regexpr('dataset: "\\w+"', str))  # Extract "dataset" match
+	  
+	  if (length(id_match) > 0 && length(dataset_match) > 0) {
+		id = gsub('id: "|"', '', id_match)  # Extract "id" value
+		dataset = gsub('dataset: "|"', '', dataset_match)  # Extract "dataset" value
+		return(c(id = id, dataset = dataset))
+	  } else {
+		return(c(id = NA, dataset = NA))
+	  }
+	}
+	
+	dialog_pattern = 'dialog:.*\\n.*\\n\\s*dataset:\\s*"([^"]+)"'
+	dialog_db = regmatches(rmd_text, gregexpr(dialog_pattern, rmd_text,perl = TRUE))[[1]]
+	#print(dialog_db)
+
+	# Apply the extract_values_fn function to each element of the string array
+	result = sapply(dialog_db, extract_values_fn)
+
+	# Create a data frame from the extracted values
+	df = data.frame(t(result))
+	
+	cat("\ndataset found from all dialogs in BMD\n")
+	#print(unique(df$dataset))
+	BSkyFormat(df)
+	
+	
+	# dataset_name_to_discard_df_freq = NULL
+	
+	# dataset_name_to_discard = c("reRunOutput", "loadDatasetFromPackage", "saveAModel", "loadAModel")
+	
+	# if(any(df$id %in% dataset_name_to_discard))
+	# {
+		# dataset_name_to_discard_df = df[(df$id %in% dataset_name_to_discard), ]
+		# row.names(dataset_name_to_discard_df) = c()
+		
+		# dataset_name_to_discard_df_freq = data.frame(table(dataset_name_to_discard_df$dataset))
+		# #BSkyFormat(dataset_name_to_discard_df_freq)
+	# }
+	
+	#return(invisible(dataset_name_to_discard_df_freq))
+	
+	return(invisible(na.omit(unique(df$dataset))))
+	#return(invisible(df$dataset))
+	
+}
 
 ##30Apr2024 - a lot changes to handle in App BMD Script run in addition to the off App headless RMD script run
 ##30Apr2024 - introduced inAppScriptEnv TRUE/FALSE flag to seperate the logic for In App BMD script from Off App RMD script execution
@@ -1890,7 +1484,16 @@ BSkyInAppBMDScriptExecuteRBlocks <- function(bsky_script_system_dir, dialog_cons
 ##31Mar2021
 ##11Nov2023 - made changes to handle the output formatting from automated (headless) BSky script run
 ## fileName = "C:/Users/User/Documents/workfolder/BSky/Rmarkdown/kableoutput1.html"
-BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName = NULL, timeStamp = Sys.time(), fileOpenMode = "w", codeChunkNum = 1, codeChunkCmt = c(), inAppScriptEnv = FALSE, bSkyDebug = 0)
+# BSkyWriteKableHtmlOutput(           
+	# datasetName = script_file_name_without_ext, 
+    # dirName = bsky_script_output_subdir, 
+	# fileName = bsky_script_output_file, 
+	# timeStamp = cur_timestamp, 
+	# codeChunkNum = codeChunkNum, 
+	# codeChunkCmt = code_chunks_comments[codeChunkNum], 
+	# sinkFilename = script_execution_sink_filename)	
+	
+BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName = NULL, timeStamp = Sys.time(), fileOpenMode = "w", codeChunkNum = 1, codeChunkCmt = c(), inAppScriptEnv = FALSE, sinkFilename = c(), bSkyDebug = 0)
 {
 	#################################################################################
 	# Note: Remeber to consider the following - 
@@ -1916,13 +1519,39 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 	full_svg_file_names = c()
 	graphicsDir = BSkyGetGraphicsDirPath()
 	
-	sink_file_path = paste(graphicsDir, "\\", "BSkyBmdOutsink.txt", sep='')
-	sink_file = file.info(sink_file_path) 
-	
-	if(sink_file$size[1] < 1)
+	if(length(sinkFilename) > 0)
 	{
-		return(invisible(FALSE))
+		sink_file_path = sinkFilename  #sink_file_path = paste(graphicsDir, "\\", "BSkysink.txt", sep='')
+	}else{
+		sink_file_path = paste(graphicsDir, "\\", "BSkyBmdOutsink.txt", sep='')
 	}
+	 
+	cat("sink file path: ", sink_file_path, "\n")
+	
+	
+		# ############################################################
+		# #  Open a sink file to redirect the stdout and stderr output
+		# ############################################################
+		# #sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
+		
+		# #sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
+		# sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
+		
+		# ####################################################
+		# # close the bsky_script_system_dir\logs sink files()
+		# ####################################################
+		# #suppressWarnings(sink())
+		# sink()
+		
+		# sink(file = sink_file_conn, append = TRUE, type = c("output"), split = FALSE)
+		# sink(file = sink_file_conn, append = TRUE, type = c("message"), split = FALSE)
+		
+	sink_file = file.info(sink_file_path)
+	
+	# if(sink_file$size[1] < 1)
+	# {
+		# return(invisible(FALSE))
+	# }
 	
 	
 	if(!is.null(graphicsDir) && length(graphicsDir) > 0 && trimws(graphicsDir) != "" && dir.exists(graphicsDir))
@@ -2002,6 +1631,8 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 
 		if(inAppScriptEnv == FALSE)
 		{
+			writeLines(paste("<div style=\"margin-left: 40px;\">"), tempfileConn, sep="\n")
+			
 			if(trimws(codeChunkCmt) != "")
 			{
 				writeLines(paste("<h4><strong>", codeChunkCmt, "</strong></h4>"), tempfileConn, sep="\n")
@@ -2067,6 +1698,49 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 								}
 								
 								#writeLines("\n", tempfileConn, sep="\n")
+								
+								# if(inAppScriptEnv == TRUE)
+								# {
+									# formulaEqFound = length(grep("begin\\{aligned\\}",retObjList[[ret_structure_counter]][[1]]$object$tables[[j]]))
+									# coefValueEqFound = length(grep("\\\\widehat",retObjList[[ret_structure_counter]][[1]]$object$tables[[j]]))
+									
+									# if(formulaEqFound > 0 && coefValueEqFound > 0)
+									# {
+										# # Do notthing for Equation output in BMD script execution - Look into this later. Not a easy solution
+										# if(FALSE)
+										# {
+											# #writeLines("<span class=\"mjx-chtml MJXc-display\" style=\"text-align: center;\"><span id=\"MathJax-Element-4-Frame\" class=\"mjx-chtml MathJax_CHTML\" tabindex=\"0\" style=\"font-size: 112%; text-align: center;\"><span id=\"MJXc-Node-133\" class=\"mjx-math\"><span id=\"MJXc-Node-134\" class=\"mjx-mrow\"><span id=\"MJXc-Node-135\" class=\"mjx-mtable\" style=\"vertical-align: -0.324em; padding: 0px 0.167em;\"><span class=\"mjx-table\"><span id=\"MJXc-Node-136\" class=\"mjx-mtr\" style=\"height: 1.147em;\"><span id=\"MJXc-Node-137\" class=\"mjx-mtd\" style=\"padding: 0px; text-align: right; width: 1.889em;\"><span id=\"MJXc-Node-138\" class=\"mjx-mrow\" style=\"margin-top: -0.128em;\"><span id=\"MJXc-Node-139\" class=\"mjx-texatom\"><span id=\"MJXc-Node-140\" class=\"mjx-mrow\"><span id=\"MJXc-Node-141\" class=\"mjx-texatom\"><span id=\"MJXc-Node-142\" class=\"mjx-mrow\"><span id=\"MJXc-Node-143\" class=\"mjx-munderover\"><span class=\"mjx-stack\"><span class=\"mjx-over\" style=\"height: 0.334em; padding-bottom: 0.06em;\"><span id=\"MJXc-Node-148\" class=\"mjx-mo\" style=\"vertical-align: top;\"><span class=\"mjx-char MJXc-TeX-size4-R\" style=\"padding-top: 0.623em; padding-bottom: 0.251em;\">ˆ</span></span></span><span class=\"mjx-op\"><span id=\"MJXc-Node-144\" class=\"mjx-mrow\"><span id=\"MJXc-Node-145\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.127em; padding-bottom: 0.313em;\">m</span></span><span id=\"MJXc-Node-146\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.127em; padding-bottom: 0.561em;\">p</span></span><span id=\"MJXc-Node-147\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.189em; padding-bottom: 0.561em;\">g</span></span></span></span></span></span></span></span></span></span><span class=\"mjx-strut\"></span></span></span><span id=\"MJXc-Node-149\" class=\"mjx-mtd\" style=\"padding: 0px; text-align: left; width: 23.093em;\"><span id=\"MJXc-Node-150\" class=\"mjx-mrow\" style=\"margin-top: -0.128em;\"><span id=\"MJXc-Node-151\" class=\"mjx-mi\"></span><span id=\"MJXc-Node-152\" class=\"mjx-mo MJXc-space3\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.065em; padding-bottom: 0.313em;\">=</span></span><span id=\"MJXc-Node-153\" class=\"mjx-mn MJXc-space3\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.375em; padding-bottom: 0.375em;\">34.1849</span></span><span id=\"MJXc-Node-154\" class=\"mjx-mo MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.313em; padding-bottom: 0.437em;\">−</span></span><span id=\"MJXc-Node-155\" class=\"mjx-mn MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.375em; padding-bottom: 0.375em;\">1.2274</span></span><span id=\"MJXc-Node-156\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">(</span></span><span id=\"MJXc-Node-157\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">cyl</span></span><span id=\"MJXc-Node-158\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">)</span></span><span id=\"MJXc-Node-159\" class=\"mjx-mo MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.313em; padding-bottom: 0.437em;\">−</span></span><span id=\"MJXc-Node-160\" class=\"mjx-mn MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.375em; padding-bottom: 0.375em;\">0.0188</span></span><span id=\"MJXc-Node-161\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">(</span></span><span id=\"MJXc-Node-162\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">disp</span></span><span id=\"MJXc-Node-163\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">)</span></span><span id=\"MJXc-Node-164\" class=\"mjx-mo MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.313em; padding-bottom: 0.437em;\">−</span></span><span id=\"MJXc-Node-165\" class=\"mjx-mn MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.375em; padding-bottom: 0.375em;\">0.0147</span></span><span id=\"MJXc-Node-166\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">(</span></span><span id=\"MJXc-Node-167\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">hp</span></span><span id=\"MJXc-Node-168\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.437em; padding-bottom: 0.561em;\">)</span></span><span class=\"mjx-strut\"></span></span></span></span></span></span></span></span></span></span>", tempfileConn, sep="\n")
+											# #writeLines("```", tempfileConn, sep="\n")
+											
+											# #writeLines("```{html}", tempfileConn, sep="\n")
+											# writeLines(paste("<script type=\"math/tex; mode=display\" id=\"MathJax-Element-4\">",retObjList[[ret_structure_counter]][[1]]$object$tables[[j]],"</script>"), tempfileConn, sep="\n")
+										# }
+									# }
+									# else if(formulaEqFound > 0)
+									# {
+										# # Do notthing for Equation output in BMD script execution - Look into this later. Not a easy solution
+										# if(FALSE)
+										# {
+											# #writeLines("```{html}", tempfileConn, sep="\n")
+											
+											# #writeLines("<span class=\"mjx-chtml MJXc-display\" style=\"text-align: center;\"><span id=\"MathJax-Element-3-Frame\" class=\"mjx-chtml MathJax_CHTML\" tabindex=\"0\" style=\"font-size: 113%; text-align: center;\"><span id=\"MJXc-Node-85\" class=\"mjx-math\"><span id=\"MJXc-Node-86\" class=\"mjx-mrow\"><span id=\"MJXc-Node-87\" class=\"mjx-mtable\" style=\"vertical-align: -0.938em; padding: 0px 0.167em;\"><span class=\"mjx-table\"><span id=\"MJXc-Node-88\" class=\"mjx-mtr\" style=\"height: 1.225em;\"><span id=\"MJXc-Node-89\" class=\"mjx-mtd\" style=\"padding: 0px; text-align: right; width: 1.889em;\"><span id=\"MJXc-Node-90\" class=\"mjx-mrow\" style=\"margin-top: -0.2em;\"><span id=\"MJXc-Node-91\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.187em; padding-bottom: 0.556em;\">mpg</span></span><span class=\"mjx-strut\"></span></span></span><span id=\"MJXc-Node-92\" class=\"mjx-mtd\" style=\"padding: 0px; text-align: left; width: 16.014em;\"><span id=\"MJXc-Node-93\" class=\"mjx-mrow\" style=\"margin-top: -0.2em;\"><span id=\"MJXc-Node-94\" class=\"mjx-mi\"></span><span id=\"MJXc-Node-95\" class=\"mjx-mo MJXc-space3\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.065em; padding-bottom: 0.31em;\">=</span></span><span id=\"MJXc-Node-96\" class=\"mjx-mi MJXc-space3\"><span class=\"mjx-char MJXc-TeX-math-I\" style=\"padding-top: 0.249em; padding-bottom: 0.31em;\">α</span></span><span id=\"MJXc-Node-97\" class=\"mjx-mo MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.31em; padding-bottom: 0.433em;\">+</span></span><span id=\"MJXc-Node-98\" class=\"mjx-msubsup MJXc-space2\"><span class=\"mjx-base\" style=\"margin-right: -0.007em;\"><span id=\"MJXc-Node-99\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-math-I\" style=\"padding-top: 0.495em; padding-bottom: 0.495em; padding-right: 0.007em;\">β</span></span></span><span class=\"mjx-sub\" style=\"font-size: 70.7%; vertical-align: -0.212em; padding-right: 0.071em;\"><span id=\"MJXc-Node-100\" class=\"mjx-texatom\" style=\"\"><span id=\"MJXc-Node-101\" class=\"mjx-mrow\"><span id=\"MJXc-Node-102\" class=\"mjx-mn\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.372em; padding-bottom: 0.372em;\">1</span></span></span></span></span></span><span id=\"MJXc-Node-103\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.495em; padding-bottom: 0.618em;\">(</span></span><span id=\"MJXc-Node-104\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.433em; padding-bottom: 0.556em;\">cyl</span></span><span id=\"MJXc-Node-105\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.495em; padding-bottom: 0.618em;\">)</span></span><span id=\"MJXc-Node-106\" class=\"mjx-mo MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.31em; padding-bottom: 0.433em;\">+</span></span><span id=\"MJXc-Node-107\" class=\"mjx-msubsup MJXc-space2\"><span class=\"mjx-base\" style=\"margin-right: -0.007em;\"><span id=\"MJXc-Node-108\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-math-I\" style=\"padding-top: 0.495em; padding-bottom: 0.495em; padding-right: 0.007em;\">β</span></span></span><span class=\"mjx-sub\" style=\"font-size: 70.7%; vertical-align: -0.212em; padding-right: 0.071em;\"><span id=\"MJXc-Node-109\" class=\"mjx-texatom\" style=\"\"><span id=\"MJXc-Node-110\" class=\"mjx-mrow\"><span id=\"MJXc-Node-111\" class=\"mjx-mn\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.372em; padding-bottom: 0.372em;\">2</span></span></span></span></span></span><span id=\"MJXc-Node-112\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.495em; padding-bottom: 0.618em;\">(</span></span><span id=\"MJXc-Node-113\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.433em; padding-bottom: 0.556em;\">disp</span></span><span id=\"MJXc-Node-114\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.495em; padding-bottom: 0.618em;\">)</span></span><span id=\"MJXc-Node-115\" class=\"mjx-mo MJXc-space2\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.31em; padding-bottom: 0.433em;\">+</span></span><span id=\"MJXc-Node-116\" class=\"mjx-msubsup MJXc-space2\"><span class=\"mjx-base\" style=\"margin-right: -0.007em;\"><span id=\"MJXc-Node-117\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-math-I\" style=\"padding-top: 0.495em; padding-bottom: 0.495em; padding-right: 0.007em;\">β</span></span></span><span class=\"mjx-sub\" style=\"font-size: 70.7%; vertical-align: -0.212em; padding-right: 0.071em;\"><span id=\"MJXc-Node-118\" class=\"mjx-texatom\" style=\"\"><span id=\"MJXc-Node-119\" class=\"mjx-mrow\"><span id=\"MJXc-Node-120\" class=\"mjx-mn\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.372em; padding-bottom: 0.372em;\">3</span></span></span></span></span></span><span id=\"MJXc-Node-121\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.495em; padding-bottom: 0.618em;\">(</span></span><span id=\"MJXc-Node-122\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.433em; padding-bottom: 0.556em;\">hp</span></span><span id=\"MJXc-Node-123\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.495em; padding-bottom: 0.618em;\">)</span></span><span id=\"MJXc-Node-124\" class=\"mjx-mtext\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"margin-top: -0.304em; padding-bottom: 0.372em;\">&nbsp;</span></span><span id=\"MJXc-Node-125\" class=\"mjx-mo\"><span class=\"mjx-char MJXc-TeX-main-R\" style=\"padding-top: 0.31em; padding-bottom: 0.433em;\">+</span></span><span class=\"mjx-strut\"></span></span></span></span><span id=\"MJXc-Node-126\" class=\"mjx-mtr\" style=\"height: 1.15em;\"><span id=\"MJXc-Node-127\" class=\"mjx-mtd\" style=\"padding: 0.15em 0px 0px; text-align: right;\"><span id=\"MJXc-Node-128\" class=\"mjx-mrow\" style=\"margin-top: -0.2em;\"><span class=\"mjx-strut\"></span></span></span><span id=\"MJXc-Node-129\" class=\"mjx-mtd\" style=\"padding: 0.15em 0px 0px; text-align: left;\"><span id=\"MJXc-Node-130\" class=\"mjx-mrow\" style=\"margin-top: -0.2em;\"><span id=\"MJXc-Node-131\" class=\"mjx-mspace\" style=\"width: 1em; height: 0px;\"></span><span id=\"MJXc-Node-132\" class=\"mjx-mi\"><span class=\"mjx-char MJXc-TeX-math-I\" style=\"padding-top: 0.187em; padding-bottom: 0.31em;\">ϵ</span></span><span class=\"mjx-strut\"></span></span></span></span></span></span></span></span></span></span>", tempfileConn, sep="\n")
+											# #writeLines("```", tempfileConn, sep="\n")
+											
+											# #writeLines("```{html}", tempfileConn, sep="\n")
+											# writeLines(paste("<script type=\"math/tex; mode=display\" id=\"MathJax-Element-3\">",retObjList[[ret_structure_counter]][[1]]$object$tables[[j]],"</script>"), tempfileConn, sep="\n")
+											 
+											# #writeLines("```", tempfileConn, sep="\n")
+										# }
+									# }
+									# else
+									# {
+										# writeLines(retObjList[[ret_structure_counter]][[1]]$object$tables[[j]], tempfileConn, sep="\n")
+									# }
+								# }
+								# else
+								# {
+									# writeLines(retObjList[[ret_structure_counter]][[1]]$object$tables[[j]], tempfileConn, sep="\n")
+								# }
 								
 								if(inAppScriptEnv == TRUE)
 								{
@@ -2206,8 +1880,9 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 						#<!-- Image with an absolute URL -->
 						#<img src="https://example.com/path/to/remote/image.jpg" alt="Description of the remote image">
 						
-						if(inAppScriptEnv == TRUE)
-						{
+						#Commented out so that both version i.e., in app or headless bky auto scrip can embed the images in the HTML itself
+						#if(inAppScriptEnv == TRUE)
+						#{
 							svg_content = readLines(full_svg_file_names[plot_file_counter])
 						
 							# Sample 5 digits from 0 to 9
@@ -2222,9 +1897,9 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 							svg_content = gsub("#clip", paste0("#clip",rand2), svg_content)
 								
 							svg_content = svg_content[-1]
-							writeLines("```{html}", tempfileConn, sep="\n")
+							#writeLines("```{html}", tempfileConn, sep="\n")
 							writeLines(svg_content, tempfileConn, sep="\n")
-							writeLines("```", tempfileConn, sep="\n")
+							#writeLines("```", tempfileConn, sep="\n")
 							
 							# require(XML)
 							# # Read the SVG file
@@ -2235,12 +1910,43 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 							# writeLines("```{html}", tempfileConn, sep="\n")
 							# #writeLines(svg_xml, tempfileConn, sep="\n")
 							# writeLines("```", tempfileConn, sep="\n")
-						}
-						else
-						{
-							writeLines(paste("<img src=", "\"", "plots/", timeStamp, "_", datasetName, "_", codeChunkNum, "_", svg_file_names[plot_file_counter],"\"",">", sep=''), tempfileConn)
-							file.copy(full_svg_file_names[plot_file_counter], paste(plot_subdir, "\\", timeStamp, "_", datasetName, "_", codeChunkNum, "_", svg_file_names[plot_file_counter], sep=''))
-						}
+						#}
+						#else
+						#{
+						#	writeLines(paste("<img src=", "\"", "plots/", timeStamp, "_", datasetName, "_", codeChunkNum, "_", svg_file_names[plot_file_counter],"\"",">", sep=''), tempfileConn)
+							if(inAppScriptEnv == FALSE){
+								# Even though for headless bsky autoscript mode, images are embedded, images are also copied to the plot subdir to access each svgs plots if needed
+								
+								# Build initial filename
+								max_path_length = 260 -1 # limitation in Windows for maximum file name character length allowed
+								sep <- "_"
+
+								# Estimate fixed part length (everything except the variable part)
+								fixed_length <- nchar(plot_subdir) +
+												nchar(timeStamp) + nchar(codeChunkNum) + nchar(svg_file_names[plot_file_counter]) +
+												nchar(sep) * 5  # 5 separators around script name 
+
+								# Allowed length for datasetName
+								remaining_length <- max_path_length - fixed_length
+
+								# Trim if necessary
+								trimmed_script_name <- datasetName
+								if (nchar(datasetName) > remaining_length) {
+								  trimmed_script_name <- substr(datasetName, 1, remaining_length)
+								}
+
+								# Construct final safe file name
+								adj_output_file_name_dueto_260max_filename_limit <- paste0(
+								  plot_subdir,"\\", timeStamp, sep,
+								  trimmed_script_name,
+								  sep,
+								  codeChunkNum, sep, svg_file_names[plot_file_counter]
+								)
+								
+								#file.copy(full_svg_file_names[plot_file_counter], paste(plot_subdir, "\\", timeStamp, "_", datasetName, "_", codeChunkNum, "_", svg_file_names[plot_file_counter], sep=''))
+								file.copy(full_svg_file_names[plot_file_counter], adj_output_file_name_dueto_260max_filename_limit)
+							}
+						#}
 						
 						file.remove(full_svg_file_names[plot_file_counter])
 					}
@@ -2304,7 +2010,34 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 			
 			if(inAppScriptEnv == FALSE)
 			{
-				file.copy(sink_file_path, paste(log_subdir, "\\", timeStamp, "_",  datasetName, "_", "BSkysink_", codeChunkNum, ".txt", sep=''))
+				# Build initial filename
+				max_path_length = 260 -1 # limitation in Windows for maximum file name character length allowed
+				sep <- "_"
+
+				# Estimate fixed part length (everything except the variable part)
+				fixed_length <- nchar(log_subdir) +
+								nchar(timeStamp) + nchar(codeChunkNum) + nchar("BSkysink_") + nchar(".txt") +
+								nchar(sep) * 4  # 5 separators around script name 
+
+				# Allowed length for datasetName
+				remaining_length <- max_path_length - fixed_length
+
+				# Trim if necessary
+				trimmed_script_name <- datasetName
+				if (nchar(datasetName) > remaining_length) {
+				  trimmed_script_name <- substr(datasetName, 1, remaining_length)
+				}
+
+				# Construct final safe file name
+				adj_output_file_name_dueto_260max_filename_limit <- paste0(
+				  log_subdir,"\\", timeStamp, sep,
+				  trimmed_script_name,
+				  sep,
+				  "BSkysink_", codeChunkNum, ".txt"
+				)
+								
+				#file.copy(sink_file_path, paste(log_subdir, "\\", timeStamp, "_",  datasetName, "_", "BSkysink_", codeChunkNum, ".txt", sep=''))
+				file.copy(sink_file_path, adj_output_file_name_dueto_260max_filename_limit)
 			}
 			
 			file.remove(sink_file_path)
@@ -2312,6 +2045,11 @@ BSkyWriteKableHtmlOutput <- function(datasetName = c(), dirName = NULL, fileName
 		
 		if(!is.null(tempfileConn))
 		{
+			if(inAppScriptEnv == FALSE)
+			{
+				writeLines(paste("</div>"), tempfileConn, sep="\n")
+			}
+			
 			#writeLines("\n</body>\n", fileConn)
 			#writeLines("\n</html>\n", fileConn)
 			close(tempfileConn)
@@ -4219,3 +3957,2099 @@ BSkyInAppBMDScriptExecuteErrWarnHandler <- function(m)
 		message("Msg: ", as.character(m$message))
 	}
 }
+
+
+##############################################################################################
+# 07/21/25
+# The following set of functions are not used for stanadalone BMD or RMD script auto execution
+###############################################################################################
+
+## 16Dec2023 
+## New function added for BlueSky script(exported from BSky app) automation 
+BSkyScriptAutomationInternalEngine.OLD <- function(bsky_script_input_root_dir, bsky_script_output_root_dir, bsky_script_system_dir, bsky_delete_data_file = FALSE, debug = FALSE)
+{ 
+	if (!dir.exists(bsky_script_system_dir)) 
+	{ 
+		cat("\n", bsky_script_system_dir, "- BlueSKy System Automation script direcotry not found", "..exiting..\n")
+		return(invisible)
+	}
+	
+	#####################################################################################################
+	# Setting up the output subdirectory to write HTML file names for every BlueSky Statistics Script run
+	#####################################################################################################
+	cur_timestamp = format(Sys.time(), "%Y%m%d_%H%M%S")
+	
+	BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp = cur_timestamp, init = TRUE)
+	
+	BSkySetGraphicsDirPath(bskyGraphicsDirPath = bsky_script_system_dir)
+
+	Incoming_file_open_msg_log_dir = paste0(bsky_script_system_dir,"\\logs")
+	if (!dir.exists(Incoming_file_open_msg_log_dir)) 
+	{
+		# Create the directory if it does not exist
+		dir.create(Incoming_file_open_msg_log_dir)
+	}
+
+	if (!dir.exists(bsky_script_output_root_dir)) 
+	{
+		# Create the directory if it does not exist
+		dir.create(bsky_script_output_root_dir)
+	}
+	
+	dst_html_css_lib_dir = paste0(bsky_script_output_root_dir, "\\", 'htmlCSSlib')
+	src_html_css_lib_dir = paste0(bsky_script_system_dir, "\\", 'htmlCSSlib')
+	
+	if (!dir.exists(dst_html_css_lib_dir)) 
+	{
+		file.copy(src_html_css_lib_dir, bsky_script_output_root_dir, recursive=TRUE)
+	}
+	
+	subdirectories = c()
+	
+	if (dir.exists(bsky_script_input_root_dir)) 
+	{ 
+		subdirectories <- list.dirs(bsky_script_input_root_dir, recursive = FALSE, full.names = TRUE)
+	}
+	
+	if(length(subdirectories) > 0)
+	{
+		list_across_all_script_dataset_full_file_paths = c()
+		sink_file_conn = NULL
+					
+		for(input_dir in subdirectories)
+		{
+			cat("\nprocessing input script directory:", input_dir, "\n")
+			
+			bsky_script_output_dir = paste(bsky_script_output_root_dir, "\\", basename(input_dir), sep='')
+			
+			if (!dir.exists(bsky_script_output_dir)) 
+			{
+				# Create the directory if it does not exist in the root output directory folder
+				dir.create(bsky_script_output_dir)
+			}
+			
+			# Determine whether the script in the current directory needs to be processed (i.e. active state or disabled)
+			process_script = TRUE
+			
+			# Deternine if any addtional script configuration file present to indicate whether to process incoming data files
+			process_incoming_datafile = FALSE
+			
+			# If the datafile will be picked up from an incoming datafile directory, use the script dir as default 
+			incoming_datafile_dir = input_dir
+			
+			# dataset used to generate the script. This is needed to replace the dataset name with incoming datafile name
+			script_dataset_name = ""						
+			
+			#pattern="script.config.*.txt"
+			script_cfg_file = list.files(path = input_dir, pattern=paste0(".*", "config", ".*\\.txt$"), ignore.case = TRUE, full.names = TRUE)
+			
+			if(length(script_cfg_file) > 0)
+			{
+				script_cfg_entries = readLines(script_cfg_file[1], warn = FALSE)
+				
+				if(length(script_cfg_entries) > 0)
+				{
+					script_cfg_entry_index = grep("Script_Status", script_cfg_entries, ignore.case = TRUE)
+					if(length(script_cfg_entry_index) > 0)
+					{
+						if(length(grep("=", script_cfg_entries[script_cfg_entry_index[1]])) > 0)
+						{
+							if(tolower(trimws(strsplit(script_cfg_entries[script_cfg_entry_index[1]], "=")[[1]][2])) != 'active')
+							{
+								process_script = FALSE		
+							}
+						}	
+					}
+				}
+				
+				#script_cfg_entries = readLines(script_cfg_file[1], warn = FALSE)
+				if(length(script_cfg_entries) > 0)
+				{
+					script_cfg_entry_index = grep("Use_Incoming_Datafiles", script_cfg_entries, ignore.case = TRUE)
+					if(length(script_cfg_entry_index) > 0)
+					{
+						if(length(grep("=", script_cfg_entries[script_cfg_entry_index[1]])) > 0)
+						{
+							if(tolower(trimws(strsplit(script_cfg_entries[script_cfg_entry_index[1]], "=")[[1]][2])) == 'yes')
+							{
+								process_incoming_datafile = TRUE
+								
+								script_cfg_entry_index = grep("Incoming_Datafiles_Dir", script_cfg_entries, ignore.case = TRUE)
+								
+								if(length(script_cfg_entry_index) > 0)
+								{
+									if(length(grep("=", script_cfg_entries[script_cfg_entry_index[1]])) > 0)
+									{
+										incoming_datafile_dir = trimws(strsplit(script_cfg_entries[script_cfg_entry_index[1]], "=")[[1]][2])
+											
+										if(incoming_datafile_dir == "")
+										{
+											incoming_datafile_dir = input_dir
+										}
+										else
+										{
+											script_cfg_entry_index = grep("DatasetName_Used_In_The_Script", script_cfg_entries, ignore.case = TRUE)
+											if(length(script_cfg_entry_index) > 0)
+											{
+												if(length(grep("=", script_cfg_entries[script_cfg_entry_index[1]])) > 0)
+												{
+													script_dataset_name = trimws(strsplit(script_cfg_entries[script_cfg_entry_index[1]], "=")[[1]][2])
+												}
+											}
+										}
+									}
+								}
+							}
+						}	
+					}
+				}
+			}
+			
+			# cat("\n======================\n")
+			# cat("\nprocess_script: ", process_script,"\n")
+			# cat("\nprocess_incoming_datafile: ", process_incoming_datafile,"\n")
+			# cat("\nscript_dataset_name: ", script_dataset_name,"\n")
+			# cat("\nincoming_datafile_dir: ", incoming_datafile_dir,"\n")
+			
+			#################################################################################################
+			# Do not process (i.e. skip) this script subdirectory if process_script is determined to be FALSE
+			#################################################################################################
+			if(process_script == FALSE)
+			{
+				cat("\nSkipping processing of the script (marked inactive) in:", input_dir, "\n")
+				next #skip this iteration of subdirectory and move to the next subdirectory in the for loop 
+			}
+			
+			#script_full_names = list.files(path = input_dir, pattern=paste0(".*", "script", ".*\\.Rmd$"), ignore.case = TRUE, full.names = TRUE)
+			#script_full_names = list.files(path = input_dir, pattern=".*.Bmd|.Rmd", ignore.case = TRUE, full.names = TRUE)
+			script_full_names <- list.files(
+								  path = input_dir,
+								  pattern = "\\.(Bmd|Rmd)$",
+								  ignore.case = TRUE,
+								  full.names = TRUE
+								)
+			
+			if(length(script_full_names) > 0)
+			{
+				#################################
+				# Get file name without extension
+				#################################
+				script_file_name_without_ext <- tools::file_path_sans_ext(basename(script_full_names[1]))
+				script_file_name_without_ext = make.names(script_file_name_without_ext)
+				script_file_name_without_ext = gsub("\\.","_", script_file_name_without_ext)
+			
+				#rmd_content = readLines(script_full_names[1], warn = FALSE)
+				
+				# Get the extension string
+				file_type = toupper(tools::file_ext(script_full_names[1]))
+				
+				if(file_type != "BMD" && file_type != "RMD") 
+				{ 
+					cat("\n", script_full_names, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
+					return(invisible)
+				}
+				
+				if(file_type == "BMD")
+				{
+					# Load the 'readr' package for reading lines from files
+					suppressMessages(require(readr))
+					
+					# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
+					zip_file_path = script_full_names[1]
+					script_file_name_without_ext = tools::file_path_sans_ext(basename(script_full_names[1]))
+					
+					# Open a connection to the zip file
+					zip_connection = unz(zip_file_path, script_file_name_without_ext)
+					
+					# Read the lines from the text file inside the zip
+					rmd_content = read_lines(zip_connection)
+					
+					# Close the zip connection
+					#close(zip_connection)
+				}
+				else
+				{
+					rmd_content = readLines(script_full_names[1], warn = FALSE)
+				}
+
+
+				# Combine lines into a single string
+				rmd_text <- paste(rmd_content, collapse = "\n")
+
+				if(file_type == "RMD"){
+					# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
+					code_chunks <- regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
+
+					# Remove the enclosures from each code chunk
+					code_chunks <- gsub("```\\{r\\}|```", "", code_chunks)
+					
+					# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
+					code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
+					extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
+					code_chunks_comments[1] = gsub('(```|\\{r\\})',"",substr(code_chunks_comments[1], sum(nchar(extract_first_comment)), nchar(code_chunks_comments[1])))
+					
+					# Remove the enclosures from each chunk comment
+					code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
+					
+					# For debugging
+					#print(code_chunks_comments)
+				}else{
+					# Extract all text between "```{dialog}", "```{console}" and "```" for all occurrences (including the enclosures)
+					dialog_console_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
+					
+					# Extract all text between "```{dialog}" and "```" for all occurrences (including the enclosures)
+					dialog_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```", rmd_text))[[1]]
+					
+					# Extract all text between "```{console}" and "```" for all occurrences (including the enclosures)
+					console_blocks = regmatches(rmd_text, gregexpr("```\\{console\\}(.*?)```", rmd_text))[[1]]
+					
+					# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
+					code_chunks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
+
+					# Remove the enclosures from each code chunk
+					code_chunks = gsub("```\\{r\\}|```", "", code_chunks)
+					
+			
+					# Extract lines that start with '#'
+					#code_chunks_comments = grep("^#", rmd_content, value = TRUE)
+
+					# Define the regular expression pattern to match everything after "output_title: and within ```console block"
+					#title_pattern = '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
+					
+					#title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
+					title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
+					
+					# Extract the desired string using regmatches and regexpr
+					code_chunks_comments = regmatches(rmd_text, gregexpr(title_pattern, rmd_text))[[1]]
+					
+					# Remove the "output_title: " prefix and extra enclosure " around 
+					#code_chunks_comments = gsub('output_title: ', '', code_chunks_comments) 
+					#code_chunks_comments = gsub('"', '', code_chunks_comments)
+					code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )|(\\{console\\})', '', code_chunks_comments)
+					
+					# Define the regular expression pattern with exact case matching for "dataset"
+					#dataset_name_and_console_comment_pattern <- '(dataset:\\s*"([^"]+)")|(```\\{console\\}(.*?)```)'
+					dataset_name_and_console_comment_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))|(```\\{console\\}(.*?)```)'
+					datasets_names_and_console_comments = regmatches(rmd_text, gregexpr(dataset_name_and_console_comment_pattern, rmd_text))[[1]]
+					
+					# #dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
+					# #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
+					# dataset_names_pattern =  'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
+					# dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
+					# dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
+					
+					dataset_names = BSkyInAppScriptExtractOldDatasetList(rmd_text = rmd_text, file_type = file_type)
+					
+					if(length(code_chunks) > length(code_chunks_comments))
+					{
+						#Extract "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+						dialog_console_r_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+						
+						if(debug)
+						{
+							cat("\nnumber of ```r code blocks\n")
+							print(length(code_chunks))
+							cat("\nnumber of code titles\n")
+							print(length(code_chunks_comments))
+							cat("\nnumber of blocks - dialog,r,console blocks\n")
+							print(length(dialog_console_r_blocks))
+						
+							BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+							BSkyFormat(dialog_console_r_blocks)
+						}
+						
+						code_chunks_comments_modified = c()
+						datasets_names_and_console_comments_modified = c()
+						dialog_console_blocks_modified = c()
+						
+						multiple_r_blocks_found = FALSE
+						k = 1
+						
+						for(j in 1:length(dialog_console_r_blocks))
+						{	
+							if(trimws(dialog_console_r_blocks[j]) == "```{r}")
+							{
+								if(multiple_r_blocks_found == TRUE)
+								{
+									#Seccond or more continuous occurance of a ```r block for a given dialog block
+									code_chunks_comments_modified = c(code_chunks_comments_modified, "BSky_NO_TITLE")
+									datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "BSky_NO_TITLE")	
+									dialog_console_blocks_modified = c(dialog_console_blocks_modified, "BSKY_NO_DIALOG_CONSOLE_BLOCK")
+								}
+								else
+								{
+									#First occurance of a ```r block - do nothing 
+									multiple_r_blocks_found = TRUE
+								}
+							}
+							else if(trimws(dialog_console_r_blocks[j]) == "```{dialog}" || trimws(dialog_console_r_blocks[j]) == "```{console}")
+							{
+								code_chunks_comments_modified = c(code_chunks_comments_modified, code_chunks_comments[k])
+								datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, datasets_names_and_console_comments[k])
+								dialog_console_blocks_modified = c(dialog_console_blocks_modified, dialog_console_blocks[k])
+								
+								k = k+1
+								multiple_r_blocks_found = FALSE
+							}
+							else
+							{
+								cat("\n","UNNOWN BLOCK==",trimws(dialog_console_r_blocks[j]),"==","\n")
+							}
+						}
+						
+						if(debug)
+						{
+							BSkyFormat(cbind(code_chunks_comments_modified,datasets_names_and_console_comments_modified))
+						}
+						code_chunks_comments = code_chunks_comments_modified
+						datasets_names_and_console_comments = datasets_names_and_console_comments_modified
+						dialog_console_blocks = dialog_console_blocks_modified
+					}	
+				}
+				
+				
+				if(process_script == TRUE && process_incoming_datafile == TRUE)
+				{
+					bsky_script_output_subdir = paste(bsky_script_output_dir,"\\OutputFiles_", script_file_name_without_ext, "_", cur_timestamp, sep='')
+					
+					#adj_output_file_name_dueto_260max_filename_limit = paste("BSkyReport", "_", script_file_name_without_ext, "_", cur_timestamp, ".htm", sep='')
+					# Build initial filename
+					max_path_length = 260 -1 # limitation in Windows for maximum file name character length allowed
+					base_file_prefix <- "BSkyReport_"
+					file_ext <- ".htm"
+					sep <- "_"
+
+					# Estimate fixed part length (everything except the variable part)
+					fixed_length <- nchar(file.path(bsky_script_output_subdir, base_file_prefix)) +
+									nchar(cur_timestamp) + nchar(file_ext) + nchar(sep) * 2  # 2 separators around script name 
+
+					# Allowed length for script_file_name_without_ext
+					remaining_length <- max_path_length - fixed_length
+
+					# Trim if necessary
+					trimmed_script_name <- script_file_name_without_ext
+					if (nchar(script_file_name_without_ext) > remaining_length) {
+					  trimmed_script_name <- substr(script_file_name_without_ext, 1, remaining_length)
+					}
+
+					# Construct final safe file name
+					adj_output_file_name_dueto_260max_filename_limit <- paste0(
+					  base_file_prefix,
+					  trimmed_script_name,
+					  sep,
+					  cur_timestamp,
+					  file_ext
+					)
+					
+					bsky_script_output_file = paste(bsky_script_output_subdir,"\\",adj_output_file_name_dueto_260max_filename_limit, sep='')
+					#cat("Ouput file name to be created: ", bsky_script_output_file, "\n")
+				
+					if (!dir.exists(bsky_script_output_subdir)) 
+					{
+						# Create the directory if it does not exist
+						dir.create(bsky_script_output_subdir)
+					}
+					
+					# if(!dir.exists(bsky_script_output_subdir)){
+						# cat("Directory could not be created: ", bsky_script_output_subdir, "\n")
+					# }else{
+						# cat("Directory created: ", bsky_script_output_subdir, "\n")
+					# }
+					
+					# if(!file.exists(paste(bsky_script_system_dir, "\\template_pre.html", sep=''))){
+						# cat("Source template_pre.html not found: ", paste(bsky_script_system_dir, "\\template_pre.html", sep=''), "\n")
+					# }else{
+						# cat("Source template_pre.html found: ", paste(bsky_script_system_dir, "\\template_pre.html", sep=''), "\n")
+					# }
+					
+					# Copy the pre section from the HTML template file into the output HTML file
+					if(!file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), bsky_script_output_file, overwrite = TRUE)){
+						cat("template_pre.html file copy failed", "\n")
+					}
+					
+					# if(!file.exists(bsky_script_output_file)){
+						# cat("Output file not create - why?: ", bsky_script_output_file, "\n")
+					# }else{
+						# cat("Output file exists: ", bsky_script_output_file, "\n")
+					# }
+					
+					codeChunkNum = 0
+					list_script_dataset_full_file_paths = c()
+					
+					# Print the extracted R code chunks
+					for (chunk in code_chunks) 
+					{		
+						delete_left_over_sink_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg|.txt", ignore.case = TRUE, full.names = TRUE)
+						
+						if(length(delete_left_over_sink_svgs) > 0)
+						{
+							unlink(delete_left_over_sink_svgs)
+						}
+							
+						############################################################
+						#  Open a sink file to redirect the stdout and stderr output
+						############################################################
+						#sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
+						
+						script_execution_sink_filename = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep='')
+						sink_file_conn = file(script_execution_sink_filename)
+						
+						# close the system level script files in bsky_script_system_dir\logs directory
+						#suppressWarnings(sink())
+						sink()
+						
+						sink(file = sink_file_conn, append = TRUE, type = c("output"), split = FALSE)
+						sink(file = sink_file_conn, append = TRUE, type = c("message"), split = FALSE)
+								
+						#######################################################################################
+						#  Open a SVG graphics device to collect the graphics files for each dataset processed
+						#######################################################################################
+						SvgFileName = "BSkyRplot%03d.svg"
+						svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''))
+						
+						if(regexpr(paste0("\nBSkyloadDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+						{
+							#cat("\nI am here ==============\n")
+							#gsub("BSkyloadDataset\\(fullpathfilename='[^=]+([\\\\/][^.,])+", "BSkyloadDataset(fullpathfilename='c:\\\\path to\\\\abc\\\\hell 1\\1", xyz)
+							#script_dataset_name = sub('.*[\\\\/]+([^/\']+)\'.*', '\\1', chunk)
+							
+							BSkyloadDataset_string_pattern = "BSkyloadDataset\\(fullpathfilename=\\'.*[\\\\/]+([^/\\']+)'.*?"
+							matches_positions <- gregexpr(BSkyloadDataset_string_pattern, chunk)
+							all_matches <- regmatches(chunk, matches_positions)
+							script_dataset_names = sub('.*[\\\\/]+([^/\']+)\'.*', '\\1', all_matches[[1]])
+							
+							#print(script_dataset_names)
+							#cat("\n++++++++++++++++++++++++++++++++++++++++\n")
+							
+							if(length(script_dataset_names) > 0)
+							{
+								for(dataset_index in 1:length(script_dataset_names))
+								{
+									full_script_dataset_file_path = paste0(incoming_datafile_dir, "\\", script_dataset_names[dataset_index])
+									
+									if(file.exists(full_script_dataset_file_path))
+									{
+										BSkyloadDataset_to_replace <- gsub('\\\\', '\\\\\\\\', all_matches[[1]][dataset_index])
+										BSkyloadDataset_to_replace <- gsub('\\(', '\\\\(', BSkyloadDataset_to_replace)
+										
+										full_script_dataset_file_path_prep =paste0("BSkyloadDataset(fullpathfilename='",full_script_dataset_file_path,"'")
+										#full_script_dataset_file_path_prep <- gsub('\\\\', '\\\\\\\\', full_script_dataset_file_path_prep)
+										full_script_dataset_file_path_prep <- gsub('\\\\', '/', full_script_dataset_file_path_prep)
+										full_script_dataset_file_path_prep <- gsub('\\(', '\\\\(', full_script_dataset_file_path_prep)
+										
+										#print(chunk)
+										
+										chunk = gsub(BSkyloadDataset_to_replace, full_script_dataset_file_path_prep, chunk)
+										
+										list_script_dataset_full_file_paths = c(list_script_dataset_full_file_paths, full_script_dataset_file_path)
+										#print(chunk)
+									}
+									else
+									{
+										cat("\nInfo:", script_dataset_names[dataset_index], "data file not found in the incoming file folder", incoming_datafile_dir, "- no file path replacement is performed in the script. It will attempt to open the data file at the original location when the script was generated from the BlueSky Statistics app.\n")
+									}
+								}
+							}
+						}
+						
+						###################################################################################################
+						# Execute the script copied from BlueSky Statistics App as is without any dataset name substitution
+						###################################################################################################
+						cmd_execution_status = BSkyEvalRcommand(RcommandString = chunk)
+						
+						#cat("\nCommand Execution Status : ", cmd_execution_status$executionStatus, "\n") if -1 that indicates failed execution 
+						
+						
+						################################
+						# Close the SVG graphics device
+						################################
+						dev.off()
+						
+						##################################
+						#  Close the chunk level sink file 
+						##################################
+						sink()
+						
+						#######################################################
+						# Open back the bsky_script_system_dir\logs sink files 
+						#######################################################
+						BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp)
+						
+						codeChunkNum = codeChunkNum + 1
+						
+						# Generate the HTML output file from the script
+						BSkyWriteKableHtmlOutput(datasetName = script_file_name_without_ext, dirName = bsky_script_output_subdir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = code_chunks_comments[codeChunkNum], sinkFilename = script_execution_sink_filename)
+					
+						# No incoming datafile is used - so no datafile to move
+						#file.copy(full_datafile_names[file_counter], paste(bsky_script_output_subdir,"\\", datafile_names[file_counter], sep=''))
+						#file.remove(full_datafile_names[file_counter])
+						
+						delete_left_over_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg", ignore.case = TRUE, full.names = TRUE)
+						if(length(delete_left_over_svgs) > 0)
+						{
+							unlink(delete_left_over_svgs)
+						}
+					}
+
+					# Copy the post section from the HTML template file into the output HTML file
+					html_closing_block <- readLines(paste(bsky_script_system_dir, "\\template_post.html", sep=''))
+					outputHTMLfileConn = file(bsky_script_output_file, "a")
+
+					# Write the combined lines to a new file
+					writeLines(html_closing_block, outputHTMLfileConn)
+					close(outputHTMLfileConn)
+					
+					# Move the datafile to the output datafile subdirectory from the input directory
+					bsky_script_output_datafiles_subdir = paste(bsky_script_output_subdir,"\\datafile", sep='')
+				
+					if (!dir.exists(bsky_script_output_datafiles_subdir)) 
+					{
+						#Create the directory if it does not exist
+						dir.create(bsky_script_output_datafiles_subdir)
+					}
+					
+					#full_datafile_names = list.files(path = incoming_datafile_dir, pattern=".*.csv|.xls|.xlsx", ignore.case = TRUE, full.names = TRUE)
+					#file.copy(full_datafile_names, file.path(bsky_script_output_datafiles_subdir, basename(full_datafile_names)))
+					
+					
+					list_script_dataset_full_file_paths = unique(list_script_dataset_full_file_paths)
+					#cat("\n============Copying files=============\n")
+					#print(list_script_dataset_full_file_paths)
+					file.copy(list_script_dataset_full_file_paths, file.path(bsky_script_output_datafiles_subdir, basename(list_script_dataset_full_file_paths)))
+					
+					list_across_all_script_dataset_full_file_paths = c(list_across_all_script_dataset_full_file_paths, list_script_dataset_full_file_paths)
+					# for (file_name in full_datafile_names) 
+					# {
+						# print(file_name)
+						# print(file.path(bsky_script_output_datafiles_subdir, file_name))
+						# file.copy(file_name, file.path(bsky_script_output_datafiles_subdir, basename(file_name)))
+					# }
+					
+					#file.remove(full_datafile_names) 
+				}
+				else if(process_script == TRUE)
+				{
+					bsky_script_output_subdir = paste(bsky_script_output_dir,"\\OutputFiles_", script_file_name_without_ext, "_", cur_timestamp, sep='')
+					#bsky_script_output_file = paste(bsky_script_output_subdir,"\\","BSkyReport", "_", script_file_name_without_ext, "_", cur_timestamp, ".htm", sep='')
+					
+					# Build initial filename
+					max_path_length = 260 -1 # limitation in Windows for maximum file name character length allowed
+					base_file_prefix <- "BSkyReport_"
+					file_ext <- ".htm"
+					sep <- "_"
+
+					# Estimate fixed part length (everything except the variable part)
+					fixed_length <- nchar(file.path(bsky_script_output_subdir, base_file_prefix)) +
+									nchar(cur_timestamp) + nchar(file_ext) + nchar(sep) * 2  # 2 separators around script name 
+
+					# Allowed length for script_file_name_without_ext
+					remaining_length <- max_path_length - fixed_length
+
+					# Trim if necessary
+					trimmed_script_name <- script_file_name_without_ext
+					if (nchar(script_file_name_without_ext) > remaining_length) {
+					  trimmed_script_name <- substr(script_file_name_without_ext, 1, remaining_length)
+					}
+
+					# Construct final safe file name
+					adj_output_file_name_dueto_260max_filename_limit <- paste0(
+					  base_file_prefix,
+					  trimmed_script_name,
+					  sep,
+					  cur_timestamp,
+					  file_ext
+					)
+				
+					if (!dir.exists(bsky_script_output_subdir)) 
+					{
+						# Create the directory if it does not exist
+						dir.create(bsky_script_output_subdir)
+					}
+					
+					# Copy the pre section from the HTML template file into the output HTML file
+					#file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), bsky_script_output_file)
+					file.copy(paste(bsky_script_system_dir, "\\template_pre.html", sep=''), adj_output_file_name_dueto_260max_filename_limit)
+					
+					codeChunkNum = 0
+					
+					# Print the extracted R code chunks
+					for (chunk in code_chunks) 
+					{		
+						delete_left_over_sink_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg|.txt", ignore.case = TRUE, full.names = TRUE)
+						if(length(delete_left_over_sink_svgs) > 0)
+						{
+							unlink(delete_left_over_sink_svgs)
+						}
+							
+						############################################################
+						#  Open a sink file to redirect the stdout and stderr output
+						############################################################
+						#sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
+						
+						#sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''))
+						script_execution_sink_filename = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep='')
+						sink_file_conn = file(script_execution_sink_filename)
+						
+						####################################################
+						# close the bsky_script_system_dir\logs sink files()
+						####################################################
+						#suppressWarnings(sink())
+						sink()
+						
+						sink(file = sink_file_conn, append = TRUE, type = c("output"), split = FALSE)
+						sink(file = sink_file_conn, append = TRUE, type = c("message"), split = FALSE)
+								
+						#######################################################################################
+						#  Open a SVG graphics device to collect the graphics files for each dataset processed
+						#######################################################################################
+						SvgFileName = "BSkyRplot%03d.svg"
+						svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''))
+						
+						###################################################################################################
+						# Execute the script copied from BlueSky Statistics App as is without any dataset name substitution
+						###################################################################################################
+						cmd_execution_status = BSkyEvalRcommand(RcommandString = chunk)
+						
+						#cat("\nCommand Execution Status : ", cmd_execution_status$executionStatus, "\n") if -1 that indicates failed execution 
+						
+						
+						################################
+						# Close the SVG graphics device
+						################################
+						dev.off()
+						
+						##################################
+						#  Close the chunk level sink file 
+						##################################
+						sink()
+						
+						#######################################################
+						# Open back the bsky_script_system_dir\logs sink files 
+						#######################################################
+						BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp)
+						
+						codeChunkNum = codeChunkNum + 1
+						
+						# Generate the HTML output file from the script
+						BSkyWriteKableHtmlOutput(datasetName = script_file_name_without_ext, dirName = bsky_script_output_subdir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = code_chunks_comments[codeChunkNum], sinkFilename = script_execution_sink_filename)
+					
+						# No incoming datafile is used - so no datafile to move
+						#file.copy(full_datafile_names[file_counter], paste(bsky_script_output_subdir,"\\", datafile_names[file_counter], sep=''))
+						#file.remove(full_datafile_names[file_counter])
+						
+						delete_left_over_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg", ignore.case = TRUE, full.names = TRUE)
+						if(length(delete_left_over_svgs) > 0)
+						{
+							unlink(delete_left_over_svgs)
+						}
+					}
+
+					# Copy the post section from the HTML template file into the output HTML file
+					html_closing_block <- readLines(paste(bsky_script_system_dir, "\\template_post.html", sep=''))
+					outputHTMLfileConn = file(bsky_script_output_file, "a")
+
+					# Write the combined lines to a new file
+					writeLines(html_closing_block, outputHTMLfileConn)
+					close(outputHTMLfileConn)
+				}
+			}
+		}
+		
+		#print(list_across_all_script_dataset_full_file_paths)
+		# All script directories have been processed and if there is any data files in different incoming file, remove them
+		if(bsky_delete_data_file && length(list_across_all_script_dataset_full_file_paths) > 0)
+		{
+			file.remove(list_across_all_script_dataset_full_file_paths)
+		}
+	}
+}
+
+
+BSkyInAppScriptExtractDialogDataset <- function(rmd_text)
+{
+	# Define a function to extract "id" and "dataset" values from a string
+	extract_values_fn <- function(str) {
+	  id_match = regmatches(str, regexpr('id: "\\w+"', str))  # Extract "id" match
+	  dataset_match = regmatches(str, regexpr('dataset: "\\w+"', str))  # Extract "dataset" match
+	  
+	  if (length(id_match) > 0 && length(dataset_match) > 0) {
+		id = gsub('id: "|"', '', id_match)  # Extract "id" value
+		dataset = gsub('dataset: "|"', '', dataset_match)  # Extract "dataset" value
+		return(c(id = id, dataset = dataset))
+	  } else {
+		return(c(id = NA, dataset = NA))
+	  }
+	}
+	
+	dialog_pattern = 'dialog:.*\\n.*\\n\\s*dataset:\\s*"([^"]+)"'
+	dialog_db = regmatches(rmd_text, gregexpr(dialog_pattern, rmd_text,perl = TRUE))[[1]]
+	#print(dialog_db)
+
+	# Apply the extract_values_fn function to each element of the string array
+	result = sapply(dialog_db, extract_values_fn)
+
+	# Create a data frame from the extracted values
+	df = data.frame(t(result))
+	
+	BSkyFormat(df)
+	
+	dataset_name_to_discard_df_freq = NULL
+	
+	dataset_name_to_discard = c("reRunOutput", "loadDatasetFromPackage", "saveAModel", "loadAModel")
+	
+	if(any(df$id %in% dataset_name_to_discard))
+	{
+		dataset_name_to_discard_df = df[(df$id %in% dataset_name_to_discard), ]
+		row.names(dataset_name_to_discard_df) = c()
+		
+		dataset_name_to_discard_df_freq = data.frame(table(dataset_name_to_discard_df$dataset))
+		#BSkyFormat(dataset_name_to_discard_df_freq)
+	}
+	
+	return(invisible(dataset_name_to_discard_df_freq))
+}
+
+
+BSkyInAppScriptExtractOldDatasetList <- function(bsky_script_full_file_path = c(), json_output_file_path =c(), rmd_text=c(), file_type = "BMD", debug = FALSE)
+{
+	if(length(rmd_text) == 0)
+	{
+		if (!file.exists(bsky_script_full_file_path)) 
+		{ 
+			cat("\n", bsky_script_full_file_path, "- BlueSky script file not found", "..exiting..\n")
+			return(invisible)
+		}
+		
+		# Get the extension string
+		file_type = toupper(tools::file_ext(bsky_script_full_file_path))
+		
+		if(file_type != "BMD" && file_type != "RMD") 
+		{ 
+			cat("\n", bsky_script_full_file_path, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
+			return(invisible)
+		}
+		
+		if(file_type == "BMD")
+		{
+			# Load the 'readr' package for reading lines from files
+			suppressMessages(require(readr))
+			
+			# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
+			zip_file_path = bsky_script_full_file_path
+			script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
+			
+			# Open a connection to the zip file
+			zip_connection = unz(zip_file_path, script_file_name_without_ext)
+			
+			# Read the lines from the text file inside the zip
+			rmd_content = read_lines(zip_connection)
+			
+			# Close the zip connection
+			#close(zip_connection)
+		}
+		else
+		{
+			rmd_content = readLines(bsky_script_full_file_path, warn = FALSE)
+		}
+
+		# Combine lines into a single string
+		rmd_text = paste(rmd_content, collapse = "\n")
+		
+		######################
+		# SK for testing only 
+		######################
+		
+		#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+		#desired_blocks <- regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+		desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
+		#print(desired_blocks)
+		
+		# Combine lines into a single string
+		desired_blocks = paste(desired_blocks, collapse = "\n")
+		
+		rmd_text = desired_blocks
+		##########################
+		##########################
+	}
+
+	if(file_type == "BMD")
+	{
+		#cat(rmd_text)
+		
+		#dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
+		#dataset_names_pattern = '(\\bdataset:\\s*"([^"]+)")|(\\bdataset:[^)]+)'
+		#dataset_names_pattern = 'dataset:\\s*"([^"]+)"|\\bdataset:[^)]+'
+		 #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
+		#dataset_names_pattern =  '\\(dataset:([^)"\\n]+)\\)'
+		
+		dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
+		dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
+		dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
+		# dataset_names = trimws(gsub('name:|["()]','',dataset_names))
+		# dataset_names = dataset_names[1]
+		
+		# cat("\n=============================================\n")
+		# cat("\nBefore removing unwanted dataset names\n")
+		# print(dataset_names)
+		# cat("=============================================\n\n")
+		
+		discard_df_freq = BSkyInAppScriptExtractDialogDataset(rmd_text)
+		
+		# cat("\n=============================================\n")
+		# cat("\nunwanted dataset names\n")
+		# print(discard_df_freq)
+		# cat("=============================================\n\n")
+		
+		if(!is.null(discard_df_freq))
+		{
+			for(i in 1:dim(discard_df_freq)[1])
+			{
+				# Find the indices of the occurrences of the string to remove
+				indices_to_remove = which(dataset_names == discard_df_freq[i,1])
+
+				# Check if the number of occurrences to remove is less than or equal to the actual occurrences
+				if (discard_df_freq[i,2] <= length(indices_to_remove)) {
+					# Remove the specified number of occurrences
+					dataset_names = dataset_names[-indices_to_remove[1:discard_df_freq[i,2]]]
+				} else {
+					# If the number of occurrences to remove is greater than the actual occurrences, print a warning
+					print("Number of occurrences of dataset names to remove exceeds the actual occurrences")
+				}
+			}
+		}
+		
+		#cat("\nAfter removing unwanted dataset names\n")
+		#print(dataset_names)
+		
+		dataset_names = sort(unique(dataset_names))
+	}
+	
+	if(length(json_output_file_path) == 0)
+	{
+		return(invisible(dataset_names))
+	}
+	else
+	{
+		# Suppress warnings and info messages for require()
+		suppressMessages(require(jsonlite))
+		
+		if (!file.exists(json_output_file_path)) 
+		{
+			#print(json_output_file_path)
+			# json_file_conn = file.create(json_output_file_path)
+			# close(json_file_conn)
+			#09Apr24 Anil commented above code because of error below
+			#Error: no applicable method for 'close' applied to an object of class "logical"
+			#instead used following code and it worked
+			file.create(json_output_file_path)
+		}
+		
+		datasetname = list(datasetname = dataset_names)
+		# Convert the combined list to JSON format
+		json_data <- toJSON(datasetname, pretty = TRUE, auto_unbox = TRUE)
+
+		# print(json_data)
+		
+		# Write the JSON data to a file
+		write(json_data, json_output_file_path)
+
+		#return(invisible())
+		#return(invisible(dataset_names))
+	}
+}
+
+
+BSkyInAppScriptExecutionEngine.Retired <- function(bsky_script_full_file_path, json_output_file_path =c(), currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), expand_extraction = TRUE, debug = FALSE)
+{ 
+	if (!file.exists(bsky_script_full_file_path)) 
+	{ 
+		cat("\n", bsky_script_full_file_path, "- BlueSky script file not found", "..exiting..\n")
+		return(invisible)
+	}
+	
+	# Get the extension string
+	file_type = toupper(tools::file_ext(bsky_script_full_file_path))
+	
+	if(file_type != "BMD" && file_type != "RMD") 
+	{ 
+		cat("\n", bsky_script_full_file_path, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
+		return(invisible)
+	}
+	
+	if(file_type == "BMD")
+	{
+		# Load the 'readr' package for reading lines from files
+		suppressMessages(require(readr))
+
+		# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
+		zip_file_path = bsky_script_full_file_path
+		script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
+
+		# Open a connection to the zip file
+		zip_connection = unz(zip_file_path, script_file_name_without_ext)
+
+		# Read the lines from the text file inside the zip
+		rmd_content = read_lines(zip_connection)
+
+		# Close the zip connection
+		#close(zip_connection)
+	}
+	else
+	{
+		rmd_content = readLines(bsky_script_full_file_path, warn = FALSE)
+	}
+
+	# Combine lines into a single string
+	rmd_text = paste(rmd_content, collapse = "\n")
+	
+	######################
+	# SK for testing only 
+	######################
+	
+	#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+	#desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+	desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
+	#print(desired_blocks)
+	
+	# Combine lines into a single string
+	desired_blocks <- paste(desired_blocks, collapse = "\n")
+	
+	rmd_text = desired_blocks
+
+	##########################
+	##########################
+
+	# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
+	code_chunks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
+
+	# Remove the enclosures from each code chunk
+	code_chunks = gsub("```\\{r\\}|```", "", code_chunks)
+	
+	if(file_type == "BMD")
+	{
+		# Extract lines that start with '#'
+		#code_chunks_comments = grep("^#", rmd_content, value = TRUE)
+
+		# Define the regular expression pattern to match everything after "output_title: and within ```console block"
+		#title_pattern = '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
+		
+		#title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
+		title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
+		
+		# Extract the desired string using regmatches and regexpr
+		code_chunks_comments = regmatches(rmd_text, gregexpr(title_pattern, rmd_text))[[1]]
+		
+		# Remove the "output_title: " prefix and extra enclosure " around 
+		#code_chunks_comments = gsub('output_title: ', '', code_chunks_comments) 
+		#code_chunks_comments = gsub('"', '', code_chunks_comments)
+		code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )|(\\{console\\})', '', code_chunks_comments)
+		
+		# Define the regular expression pattern with exact case matching for "dataset"
+		#dataset_name_and_console_comment_pattern <- '(dataset:\\s*"([^"]+)")|(```\\{console\\}(.*?)```)'
+		dataset_name_and_console_comment_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))|(```\\{console\\}(.*?)```)'
+		datasets_names_and_console_comments = regmatches(rmd_text, gregexpr(dataset_name_and_console_comment_pattern, rmd_text))[[1]]
+		
+		# #dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
+		# #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
+		# dataset_names_pattern =  'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
+		# dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
+		# dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
+		
+		dataset_names = BSkyInAppScriptExtractOldDatasetList(rmd_text = rmd_text, file_type = file_type)
+		
+		if(length(code_chunks) > length(code_chunks_comments))
+		{
+			#Extract "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+			dialog_console_r_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+			
+			if(debug)
+			{
+				cat("\nnumber of ```r code blocks\n")
+				print(length(code_chunks))
+				cat("\nnumber of code titles\n")
+				print(length(code_chunks_comments))
+				cat("\nnumber of blocks - dialog,r,console blocks\n")
+				print(length(dialog_console_r_blocks))
+			
+				BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+				BSkyFormat(dialog_console_r_blocks)
+			}
+			
+			code_chunks_comments_modified = c()
+			datasets_names_and_console_comments_modified = c()
+			
+			multiple_r_blocks_found = FALSE
+			k = 1
+			
+			for(j in 1:length(dialog_console_r_blocks))
+			{	
+				if(trimws(dialog_console_r_blocks[j]) == "```{r}")
+				{
+					if(multiple_r_blocks_found == TRUE)
+					{
+						#Seccond or more continuous occurance of a ```r block for a given dialog block
+						code_chunks_comments_modified = c(code_chunks_comments_modified, "BSky_NO_TITLE")
+						datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "BSky_NO_TITLE")	
+					}
+					else
+					{
+						#First occurance of a ```r block - do nothing 
+						multiple_r_blocks_found = TRUE
+					}
+				}
+				else if(trimws(dialog_console_r_blocks[j]) == "```{dialog}" || trimws(dialog_console_r_blocks[j]) == "```{console}")
+				{
+					code_chunks_comments_modified = c(code_chunks_comments_modified, code_chunks_comments[k])
+					datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, datasets_names_and_console_comments[k])
+					
+					k = k+1
+					multiple_r_blocks_found = FALSE
+				}
+				else
+				{
+					cat("\n","UNNOWN BLOCK==",trimws(dialog_console_r_blocks[j]),"==","\n")
+				}
+			}
+			
+			if(debug)
+			{
+				BSkyFormat(cbind(code_chunks_comments_modified,datasets_names_and_console_comments_modified))
+			}
+			code_chunks_comments = code_chunks_comments_modified
+			datasets_names_and_console_comments = datasets_names_and_console_comments_modified
+		}	
+	}
+	else
+	{
+		# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
+		code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
+		extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
+		code_chunks_comments[1] = gsub('(```|\\{r\\})',"",substr(code_chunks_comments[1], sum(nchar(extract_first_comment)), nchar(code_chunks_comments[1])))
+		
+		# Remove the enclosures from each chunk comment
+		code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
+		#code_chunks_comments = gsub('(\n)|(#\\s+)', '', code_chunks_comments)
+		code_chunks_comments = gsub('(\\s\n)|(\n)|(#\\s)', '', code_chunks_comments)
+	}
+	
+	
+	# For debugging
+	# cat("\nCODE CHUNK COMMENTS\n")
+	# print(code_chunks_comments)
+	# cat("\ndatasets_names_and_console_comments\n")
+	# print(datasets_names_and_console_comments)
+	if(debug)
+	{
+		BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+		cat("\nDATASET NAMES\n")
+		print(dataset_names)
+		#return()
+	}
+	
+	if(is.null(replaceOldDatasetName) || length(replaceOldDatasetName) == 0 || (length(replaceOldDatasetName) == 1 && trimws(replaceOldDatasetName) == ""))
+	{
+		old_dataset_name = dataset_names
+	}
+	else
+	{
+		old_dataset_name = replaceOldDatasetName
+	}
+	
+	if(debug)
+	{
+		cat("\nFinal list of old dataset names extracted from the script code\n")
+		print(old_dataset_name)
+		cat("\n")
+	}
+	
+	print_dataset_info_flag = TRUE
+	code_chunk_list = list()
+	
+	num_subs = min(length(old_dataset_name), length(currentDatasetName))
+	final_dataset_names = currentDatasetName[1:	num_subs]	
+	if(length(old_dataset_name) > num_subs)
+		final_dataset_names = c(final_dataset_names, old_dataset_name[(num_subs+1):length(old_dataset_name)])
+	
+	if(debug)
+	{
+		cat("\nFinal list of dataset names to be used in script code\n")
+		print(final_dataset_names)
+		cat("\n")
+	}
+					
+	codeChunkNum = 0
+	codeChunkCommentNum = 0
+	
+	for (chunk in code_chunks) 
+	{	
+		codeChunkCommentNum = codeChunkCommentNum + 1 
+		
+		if(regexpr(paste0("BSkyInAppScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else if(regexpr(paste0("BSkyInAppScriptExtractOldDatasetList", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else if(regexpr(paste0("\nBSkyloadDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else if(regexpr(paste0("\nBSkyLoadRpkgDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else
+		{
+			codeChunkNum = codeChunkNum + 1
+			
+			chunk_modified = chunk
+			
+			if(!is.null(currentDatasetName) && !is.na(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName[1]) != "")
+			{
+				if(!is.null(old_dataset_name) && !is.na(old_dataset_name) && length(old_dataset_name) > 0 && trimws(old_dataset_name[1]) != "")
+				{	
+					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
+					{
+						print_dataset_info_flag = FALSE
+						if(identical(trimws(old_dataset_name), trimws(currentDatasetName)))
+						{
+							cat("\nThe Active Dataset", currentDatasetName, ", the same name as the dataset used",old_dataset_name, "in the script\n")
+							cat("The script will be run with the original Dataset",old_dataset_name,"(i.e., no dataset replacement will be performed in the script)\n\n")
+						}
+						else
+						{
+							cat("\nThe script will be run after replacing the Dataset:", old_dataset_name, "with the Dataset:",currentDatasetName,"\n")
+						}
+					}
+					
+					if(!identical(trimws(old_dataset_name), trimws(currentDatasetName)))
+					{
+						num_subs = min(length(old_dataset_name), length(currentDatasetName))
+						
+						for(sub in 1:num_subs)
+						{
+							if(!identical(trimws(old_dataset_name[sub]), trimws(currentDatasetName[sub])))
+							{
+								chunk_modified = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = chunk_modified)
+								datasets_names_and_console_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = datasets_names_and_console_comments[codeChunkCommentNum])
+							
+							# cat("\nOLD DB: ", old_dataset_name[sub], "\n") 
+							# cat("\nNEW DB: ", currentDatasetName[sub], "\n")
+							# cat("\nBefore Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
+								code_chunks_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = code_chunks_comments[codeChunkCommentNum])
+							#cat("\nAfter Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")		
+							}
+						}
+					}
+				}
+				else if(length(old_dataset_name) == 0 || is.na(old_dataset_name))
+				{
+					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
+					{
+						print_dataset_info_flag = FALSE
+						cat("\nUnable to determine the original Dataset name from the script. So, the script will be run with the original Dataset (i.e., no dataset replacement will be performed with",currentDatasetName,"in the script)","\n")
+					}
+				}
+			}
+			else
+			{
+				if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
+				{
+					print_dataset_info_flag = FALSE
+					
+					if(length(old_dataset_name) == 0)
+					{
+						cat("\nUnable to determine the original Dataset name from the script. Anyway, the script will be run with the original Dataset","\n")
+					}
+					else
+					{
+						cat("\nThe script will be run with the original Dataset (i.e., no dataset replacement will be performed):", old_dataset_name,"\n")
+					}
+				}
+			}
+			
+			if(debug)
+			{
+				cat("\nBefore: ",code_chunks_comments[codeChunkCommentNum],"\n")
+			}
+			
+			if(!(code_chunks_comments[codeChunkCommentNum] %in% c("Save Models to a file", "Load Models from a file")))
+			{
+				if((length(grep("dataset:", code_chunks_comments[codeChunkCommentNum])) == 0) && length(grep("dataset:", datasets_names_and_console_comments[codeChunkCommentNum])) > 0)
+				{
+					datasets_names_and_console_comments[codeChunkCommentNum] = gsub('"', '', datasets_names_and_console_comments[codeChunkCommentNum])	
+					code_chunks_comments[codeChunkCommentNum] = paste0(code_chunks_comments[codeChunkCommentNum], " (", datasets_names_and_console_comments[codeChunkCommentNum], ")")
+				}
+			}
+			
+			code_chunks_comment = paste0("Title:",code_chunks_comments[codeChunkCommentNum]) #Anil 10Apr24. used this instead of line abv for title
+			
+			if(debug)
+			{
+				cat("\nAfter: ",code_chunks_comment,"\n")
+			}
+			
+			code_chunk_list = c(code_chunk_list, chunk_header = list(code_chunks_comment))
+			#code_chunk_list = c(code_chunk_list, chunk_new_line = list("BSkyFormat('\n')")) #Anil 10Apr24. Now we have title, this is not needed
+			code_chunk_list = c(code_chunk_list, chunk_code = list(chunk_modified))
+		}
+	}
+	
+	if(length(json_output_file_path) == 0)
+	{
+		return(invisible(code_chunk_list))
+	}
+	else
+	{
+		# Suppress warnings and info messages for require()
+		suppressMessages(require(jsonlite))
+		
+		#for(i in 1:length(code_chunk_list)){
+		# dump the values into json file 
+		#}
+		
+		if (!file.exists(json_output_file_path)) 
+		{
+			#print(json_output_file_path)
+			# json_file_conn = file.create(json_output_file_path)
+			# close(json_file_conn)
+			#09Apr24 Anil commented above code because of error below
+			#Error: no applicable method for 'close' applied to an object of class "logical"
+			#instead used following code and it worked
+			file.create(json_output_file_path)
+		}
+	
+		# Convert the combined list to JSON format
+		json_data <- toJSON(code_chunk_list, pretty = TRUE, auto_unbox = TRUE)
+
+		#print(json_data)
+		
+		# Write the JSON data to a file
+		write(json_data, json_output_file_path)
+
+		#return(invisible())
+		return(invisible(code_chunk_list))
+	}
+}
+
+
+BSkyInAppBMDScriptExecutionEngine <- function(bsky_script_full_file_path, bmd_output_file_path =c(), currentDatasetName = BSkyGetCurrentDatabaseName(), replaceOldDatasetName = c(), currentColumnNames = c(), replaceOldColumnNames = c(), scriptSinkfile = FALSE, expand_extraction = TRUE, debug = FALSE)
+{ 
+	if (!file.exists(bsky_script_full_file_path)) 
+	{ 
+		cat("\n", bsky_script_full_file_path, "- BlueSky script file not found", "..exiting..\n")
+		return(invisible)
+	}
+	
+	# Get the extension string
+	file_type = toupper(tools::file_ext(bsky_script_full_file_path))
+	
+	if(file_type != "BMD" && file_type != "RMD") 
+	{ 
+		cat("\n", bsky_script_full_file_path, "- file type must have the file extension of Bmd or Rmd", "..exiting..\n")
+		return(invisible)
+	}
+	
+	if(file_type == "BMD")
+	{
+		# Load the 'readr' package for reading lines from files
+		suppressMessages(require(readr))
+
+		# Define the path to the BSky Bmd zip file and the name of the text file inside the zip
+		zip_file_path = bsky_script_full_file_path
+		script_file_name_without_ext = tools::file_path_sans_ext(basename(bsky_script_full_file_path))
+
+		# Open a connection to the zip file
+		zip_connection = unz(zip_file_path, script_file_name_without_ext)
+
+		# Read the lines from the text file inside the zip
+		rmd_content = read_lines(zip_connection)
+
+		# Close the zip connection
+		#close(zip_connection)
+	}
+	else
+	{
+		rmd_content = readLines(bsky_script_full_file_path, warn = FALSE)
+	}
+
+	# Combine lines into a single string
+	rmd_text = paste(rmd_content, collapse = "\n")
+	
+	######################
+	# SK for testing only 
+	######################
+	
+	#Extract all text between "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+	#desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+	desired_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```|```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
+	#print(desired_blocks)
+	
+	# Combine lines into a single string
+	rmd_text <- paste(desired_blocks, collapse = "\n")
+
+	##########################
+	##########################
+
+	# Extract all text between "```{dialog}", "```{console}" and "```" for all occurrences (including the enclosures)
+	dialog_console_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```|```\\{console\\}(.*?)```", rmd_text))[[1]]
+	
+	# Extract all text between "```{dialog}" and "```" for all occurrences (including the enclosures)
+	dialog_blocks = regmatches(rmd_text, gregexpr("```\\{dialog\\}(.*?)```", rmd_text))[[1]]
+	
+	# Extract all text between "```{console}" and "```" for all occurrences (including the enclosures)
+	console_blocks = regmatches(rmd_text, gregexpr("```\\{console\\}(.*?)```", rmd_text))[[1]]
+	
+	# Extract all text between "```{r}" and "```" for all occurrences (excluding the enclosures)
+	code_chunks = regmatches(rmd_text, gregexpr("```\\{r\\}(.*?)```", rmd_text))[[1]]
+
+	# Remove the enclosures from each code chunk
+	code_chunks = gsub("```\\{r\\}|```", "", code_chunks)
+	
+	if(file_type == "BMD")
+	{
+		# Extract lines that start with '#'
+		#code_chunks_comments = grep("^#", rmd_content, value = TRUE)
+
+		# Define the regular expression pattern to match everything after "output_title: and within ```console block"
+		#title_pattern = '(^Open Dataset: (.*)$)|((output_title:)\\s*"([^"]+)")'
+		
+		#title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")' 
+		title_pattern = '((Open Dataset:)\\s*([^"]+)\n)|((output_title:)\\s*"([^"]+)")|(```\\{console\\}(.*?)```)' 
+		
+		# Extract the desired string using regmatches and regexpr
+		code_chunks_comments = regmatches(rmd_text, gregexpr(title_pattern, rmd_text))[[1]]
+		
+		# Remove the "output_title: " prefix and extra enclosure " around 
+		#code_chunks_comments = gsub('output_title: ', '', code_chunks_comments) 
+		#code_chunks_comments = gsub('"', '', code_chunks_comments)
+		code_chunks_comments = gsub('(")|(\n)|(`)|(\\{r\\})|(output_title: )|(\\{console\\})', '', code_chunks_comments)
+		
+		# Define the regular expression pattern with exact case matching for "dataset"
+		#dataset_name_and_console_comment_pattern <- '(dataset:\\s*"([^"]+)")|(```\\{console\\}(.*?)```)'
+		dataset_name_and_console_comment_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))|(```\\{console\\}(.*?)```)'
+		datasets_names_and_console_comments = regmatches(rmd_text, gregexpr(dataset_name_and_console_comment_pattern, rmd_text))[[1]]
+		
+		# #dataset_names_pattern = '(dataset:\\s*"([^"]+)")|(dataset:\\s*([^"]+)\\))'
+		# #dataset_names_pattern = 'dataset:\\s*(?:"([^"]+)"|([^"\\n()]+))'
+		# dataset_names_pattern =  'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
+		# dataset_names = regmatches(rmd_text, gregexpr(dataset_names_pattern, rmd_text))[[1]]
+		# dataset_names = trimws(gsub('dataset:|["()]','',dataset_names))
+		
+		dataset_names = BSkyInAppScriptExtractOldDatasetList(rmd_text = rmd_text, file_type = file_type)
+		
+		if(length(code_chunks) > length(code_chunks_comments))
+		{
+			#Extract "```{r}", "```{dialog}", "```{console}"and "```" for all occurrences
+			dialog_console_r_blocks = regmatches(rmd_text, gregexpr("```\\{r\\}|```\\{dialog\\}|```\\{console\\}", rmd_text))[[1]]
+			
+			if(debug)
+			{
+				cat("\nnumber of ```r code blocks\n")
+				print(length(code_chunks))
+				cat("\nnumber of code titles\n")
+				print(length(code_chunks_comments))
+				cat("\nnumber of blocks - dialog,r,console blocks\n")
+				print(length(dialog_console_r_blocks))
+			
+				BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+				BSkyFormat(dialog_console_r_blocks)
+			}
+			
+			code_chunks_comments_modified = c()
+			datasets_names_and_console_comments_modified = c()
+			dialog_console_blocks_modified = c()
+			
+			multiple_r_blocks_found = FALSE
+			k = 1
+			
+			for(j in 1:length(dialog_console_r_blocks))
+			{	
+				if(trimws(dialog_console_r_blocks[j]) == "```{r}")
+				{
+					if(multiple_r_blocks_found == TRUE)
+					{
+						#Seccond or more continuous occurance of a ```r block for a given dialog block
+						code_chunks_comments_modified = c(code_chunks_comments_modified, "BSky_NO_TITLE")
+						datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, "BSky_NO_TITLE")	
+						dialog_console_blocks_modified = c(dialog_console_blocks_modified, "BSKY_NO_DIALOG_CONSOLE_BLOCK")
+					}
+					else
+					{
+						#First occurance of a ```r block - do nothing 
+						multiple_r_blocks_found = TRUE
+					}
+				}
+				else if(trimws(dialog_console_r_blocks[j]) == "```{dialog}" || trimws(dialog_console_r_blocks[j]) == "```{console}")
+				{
+					code_chunks_comments_modified = c(code_chunks_comments_modified, code_chunks_comments[k])
+					datasets_names_and_console_comments_modified = c(datasets_names_and_console_comments_modified, datasets_names_and_console_comments[k])
+					dialog_console_blocks_modified = c(dialog_console_blocks_modified, dialog_console_blocks[k])
+					
+					k = k+1
+					multiple_r_blocks_found = FALSE
+				}
+				else
+				{
+					cat("\n","UNNOWN BLOCK==",trimws(dialog_console_r_blocks[j]),"==","\n")
+				}
+			}
+			
+			if(debug)
+			{
+				BSkyFormat(cbind(code_chunks_comments_modified,datasets_names_and_console_comments_modified))
+			}
+			code_chunks_comments = code_chunks_comments_modified
+			datasets_names_and_console_comments = datasets_names_and_console_comments_modified
+			dialog_console_blocks = dialog_console_blocks_modified
+		}	
+	}
+	else
+	{
+		# Extract all text between "```" and "```{r}" title comment for the code chunk all chunk occurrences
+		code_chunks_comments <- regmatches(rmd_text, gregexpr("```(.*?)```\\{r\\}", rmd_text))[[1]]
+		extract_first_comment = regmatches(code_chunks_comments[1], gregexpr("```\\{r(.*?)```", code_chunks_comments[1]))[[1]]
+		code_chunks_comments[1] = gsub('(```|\\{r\\})',"",substr(code_chunks_comments[1], sum(nchar(extract_first_comment)), nchar(code_chunks_comments[1])))
+		
+		# Remove the enclosures from each chunk comment
+		code_chunks_comments <- gsub("```\\{r\\}|```", "", code_chunks_comments)
+		#code_chunks_comments = gsub('(\n)|(#\\s+)', '', code_chunks_comments)
+		code_chunks_comments = gsub('(\\s\n)|(\n)|(#\\s)', '', code_chunks_comments)
+	}
+	
+	
+	# For debugging
+	# cat("\nCODE CHUNK COMMENTS\n")
+	# print(code_chunks_comments)
+	# cat("\ndatasets_names_and_console_comments\n")
+	# print(datasets_names_and_console_comments)
+	if(debug)
+	{
+		BSkyFormat(cbind(code_chunks_comments,datasets_names_and_console_comments))
+		cat("\nDATASET NAMES\n")
+		print(dataset_names)
+		#return()
+	}
+	
+	if(is.null(replaceOldDatasetName) || length(replaceOldDatasetName) == 0 || (length(replaceOldDatasetName) == 1 && trimws(replaceOldDatasetName) == ""))
+	{
+		old_dataset_name = dataset_names
+	}
+	else
+	{
+		old_dataset_name = replaceOldDatasetName
+	}
+	
+	if(debug)
+	{
+		cat("\nFinal list of old dataset names extracted from the script code\n")
+		print(old_dataset_name)
+		cat("\n")
+	}
+	
+	print_dataset_info_flag = TRUE
+	code_chunk_list = list()
+	
+	num_subs = min(length(old_dataset_name), length(currentDatasetName))
+	final_dataset_names = currentDatasetName[1:	num_subs]	
+	if(length(old_dataset_name) > num_subs)
+		final_dataset_names = c(final_dataset_names, old_dataset_name[(num_subs+1):length(old_dataset_name)])
+	
+	if(debug)
+	{
+		cat("\nFinal list of dataset names to be used in script code\n")
+		print(final_dataset_names)
+		cat("\n")
+	}
+					
+	codeChunkNum = 0
+	codeChunkCommentNum = 0
+	
+	
+	for (chunk in code_chunks) 
+	{	
+		codeChunkCommentNum = codeChunkCommentNum + 1 
+		
+		if(regexpr(paste0("BSkyInAppScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else if(regexpr(paste0("BSkyInAppBMDScriptExecutionEngine", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else if(regexpr(paste0("BSkyInAppScriptExtractOldDatasetList", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else if(regexpr(paste0("\nBSkyloadDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else if(regexpr(paste0("\nBSkyLoadRpkgDataset", ".*"), trimws(chunk,which = "left", whitespace = "[ \t\r]"))[1] > 0)
+		{
+		}
+		else
+		{
+			codeChunkNum = codeChunkNum + 1
+			
+			chunk_modified = chunk
+			
+			if(!is.null(currentDatasetName) && !is.na(currentDatasetName) && length(currentDatasetName) > 0 && trimws(currentDatasetName[1]) != "")
+			{
+				if(!is.null(old_dataset_name) && !is.na(old_dataset_name) && length(old_dataset_name) > 0 && trimws(old_dataset_name[1]) != "")
+				{	
+					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
+					{
+						print_dataset_info_flag = FALSE
+						if(identical(trimws(old_dataset_name), trimws(currentDatasetName)))
+						{
+							cat("\nThe Active Dataset", currentDatasetName, ", the same name as the dataset used",old_dataset_name, "in the script\n")
+							cat("The script will be run with the original Dataset",old_dataset_name,"(i.e., no dataset replacement will be performed in the script)\n\n")
+						}
+						else
+						{
+							cat("\nThe script will be run after replacing the Dataset:", old_dataset_name, "with the Dataset:",currentDatasetName,"\n")
+						}
+					}
+					
+					if(!identical(trimws(old_dataset_name), trimws(currentDatasetName)))
+					{
+						num_subs = min(length(old_dataset_name), length(currentDatasetName))
+						
+						for(sub in 1:num_subs)
+						{
+							if(!identical(trimws(old_dataset_name[sub]), trimws(currentDatasetName[sub])))
+							{
+								chunk_modified = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = chunk_modified)
+								
+								dataset_name_pattern =  'dataset:\\s*(?:"([^"]+)"|([^"()]+))'
+								dataset_name = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(dataset_name_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
+								dataset_name = trimws(gsub('dataset:|["()]','',dataset_name))
+								
+								#cat("\nBlock dataset name:",dataset_name, "\n")
+								
+								if(length(dataset_name) > 0 && dataset_name == old_dataset_name[sub])
+								{
+									datasets_names_and_console_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = datasets_names_and_console_comments[codeChunkCommentNum])
+									dialog_console_blocks[codeChunkCommentNum] = gsub(old_dataset_name[sub], currentDatasetName[sub], dialog_console_blocks[codeChunkCommentNum])
+								
+									# cat("\nOLD DB: ", old_dataset_name[sub], "\n") 
+									# cat("\nNEW DB: ", currentDatasetName[sub], "\n")
+									# cat("\nBefore Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
+									code_chunks_comments[codeChunkCommentNum] = BSkyDatasetNameSubstitute(datasetName = old_dataset_name[sub], toDatasetName = currentDatasetName[sub], replaceOldColumnNames = replaceOldColumnNames, currentColumnNames = currentColumnNames, RcommandString = code_chunks_comments[codeChunkCommentNum])
+									#cat("\nAfter Sub: ",code_chunks_comments[codeChunkCommentNum],"\n")
+								}
+							}
+						}
+					}
+					
+					# Update the Dialog title to append with (datasetname) if it does not exist already
+					output_title_pattern = 'output_title: "[^"]+"'
+					output_title = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(output_title_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
+					
+					if(length(output_title) > 0)
+					{
+						# Extract dataset name (by now already updated with the new dataset) from the dialog definition 
+						#dialog_dataset_name_pattern =  "^\\s+dataset: \".*\"(?!\\s+output_title:)"				   
+						#dialog_dataset_name_pattern = "^\\s+dataset: \".*\"(?!(?:\\s+output_title:|\\s*\\(dataset:))"
+						dialog_dataset_name_pattern = "dataset: \"[^\\\"]+\""
+
+						dialog_dataset_name = regmatches(dialog_console_blocks[codeChunkCommentNum], gregexpr(dialog_dataset_name_pattern, dialog_console_blocks[codeChunkCommentNum]))[[1]]
+						dialog_dataset_name = trimws(gsub('dataset:|["()]','',dialog_dataset_name))
+					
+						# Extract the last occurance (datasetname) substring from the dialog title string if it exists 
+						extract_dataset_name_pattern <- "\\((.*?)\\)"
+						matches <- regmatches(output_title, gregexpr(extract_dataset_name_pattern, output_title))
+						
+						if(length(matches[[1]]) > 0)
+						{
+							last_occurrence_data_name <- tail(matches[[1]], 1)
+
+							# if last occurance (datasetname) substring does not exist in the dialog title, append (datasetname) to the dialog title
+							if(length(grep(dialog_dataset_name, last_occurrence_data_name)) == 0)
+							{
+								replacement_string = paste0("\\1\\2", " (", dialog_dataset_name, ")", "\\3")
+								dialog_console_blocks[codeChunkCommentNum] <- gsub("(output_title: \")([^\"]*)(\")", replacement_string , dialog_console_blocks[codeChunkCommentNum], perl = TRUE)
+							}
+						}
+						else
+						{
+							# (datasetname) substring does not exist in the dialog title, append (datasetname) to the dialog title
+							replacement_string = paste0("\\1\\2", " (", dialog_dataset_name, ")", "\\3")
+							dialog_console_blocks[codeChunkCommentNum] <- gsub("(output_title: \")([^\"]*)(\")", replacement_string , dialog_console_blocks[codeChunkCommentNum], perl = TRUE)
+						}
+					}
+				}
+				else if(length(old_dataset_name) == 0 || is.na(old_dataset_name))
+				{
+					if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
+					{
+						print_dataset_info_flag = FALSE
+						cat("\nUnable to determine the original Dataset name from the script. So, the script will be run with the original Dataset (i.e., no dataset replacement will be performed with",currentDatasetName,"in the script)","\n")
+					}
+				}
+			}
+			else
+			{
+				if(print_dataset_info_flag == TRUE || codeChunkNum == 1)
+				{
+					print_dataset_info_flag = FALSE
+					
+					if(length(old_dataset_name) == 0)
+					{
+						cat("\nUnable to determine the original Dataset name from the script. Anyway, the script will be run with the original Dataset","\n")
+					}
+					else
+					{
+						cat("\nThe script will be run with the original Dataset (i.e., no dataset replacement will be performed):", old_dataset_name,"\n")
+					}
+				}
+			}
+			
+			if(debug)
+			{
+				cat("\nBefore: ",code_chunks_comments[codeChunkCommentNum],"\n")
+			}
+			
+			if(!(code_chunks_comments[codeChunkCommentNum] %in% c("Save Models to a file", "Load Models from a file")))
+			{
+				if((length(grep("dataset:", code_chunks_comments[codeChunkCommentNum])) == 0) && length(grep("dataset:", datasets_names_and_console_comments[codeChunkCommentNum])) > 0)
+				{
+					datasets_names_and_console_comments[codeChunkCommentNum] = gsub('"', '', datasets_names_and_console_comments[codeChunkCommentNum])	
+					code_chunks_comments[codeChunkCommentNum] = paste0(code_chunks_comments[codeChunkCommentNum], " (", datasets_names_and_console_comments[codeChunkCommentNum], ")")
+				}
+			}
+			
+			code_chunks_comment = paste0("Title:",code_chunks_comments[codeChunkCommentNum]) #Anil 10Apr24. used this instead of line abv for title
+			
+			if(debug)
+			{
+				cat("\nAfter: ",code_chunks_comment,"\n")
+			}
+			
+			#code_chunk_list = c(code_chunk_list, chunk_header = list(code_chunks_comment))
+			code_chunk_list = c(code_chunk_list, dialog_console = list(dialog_console_blocks[codeChunkCommentNum]))
+			#code_chunk_list = c(code_chunk_list, chunk_new_line = list("BSkyFormat('\n')")) #Anil 10Apr24. Now we have title, this is not needed
+			code_chunk_list = c(code_chunk_list, chunk_code = list(chunk_modified))
+		}
+	}
+	
+	oldGraphicsDirPath = BSkyGetGraphicsDirPath()
+	
+	tryCatch({
+        withCallingHandlers({
+		
+			if(length(code_chunk_list) > 1)
+			{
+				BSkyInAppBMDScriptExecuteRBlocks(bsky_script_system_dir = bmd_output_file_path, dialog_console_code_chunk_list = code_chunk_list, scriptSinkfile = scriptSinkfile, inAppScriptEnv = TRUE)
+			}
+            
+        }, warning = BSkyInAppBMDScriptExecuteErrWarnHandler, silent = TRUE)
+    }, error = BSkyInAppBMDScriptExecuteErrWarnHandler, silent = TRUE)
+	
+	
+	# Restore the graphics path for the App to execute normally when it returns from the BMD execution
+	BSkySetGraphicsDirPath(bskyGraphicsDirPath = oldGraphicsDirPath)
+	
+	# Close out sin() file
+	#suppressWarnings(sink())
+	suppressWarnings(sink(type = "output"))
+	suppressWarnings(sink(type = "message"))
+	
+	if(length(bmd_output_file_path) == 0)
+	{
+		return(invisible(code_chunk_list))
+	}
+	else
+	{
+		return(invisible())
+	}
+}
+
+
+BSkyInAppBMDScriptExecuteRBlocks <- function(bsky_script_system_dir, dialog_console_code_chunk_list, scriptSinkfile = FALSE, inAppScriptEnv = TRUE)
+{
+		if (!dir.exists(bsky_script_system_dir)) 
+		{ 
+			cat("\n", bsky_script_system_dir, "- BlueSKy temp script directory not found", "..exiting..\n")
+			return(invisible)
+		}
+		
+		if(inAppScriptEnv == TRUE)
+		{
+			bmd_script_working_dir = paste0(bsky_script_system_dir,"\\BlueSkyScript")
+			if (!dir.exists(bmd_script_working_dir)) 
+			{
+				# Create the directory if it does not exist
+				dir.create(bmd_script_working_dir)
+			}
+			
+			if (dir.exists(bmd_script_working_dir)) 
+			{
+				bsky_script_system_dir = bmd_script_working_dir
+			}
+		}
+		
+		if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
+		{
+			system_log_dir = paste0(bsky_script_system_dir,"\\logs")
+			if (!dir.exists(system_log_dir)) 
+			{
+				# Create the directory if it does not exist
+				dir.create(system_log_dir)
+			}
+		}
+		
+		# system_out_dir = paste0(bsky_script_system_dir,"\\out")
+		# if (!dir.exists(system_out_dir)) 
+		# {
+			# # Create the directory if it does not exist
+			# dir.create(system_out_dir)
+		# }
+	
+		#####################################################################################################
+		# Setting up the output directory to write HTML file names for every BlueSky Statistics Script run
+		#####################################################################################################
+		cur_timestamp = format(Sys.time(), "%Y%m%d_%H%M%S")
+		
+		if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
+		{
+			BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp = cur_timestamp, init = TRUE, inAppScriptEnv = inAppScriptEnv)
+		}
+		
+		oldGraphicsDirPath = BSkyGetGraphicsDirPath()
+		BSkySetGraphicsDirPath(bskyGraphicsDirPath = bsky_script_system_dir)
+		
+		
+		if(inAppScriptEnv == TRUE)
+		{
+			bsky_script_output_file = paste(bsky_script_system_dir,"\\","BSkyBMDOutput", sep='')
+		}
+		else
+		{
+			bsky_script_output_file = paste(bsky_script_system_dir,"\\","BSkyBMDOutput", "_", cur_timestamp, ".htm", sep='')
+		}
+		
+		writeLines("\n", bsky_script_output_file, sep = "\n") 
+		
+		codeChunkNum = 0
+
+		for (chunk in 1:length(dialog_console_code_chunk_list)) 
+		{	
+			outputBMDfileConn = file(bsky_script_output_file, "ab")
+					
+			if(names(dialog_console_code_chunk_list[chunk]) == "dialog_console")
+			{
+				if(dialog_console_code_chunk_list[[chunk]] != "BSKY_NO_DIALOG_CONSOLE_BLOCK")
+				{
+					# Write the combined lines to a new file
+					writeLines(dialog_console_code_chunk_list[[chunk]], outputBMDfileConn, sep = "\n")
+					#writeLines("\n", outputBMDfileConn, sep = "\n")
+				}
+				
+				close(outputBMDfileConn)
+			}
+			else if(names(dialog_console_code_chunk_list[chunk]) == "chunk_code")
+			{
+				# Write the combined lines to a new file
+				
+				#writeLines(paste("```{r}",dialog_console_code_chunk_list[chunk],"```"), outputBMDfileConn, sep = "\n")
+				writeLines("```{r}", outputBMDfileConn, sep = "\n")
+				writeLines(paste(dialog_console_code_chunk_list[chunk]), outputBMDfileConn, sep = "\n")
+				writeLines("```", outputBMDfileConn, sep = "\n")
+				
+				#writeLines("\n", outputBMDfileConn)
+				close(outputBMDfileConn)
+				
+				delete_left_over_sink_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg|.txt", ignore.case = TRUE, full.names = TRUE)
+				if(length(delete_left_over_sink_svgs) > 0)
+				{
+					unlink(delete_left_over_sink_svgs)
+				}
+					
+				############################################################
+				#  Open a sink file to redirect the stdout and stderr output
+				############################################################
+				#sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
+				
+				#sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
+				sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
+				
+				####################################################
+				# close the bsky_script_system_dir\logs sink files()
+				####################################################
+				#suppressWarnings(sink())
+				sink()
+				
+				sink(file = sink_file_conn, append = TRUE, type = c("output"), split = FALSE)
+				sink(file = sink_file_conn, append = TRUE, type = c("message"), split = FALSE)
+						
+				#######################################################################################
+				#  Open a SVG graphics device to collect the graphics files for each dataset processed
+				#######################################################################################
+				SvgFileName = "BSkyRplot%03d.svg"
+				#svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''), width=10, height=6)
+				#antialias = c("default", "none", "gray", "subpixel") pointsize = 12
+				svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''), width=par("din")[1], height=par("din")[2])
+				
+				
+				#cat("\n============\n", dialog_console_code_chunk_list[[chunk]], "\n====\n")
+				###################################################################################################
+				# Execute the script copied from BlueSky Statistics App as is without any dataset name substitution
+				###################################################################################################
+				cmd_execution_status = BSkyEvalRcommandForAppScript(RcommandString = dialog_console_code_chunk_list[[chunk]])
+				
+				#cat("\nCommand Execution Status : ", cmd_execution_status$executionStatus, "\n") if -1 that indicates failed execution 
+				
+				################################
+				# Close the SVG graphics device
+				################################
+				dev.off()
+				
+				##################################
+				#  Close the chunk level sink file 
+				##################################
+				#sink()
+				sink(type = "output")
+				sink(type = "message")
+		
+				close(sink_file_conn)
+				
+				#######################################################
+				# Open back the bsky_script_system_dir\logs sink files 
+				#######################################################
+				if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
+				{
+					BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp, inAppScriptEnv = TRUE)
+				}
+				
+				codeChunkNum = codeChunkNum + 1
+				
+				# Generate the HTML output file from the script
+				BSkyWriteKableHtmlOutput(datasetName = c(""), dirName = bsky_script_system_dir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = c(""), inAppScriptEnv = TRUE)
+			
+				# No incoming datafile is used - so no datafile to move
+				#file.copy(full_datafile_names[file_counter], paste(bsky_script_output_subdir,"\\", datafile_names[file_counter], sep=''))
+				#file.remove(full_datafile_names[file_counter])
+				
+				delete_left_over_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg", ignore.case = TRUE, full.names = TRUE)
+				if(length(delete_left_over_svgs) > 0)
+				{
+					unlink(delete_left_over_svgs)
+				}
+			}
+		}
+		
+		# Restore the graphics path for the App to execute normally when it returns from the BMD execution
+		BSkySetGraphicsDirPath(bskyGraphicsDirPath = oldGraphicsDirPath)
+		sink()
+		
+		require(zip)
+
+		# List of files to include in the zip archive
+		files_to_zip = bsky_script_output_file
+
+		# Name of the output zip file
+		zip_filename = paste0(files_to_zip, ".Bmd")
+		
+		#print(files_to_zip)
+		#print(zip_filename)
+
+		# Create the zip file
+		zip::zip(zip_filename, files = files_to_zip, mode = "cherry-pick")
+}
+
+
+BSkyStandAloneBMDScriptExecuteRBlocks.Not.Used <- function(bsky_script_system_dir, dialog_console_code_chunk_list, scriptSinkfile = FALSE, inAppScriptEnv = TRUE)
+{
+		if (!dir.exists(bsky_script_system_dir)) 
+		{ 
+			cat("\n", bsky_script_system_dir, "- BlueSKy temp script directory not found", "..exiting..\n")
+			return(invisible)
+		}
+		
+		if(inAppScriptEnv == TRUE)
+		{
+			bmd_script_working_dir = paste0(bsky_script_system_dir,"\\BlueSkyScript")
+			if (!dir.exists(bmd_script_working_dir)) 
+			{
+				# Create the directory if it does not exist
+				dir.create(bmd_script_working_dir)
+			}
+			
+			if (dir.exists(bmd_script_working_dir)) 
+			{
+				bsky_script_system_dir = bmd_script_working_dir
+			}
+		}
+		
+		if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
+		{
+			system_log_dir = paste0(bsky_script_system_dir,"\\logs")
+			if (!dir.exists(system_log_dir)) 
+			{
+				# Create the directory if it does not exist
+				dir.create(system_log_dir)
+			}
+		}
+		
+		# system_out_dir = paste0(bsky_script_system_dir,"\\out")
+		# if (!dir.exists(system_out_dir)) 
+		# {
+			# # Create the directory if it does not exist
+			# dir.create(system_out_dir)
+		# }
+	
+		#####################################################################################################
+		# Setting up the output directory to write HTML file names for every BlueSky Statistics Script run
+		#####################################################################################################
+		cur_timestamp = format(Sys.time(), "%Y%m%d_%H%M%S")
+		
+		if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
+		{
+			BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp = cur_timestamp, init = TRUE, inAppScriptEnv = inAppScriptEnv)
+		}
+		
+		oldGraphicsDirPath = BSkyGetGraphicsDirPath()
+		BSkySetGraphicsDirPath(bskyGraphicsDirPath = bsky_script_system_dir)
+		
+		
+		# if(inAppScriptEnv == TRUE)
+		# {
+			# bsky_script_output_file = paste(bsky_script_system_dir,"\\","BSkyBMDOutput", sep='')
+		# }
+		# else
+		{
+			bsky_script_output_file = paste(bsky_script_system_dir,"\\","BSkyBMDOutput", "_", cur_timestamp, ".htm", sep='')
+		}
+		
+		writeLines("\n", bsky_script_output_file, sep = "\n") 
+		
+		codeChunkNum = 0
+
+		for (chunk in 1:length(dialog_console_code_chunk_list)) 
+		{	
+			outputBMDfileConn = file(bsky_script_output_file, "ab")
+					
+			if(names(dialog_console_code_chunk_list[chunk]) == "dialog_console")
+			{
+				# if(dialog_console_code_chunk_list[[chunk]] != "BSKY_NO_DIALOG_CONSOLE_BLOCK")
+				# {
+					# # Write the combined lines to a new file
+					# writeLines(dialog_console_code_chunk_list[[chunk]], outputBMDfileConn, sep = "\n")
+					# #writeLines("\n", outputBMDfileConn, sep = "\n")
+				# }
+				
+				# close(outputBMDfileConn)
+			}
+			else if(names(dialog_console_code_chunk_list[chunk]) == "chunk_code")
+			{
+				# Write the combined lines to a new file
+				
+				#writeLines(paste("```{r}",dialog_console_code_chunk_list[chunk],"```"), outputBMDfileConn, sep = "\n")
+				writeLines("```{r}", outputBMDfileConn, sep = "\n")
+				writeLines(paste(dialog_console_code_chunk_list[chunk]), outputBMDfileConn, sep = "\n")
+				writeLines("```", outputBMDfileConn, sep = "\n")
+				
+				#writeLines("\n", outputBMDfileConn)
+				close(outputBMDfileConn)
+				
+				delete_left_over_sink_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg|.txt", ignore.case = TRUE, full.names = TRUE)
+				if(length(delete_left_over_sink_svgs) > 0)
+				{
+					unlink(delete_left_over_sink_svgs)
+				}
+					
+				############################################################
+				#  Open a sink file to redirect the stdout and stderr output
+				############################################################
+				#sink(file = paste(bsky_script_system_dir,"\\","BSkysink.txt", sep=''), append = FALSE, type = c("output", "message"), split = FALSE)
+				
+				#sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
+				sink_file_conn = file(paste(bsky_script_system_dir,"\\","BSkyBmdOutsink.txt", sep=''), open = "wt", encoding = "UTF-8")
+				
+				####################################################
+				# close the bsky_script_system_dir\logs sink files()
+				####################################################
+				#suppressWarnings(sink())
+				sink()
+				
+				sink(file = sink_file_conn, append = TRUE, type = c("output"), split = FALSE)
+				sink(file = sink_file_conn, append = TRUE, type = c("message"), split = FALSE)
+						
+				#######################################################################################
+				#  Open a SVG graphics device to collect the graphics files for each dataset processed
+				#######################################################################################
+				SvgFileName = "BSkyRplot%03d.svg"
+				#svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''), width=10, height=6)
+				#antialias = c("default", "none", "gray", "subpixel") pointsize = 12
+				svg(paste(bsky_script_system_dir,"\\",SvgFileName, sep=''), width=par("din")[1], height=par("din")[2])
+				
+				
+				#cat("\n============\n", dialog_console_code_chunk_list[[chunk]], "\n====\n")
+				###################################################################################################
+				# Execute the script copied from BlueSky Statistics App as is without any dataset name substitution
+				###################################################################################################
+				cmd_execution_status = BSkyEvalRcommandForAppScript(RcommandString = dialog_console_code_chunk_list[[chunk]])
+				
+				#cat("\nCommand Execution Status : ", cmd_execution_status$executionStatus, "\n") if -1 that indicates failed execution 
+				
+				################################
+				# Close the SVG graphics device
+				################################
+				dev.off()
+				
+				##################################
+				#  Close the chunk level sink file 
+				##################################
+				#sink()
+				sink(type = "output")
+				sink(type = "message")
+		
+				close(sink_file_conn)
+				
+				#######################################################
+				# Open back the bsky_script_system_dir\logs sink files 
+				#######################################################
+				if(inAppScriptEnv == TRUE && scriptSinkfile == TRUE)
+				{
+					BSkyScriptSystemSinkFileMgmt(bsky_script_system_dir, cur_timestamp, inAppScriptEnv = TRUE)
+				}
+				
+				codeChunkNum = codeChunkNum + 1
+				
+				# Generate the HTML output file from the script
+				BSkyWriteKableHtmlOutput(datasetName = c(""), dirName = bsky_script_system_dir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = c(""), inAppScriptEnv = TRUE)
+				#BSkyWriteKableHtmlOutput(datasetName = script_file_name_without_ext, dirName = bsky_script_output_subdir, fileName = bsky_script_output_file, timeStamp = cur_timestamp, codeChunkNum = codeChunkNum, codeChunkCmt = code_chunks_comments[codeChunkNum], sinkFilename = script_execution_sink_filename)
+					
+			
+				# No incoming datafile is used - so no datafile to move
+				#file.copy(full_datafile_names[file_counter], paste(bsky_script_output_subdir,"\\", datafile_names[file_counter], sep=''))
+				#file.remove(full_datafile_names[file_counter])
+				
+				delete_left_over_svgs = list.files(path = bsky_script_system_dir, pattern=".*.svg", ignore.case = TRUE, full.names = TRUE)
+				if(length(delete_left_over_svgs) > 0)
+				{
+					unlink(delete_left_over_svgs)
+				}
+			}
+		}
+		
+		# Restore the graphics path for the App to execute normally when it returns from the BMD execution
+		BSkySetGraphicsDirPath(bskyGraphicsDirPath = oldGraphicsDirPath)
+		sink()
+		
+		if(FALSE){
+			require(zip)
+
+			# List of files to include in the zip archive
+			files_to_zip = bsky_script_output_file
+
+			# Name of the output zip file
+			zip_filename = paste0(files_to_zip, ".Bmd")
+			
+			#print(files_to_zip)
+			#print(zip_filename)
+
+			# Create the zip file
+			zip::zip(zip_filename, files = files_to_zip, mode = "cherry-pick")
+		}
+}
+
+
+#########################################################################################
