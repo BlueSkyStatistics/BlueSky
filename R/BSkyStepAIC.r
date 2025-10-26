@@ -384,7 +384,7 @@ ModelMatchesDataset <- function(modelname, curdatasetname, validateDatasetCheck=
 	}
 
 	####### CHECK IF CURRENT DATASET AND THE DATASET USED FOR CREATING THE MODEL ARE SAME OR NOT. THEY MUST BE SAME. ########
-	if(datasetSameCheck && modclass != "train")  
+	if(datasetSameCheck && !base::any(modclass %in% "train"))  
 	{
 		#We set the attribute datasetName only on models of class lm
 		#Models of class glm also list lm in the class	
