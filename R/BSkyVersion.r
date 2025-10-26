@@ -14,9 +14,9 @@
 #' @examples BSkyVersion()
 BSkyVersion<-function(fulldetails=TRUE)
 {
-	bskyver= "Version: 9.21"
-	bskydate="Date: 2025-08-30"
-	bskytime="01:07PM"
+	bskyver= "Version: 9.22"
+	bskydate="Date: 2025-09-22"
+	bskytime="07:05PM"
 
 
 	if(fulldetails)
