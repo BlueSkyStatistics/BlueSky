@@ -2094,17 +2094,18 @@ BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex,removeComma
 						} else
 						{
 						
-							current_locale <- Sys.getlocale("LC_NUMERIC")
+							# current_locale <- Sys.getlocale("LC_NUMERIC")
 				  
 							# Define a list of European locales with comma decimal separator
-							european_locales <- c(
-							  "de_DE", "fr_FR", "it_IT", "es_ES", "nl_NL", "fr_BE", "fr_CH", 
-							  "de_AT", "pt_PT", "no_NO", "sv_SE", "fi_FI", "da_DK", "ru_RU",
-							  "el_GR", "tr_TR", "pt_BR", "es_AR"
-							)
+							# european_locales <- c(
+							#   "de_DE", "fr_FR", "it_IT", "es_ES", "nl_NL", "fr_BE", "fr_CH", 
+							#   "de_AT", "pt_PT", "no_NO", "sv_SE", "fi_FI", "da_DK", "ru_RU",
+							#   "el_GR", "tr_TR", "pt_BR", "es_AR"
+							# )
 				  
+
 							# Check if current locale matches any European-style locale
-							is_european_locale <- any(sapply(european_locales, function(loc) grepl(loc, current_locale)))
+							is_european_locale <- (Sys.localeconv()["decimal_point"] == ",") # any(sapply(european_locales, function(loc) grepl(loc, current_locale)))
 				  
 							if (is_european_locale) 
 							{
