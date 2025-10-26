@@ -1,21 +1,3 @@
-BSky_variance_analysis (
-    data_format = c("wide" )
-    cols_to_compare = c('A','B','C')
-    response_col = NULL
-    group_col = NULL
-    conf_level = 0.95
-    alt_hypothesis = "two.sided"
-    p_adjust_method = "holm"
-    normal_distribution =FALSE
-    Fligner_Killeen =FALSE
-  pairwiseComparison=FALSE
-    data_name="AandB"
-
-
-
-
-
-
 
 BSky_variance_analysis <- function( 
     data_name,
