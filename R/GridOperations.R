@@ -306,19 +306,21 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 
 	if(!globalmarkersset)
 	{
-		localeRes = Sys.getlocale("LC_COLLATE")
-		if(localeRes == "German_Italy.1252" ||
-		localeRes == "German_Liechtenstein.1252" ||
-		localeRes == "German_Luxembourg.1252" ||
-		localeRes == "German_Austria.1252" ||
-		localeRes == "German_Switzerland.1252" ||
-		localeRes == "German_Germany.1252" || 
-		localeRes == "German_Belgium.1252")
-		{
+		# localeRes = Sys.getlocale("LC_COLLATE")
+		# if(localeRes == "German_Italy.1252" ||
+		# localeRes == "German_Liechtenstein.1252" ||
+		# localeRes == "German_Luxembourg.1252" ||
+		# localeRes == "German_Austria.1252" ||
+		# localeRes == "German_Switzerland.1252" ||
+		# localeRes == "German_Germany.1252" || 
+		# localeRes == "German_Belgium.1252")
+		# {
 			
-			deciCh = ','
-			groupingChar = '.'
-		} 
+		# 	deciCh = ','
+		# 	groupingChar = '.'
+		# } 
+		deciCh=Sys.localeconv()["decimal_point"]
+		groupingChar = Sys.localeconv()["thousands_sep"]		
 	}
 
 
