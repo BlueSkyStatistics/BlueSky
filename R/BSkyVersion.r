@@ -15,8 +15,8 @@
 BSkyVersion<-function(fulldetails=TRUE)
 {
 	bskyver= "Version: 9.23"
-	bskydate="Date: 2025-10-27"
-	bskytime="06:12PM"
+	bskydate="Date: 2025-10-29"
+	bskytime="11:32AM"
 
 
 	if(fulldetails)
@@ -44,6 +44,9 @@ BSkyVersion<-function(fulldetails=TRUE)
 
 		cat("\n\n------ Internationalization ------\n")
 		print(l10n_info())
+
+		cat("\n\n------ Locale Conventions ------\n")
+		print(Sys.localeconv())		
 
 		cat("\n\n------ System Info ------\n")
 		print(Sys.info()[c(1:3,5)])
