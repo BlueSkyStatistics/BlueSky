@@ -14,42 +14,72 @@
 #' @examples BSkyVersion()
 BSkyVersion<-function(fulldetails=TRUE)
 {
-	bskyver= "Version: 9.23"
-	bskydate="Date: 2025-10-29"
+	bskyver= "9.24"
+	bskydate="2025-10-31"
 	bskytime="11:32AM"
 
 
 	if(fulldetails)
 	{
 		rver = R.Version()
-		print("------ BlueSky R package version ------")
-		print(bskyver) 
-		print(bskydate)
-		print(bskytime) 
+		title1 = "BlueSky R package version"
+		# print(title1)
+		# cat("Version: ")
+		# print(bskyver) 
+		# cat("Date: ")
+		# print(bskydate)
+		# cat("Time: ")
+		# print(bskytime) 
+		BSkypkg = data.frame(Ver=c(bskyver), Date=c(bskydate), Time=c(bskytime))
+		BSkyFormat(obj=BSkypkg, singleTableOutputHeader = title1)		
+		
+		title2 = "R Home"
+		# cat("\n\n------ ",title2," ------\n")
+		# print(R.home())
+		rhome = as.data.frame(R.home())
+		BSkyFormat(obj=rhome, singleTableOutputHeader = title2)			
 
-		cat("\n\n------ R Home ------\n")
-		print(R.home())
+		title3 = "R library paths"
+		# cat("\n\n------ ",title3," ------\n")
+		# print(.libPaths()) 
+		libP = as.data.frame(.libPaths())
+		BSkyFormat(obj=libP, singleTableOutputHeader = title3)		
 
-		cat("\n\n------ R library paths ------\n")
-		print(.libPaths()) 
+		title4 = "R version"
+		# cat("\n\n------ ",title4," ------\n")
+		#print(rver)
+		rVer = as.data.frame(rver)
+		BSkyFormat(obj=rVer, singleTableOutputHeader = title4)		
 
-		cat("\n\n------ R version ------\n")
-		print(rver)
-
-		cat("\n\n------ R SessionInfo ------\n")
+		title5 = "R SessionInfo"
+		cat("\n\n------ ",title5," ------\n")
 		print(sessionInfo())
+		# sess = as.data.frame(sessionInfo())
+		# BSkyFormat(obj=sess, singleTableOutputHeader = title5)			
 
-		cat("\n\n------ Encoding ------\n")
-		print(getOption("encoding"))
+		title6 = "Encoding"
+		# cat("\n\n------ ",title6," ------\n")
+		#print(getOption("encoding"))
+		enc = as.data.frame(getOption("encoding"))
+		BSkyFormat(obj=enc, singleTableOutputHeader = title6)			
 
-		cat("\n\n------ Internationalization ------\n")
-		print(l10n_info())
+		title7 = "Internationalization"
+		# cat("\n\n------ ",title7," ------\n")
+		#print(l10n_info())
+		i18n = as.data.frame(l10n_info())
+		BSkyFormat(obj = i18n, singleTableOutputHeader = title7)		
 
-		cat("\n\n------ Locale Conventions ------\n")
-		print(Sys.localeconv())		
+		title8 = "Locale Conventions"
+		# cat("\n\n------ ",title8," ------\n")
+		#print(l10n_info())
+		lconv = as.data.frame(Sys.localeconv())
+		BSkyFormat(obj = lconv, singleTableOutputHeader = title8)
 
-		cat("\n\n------ System Info ------\n")
-		print(Sys.info()[c(1:3,5)])
+		title9 = "System Info"
+		# cat("\n\n------ ",title9," ------\n")
+		# print(Sys.info()[c(1:3,5)])
+		sysinfo = as.data.frame(Sys.info()[c(1:3,5)])
+		BSkyFormat(obj = sysinfo, singleTableOutputHeader = title9)		
 
 		if(.Platform$OS.type == "windows")
 		{ 
