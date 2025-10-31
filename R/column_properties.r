@@ -2036,32 +2036,83 @@ BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex,removeComma
 					variableClass = eval(parse(text=paste('class(',datasetname,'$',colNameOrIndex,')', sep='')))
 					if("factor" %in% variableClass)
 					{
-						# this can be used if levels are numeric-strings like
-						# ("3.4","5","9") and we want the same numbers after conversion i.e. 3.4, 5, 9
-						# but this produces NAs if levels are like ("high", "med", "low"), i.e. pure character levels
-						# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(as.character(',datasetname,'$',colNameOrIndex,'))', sep='')))
-						
-						## this can be use for levels that are pure character or character-numebers
-						# ("male", "female") or ("3.4","5","9") and converts to integer i.e. (1,2) and (1,2,3) respectively
-						#30May2022eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(',datasetname,'$',colNameOrIndex,')', sep='')))
-						
-						if(any (is.na(suppressWarnings (as.numeric(levels(eval(parse(text=paste(datasetname,'$',colNameOrIndex)))) ))) == TRUE))
+						# FOR "Make Numeric European": a factor col having numbers with commas (Excel file loads the col as factor)
+						if (removeCommas || removePeriods || replaceCommaWithPeriod) # cleanup of commas
 						{
-							eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(',datasetname,'$',colNameOrIndex,')', sep='')))
+							var_expr <- paste(datasetname, "$", colNameOrIndex, sep = "")
+							var_data <- eval(parse(text = var_expr))
+							cleaned_data =var_data
+							#removing white spaces
+							cleaned_data <- gsub("\\s+", "", cleaned_data)						
+								
+							if (removePeriods)
+							{
+								cleaned_data <- gsub("\\.", "", cleaned_data)         # remove dots used as thousand separators
+							}
+							
+							if (replaceCommaWithPeriod)
+							{
+							
+							cleaned_data <- gsub(",", ".", cleaned_data)    # replace , with periods
+							
+							}
+							
+							if (removeCommas)
+							{
+								cleaned_data <- gsub(",", "", cleaned_data)    # remove ,
+							} 
+											
+							# Now try to convert to numeric, if it fails then no need to change the dataset col
+							numeric_data <- suppressWarnings(as.numeric(cleaned_data))							   
+							# If any cleaned values are still non-numeric, throw an error
+							if (any(is.na(numeric_data) & !is.na(cleaned_data))) 
+							{
+								BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+								bad_vals <- var_data[is.na(numeric_data) & !is.na(cleaned_data)]
+								
+								non_na_values <- bad_vals[!is.na(bad_vals)]
+								BSkyErrMsg <-paste("BSkyMakeColumnNumeric: Conversion failed for variable '", colNameOrIndex,
+										"' in dataset '", sub("^\\.GlobalEnv\\$", "", datasetname), "'. The following entries (up to 10) cannot be converted into numeric: ",
+										paste(unique(head(non_na_values, 10)), collapse = ", "), sep = "")
+								warning(	BSkyErrMsg)	   
+										
+							} else {
+
+								# Assign the cleaned numeric values back to the dataset
+								assign_expr <- paste(datasetname, "$", colNameOrIndex, " <- numeric_data", sep = "")
+								eval(parse(text = assign_expr))
+								BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+							}
 						}
-						else {
-							#30May2022 First we convert factor to character and then type.convert() should convert the column to the correct type based on the data
-							# if the data in col is like ("High","med","low") it will remain character if the data is ("12","23","34") then it changes to (12,23,34)
-							eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- type.convert(stringr::str_trim(as.character(',datasetname,'$',colNameOrIndex,'), side="both"),as.is=TRUE)', sep='')))
+						else
+						{
+							# this can be used if levels are numeric-strings like
+							# ("3.4","5","9") and we want the same numbers after conversion i.e. 3.4, 5, 9
+							# but this produces NAs if levels are like ("high", "med", "low"), i.e. pure character levels
+							# eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(as.character(',datasetname,'$',colNameOrIndex,'))', sep='')))
+							
+							## this can be use for levels that are pure character or character-numebers
+							# ("male", "female") or ("3.4","5","9") and converts to integer i.e. (1,2) and (1,2,3) respectively
+							#30May2022eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(',datasetname,'$',colNameOrIndex,')', sep='')))
+							
+							if(any (is.na(suppressWarnings (as.numeric(levels(eval(parse(text=paste(datasetname,'$',colNameOrIndex)))) ))) == TRUE))
+							{
+								eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.numeric(',datasetname,'$',colNameOrIndex,')', sep='')))
+							}
+							else {
+								#30May2022 First we convert factor to character and then type.convert() should convert the column to the correct type based on the data
+								# if the data in col is like ("High","med","low") it will remain character if the data is ("12","23","34") then it changes to (12,23,34)
+								eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- type.convert(stringr::str_trim(as.character(',datasetname,'$',colNameOrIndex,'), side="both"),as.is=TRUE)', sep='')))
+							}
+							##This may be used in future.
+							##check if col is a character col ("Male","Female"). You can convert these levels to numeric levels (1,2)
+							#ischaracter = eval(parse(text=paste('is.character(',datasetname,'$',colNameOrIndex,')', sep='')))
+							#if(ischaracter)
+							#{
+								#eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(as.factor(',datasetname,'$',colNameOrIndex,'))', sep='')))
+							#}
+							BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
 						}
-						##This may be used in future.
-						##check if col is a character col ("Male","Female"). You can convert these levels to numeric levels (1,2)
-						#ischaracter = eval(parse(text=paste('is.character(',datasetname,'$',colNameOrIndex,')', sep='')))
-						#if(ischaracter)
-						#{
-							#eval(parse(text=paste(datasetname,'$',colNameOrIndex,' <- as.integer(as.factor(',datasetname,'$',colNameOrIndex,'))', sep='')))
-						#}
-						BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes
 					} else if ("character" %in% variableClass)
 					{
 						var_expr <- paste(datasetname, "$", colNameOrIndex, sep = "")
