@@ -15,8 +15,8 @@
 BSkyVersion<-function(fulldetails=TRUE)
 {
 	bskyver= "9.24"
-	bskydate="2025-10-31"
-	bskytime="11:32AM"
+	bskydate="2025-11-04"
+	bskytime="02:15PM"
 
 
 	if(fulldetails)
@@ -133,8 +133,8 @@ BSkyVersion<-function(fulldetails=TRUE)
 		Filter(file.exists, candidates)
 	}
 	else {
-		details = paste(bskyver,'\n', bskydate,'\n', bskytime, '\n\nR:\n',R.Version()$version.string,sep='')
-		return(invisible(details))
+		details = paste('Version: ',bskyver,'\n', 'Date: ',bskydate,'\n', 'Time: ',bskytime, '\n\nR:\n',R.Version()$version.string,sep='')
+		return(details) #invisible did not work in DEV so -> #invisible(paste(text="Hi\n\nThere",sep=''))
 	}
 }
 
