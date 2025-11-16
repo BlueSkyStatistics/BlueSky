@@ -1,18 +1,10 @@
-BSky_variance_analysis (
-    data_format = c("wide" )
-    cols_to_compare = c('A','B','C')
-    response_col = NULL
-    group_col = NULL
-    conf_level = 0.95
-    alt_hypothesis = "two.sided"
-    p_adjust_method = "holm"
-    normal_distribution =FALSE
-    Fligner_Killeen =FALSE
-  pairwiseComparison=FALSE
-    data_name="AandB"
 
 
-
+# simple number formatter (no scientific notation)
+fmt_plain <- function(x, digits = BSkyGetDecimalDigitSetting()) {
+  if (is.na(x)) return("NA")
+  formatC(round(x, digits = digits), format = "f", digits = digits)
+}
 
 
 
@@ -225,7 +217,9 @@ BSky_variance_analysis <- function(
 	bonf_df$CI_Upper <- mcp_result$CI_Upper
 	bonf_df$group <- factor(bonf_df$group, levels = rev(unique(bonf_df$group)))
 	
-	
+	min_mc_p <- fmt_plain(min_mc_p)
+levene_p <- fmt_plain(levene_p)
+         
 	
     
     dfForTestStats <- data.frame(
@@ -241,8 +235,12 @@ BSky_variance_analysis <- function(
   	group_split(group) %>%                # split tibble by group
   	lapply(function(df) df$value)         # extract "value" column as numeric vector
 		# Now call mc_pvalue_from_data
-		out <- mc_pvalue_from_dataNEW(data_list, rel.tol = 1e-8)      
-    min_mc_p =round (out$overall_p, digits =BSkyGetDecimalDigitSetting())    
+		out <- mc_pvalue_from_dataNEW(data_list, rel.tol = 1e-8) 
+    
+    min_mc_p =round (out$overall_p, digits =BSkyGetDecimalDigitSetting())  
+    
+           min_mc_p <- fmt_plain(min_mc_p)
+levene_p <- fmt_plain(levene_p)
          
          dfForTestStats <- data.frame(
   Method  = c("Multiple comparisons", "Levene"),
@@ -251,17 +249,21 @@ BSky_variance_analysis <- function(
 )
     BSkyFormat(dfForTestStats, singleTableOutputHeader = "Tests")
 	
-	samples_mcp <- long_data %>%
+    samples_mcp <- long_data %>%
   group_split(group, .keep = TRUE) %>%
-  setNames(unique(long_data$group)) %>%
+  setNames(levels(unique(long_data$group))) %>%
   lapply(function(df) df$value)
-	
-	 
+  
 	result_mcp <- mc_intervals_graphical_kgt2_modified(samples_mcp,alpha)
 	
-	bonf_df$CI_Lower <- result_mcp$CI_dataframe$CI_Lower
-	bonf_df$CI_Upper <- result_mcp$CI_dataframe$CI_Upper
-	bonf_df$group <- factor(bonf_df$group, levels = rev(unique(bonf_df$group)))
+  # overwrite bonf_df CI_Lower and CI_Upper using row names in CI_dataframe
+	bonf_df$CI_Lower <- result_mcp$CI_dataframe[bonf_df$group, "CI_Lower"]
+	bonf_df$CI_Upper <- result_mcp$CI_dataframe[bonf_df$group, "CI_Upper"]
+
+         
+	#bonf_df$CI_Lower <- result_mcp$CI_dataframe$CI_Lower
+	#bonf_df$CI_Upper <- result_mcp$CI_dataframe$CI_Upper
+	bonf_df$group <- factor(bonf_df$group, levels = 			rev(unique(bonf_df$group)))
 	
 	
     } else if (base::nlevels(long_data$group) ==2 &&normal_distribution)
