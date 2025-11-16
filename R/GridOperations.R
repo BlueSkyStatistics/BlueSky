@@ -306,19 +306,21 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 
 	if(!globalmarkersset)
 	{
-		localeRes = Sys.getlocale("LC_COLLATE")
-		if(localeRes == "German_Italy.1252" ||
-		localeRes == "German_Liechtenstein.1252" ||
-		localeRes == "German_Luxembourg.1252" ||
-		localeRes == "German_Austria.1252" ||
-		localeRes == "German_Switzerland.1252" ||
-		localeRes == "German_Germany.1252" || 
-		localeRes == "German_Belgium.1252")
-		{
+		# localeRes = Sys.getlocale("LC_COLLATE")
+		# if(localeRes == "German_Italy.1252" ||
+		# localeRes == "German_Liechtenstein.1252" ||
+		# localeRes == "German_Luxembourg.1252" ||
+		# localeRes == "German_Austria.1252" ||
+		# localeRes == "German_Switzerland.1252" ||
+		# localeRes == "German_Germany.1252" || 
+		# localeRes == "German_Belgium.1252")
+		# {
 			
-			deciCh = ','
-			groupingChar = '.'
-		} 
+		# 	deciCh = ','
+		# 	groupingChar = '.'
+		# } 
+		deciCh=Sys.localeconv()["decimal_point"]
+		groupingChar = Sys.localeconv()["thousands_sep"]		
 	}
 
 
@@ -414,7 +416,7 @@ if ("character" %in% class(tabular_data))
 }
 if (base::is.null(tabular_data))
 {
-    return (invisible("Something went wrong with realing from the clipboard and a NULL was returned"))
+    return (invisible("Something went wrong with reading from the clipboard and a NULL was returned"))
 }	
 	
 	## run for each column to get desired encoded data
@@ -483,6 +485,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
      return(invisible())  
     }
   
+  isDesign = "design" %in% ( eval(parse(text = paste("class(.GlobalEnv$", dataSetNameOrIndex, ")"))) )
   totalDatasetCols = eval(parse(text = paste("ncol(", dataSetNameOrIndex, ")")))
   newColumnBaseName ="var"
   newColumnSuffix = 1
@@ -491,21 +494,33 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
       if (startCol > totalDatasetCols)
       {
         newColName =paste(newColumnBaseName, startCol, sep="")
-        eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                  "[,c(", deparse(newColName), ")]", "<- NA", sep = "")))
-        
-        eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                  "[,c(", startCol, ")]", "<- as.numeric(.GlobalEnv$",
-                  dataSetNameOrIndex, "[, c(", deparse(newColName), ")])",
-                  sep = "")))
+		if(isDesign){
+			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[[c(", deparse(newColName), ")]]", "<- NA", sep = "")))
+			
+			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[[c(", startCol, ")]]", "<- as.numeric(.GlobalEnv$",
+					dataSetNameOrIndex, "[[ c(", deparse(newColName), ")]])", sep = "")))
+		}
+		else {
+			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[,c(", deparse(newColName), ")]", "<- NA", sep = "")))
+			
+			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[,c(", startCol, ")]", "<- as.numeric(.GlobalEnv$",
+					dataSetNameOrIndex, "[, c(", deparse(newColName), ")])", sep = "")))
+		}
+
 		newColumnSuffix = newColumnSuffix +1
 
       }
       
       
         every_column <- data[seq(i, length(data), by = noOfCols)]
-        classOfVariable <- eval(parse(text = paste("class(",
-            dataSetNameOrIndex, "[,", startCol, "])")))
+		classOfVariable =""
+		if(isDesign){
+			classOfVariable <- eval(parse(text = paste("class(", dataSetNameOrIndex, "[[", startCol, "]])")))
+		}
+		else {
+			classOfVariable <- eval(parse(text = paste("class(", dataSetNameOrIndex, "[,", startCol, "])")))
+		}
+        
         if ("numeric" %in% classOfVariable || "integer" %in%
             classOfVariable) {
 			
@@ -522,10 +537,19 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
           
             if (empty_string_count != empty_numeric_count) {
                 every_column <- every_column_temp
-                eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+				if(isDesign){
+					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[[", startCol, "]]", "<- as.character(.GlobalEnv$",
+                  dataSetNameOrIndex, "[[ ", startCol, "]])",
+                  sep = "")))
+				}
+				else {
+					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
                   "[,", startCol, "]", "<- as.character(.GlobalEnv$",
                   dataSetNameOrIndex, "[, ", startCol, "])",
                   sep = "")))
+				}
+
             }
             end_position <- startRow + noOfRows - 1
             eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
@@ -538,16 +562,32 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
 			every_column[every_column ==""] =NA
             every_column = as.factor(every_column)
             levelsInPastedData = levels(every_column)
-            levelsInDestinationColumn = eval(parse(text = paste("levels(",
-                dataSetNameOrIndex, "[,", startCol, "])", sep = "")))
+			if(isDesign){
+				levelsInDestinationColumn = eval(parse(text = paste("levels(", dataSetNameOrIndex, "[[", startCol, "]])", sep = "")))
+			}
+			else {
+				levelsInDestinationColumn = eval(parse(text = paste("levels(", dataSetNameOrIndex, "[,", startCol, "])", sep = "")))
+			}
+            
             for (element in levelsInPastedData) {
                 if (!(element %in% levelsInDestinationColumn)) {
-                  eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                    "[,", startCol, "]", " <- factor(.GlobalEnv$",
-                    dataSetNameOrIndex, "[,", startCol, "],",
-                    "levels = c(levels(.GlobalEnv$", dataSetNameOrIndex,
-                    "[,", startCol, "]),", deparse(element),
-                    "))", sep = "")))
+					if(isDesign){
+						eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+						"[[", startCol, "]]", " <- factor(.GlobalEnv$",
+						dataSetNameOrIndex, "[[", startCol, "]],",
+						"levels = c(levels(.GlobalEnv$", dataSetNameOrIndex,
+						"[[", startCol, "]]),", deparse(element),
+						"))", sep = "")))
+					}
+					else {
+						eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+						"[,", startCol, "]", " <- factor(.GlobalEnv$",
+						dataSetNameOrIndex, "[,", startCol, "],",
+						"levels = c(levels(.GlobalEnv$", dataSetNameOrIndex,
+						"[,", startCol, "]),", deparse(element),
+						"))", sep = "")))
+					}
+                  
                 }
             }
             end_position <- startRow + noOfRows - 1
@@ -565,9 +605,17 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
         }
         else if ("Date" %in% classOfVariable || "POSIXct" %in%
             classOfVariable || "logical" %in% classOfVariable) {
-            eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+			if(isDesign){
+				eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                "[[", startCol, "]]", "<- as.character(.GlobalEnv$",
+                dataSetNameOrIndex, "[[ ", startCol, "]])", sep = "")))
+			}
+			else {
+				eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
                 "[,", startCol, "]", "<- as.character(.GlobalEnv$",
                 dataSetNameOrIndex, "[, ", startCol, "])", sep = "")))
+			}
+
             end_position <- startRow + noOfRows - 1
             eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
                 "[startRow:end_position, ", startCol, "] <- every_column",

@@ -2463,7 +2463,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				  values = ~n,
 				  type = 'pie'
 				) %>%
-				layout(
+				plotly::layout(
 					title = list(
 					  text = paste("Pie Chart of", input$group_var),
 					  x = 0.5,   # centers the title
@@ -2514,7 +2514,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 			if (input$plot_type %in% c("scatter")){
 				ggplotly(base_plot(), tooltip = "text") %>%
 							  #style(customdata = bsky_temp_df_global$row_id, traces = 1) %>%
-								layout(dragmode = "lasso")
+								plotly::layout(dragmode = "lasso")
 			}else{
 				ggplotly(base_plot())
 			}
