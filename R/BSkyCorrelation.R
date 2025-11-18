@@ -135,13 +135,13 @@ BSkyPlotCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pears
 		
 		if (visualizeCorrelation)
 		{
-			 DescTools::PlotCorr(x=m, cols = colorRampPalette(c("cyan3","white","chartreuse2"), space = "rgb")(20),breaks=seq(-1, 1, length=21), border="black", args.colorlegend = list(labels=sprintf("%.1f", seq(-1, 1, length = 11)), frame=TRUE), main ="Web plot of the Correlation Matrix")
+			 DescTools::PlotCorr(x=m, cols = colorRampPalette(c("cyan3","white","chartreuse2"), space = "rgb")(20),breaks=seq(-1, 1, length=21), border="black", args.colorlegend = list(labels=sprintf("%.1f", seq(-1, 1, length = 11)), frame=TRUE))
 			 title(main="Correlation Matrix", line=3)
 			 text(x=rep(1:ncol(m),ncol(m)), y=rep(1:ncol(m),each=ncol(m)), label=sprintf(paste("%0.", BSkyGetDecimalDigitSetting(), "f", sep=""), m[,ncol(m):1]), cex=0.8, xpd=TRUE)
 		}
 	if (plotWeb)
 	{
-		DescTools::PlotWeb(m, col = c(hred, hblue), lty = par("lty"), lwd = NULL, args.legend=NULL,
+		DescTools::PlotWeb(m, col = c(hred, hblue), lty = par("lty"), lwd = NULL, args.legend=NULL, main ="Web plot of the Correlation Matrix",
 			pch = 21, pt.cex = 2, pt.col = "black", pt.bg = "darkgrey",
 			cex.lab = 1, las = 1, adj = NULL, dist = 0.5)
 	}
