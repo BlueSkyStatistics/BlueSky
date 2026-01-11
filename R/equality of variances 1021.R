@@ -64,8 +64,14 @@ BSky_variance_analysis <- function(
         # Combine into a single vector of column names
         cols_needed <- c(group_col, response_col)
 
-        # Drop missing
-        data <- data %>% drop_na(all_of(cols_needed))
+        #Added by Aaron 01/11/2026
+		# Drop missing
+		#The line below was commented as it was causing an error for some customers
+		#The error was unused argument (all_of(cols_needed))
+        #data <- data %>% drop_na(all_of(cols_needed))
+		#data <- data %>% tidyr::drop_na(!!!rlang::syms(cols_needed))
+		
+		data <- data %>% tidyr::drop_na(any_of(cols_needed))
         # Keep grouping + response cols
         long_data <- data %>%
             select(all_of(cols_needed)) %>%
