@@ -7733,6 +7733,107 @@ BSkySetGraphicsDirPath <- function(bskyGraphicsDirPath = c())
 }
 
 
+#########################################################################################################
+# 25Jan2026 SK introduced the following function that can be used within a dialog R code to overrride the 
+# App layer (Python/Javascript SVG device Height/Width settings by closing the svg graphics device and opeing a new 
+# svg device with the height and width parameter passed to the following function
+# the graphics device reopeing is temorary within the scope of dialog code or any bulk code sent (from R editor or output syntax window)
+# to Bsky eval from the app Layer. This scope is temprary because before calling bsky eval every time, app layer 
+# closes and opens a new svg device with the tripple dot theme height/width settings
+#########################################################################################################
+BSkySetGraphicsHeightWidth <- function(width = NULL, height = NULL, bskyEvalDebug = FALSE)
+{
+	#Default global setting is width = 1000 and height = 600
+	
+	graphicsDir = BSkyGetGraphicsDirPath()
+	
+	if(!is.null(height) && !is.null(width) && !is.null(graphicsDir) && length(graphicsDir) > 0 && trimws(graphicsDir) != "" && dir.exists(graphicsDir))
+	{
+		if(height > 100) height = height / 100
+		if(width > 100)  width  = width / 100
+		
+		width =  if (width > 1) width else 1
+		height = if (height > 1) height  else 1
+		
+		## Check for an active graphics device
+		if (dev.cur() > 1) 
+		{
+			if(is.null(height) && is.null(width)){
+				## Capture current device size (in inches)
+				sz <- dev.size("in")
+				uadatasets.sk$bskyGraphicsWidth  = sz[1]
+				uadatasets.sk$bskyGraphicsHeight = sz[2]
+			}else{
+				uadatasets.sk$bskyGraphicsWidth  = width
+				uadatasets.sk$bskyGraphicsHeight = height
+			}
+			
+			## Close current device
+			dev.off()
+			
+			orig_graphicsDeviceFileName = uadatasets.sk$initial_graphics_file_name 
+			orig_base_svg_filename <- sub("\\d{3}\\.svg$", ".svg", orig_graphicsDeviceFileName)
+			
+			if (file.exists(orig_graphicsDeviceFileName)) {
+			  unlink(orig_graphicsDeviceFileName)
+			}
+			
+			if (file.exists(orig_graphicsDeviceFileName)) {
+			  cat("\nError: Orig Graphics device file: ", orig_graphicsDeviceFileName, " could not be removed\n")
+			}
+			
+			svg(
+				filename = sub("\\.svg$", "%03d.svg", orig_base_svg_filename),
+				width  = uadatasets.sk$bskyGraphicsWidth, 
+				height = uadatasets.sk$bskyGraphicsHeight
+			)
+			
+			open_grp_device_list = dev.list()
+			if(is.null(open_grp_device_list)) cat("\nError: New SVG graphics device could be opened after closing the original one\n")
+			
+			full_file_names = list.files(path = graphicsDir, pattern="png|svg", full.names = TRUE)
+		
+			# capture the file name with path for the very first graphics device file open automatically 
+			uadatasets.sk$initial_graphics_file_name = full_file_names[which.max(file.mtime(full_file_names))]
+
+			#uadatasets.sk$initial_graphics_file_mtime = file.mtime(uadatasets.sk$initial_graphics_file_name) 
+
+			uadatasets.sk$strating_count_of_bsky_graphics_files = length(full_file_names) #0
+			uadatasets.sk$last_count_of_bsky_graphics_files = uadatasets.sk$strating_count_of_bsky_graphics_files
+
+			if(bskyEvalDebug == TRUE)
+			{
+				print("After opening a new SVG device in BSkySetGraphicsHeightWidth")
+				print(full_file_names)
+				print(uadatasets.sk$initial_graphics_file_name)
+				print(uadatasets.sk$strating_count_of_bsky_graphics_files)
+				print(uadatasets.sk$last_count_of_bsky_graphics_files)
+			}
+			
+			#inserting a dummy plot graphics into the already open first graphics device image file 
+			plot.new()
+			
+			if(bskyEvalDebug == TRUE)
+			{
+				print("After plot.new() in BSkySetGraphicsHeightWidth")
+				full_file_names_after = list.files(path = graphicsDir, pattern="png|svg", full.names = TRUE)
+				print(full_file_names_after)
+				print(full_file_names_after[which.max(file.mtime(full_file_names_after))])
+				print(length(full_file_names_after))
+				print(length(full_file_names_after))
+			}
+		}
+	}
+	
+	if(bskyEvalDebug == TRUE)
+	{
+		BSkyFormat(c(curWidth = uadatasets.sk$bskyGraphicsWidth, curHeight = uadatasets.sk$bskyGraphicsHeight))
+	}
+	
+	return(invisible(c(curWidth = uadatasets.sk$bskyGraphicsWidth, curHeight = uadatasets.sk$bskyGraphicsHeight)))
+}
+
+
 #14Jun2021 for setting the environment variables to control the echo and inline echo of the R commands being executed by BSkyExecuteRcommand()
 BSkySetRCommandDisplaySetting <- function(echo = TRUE, echoInline = TRUE)
 {
