@@ -341,6 +341,8 @@ BSkyLoadRefresh <- function(bskyDatasetName, load.dataframe = TRUE, load.UIgrid 
     pkgEnv = c()
     ischar = is.character(bskyDatasetName)
     originalDatasetname = bskyDatasetName
+	# eval(parse(text =paste("names(.GlobalEnv$", bskyDatasetName, ") <- base::make.unique(names(.GlobalEnv$", bskyDatasetName, "))", sep ="")))
+	# print(eval(parse(text=paste("names(.GlobalEnv$",bskyDatasetName, ")"))))
     if (!load.dataframe) {
         return(invisible())
     }
@@ -472,6 +474,7 @@ BSkyLoadRefresh <- function(bskyDatasetName, load.dataframe = TRUE, load.UIgrid 
             }
         }
     }
+	eval(parse(text =paste("names(.GlobalEnv$", bskyDatasetName, ") <- base::make.unique(names(.GlobalEnv$", bskyDatasetName, "))", sep ="")))
     hasrows = FALSE
     rowcount = eval(parse(text = paste("nrow(.GlobalEnv$", bskyDatasetName, 
         ")", sep = "")))
