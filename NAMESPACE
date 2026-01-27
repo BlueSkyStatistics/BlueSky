@@ -276,6 +276,6 @@ export(getRFunctionNames, get_all_function_signatures_name_values,get_signatures
 
 export(xor_deobfuscatestring, importMSSQLDBList, importMSSQLtable)
 export(BSkyGraphBuilderSubprocLaunchMain)
-export(BSkySetLibLoadMsgPrintSetting, BSkyGetLibLoadMsgPrintSetting)
+export(BSkySetLibLoadMsgPrintSetting, BSkyGetLibLoadMsgPrintSetting, BSkySetGraphicsHeightWidth)
 
 
