@@ -6290,6 +6290,10 @@ BSkyEvalRcommand <- function(RcommandString, numExprParse = -1, selectionStartpo
 			uadatasets.sk$strating_count_of_bsky_graphics_files = length(full_file_names) #0
 			uadatasets.sk$last_count_of_bsky_graphics_files = uadatasets.sk$strating_count_of_bsky_graphics_files
 			
+			uadatasets.sk$orig_initial_graphics_file_name = uadatasets.sk$initial_graphics_file_name
+			
+			uadatasets.sk$count_new_svg_graphics_files = 0
+			
 			#inserting a dummy plot graphics into the already open first graphics device image file 
 			plot.new()
 		}
@@ -7254,17 +7258,26 @@ BSkyEvalRcommandBasic <- function(RcommandString, origRcommands = c(), echo = BS
 							first_Graphics_Command_Executed = TRUE
 							
 							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							uadatasets.sk$count_new_svg_graphics_files = uadatasets.sk$count_new_svg_graphics_files + (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
 							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files - 1
 						}
 						else
 						{
 							BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+							uadatasets.sk$count_new_svg_graphics_files = uadatasets.sk$count_new_svg_graphics_files + (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
 							uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
 						}
 					}
 					else
 					{
+					    # SK 01/29/26 Addded to support open/close SVG devices in BSkySetGraphicsHeightWidth()
+						if(file.exists(uadatasets.sk$initial_graphics_file_name ))
+						{
+							file.remove(uadatasets.sk$initial_graphics_file_name)
+						}
+						
 						BSkyGraphicsFormat(bSkyFormatAppRequest = FALSE, noOfGraphics= (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files), isRmarkdownOutputOn = bsky_Rmarkdown_settings$doRmarkdownFormatting)
+						uadatasets.sk$count_new_svg_graphics_files = uadatasets.sk$count_new_svg_graphics_files + (num_graphics_files - uadatasets.sk$last_count_of_bsky_graphics_files)
 						uadatasets.sk$last_count_of_bsky_graphics_files = num_graphics_files
 					}
 				}
@@ -7741,11 +7754,95 @@ BSkySetGraphicsDirPath <- function(bskyGraphicsDirPath = c())
 # to Bsky eval from the app Layer. This scope is temprary because before calling bsky eval every time, app layer 
 # closes and opens a new svg device with the tripple dot theme height/width settings
 #########################################################################################################
-BSkySetGraphicsHeightWidth <- function(width = NULL, height = NULL, bskyEvalDebug = FALSE)
+#BSkySetGraphicsHeightWidth <- function(width = NULL, height = NULL, bskyEvalDebug = FALSE)
+BSkySetGraphicsHeightWidth <- function(width = 1000, height = 600, bskyEvalDebug = FALSE)
 {
 	#Default global setting is width = 1000 and height = 600
 	
 	graphicsDir = BSkyGetGraphicsDirPath()
+	
+	bsky_delete_leftover_bsky_temp_svg_from_past_runs <- function(dir, exclude_pattern){
+		files_to_delete <- list.files(
+		  path = dir,
+		  pattern = "^bsky_temp_.*\\.svg$",
+		  full.names = TRUE
+		)
+
+		if(bskyEvalDebug == TRUE){
+			print("Before excluding delete list")
+			print(files_to_delete)
+		}
+		
+		# Exclude files that contain the original base name
+		files_to_delete <- files_to_delete[
+		  !grepl(exclude_pattern, basename(files_to_delete))
+		]
+		
+		if(bskyEvalDebug == TRUE){
+			print("After excluding delete list")
+			print(files_to_delete)
+		}
+
+		# Delete them
+		if (length(files_to_delete) > 0) {
+		  unlink(files_to_delete)
+		}
+	}
+	
+	bsky_get_max_svg_counter <- function(svg_file){
+		dir  <- dirname(svg_file)
+		base <- sub("\\d{3}\\.svg$", "", basename(svg_file))
+
+		files <- list.files(
+		path = dir,
+		pattern = paste0("^", base, "\\d{3}\\.svg$"),
+		full.names = FALSE
+		)
+
+		if (length(files) == 0) {
+		return(0L)
+		}
+
+		nums <- as.integer(sub(".*?(\\d{3})\\.svg$", "\\1", files))
+		max(nums, na.rm = TRUE)
+	}
+	
+	bsky_rename_svg_with_offset <- function(dir, old_prefix, new_prefix, start_index) {
+		
+		files <- list.files(
+		path = dir,
+		pattern = paste0("^", old_prefix, "\\d{3}\\.svg$"),
+		full.names = TRUE
+		)
+
+		if (length(files) == 0) return(invisible(NULL))
+
+		# Sort by numeric suffix
+		ord <- order(as.integer(sub(".*?(\\d{3})\\.svg$", "\\1", files)))
+		files <- files[ord]
+
+		new_files <- file.path(
+		dir,
+		sprintf(
+		  "%s%03d.svg",
+		  new_prefix,
+		  start_index + seq_along(files)
+		)
+		)
+
+		ok <- file.rename(files, new_files)
+
+		if (!all(ok)) {
+			cat("\nWarning: Some graphics files could not be renamed\n")
+		}
+
+		if(bskyEvalDebug == TRUE){
+			BSkyFormat(data.frame(old = files, new = new_files, success = ok))
+		}
+		
+		invisible(data.frame(old = files, new = new_files, success = ok))
+	}
+
 	
 	if(!is.null(height) && !is.null(width) && !is.null(graphicsDir) && length(graphicsDir) > 0 && trimws(graphicsDir) != "" && dir.exists(graphicsDir))
 	{
@@ -7771,22 +7868,71 @@ BSkySetGraphicsHeightWidth <- function(width = NULL, height = NULL, bskyEvalDebu
 			## Close current device
 			dev.off()
 			
-			orig_graphicsDeviceFileName = uadatasets.sk$initial_graphics_file_name 
+			
+			if(bskyEvalDebug == TRUE){
+				full_file_names = list.files(path = graphicsDir, pattern="png|svg", full.names = TRUE)
+				cat("\n===Before renaming all svg files in graph dir==\n")
+				print(full_file_names)
+				cat("\nBefore =====\n")
+			}
+			
+			# capture the file name with path for the very first graphics device file open automatically 
+			# orig_graphicsDeviceFileName = full_file_names[which.max(file.mtime(full_file_names))]
+			
+			orig_graphicsDeviceFileName = uadatasets.sk$orig_initial_graphics_file_name 
 			orig_base_svg_filename <- sub("\\d{3}\\.svg$", ".svg", orig_graphicsDeviceFileName)
+			orig_base_svg_file_base_name <- sub("\\d{3}\\.svg$", "", basename(orig_graphicsDeviceFileName))
 			
-			if (file.exists(orig_graphicsDeviceFileName)) {
-			  unlink(orig_graphicsDeviceFileName)
+			#maxSvgFilenum <- as.integer(sub(".*?(\\d{3})\\.svg$", "\\1", orig_graphicsDeviceFileName))
+			maxSvgFilenum = bsky_get_max_svg_counter(orig_graphicsDeviceFileName)
+			
+			bsky_delete_leftover_bsky_temp_svg_from_past_runs(dir = graphicsDir, exclude_pattern = orig_base_svg_file_base_name)
+			bsky_temp_svg_device_filename = file.path(graphicsDir, paste0("bsky_temp_",orig_base_svg_file_base_name,".svg"))
+			
+			if(bskyEvalDebug == TRUE){
+				cat("\ncount_new_svg_graphics_files: ", uadatasets.sk$count_new_svg_graphics_files,"\n")
+				cat("\nMax SVG file number found: ", maxSvgFilenum, "\n")
 			}
 			
-			if (file.exists(orig_graphicsDeviceFileName)) {
-			  cat("\nError: Orig Graphics device file: ", orig_graphicsDeviceFileName, " could not be removed\n")
+			if(uadatasets.sk$count_new_svg_graphics_files > 0){
+				bsky_rename_svg_with_offset(
+						  dir         = graphicsDir,
+						  old_prefix  = paste0("bsky_temp_",orig_base_svg_file_base_name),
+						  new_prefix  = orig_base_svg_file_base_name,
+						  start_index = maxSvgFilenum
+						)
+				
+				uadatasets.sk$count_new_svg_graphics_files = 0
+				
+				if(bskyEvalDebug == TRUE){
+					full_file_names = list.files(path = graphicsDir, pattern="png|svg", full.names = TRUE)
+					cat("\n===After renaming all svg files in graph dir==\n")
+					print(full_file_names)
+					cat("\nAfter =====\n")
+				}
 			}
 			
+			
+			# if (file.exists(orig_graphicsDeviceFileName)) {
+			  # unlink(orig_graphicsDeviceFileName)
+			  # cat("\nInfo: Orig Graphics device file: ", orig_graphicsDeviceFileName, " removed\n")
+			# }
+			
+			# if (file.exists(orig_graphicsDeviceFileName)) {
+			  # cat("\nError: Orig Graphics device file: ", orig_graphicsDeviceFileName, " could not be removed\n")
+			# }
+			
+				
 			svg(
-				filename = sub("\\.svg$", "%03d.svg", orig_base_svg_filename),
+				#filename = sub("\\.svg$", "%03d.svg", orig_base_svg_filename),
+				#filename = sprintf("%s%03d.svg", orig_base_svg_filename, (maxSvgFilenum+7)),
+				
+				filename = sub("\\.svg$", "%03d.svg", bsky_temp_svg_device_filename),
 				width  = uadatasets.sk$bskyGraphicsWidth, 
 				height = uadatasets.sk$bskyGraphicsHeight
+				#onefile = FALSE
 			)
+			
 			
 			open_grp_device_list = dev.list()
 			if(is.null(open_grp_device_list)) cat("\nError: New SVG graphics device could be opened after closing the original one\n")
@@ -7832,6 +7978,7 @@ BSkySetGraphicsHeightWidth <- function(width = NULL, height = NULL, bskyEvalDebu
 	
 	return(invisible(c(curWidth = uadatasets.sk$bskyGraphicsWidth, curHeight = uadatasets.sk$bskyGraphicsHeight)))
 }
+
 
 
 #14Jun2021 for setting the environment variables to control the echo and inline echo of the R commands being executed by BSkyExecuteRcommand()
