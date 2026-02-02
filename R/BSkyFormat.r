@@ -7853,7 +7853,7 @@ BSkySetGraphicsHeightWidth <- function(width = 1000, height = 600, bskyEvalDebug
 		height = if (height > 1) height  else 1
 		
 		## Check for an active graphics device
-		if (dev.cur() > 1) 
+		if(!is.null(names(dev.cur())) && names(dev.cur()) == "svg") #if (dev.cur() > 1) 
 		{
 			if(is.null(height) && is.null(width)){
 				## Capture current device size (in inches)
