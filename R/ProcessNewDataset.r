@@ -377,6 +377,16 @@ BSkyPutEmptyCellsBack <-function (datasetName, defaultRows = 80, defaultCols = 1
 	# print("End-of Showing backed up values:")
 	datasetname <- paste('.GlobalEnv$',datasetName, sep='')
     # datasetname <- datasetName
+
+	# if an attribute is set on the dataset and is true then do not put back empty cell in the datagrid (Dataset1, etc.)
+	# if(eval(parse(text = paste("isTRUE(attr(",datasetname,", 'bsky_excel_cleanup_dialog'))" , sep = ""))) ) ## this should work same as the line below
+	if(eval(parse(text = paste("!is.null(attr(",datasetname,", 'bsky_excel_cleanup_dialog'))" , sep = ""))) && 
+	eval(parse(text = paste("attr(",datasetname,", 'bsky_excel_cleanup_dialog') == 'TRUE'", sep = ""))) )
+	{
+		# skip your dataset ristoration logic 
+		return(invisible())
+	}
+
     rowcount = eval(parse(text = paste("nrow(", datasetname, ")", sep = "")))
     colcount = eval(parse(text = paste("ncol(", datasetname, ")", sep = "")))
 	subDScolumnnames <- eval(parse(text=paste('colnames(',datasetname,')',sep='')))

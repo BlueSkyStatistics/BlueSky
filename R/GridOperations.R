@@ -978,7 +978,7 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 					classOfCol =eval(parse(text=paste(  "class(", datasetname, "$",cn, ")")))
 					#cat("--Class col\n")
 					#cat(classOfCol)
-					if(classOfCol =="numeric")
+					if("numeric" %in% classOfCol)
 					{
 						#cat("--Numeric col\n")
 						
@@ -997,7 +997,7 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 							eval( parse(text= paste(cn, "<- NA")) )
 						}
 					}
-					else if(classOfCol =="POSIXct" || classOfCol =="POSIXlt" || classOfCol =="Date")
+					else if("POSIXct" %in% classOfCol || "POSIXlt" %in% classOfCol || "Date" %in% classOfCol)
 					{
 						#cat("\nEdit Date cell while adding row.")
 						stdt <- strptime(rowdata[idx],format='%m/%d/%Y %H:%M:%S')
@@ -1018,7 +1018,7 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 						#cat("\n")
 						#print(cn)
 					}					
-					else if (classOfCol =="character") 
+					else if ("character" %in% classOfCol) 
 					{
 						#01Feb2018 
 						if (!is.na(rowdata[idx]) && rowdata[idx] !="")
@@ -1030,7 +1030,7 @@ BSkyAddNewDatagridRowAR <- function(rowdata=NA, rowindex=0, dataSetNameOrIndex)
 							eval( parse(text= paste(cn, "<- NA")) )
 						}
 					}
-					else if (classOfCol =="factor")#28Jun2016 Added as.factor, otherwise adding a row was changing factor to character
+					else if ("factor" %in% classOfCol)#28Jun2016 Added as.factor, otherwise adding a row was changing factor to character
 					{
 						#01Feb2018 
 						if (!is.na(rowdata[idx]) && rowdata[idx] !="")
