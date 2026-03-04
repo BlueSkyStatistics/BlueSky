@@ -1,3 +1,6 @@
+
+#This code works but it does not allow you to compile the BlueSky package
+
 BSkyGetDatasetNameTitle <-function(package ="")
 {
     if (package == ""|| package =="All_Installed_Packages") {
@@ -13,6 +16,22 @@ BSkyGetDatasetNameTitle <-function(package ="")
             sep = ""))
     return(uadatasets.sk$BSkyDataFramePackageDetails[, c("Keys")])
 
+}
+
+BSkyGetDatasetNameTitleNEW <- function(package = "") {
+
+  if (package == "" || package == "All_Installed_Packages") {
+    df <- as.data.frame(data(package = .packages(all.available = TRUE))$results)
+  } else {
+    df <- as.data.frame(data(package = package)$results)
+  }
+
+  df <- df |>
+    dplyr::filter(BSkyisValidName(Item)) |>
+    dplyr::arrange(tolower(Item)) |>
+    dplyr::mutate(Keys = paste0(Item, "-[", Title, "]-", Package))
+
+  return(df[, "Keys", drop = FALSE])
 }
 
 BSkyisValidName <- function(string) {

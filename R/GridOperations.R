@@ -1296,15 +1296,14 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
     tryCatch({
         withCallingHandlers(
 {
-            if (!is.na(as.numeric(datagridcolval))) {
-                colval = as.numeric(datagridcolval)
-            }
-            else {
-                colval = datagridcolval
-            }
-            if (datagridcolval == ".") {
-                colval = ""
-            }
+            if (identical(datagridcolval, ".")) {
+			  colval <- ""
+			} else {
+			  suppressWarnings({
+				num <- as.numeric(datagridcolval)
+			  })
+			  if (!is.na(num)) colval <- num else colval <- datagridcolval
+			}
             props <- c("Name", "Type", "Label", "Levels", "Missing",
                 "Align", "Measure", "Split", "Width", "Decimals",
                 "Columns", "Role","DateFormat")
@@ -1340,7 +1339,7 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
             rowlist <- ""
             datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
             if (!is.null(datasetname)) {
-                colIndex <- BSkyValidateColumn(datasetname, newcolname)
+                colIndex <- BSkyValidateColumn(datasetname, newcolname, FALSE)
 #Added by Aaron 06/23/2020 This is the case of a new column name
                 if (colIndex < 1) {
                   newcolmisatt <- eval(parse(text = paste(newcolname,
@@ -1423,7 +1422,7 @@ BSkyAddVarRow <-function (newcolname, rdatatype, datagridcolval, newcolindex = 0
                   }
                   i = 1
                   for (prop in props) {
-					print(prop)
+					#print(prop)
                     UAsetColProperties(dataSetNameOrIndex = datasetname,
                       colNameOrIndex = newcolname, propertyName = prop,
                       propertyValue = pval[[i]], mistype = "none",

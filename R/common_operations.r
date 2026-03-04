@@ -115,7 +115,7 @@ UAgetIndexOfDataSet <- function(datasetname)
 #Example: UAgetIndexOfColInDataSet("mydataset","gender")																					
 #																											
 #############################################################################################################
-UAgetIndexOfColInDataSet<-function(datasetname,colName)#DONE
+UAgetIndexOfColInDataSet<-function(datasetname,colName, warn = TRUE)#DONE
 {
 	BSkyFunctionInit()
 	BSkySetCurrentDatasetName(datasetname)
@@ -150,9 +150,14 @@ UAgetIndexOfColInDataSet<-function(datasetname,colName)#DONE
 		{
 			#cat("\nUAgetIndexOfColInDataSet:Col not Found: '", colName,"' Index=", idx,"\n")
 			#Error: index of col does not exist
-			BSkyErrMsg =paste("UAgetIndexOfColInDataSet: Index not found."," Col Name:", colName)
-			warning("UAgetIndexOfColInDataSet: Column not found.")
-			BSkyStoreApplicationWarnErrMsg(BSkyErrMsg, BSkyErrMsg)
+			
+			#warning("UAgetIndexOfColInDataSet: Column not found.")
+			if (warn) 
+			{
+				BSkyErrMsg =paste("UAgetIndexOfColInDataSet: Index not found."," Col Name:", colName)
+				warning("UAgetIndexOfColInDataSet: Column not found.")
+				BSkyStoreApplicationWarnErrMsg(BSkyErrMsg, BSkyErrMsg)
+			}
 			#-return(-1)
 		}					
 	# }
@@ -1426,7 +1431,7 @@ BSkyValidateDatasetFromSlice <- function(dataSetSliceIndex)
 }
 
 ## return col index if its valid otherwise returns -1
-BSkyValidateColumn <- function(datasetname, colNameOrIndex)
+BSkyValidateColumn <- function(datasetname, colNameOrIndex, warn=TRUE)
 {
 		colIndex <- -1
 		if(is.numeric(colNameOrIndex))
@@ -1442,7 +1447,7 @@ BSkyValidateColumn <- function(datasetname, colNameOrIndex)
 			# cat("\t ColName:")
 			#print(colNameOrIndex)
 			if(!is.null(colNameOrIndex))
-				colIndex <- UAgetIndexOfColInDataSet(datasetname,colNameOrIndex)
+				colIndex <- UAgetIndexOfColInDataSet(datasetname,colNameOrIndex, warn)
 		}
 		#cat("\nCol Validation Status:",colIndex);
 		return(invisible(colIndex))
