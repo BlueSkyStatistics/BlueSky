@@ -2,7 +2,7 @@ Package: BlueSky
 Type: Package
 Title: BlueSky Collection of Functions for Data Access, Analysis, and Formatting.
 Version: 9.28
-Date: 2026-03-04
+Date: 2026-03-07
 Depends: R (>= 4.0.0)
 Author: BlueSky Statistics.
 Maintainer: contact us <support@blueskystatistics.com>
