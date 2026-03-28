@@ -1014,14 +1014,71 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 						
 						dimnames(BSkyFormat_output$tables[[i]])[[2]] = merged_column_header
 					}
-					
+
 					# cat("\n<br> SK-1 <br>\n")
 					# print(dimnames(BSkyFormat_output$tables[[i]])[[2]])
 					# cat("<br>")
 					# print(repeted_column_header_df)
 					# cat("+++++++++++++++++++++++++++++++++<br>")
 				}
-		  
+
+				##################################################################################################
+				# Apply locale-specific decimal separator to all numeric string cells before kbl() rendering.
+				#
+				# WHY mon_decimal_point and NOT decimal_point:
+				#   R deliberately locks LC_NUMERIC to the C locale so that internal numeric computations
+				#   always use "." as decimal. As a result, Sys.localeconv()[["decimal_point"]] always
+				#   returns "." on every system and carries no locale information.
+				#   Sys.localeconv()[["mon_decimal_point"]] comes from LC_MONETARY, which R does NOT force
+				#   to C, so it reflects the actual OS locale (e.g. "," for de_DE, fr_FR, it_IT, etc.).
+				#
+				# WHY here and NOT earlier in the for-loop or inside BSkyFormat2/BSkyDecimalDigitFormating:
+				#   The p-value handling block above (sigfColIndex loop) relies on as.numeric() succeeding
+				#   on cell strings to classify and decorate p-values. Applying a comma decimal before that
+				#   block would cause as.numeric("0,032") to return NA, silently skipping all asterisk logic.
+				#   At this point all as.numeric() checks are complete, so the substitution is safe.
+				#
+				# WHAT is substituted:
+				#   1. Pure numeric strings ("1.234", "-0.056")          - detected via as.numeric()
+				#   2. p-value strings with leading "<"/">" ("< .001***") - detected via regex
+				#   3. Decorated numeric strings ("0.032 *", "0.051 .")   - detected via regex
+				#   Column names and row names are NOT touched.
+				##################################################################################################
+
+				locale_dec <- Sys.localeconv()[["mon_decimal_point"]]
+
+				if (!is.null(locale_dec) && nchar(locale_dec) == 1 && locale_dec != ".")
+				{
+					tbl <- BSkyFormat_output$tables[[i]]
+
+					for (r in seq_len(nrow(tbl)))
+					{
+						for (c in seq_len(ncol(tbl)))
+						{
+							cell <- tbl[r, c]
+
+							if (!is.na(suppressWarnings(as.numeric(cell))))
+							{
+								# Pure numeric string e.g. "1.234", "-0.056", "1e-04"
+								# Use fixed=TRUE for speed; "." only appears as decimal in these strings
+								tbl[r, c] <- gsub(".", locale_dec, cell, fixed = TRUE)
+							}
+							else if (grepl("^[<>]\\s*\\.?\\d", cell, perl = TRUE))
+							{
+								# p-value replacement string e.g. "< .001***", "> .05"
+								tbl[r, c] <- gsub("(?<=\\d)\\.(?=\\d)|\\.(?=\\d)", locale_dec, cell, perl = TRUE)
+							}
+							else if (grepl("(\\d+)\\.(\\d+)", cell, perl = TRUE))
+							{
+								# Decorated numeric string e.g. "0.032 *", "0.051 .", "0.100  "
+								tbl[r, c] <- gsub("(\\d+)\\.(\\d+)", paste0("\\1", locale_dec, "\\2"), cell, perl = TRUE)
+							}
+						}
+					}
+
+					BSkyFormat_output$tables[[i]] <- tbl
+				}
+
 				new_table_removed_empty_rows = BSkyFormat_output$tables[[i]]
 				
 				#Just a side note - kableExtra takes the row.names and makes it the 1st column in the data.frame - hence messes up the original col count 
