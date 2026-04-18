@@ -489,7 +489,8 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
   totalDatasetCols = eval(parse(text = paste("ncol(", dataSetNameOrIndex, ")")))
   newColumnBaseName ="var"
   newColumnSuffix = 1
-  for (i in 1:noOfCols) { 
+  class_changed = FALSE
+  for (i in 1:noOfCols) {
 	# Adding new columns
       if (startCol > totalDatasetCols)
       {
@@ -554,6 +555,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
 						dataSetNameOrIndex, "[,", startCol, "])", sep = "")))
 				}
 				classOfVariable <- "numeric"
+				class_changed = TRUE
 			}
 
             if (empty_string_count != empty_numeric_count) {
@@ -570,7 +572,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
                   dataSetNameOrIndex, "[, ", startCol, "])",
                   sep = "")))
 				}
-
+				class_changed = TRUE
             }
             end_position <- startRow + noOfRows - 1
             eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
@@ -636,6 +638,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
                 "[,", startCol, "]", "<- as.character(.GlobalEnv$",
                 dataSetNameOrIndex, "[, ", startCol, "])", sep = "")))
 			}
+			class_changed = TRUE
 
             end_position <- startRow + noOfRows - 1
             eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
@@ -644,6 +647,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
             startCol = startCol + 1
         }
 		}
+		return(invisible(class_changed))
 	}
 }
 
