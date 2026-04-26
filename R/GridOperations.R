@@ -509,6 +509,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
 		}
 
 		newColumnSuffix = newColumnSuffix +1
+		class_changed = TRUE
 
       }
       
