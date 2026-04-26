@@ -489,7 +489,8 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
   totalDatasetCols = eval(parse(text = paste("ncol(", dataSetNameOrIndex, ")")))
   newColumnBaseName ="var"
   newColumnSuffix = 1
-  for (i in 1:noOfCols) { 
+  class_changed = FALSE
+  for (i in 1:noOfCols) {
 	# Adding new columns
       if (startCol > totalDatasetCols)
       {
@@ -508,6 +509,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
 		}
 
 		newColumnSuffix = newColumnSuffix +1
+		class_changed = TRUE
 
       }
       
@@ -523,18 +525,40 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
         
         if ("numeric" %in% classOfVariable || "integer" %in%
             classOfVariable) {
-			
-			 every_column_temp <- every_column 
+
+			 every_column_temp <- every_column
 			 every_column_na_removed = every_column[!is.na(every_column)]
             empty_string_count <- sum(nchar(every_column_na_removed) ==
                 0 )
             every_column = suppressWarnings(as.numeric(every_column))
               empty_numeric_count <- sum(is.na(every_column) ==
                 TRUE)
-			
-                    	
-          
-          
+
+			##########################################################################################
+			# If the destination column is integer but the incoming values have decimal places,
+			# R would silently truncate the decimals on assignment (e.g. 56527.22 becomes 56527).
+			# Instead: convert the entire column to numeric first and inform the user.
+			##########################################################################################
+			if ("integer" %in% classOfVariable &&
+				any(!is.na(every_column) & every_column != floor(every_column)))
+			{
+				col_name_for_msg <- eval(parse(text = paste("names(", dataSetNameOrIndex, ")[", startCol, "]")))
+				cat("\nNote: Column '", col_name_for_msg, "' is of type integer but the value(s) entered contain decimal places.",
+					"\nThe column has been automatically converted from integer to numeric to preserve the decimal digits.\n", sep = "")
+
+				if (isDesign) {
+					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+						"[[", startCol, "]]", " <- as.numeric(.GlobalEnv$",
+						dataSetNameOrIndex, "[[", startCol, "]])", sep = "")))
+				} else {
+					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+						"[,", startCol, "]", " <- as.numeric(.GlobalEnv$",
+						dataSetNameOrIndex, "[,", startCol, "])", sep = "")))
+				}
+				classOfVariable <- "numeric"
+				class_changed = TRUE
+			}
+
             if (empty_string_count != empty_numeric_count) {
                 every_column <- every_column_temp
 				if(isDesign){
@@ -549,7 +573,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
                   dataSetNameOrIndex, "[, ", startCol, "])",
                   sep = "")))
 				}
-
+				class_changed = TRUE
             }
             end_position <- startRow + noOfRows - 1
             eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
@@ -615,6 +639,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
                 "[,", startCol, "]", "<- as.character(.GlobalEnv$",
                 dataSetNameOrIndex, "[, ", startCol, "])", sep = "")))
 			}
+			class_changed = TRUE
 
             end_position <- startRow + noOfRows - 1
             eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
@@ -623,6 +648,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
             startCol = startCol + 1
         }
 		}
+		return(invisible(class_changed))
 	}
 }
 
