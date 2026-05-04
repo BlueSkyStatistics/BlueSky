@@ -1595,11 +1595,17 @@ colIndex <- BSkyValidateColumn(datasetname, delcolname)
 			colcount <- eval(parse(text=paste('ncol(',datasetname,')'))) ## orginal col count before deleting a col
 			#M2: removing by assigning to NULL
 			#04Aug2016 eval(parse(text=paste(datasetname,'[',colIndex,'] <- NULL',sep='')))#. <<- to <-
-			eval(parse(text=paste(datasetname,'<-', datasetname,'[-',colIndex,']',sep='')))# easy way to remove col.
-			
+			isDesign <- eval(parse(text=paste('"design" %in% class(',datasetname,')',sep='')))
+			if(isDesign) {
+				# Use [[]] <- NULL to remove column while preserving "design" class and attributes
+				eval(parse(text=paste(datasetname,'[[',colIndex,']] <- NULL',sep='')))
+			} else {
+				eval(parse(text=paste(datasetname,'<-', datasetname,'[-',colIndex,']',sep='')))# easy way to remove col.
+			}
+
 			## Also fix variable.labels 09Aug2013
 			remainingLabels <- c()
-			for(i in 1:colcount) 
+			for(i in 1:colcount)
 			{
 				if(i!=colIndex) ## except removed col label, rest are saved and restored later
 				{
@@ -1738,11 +1744,19 @@ BSkyRemoveMultipleVarRows <- function(delcolnames, dataSetNameOrIndex)
 			colcount <- eval(parse(text=paste('ncol(',datasetname,')'))) ## orginal col count before deleting a col
 			#M2: removing by assigning to NULL
 			#04Aug2016 eval(parse(text=paste(datasetname,'[',colIndex,'] <- NULL',sep='')))#. <<- to <-
-			eval(parse(text=paste(datasetname,'<-', datasetname,'[',delindexes,']',sep='')))# easy way to remove col.
-			
+			isDesign <- eval(parse(text=paste('"design" %in% class(',datasetname,')',sep='')))
+			if(isDesign) {
+				# Delete in descending order to prevent index-shift after each removal
+				for(idx in sort(vec, decreasing=TRUE)) {
+					eval(parse(text=paste(datasetname,'[[',idx,']] <- NULL',sep='')))
+				}
+			} else {
+				eval(parse(text=paste(datasetname,'<-', datasetname,'[',delindexes,']',sep='')))# easy way to remove col.
+			}
+
 			## Also fix variable.labels 09Aug2013
 			remainingLabels <- c()
-			for(i in 1:colcount) 
+			for(i in 1:colcount)
 			{
 				if(!(i %in% vec)) ## except removed col labels, rest are saved and restored later
 				{
