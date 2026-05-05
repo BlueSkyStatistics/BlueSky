@@ -166,7 +166,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
                             selectInput("plot_type", "Select Plot Type:",
 							  choices = c("Scatter" = "scatter", "Line" = "line", "Boxplot" = "box",
 										  "Histogram" = "histogram", "Bar" = "bar", "Dot" = "dot", "Pie" = "pie",
-										  "I-MR Chart (Individuals & Moving Range)" = "imr"),
+										  "I-MR Chart (Individuals & Moving Range)" = "imr",
+										  "Interval Plot (Mean & CI)" = "interval"),
 							  selected = "scatter"
 							),
 
@@ -190,6 +191,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							uiOutput("imr_sigma_ui"),
 							div(style = "margin-left: 30px;", uiOutput("imr_num_sigma_ui")),
 
+							uiOutput("interval_ci_ui"),
+
 							hr(),
 							uiOutput("dot_plot_point_size"),
 							uiOutput("dot_plot_stack_up_ratio"),
@@ -200,7 +203,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							uiOutput("facet_scales_ui"),
 
 							conditionalPanel(
-							  condition = "['scatter', 'line', 'box', 'histogram', 'bar', 'dot', 'imr'].includes(input.plot_type)",
+							  condition = "['scatter', 'line', 'box', 'histogram', 'bar', 'dot', 'imr', 'interval'].includes(input.plot_type)",
 							  actionButton("reset_facet_values", "Clear All Facet Values")
 							),
 
@@ -584,6 +587,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		# To capture the point details when clicked on the points on Scatter and Line plots
 		clicked_points <- reactiveVal(data.frame())
 		
+		# Cache for interval plot summary — used by renderPlotly to add correct annotations
+		iv_summary_cache <- reactiveVal(NULL)
+		
 		###########################################################################
 		
 		# Setup for shinyFiles directory selection
@@ -660,7 +666,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		# one or more ref line UI elements whcih cannot be reset thouse
 		# standard reset machanism if UI element(s) is not visible for a plot type
 		observeEvent(input$plot_type, {
-		  if (input$plot_type %in% c("box", "bar", "histogram", "dot", "pie", "imr")) {
+		  if (input$plot_type %in% c("box", "bar", "histogram", "dot", "pie", "imr", "interval")) {
 			current_hlines("")
 			current_vlines("")
 			current_hline_labels("")
@@ -868,26 +874,39 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  )
 		})
 		
-		# For Scatter and Box plot jitter points
+		# Interval plot: confidence level slider
+		output$interval_ci_ui <- renderUI({
+		  req(input$plot_type == 'interval')
+		  sliderInput(
+			"interval_ci",
+			"Confidence Interval Level",
+			min   = 0.50,
+			max   = 0.9999,
+			value = 0.95,
+			step  = 0.0001
+		  )
+		})
+		
+		# For Scatter, Box and Interval plot jitter points
 		# Render checkbox to show or not the jitter points for box plot
 		output$jitter_ui <- renderUI({
-		req(input$plot_type %in% c('scatter','box'))
+		req(input$plot_type %in% c('scatter','box','interval'))
 		  checkboxInput(
 			"jitter", 
 			"Show Jitter Points", 
-			value = FALSE
+			value = if (input$plot_type == 'interval') TRUE else FALSE
 		  ) 
 		})
 	  
 		# Render the ConfInt selection slider around the fitted line if only the above checkbox is selected
 		output$jitter_spread_width_ui <- renderUI({
-		req(input$plot_type %in% c('scatter','box'), input$jitter == TRUE)
+		req(input$plot_type %in% c('scatter','box','interval'), input$jitter == TRUE)
 		   sliderInput(
 			"jitter_spread_width", 
 			"Jitter Point Spread Width", 
 			min = 0, 
 			max = 1, #0.4, 
-			value = 0.2, 
+			value = 0.1, 
 			step = 0.05
 		  )
 		})
@@ -922,7 +941,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 		output$x_scale_ui <- renderUI({
 		  req(input$plot_type)
-		  if (input$plot_type %in% c("dot", "pie", "imr")) return(NULL)
+		  if (input$plot_type %in% c("dot", "pie", "imr", "interval")) return(NULL)
 		  selectInput(
 				"x_scale", 
 				"X Axis Scale", 
@@ -938,7 +957,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 		output$y_scale_ui <- renderUI({
 		  req(input$plot_type)
-		  if (input$plot_type %in% c("dot", "pie", "imr")) return(NULL)
+		  if (input$plot_type %in% c("dot", "pie", "imr", "interval")) return(NULL)
 		  selectInput("y_scale", 
 					  "Y Axis Scale", 
 					  choices = c(
@@ -1113,6 +1132,14 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				  return(NULL)
 				}
 				
+				# Interval plot: x = categorical grouping, y = numeric response.
+				# Hide size, shape, vlines (not applicable).
+				# x_var and y_var are both required; group_var, facets, hlines all supported.
+				if (input$plot_type == "interval" &&
+					var_id %in% c("size_var", "shape_var", "vlines", "vline_labels")) {
+				  return(NULL)
+				}
+				
 				#if (var_id %in% c("y_var") && (input$plot_type %in% c("histogram", "bar", "dot"))) {
 				if (var_id %in% c("y_var") && (input$plot_type %in% c("histogram", "dot"))) {
 				  return(NULL)
@@ -1124,7 +1151,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				
 				if (var_id %in% c("hlines", "hline_labels")) {
 					#if (!(input$plot_type %in% c("scatter", "line", "box"))) {
-					if (!(input$plot_type %in% c("scatter", "line", "box", "bar", "histogram", "imr"))) {
+					if (!(input$plot_type %in% c("scatter", "line", "box", "bar", "histogram", "imr", "interval"))) {
 					  return(NULL)
 					} else {
 					  return(textInput(var_id, label))
@@ -1147,6 +1174,12 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				if (input$plot_type == "imr") {
 				  if (var_id == "y_var") effective_label <- "Y Variable - Measurement (required for I-MR)"
 				  if (var_id == "x_var") effective_label <- "X Variable - Index or Label (optional for I-MR)"
+				}
+				# Context-aware label for Interval plot
+				if (input$plot_type == "interval") {
+				  if (var_id == "y_var")     effective_label <- "Y Variable - Numeric Response (required)"
+				  if (var_id == "x_var")     effective_label <- "X Variable - Categorical Grouping (required)"
+				  if (var_id == "group_var") effective_label <- "Grouping Variable - Color by Category (optional)"
 				}
 				
 				selectInput(var_id, effective_label, choices = choices, selected = "")
@@ -1641,6 +1674,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		}
 		if (input$plot_type %in% c("imr")) {
 		  req(input$y_var)  # For IMR, y_var holds the measurement variable
+		}
+		if (input$plot_type %in% c("interval")) {
+		  req(input$x_var, input$y_var)  # Interval needs both x (categorical) and y (numeric)
 		}
 		if (input$plot_type %in% c("scatter", "line", "box")) {
 		  req(input$y_var)
@@ -2567,7 +2603,271 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  observe({ current_plot_obj(p_I) })
 		  return(p)
 		}
-		#Legends position management - works only for ggplot canvas and not for plotly canvas
+		
+		########################################################################
+		# Interval Plot (Mean & Confidence Intervals)
+		# Requires: x_var = categorical grouping, y_var = numeric response
+		# Supports: group_var (color), facet_row/col/wrap, hlines,
+		#           themes, axis angles, title/labels, CI level slider,
+		#           plotly (interactive) and ggplot (static) canvas modes
+		########################################################################
+		else if (plot_type == "interval") {
+		  req(input$x_var, input$y_var)
+		  
+		  iv_df    <- bsky_temp_df
+		  x_var    <- input$x_var
+		  y_var    <- input$y_var
+		  grp_var  <- if (!is.null(input$group_var) && input$group_var != "") input$group_var else NULL
+		  ci_level <- input$interval_ci %||% 0.95
+		  
+		  # Ensure x is treated as a factor for categorical grouping
+		  iv_df[[x_var]] <- as.factor(iv_df[[x_var]])
+		  
+		  # -----------------------------------------------------------------------
+		  # Detect active facet variable(s) — must be included in group_by so that
+		  # means and CIs are computed separately for each facet panel.
+		  # When both facet_row and facet_col are set, both are included.
+		  # -----------------------------------------------------------------------
+		  facet_vars <- c()
+		  if (!is.null(input$facet_wrap) && input$facet_wrap != "") {
+			facet_vars <- input$facet_wrap
+		  } else {
+			if (!is.null(input$facet_row) && input$facet_row != "") facet_vars <- c(facet_vars, input$facet_row)
+			if (!is.null(input$facet_col) && input$facet_col != "") facet_vars <- c(facet_vars, input$facet_col)
+		  }
+		  has_facet <- length(facet_vars) > 0
+		  
+		  # -----------------------------------------------------------------------
+		  # Per-group summary: mean, CI lower, CI upper
+		  # Grouping includes: x_var + optional group_var + all active facet vars
+		  # This ensures each facet panel gets its own statistically correct limits
+		  # -----------------------------------------------------------------------
+		  grp_cols <- unique(c(x_var, grp_var, facet_vars))
+		  
+		  iv_summary <- iv_df %>%
+			dplyr::group_by(dplyr::across(dplyr::all_of(grp_cols))) %>%
+			dplyr::summarise(
+			  .mean  = mean(.data[[y_var]], na.rm = TRUE),
+			  .n     = sum(!is.na(.data[[y_var]])),
+			  .sd    = sd(.data[[y_var]], na.rm = TRUE),
+			  .ci    = ifelse(
+				sum(!is.na(.data[[y_var]])) > 1,
+				qt(1 - (1 - ci_level) / 2, df = sum(!is.na(.data[[y_var]])) - 1) *
+				  sd(.data[[y_var]], na.rm = TRUE) / sqrt(sum(!is.na(.data[[y_var]]))),
+				0
+			  ),
+			  .groups = "drop"
+			) %>%
+			dplyr::mutate(
+			  .lower = .mean - .ci,
+			  .upper = .mean + .ci
+			) %>%
+			as.data.frame()
+		  
+		  # Join summary back to main df so facets and hover text work correctly
+		  iv_df <- dplyr::left_join(iv_df, iv_summary, by = grp_cols) %>% as.data.frame()
+		  
+		  # Hover text for plotly
+		  iv_df$.hover <- paste0(
+			x_var, ": ", iv_df[[x_var]], "<br>",
+			if (!is.null(grp_var)) paste0(grp_var, ": ", iv_df[[grp_var]], "<br>") else "",
+			if (has_facet) paste0(paste(facet_vars, collapse = "/"), ": ",
+								  apply(iv_df[, facet_vars, drop = FALSE], 1,
+										paste, collapse = "/"), "<br>") else "",
+			"Mean: ", round(iv_df$.mean, 4), "<br>",
+			"CI ", round(ci_level * 100, 1), "%: [",
+			round(iv_df$.lower, 4), ", ", round(iv_df$.upper, 4), "]", "<br>",
+			"n: ", iv_df$.n
+		  )
+		  
+		  # -----------------------------------------------------------------------
+		  # Build the ggplot
+		  # -----------------------------------------------------------------------
+		  if (!is.null(grp_var)) {
+			p <- ggplot(iv_df, aes(x = .data[[x_var]], y = .data[[y_var]],
+								   color = .data[[grp_var]], text = .hover))
+		  } else {
+			p <- ggplot(iv_df, aes(x = .data[[x_var]], y = .data[[y_var]],
+								   text = .hover))
+		  }
+		  
+		  # Raw data points — shown only when jitter checkbox is ticked
+		  show_jitter_iv <- input$jitter %||% TRUE
+		  jitter_w_iv    <- input$jitter_spread_width %||% 0.1
+		  
+		  if (show_jitter_iv) {
+			if (!is.null(grp_var)) {
+			  # When grouped, inherit color from global aes so points match group color
+			  p <- p + geom_point(alpha = 0.4,
+								  position = position_jitter(width = jitter_w_iv, seed = 42),
+								  size = 1.5, na.rm = TRUE)
+			} else {
+			  # No grouping — fixed grey
+			  p <- p + geom_point(alpha = 0.4,
+								  color = "#838386",
+								  position = position_jitter(width = jitter_w_iv, seed = 42),
+								  size = 1.5, na.rm = TRUE)
+			}
+		  }
+		  
+		  # Error bars (CI) — one per x level (+ group if present)
+		  if (!is.null(grp_var)) {
+			p <- p +
+			  geom_errorbar(data = iv_summary,
+							aes(x = .data[[x_var]],
+								ymin = .lower, ymax = .upper,
+								color = .data[[grp_var]]),
+							width = 0.2, linewidth = 0.8,
+							inherit.aes = FALSE) +
+			  geom_point(data = iv_summary,
+						 aes(x = .data[[x_var]], y = .mean,
+							 color = .data[[grp_var]]),
+						 size = 3, inherit.aes = FALSE)
+		  } else {
+			p <- p +
+			  geom_errorbar(data = iv_summary,
+							aes(x = .data[[x_var]], ymin = .lower, ymax = .upper),
+							color = "#050505", width = 0.2, linewidth = 0.8,
+							inherit.aes = FALSE) +
+			  geom_point(data = iv_summary,
+						 aes(x = .data[[x_var]], y = .mean),
+						 color = "#050505", size = 3,
+						 inherit.aes = FALSE)
+		  }
+		  
+		  # Labels use position_nudge for y-offset — ggplotly honours nudge correctly
+		  # unlike hjust/vjust. Font size 4 and hjust=-0.1 matches the reference image style.
+		  y_range   <- diff(range(iv_df[[y_var]], na.rm = TRUE))
+		  y_nudge_u <- y_range * 0.04   # above upper whisker
+		  y_nudge_l <- -y_range * 0.04  # below lower whisker
+		  
+		  p <- p +
+			# Upper CI label — nudged above the upper whisker
+			geom_text(data = iv_summary,
+					  aes(x = .data[[x_var]], y = .upper,
+						  label = round(.upper, 2)),
+					  color = "blue", size = 4,
+					  fontface = "bold",
+					  position = position_nudge(y = y_nudge_u),
+					  hjust = -0.1, inherit.aes = FALSE) +
+			# Mean label — nudged below the mean point
+			geom_text(data = iv_summary,
+					  aes(x = .data[[x_var]], y = .mean,
+						  label = round(.mean, 2)),
+					  color = "black", size = 4,
+					  fontface = "bold",
+					  position = position_nudge(y = -y_nudge_u),
+					  hjust = -0.1, inherit.aes = FALSE) +
+			# Lower CI label — nudged below the lower whisker
+			geom_text(data = iv_summary,
+					  aes(x = .data[[x_var]], y = .lower,
+						  label = round(.lower, 2)),
+					  color = "blue", size = 4,
+					  fontface = "bold",
+					  position = position_nudge(y = y_nudge_l),
+					  hjust = -0.1, inherit.aes = FALSE)
+		  
+		  # Horizontal reference lines (from hlines UI)
+		  # Use same annotation pattern as IMR chart: x = last category position
+		  # with hjust=-0.05 — this works correctly in both ggplot and plotly canvas.
+		  if (current_hlines() != "") {
+			parse_hlines <- function(s) suppressWarnings(as.numeric(unlist(strsplit(s, ","))))
+			parse_hlabels <- function(s) {
+			  if (is.null(s) || !nzchar(trimws(s))) return(character(0))
+			  trimws(unlist(strsplit(s, ",")))
+			}
+			hy      <- parse_hlines(current_hlines())
+			hlabels <- parse_hlabels(current_hline_labels())
+			hy      <- hy[!is.na(hy)]
+			if (length(hlabels) == 0)          hlabels <- rep("", length(hy))
+			if (length(hlabels) < length(hy))  hlabels <- c(hlabels, rep("", length(hy) - length(hlabels)))
+			hlabels <- hlabels[seq_along(hy)]
+			
+			# Last x category level — equivalent to imr_x_max for continuous axes
+			x_levels_iv <- levels(as.factor(iv_df[[x_var]]))
+			x_last_iv   <- x_levels_iv[length(x_levels_iv)]
+			
+			for (k in seq_along(hy)) {
+			  p <- p + geom_hline(yintercept = hy[k], linetype = "dashed",
+								  color = "darkred", linewidth = 0.6)
+			  lbl <- trimws(hlabels[k])
+			  annotation_text <- if (!is.na(lbl) && nzchar(lbl)) {
+				paste0(lbl, "\n", hy[k])
+			  } else {
+				paste0(" \n", hy[k])
+			  }
+			  p <- p + annotate("text",
+								x     = x_last_iv,
+								y     = hy[k],
+								label = annotation_text,
+								hjust = -0.05, vjust = 0.5,
+								size  = 3.2, color = "darkred")
+			}
+		  }
+		  
+		  # Facets
+		  if (!is.null(input$facet_wrap) && input$facet_wrap != "") {
+			p <- p + facet_wrap(input$facet_wrap, scales = input$facet_scales %||% "fixed")
+		  } else if ((!is.null(input$facet_row) && input$facet_row != "") ||
+					 (!is.null(input$facet_col) && input$facet_col != "")) {
+			row_f <- ifelse(is.null(input$facet_row) || input$facet_row == "", ".", input$facet_row)
+			col_f <- ifelse(is.null(input$facet_col) || input$facet_col == "", ".", input$facet_col)
+			p <- p + facet_grid(as.formula(paste(row_f, "~", col_f)),
+								scales = input$facet_scales %||% "fixed")
+		  }
+		  
+		  # Axis angle, legend, labels
+		  x_angle <- input$x_angle %||% 0
+		  y_angle <- input$y_angle %||% 0
+		  p <- p + theme(
+			axis.text.x  = element_text(angle = x_angle, vjust = 1, hjust = 1),
+			axis.text.y  = element_text(angle = y_angle, vjust = 1, hjust = 1),
+			legend.position = input$legends_pos,
+			legend.text  = element_text(size = 12),
+			legend.title = element_text(size = 13, face = "bold")
+		  )
+		  
+		  # Y-axis breaks
+		  p <- p + scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
+		  
+		  # Labs
+		  plot_title_str <- if (!is.null(input$plot_title) && input$plot_title != "") {
+			input$plot_title
+		  } else {
+			paste0(y_var, " by ", x_var,
+				   " - Interval Plot (Mean & ", round(ci_level * 100, 1), "% CI)")
+		  }
+		  p <- p + labs(
+			title = plot_title_str,
+			x     = if (!is.null(input$x_axis_label) && input$x_axis_label != "") input$x_axis_label else x_var,
+			y     = if (!is.null(input$y_axis_label) && input$y_axis_label != "") input$y_axis_label else y_var,
+			color = if (!is.null(grp_var)) grp_var else NULL
+		  ) + theme(plot.title = element_text(hjust = 0.5))
+		  
+		  # Apply theme from Themes & Options tab (same pattern as scatter)
+		  if (!is.null(input$plot_theme) && input$plot_theme != "default") {
+			theme_str <- input$plot_theme
+			if (theme_str == "solarized_light") {
+			  p <- p + ggthemes::theme_solarized(light = TRUE)
+			} else if (theme_str == "solarized_dark") {
+			  p <- p + ggthemes::theme_solarized(light = FALSE)
+			} else {
+			  parts <- strsplit(theme_str, "::")[[1]]
+			  theme_func <- getFromNamespace(parts[2], ns = parts[1])
+			  p <- p + theme_func()
+			}
+		  }
+		  
+		  current_plot_obj(p)
+		  # Cache summary + metadata for plotly label rendering
+		  iv_summary_cache(list(
+			summary  = iv_summary,
+			x_var    = x_var,
+			grp_var  = grp_var,
+			grp_cols = grp_cols
+		  ))
+		  return(p)
+		}
 		#Plotly ingores legend.position completely
 		#####################################################################################
 		
@@ -3145,6 +3445,8 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				  margin = list(t = top_margin, b = 40, l = 60, r = 20),
 				  annotations = annots
 				)
+			} else if (input$plot_type == "interval") {
+				ggplotly(base_plot(), tooltip = "text")
 			} else {
 				ggplotly(base_plot())
 			}
