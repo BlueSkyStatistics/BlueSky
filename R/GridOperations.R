@@ -277,6 +277,327 @@ BSkyEditDatagrid<-function(colname, colceldata=NA, rowdata=NA, rowindex=0, dataS
 		return(invisible(BSkyReturnStructure()))
 }
 
+##############################################################################################################
+# BSkyEditDatagridFlagInvalidClass
+#
+# Identical to BSkyEditDatagrid with one difference:
+#   Returns TRUE when the entered value was rejected due to a class mismatch (old value reverted),
+#   FALSE when the edit succeeded.
+##############################################################################################################
+BSkyEditDatagridFlagInvalidClass <- function(colname, colceldata = NA, rowdata = NA, rowindex = 0, dataSetNameOrIndex, rdateformat = '')
+{
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(dataSetNameOrIndex)
+
+	BSkyErrMsg  <- paste("BSkyEditDatagridFlagInvalidClass: Error in edit grid data : ", "DataSetName :", dataSetNameOrIndex, " ", "Variable Name List :", paste(colname, collapse = ","), sep = "")
+	BSkyWarnMsg <- paste("BSkyEditDatagridFlagInvalidClass: Warning in edit grid data : ", "DataSetName :", dataSetNameOrIndex, " ", "Variable Name List :", paste(colname, collapse = ","), sep = "")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+
+	class_mismatch <- FALSE
+
+	tryCatch(
+	{
+		withCallingHandlers(
+		{
+			rowlist     <- ""
+			datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+
+			if (rowindex >= 0)
+				rowindex <- rowindex + 1
+			else
+				rowindex <- eval(parse(text = paste('nrow(', datasetname, ') + 1')))
+
+			if (!is.null(datasetname))
+			{
+				colIndex   <- BSkyValidateColumn(datasetname, colname)
+
+				if (colIndex > 0)
+				{
+					classOfCol <- eval(parse(text = paste("class(", datasetname, "$", colname, ")")))
+
+					if ("numeric" %in% classOfCol)
+					{
+						if (!is.na(suppressWarnings(as.numeric(colceldata))) || is.na(colceldata)) {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- as.numeric(", colceldata, ")")))
+						} else {
+							class_mismatch <- TRUE
+							cat(paste0("\nValue entered ", colceldata, " - is invalid type for the dataset column of type ", classOfCol, "\n"))
+						}
+					}
+					else if ("integer" %in% classOfCol)
+					{
+						if (!is.na(suppressWarnings(as.integer(colceldata))) || is.na(colceldata)) {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- as.integer(", colceldata, ")")))
+						} else {
+							class_mismatch <- TRUE
+							cat(paste0("\nValue entered ", colceldata, " - is invalid type for the dataset column of type ", classOfCol, "\n"))
+						}
+					}
+					else if ("character" %in% classOfCol)
+					{
+						eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- as.character(", "colceldata", ")")))
+					}
+					else if ("POSIXct" %in% classOfCol || "POSIXlt" %in% classOfCol || "Date" %in% classOfCol)
+					{
+						dtformat <- rdateformat
+						if (is.na(dtformat) || dtformat == '')
+						{
+							dtformat <- eval(parse(text = paste('attr(', datasetname, '[[', colIndex, ']],"DateFormat")')))
+							if (is.null(dtformat) || dtformat == "")
+								dtformat <- '%Y-%m-%d'
+						}
+						coltzone <- eval(parse(text = paste('attr(', datasetname, '[[', colIndex, ']],"tzone")')))
+						if (is.null(coltzone) || coltzone == "")
+							coltzone <- Sys.timezone()
+
+						if (is.na(colceldata))
+						{
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- NA")))
+						}
+						else
+						{
+							validStrDate <- BSkyIsDateValid(stringDate = colceldata, dateFormat = dtformat, coltzone = coltzone)
+							if (!is.na(validStrDate) && validStrDate != '')
+							{
+								colceldata <- validStrDate
+								stdt  <- strptime(colceldata, format = dtformat, tz = coltzone)
+								posdt <- as.POSIXct(stdt, tz = coltzone)
+								eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- posdt")))
+							}
+							else
+							{
+								class_mismatch <- TRUE
+								cat(paste0("\nValue entered ", colceldata, " - is invalid date format for the dataset column of type ", classOfCol, "\n"))
+							}
+						}
+					}
+					else if ("logical" %in% classOfCol)
+					{
+						valid <- TRUE
+						if (is.na(colceldata)) {
+							colceldata <- NA
+						} else if (base::toupper(colceldata) == "TRUE"  || colceldata == TRUE) {
+							colceldata <- TRUE
+						} else if (base::toupper(colceldata) == "FALSE" || colceldata == FALSE) {
+							colceldata <- FALSE
+						} else {
+							valid      <- FALSE
+							colceldata <- NA
+						}
+
+						if (valid) {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- (", colceldata, ")", sep = '')))
+						} else {
+							class_mismatch <- TRUE
+							cat(paste0("\nValue entered ", colceldata, " - is invalid type for the dataset column of type ", classOfCol, "\n"))
+						}
+					}
+					else
+					{
+						if (is.na(colceldata)) {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- ", colceldata, sep = '')))
+						} else {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- ('", colceldata, "')", sep = '')))
+						}
+					}
+				}
+			}
+			else
+			{
+				BSkyErrMsg <- paste("BSkyEditDatagridFlagInvalidClass: Dataset does not exist or invalid rowindex. Dataset Name:", dataSetNameOrIndex)
+				warning("BSkyEditDatagridFlagInvalidClass: Dataset does not exist or invalid rowindex.")
+			}
+		},
+		warning = UAwarnHandlerFn
+		)
+	},
+	error  = UAerrHandlerFn,
+	silent = TRUE
+	)
+
+	if (BSkyLocalErrorFound()   == TRUE) { }
+	if (BSkyLocalWarningFound() == TRUE) {
+		BSkyLocalWarningFlagsReset()
+	}
+
+	BSkyFunctionWrapUp()
+	return(invisible(class_mismatch))
+}
+
+
+##############################################################################################################
+# BSkyEditDatagridColClassChange
+#
+# Identical to BSkyEditDatagrid with two differences:
+#   1. Returns TRUE when the edited cell caused the column's class to change, FALSE otherwise.
+#   2. Adds integer -> numeric promotion when a decimal value is entered into an integer column,
+#      using Sys.localeconv()[["mon_decimal_point"]] for locale-aware decimal detection.
+#      (mon_decimal_point is used rather than decimal_point because R locks LC_NUMERIC to C,
+#       so decimal_point always returns "." and carries no locale information.)
+##############################################################################################################
+BSkyEditDatagridColClassChange <- function(colname, colceldata = NA, rowdata = NA, rowindex = 0, dataSetNameOrIndex, rdateformat = '')
+{
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(dataSetNameOrIndex)
+
+	BSkyErrMsg  <- paste("BSkyEditDatagridColClassChange: Error in edit grid data : ", "DataSetName :", dataSetNameOrIndex, " ", "Variable Name List :", paste(colname, collapse = ","), sep = "")
+	BSkyWarnMsg <- paste("BSkyEditDatagridColClassChange: Warning in edit grid data : ", "DataSetName :", dataSetNameOrIndex, " ", "Variable Name List :", paste(colname, collapse = ","), sep = "")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+
+	class_changed <- FALSE
+
+	tryCatch(
+	{
+		withCallingHandlers(
+		{
+			rowlist     <- ""
+			datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+
+			if (rowindex >= 0)
+				rowindex <- rowindex + 1
+			else
+				rowindex <- eval(parse(text = paste('nrow(', datasetname, ') + 1')))
+
+			if (!is.null(datasetname))
+			{
+				colIndex <- BSkyValidateColumn(datasetname, colname)
+
+				if (colIndex > 0)
+				{
+					# Record class before the edit
+					class_before <- eval(parse(text = paste("class(", datasetname, "$", colname, ")")))
+					classOfCol   <- class_before
+
+					if ("numeric" %in% classOfCol)
+					{
+						if (!is.na(suppressWarnings(as.numeric(colceldata))) || is.na(colceldata)) {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- as.numeric(", colceldata, ")")))
+						} else {
+							cat(paste0("\nValue entered ", colceldata, " - is invalid type for the dataset column of type ", classOfCol, "\n"))
+						}
+					}
+					else if ("integer" %in% classOfCol)
+					{
+						# Normalise locale decimal separator before numeric parsing.
+						# mon_decimal_point reflects the actual OS locale (e.g. "," for de_DE, fr_FR)
+						# whereas decimal_point is always "." because R locks LC_NUMERIC to C.
+						locale_dec_input     <- Sys.localeconv()[["mon_decimal_point"]]
+						colceldata_normalised <- colceldata
+						if (!is.null(locale_dec_input) && nchar(locale_dec_input) == 1 && locale_dec_input == ",") {
+							colceldata_normalised <- gsub(",", ".", colceldata, fixed = TRUE)
+						}
+
+						if (!is.na(suppressWarnings(as.numeric(colceldata_normalised))) || is.na(colceldata))
+						{
+							numeric_val <- suppressWarnings(as.numeric(colceldata_normalised))
+
+							if (!is.na(numeric_val) && numeric_val != floor(numeric_val))
+							{
+								# Decimal entered into an integer column — promote column to numeric
+								cat(paste0("\nNote: Column '", colname, "' is of type integer but the value entered contains decimal places.",
+									"\nThe column has been automatically converted from integer to numeric to preserve the decimal digits.\n"))
+								eval(parse(text = paste(datasetname, "[,", colIndex, "] <- as.numeric(", datasetname, "[,", colIndex, "])")))
+								eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- ", numeric_val)))
+							}
+							else
+							{
+								eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- as.integer(", colceldata_normalised, ")")))
+							}
+						}
+						else
+						{
+							cat(paste0("\nValue entered ", colceldata, " - is invalid type for the dataset column of type ", classOfCol, "\n"))
+						}
+					}
+					else if ("character" %in% classOfCol)
+					{
+						eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- as.character(", "colceldata", ")")))
+					}
+					else if ("POSIXct" %in% classOfCol || "POSIXlt" %in% classOfCol || "Date" %in% classOfCol)
+					{
+						dtformat <- rdateformat
+						if (is.na(dtformat) || dtformat == '')
+						{
+							dtformat <- eval(parse(text = paste('attr(', datasetname, '[[', colIndex, ']],"DateFormat")')))
+							if (is.null(dtformat) || dtformat == "")
+								dtformat <- '%Y-%m-%d'
+						}
+						coltzone <- eval(parse(text = paste('attr(', datasetname, '[[', colIndex, ']],"tzone")')))
+						if (is.null(coltzone) || coltzone == "")
+							coltzone <- Sys.timezone()
+
+						if (is.na(colceldata))
+						{
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- NA")))
+						}
+						else
+						{
+							validStrDate <- BSkyIsDateValid(stringDate = colceldata, dateFormat = dtformat, coltzone = coltzone)
+							if (!is.na(validStrDate) && validStrDate != '')
+							{
+								colceldata <- validStrDate
+								stdt  <- strptime(colceldata, format = dtformat, tz = coltzone)
+								posdt <- as.POSIXct(stdt, tz = coltzone)
+								eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- posdt")))
+							}
+						}
+					}
+					else if ("logical" %in% classOfCol)
+					{
+						valid <- TRUE
+						if (is.na(colceldata)) {
+							colceldata <- NA
+						} else if (base::toupper(colceldata) == "TRUE"  || colceldata == TRUE) {
+							colceldata <- TRUE
+						} else if (base::toupper(colceldata) == "FALSE" || colceldata == FALSE) {
+							colceldata <- FALSE
+						} else {
+							valid    <- FALSE
+							colceldata <- NA
+						}
+
+						if (valid) {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- (", colceldata, ")", sep = '')))
+						} else {
+							cat(paste0("\nValue entered ", colceldata, " - is invalid type for the dataset column of type ", classOfCol, "\n"))
+						}
+					}
+					else
+					{
+						if (is.na(colceldata)) {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- ", colceldata, sep = '')))
+						} else {
+							eval(parse(text = paste(datasetname, "[", rowindex, ",", colIndex, "] <- ('", colceldata, "')", sep = '')))
+						}
+					}
+
+					# Compare class after the edit to detect any change
+					class_after   <- eval(parse(text = paste("class(", datasetname, "$", colname, ")")))
+					class_changed <- !identical(class_before, class_after)
+				}
+			}
+			else
+			{
+				BSkyErrMsg <- paste("BSkyEditDatagridColClassChange: Dataset does not exist or invalid rowindex. Dataset Name:", dataSetNameOrIndex)
+				warning("BSkyEditDatagridColClassChange: Dataset does not exist or invalid rowindex.")
+			}
+		},
+		warning = UAwarnHandlerFn
+		)
+	},
+	error  = UAerrHandlerFn,
+	silent = TRUE
+	)
+
+	if (BSkyLocalErrorFound() == TRUE) { }
+	if (BSkyLocalWarningFound() == TRUE) {
+		BSkyLocalWarningFlagsReset()
+	}
+
+	BSkyFunctionWrapUp()
+	return(invisible(class_changed))
+}
+
 
 BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, noOfCols = 3,
     data = NA, dataSetNameOrIndex = "mtcars")
@@ -319,7 +640,8 @@ BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, 
 		# 	deciCh = ','
 		# 	groupingChar = '.'
 		# } 
-		deciCh=Sys.localeconv()["decimal_point"]
+		#deciCh=Sys.localeconv()["decimal_point"]
+		deciCh=Sys.localeconv()[["mon_decimal_point"]]
 		groupingChar = Sys.localeconv()["thousands_sep"]		
 	}
 
@@ -472,17 +794,19 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
   #data = as.character(as.matrix(tabular_data))
   
   if (length(data) == 1) {
+	results =NULL
         colname = eval(parse(text = paste("names(", dataSetNameOrIndex,
             ")", "[", startCol, "]", sep = "")))
         if (data == "" || data == "<NA>") {
-            BSkyEditDatagrid(colname = colname, rowindex = startRow -
+            results =BSkyEditDatagridFlagInvalidClass(colname = colname, rowindex = startRow -
                 1, dataSetNameOrIndex = dataSetNameOrIndex)
         }
         else {
-            BSkyEditDatagrid(colname = colname, colceldata = data,
+            results =BSkyEditDatagridFlagInvalidClass(colname = colname, colceldata = data,
                 rowindex = startRow - 1, dataSetNameOrIndex = dataSetNameOrIndex)
         }
-     return(invisible())  
+     #return(invisible())
+		return(invisible(if (isTRUE(results)) 4L else 3L))
     }
   
   isDesign = "design" %in% ( eval(parse(text = paste("class(.GlobalEnv$", dataSetNameOrIndex, ")"))) )
@@ -648,7 +972,7 @@ if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboar
             startCol = startCol + 1
         }
 		}
-		return(invisible(class_changed))
+		return(invisible(if (isTRUE(class_changed)) 1L else 0L))
 	}
 }
 

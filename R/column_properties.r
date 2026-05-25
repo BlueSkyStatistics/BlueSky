@@ -2208,8 +2208,91 @@ BSkyMakeColumnNumeric <- function(colNameOrIndex, dataSetNameOrIndex,removeComma
 				warning("BSkyMakeColumnNumeric:  Can't make it numeric. Dataset name or index not found.")
 			}			
 
-		BSkyFunctionWrapUp()	
+		BSkyFunctionWrapUp()
 		return(invisible())
+}
+
+
+# Locale-aware equivalent of BSkyMakeColumnNumeric.
+# Uses mon_decimal_point (governed by LC_MONETARY) so the correct decimal
+# separator is detected even when LC_NUMERIC=C (e.g. "," on Polish machines).
+# On failure the column is left completely untouched, identical to BSkyMakeColumnNumeric.
+BSkyMakeColumnNumericNew <- function(colNameOrIndex, dataSetNameOrIndex) {
+
+	BSkyFunctionInit()
+	BSkySetCurrentDatasetName(dataSetNameOrIndex)
+
+	BSkyErrMsg <- paste("BSkyMakeColumnNumericNew: Error setting col properties : ", "DataSetName :", dataSetNameOrIndex, " ", "Variable  :", paste(colNameOrIndex, collapse = ","), sep = "")
+	BSkyWarnMsg <- paste("BSkyMakeColumnNumericNew: Warning setting col properties : ", "DataSetName :", dataSetNameOrIndex, " ", "Variable :", paste(colNameOrIndex, collapse = ","), sep = "")
+	BSkyStoreApplicationWarnErrMsg(BSkyWarnMsg, BSkyErrMsg)
+
+	datasetname <- BSkyValidateDataset(dataSetNameOrIndex)
+
+	if (!is.null(datasetname)) {
+		colIndex <- BSkyValidateColumn(datasetname, colNameOrIndex)
+		if (colIndex > 0) {
+			bskyattrs <- BSkyAttributesBackup(colIndex, datasetname)
+
+			var_data <- eval(parse(text = paste(datasetname, "$", colNameOrIndex, sep = "")))
+
+			# Convert factor to character, preserving level values not integer codes
+			if (is.factor(var_data)) var_data <- as.character(var_data)
+
+			if (!is.character(var_data)) {
+				numeric_data <- suppressWarnings(as.numeric(var_data))
+				cleaned      <- var_data  # for NA mask below
+			} else {
+				# Empty strings → NA
+				var_data[var_data == ""] <- NA
+
+				# mon_decimal_point respects LC_MONETARY (e.g. "," on Polish) even when LC_NUMERIC=C
+				deciCh       <- Sys.localeconv()[["mon_decimal_point"]]
+				groupingChar <- Sys.localeconv()[["thousands_sep"]]
+
+				# Strip whitespace first, including Unicode non-breaking spaces;
+				# then blank out whitespace-only strings so they become NA like ""
+				cleaned <- gsub("\\s+", "", var_data, perl = TRUE)
+				cleaned[cleaned == ""] <- NA
+
+				# Remove grouping separator before replacing decimal so "1.234,56" -> "1234,56" -> "1234.56"
+				if (nzchar(groupingChar) && groupingChar != deciCh) {
+					cleaned <- gsub(groupingChar, "", cleaned, fixed = TRUE)
+				}
+
+				# Normalise decimal separator to "." for as.numeric
+				if (nzchar(deciCh) && deciCh != ".") {
+					cleaned <- gsub(deciCh, ".", cleaned, fixed = TRUE)
+				}
+
+				numeric_data <- suppressWarnings(as.numeric(cleaned))
+			}
+
+			# If any non-NA values could not convert, warn and leave the column untouched
+			if (any(is.na(numeric_data) & !is.na(cleaned))) {
+				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+				bad_vals    <- var_data[is.na(numeric_data) & !is.na(cleaned)]
+				non_na_vals <- bad_vals[!is.na(bad_vals)]
+				BSkyErrMsg  <- paste0("BSkyMakeColumnNumericNew: Conversion failed for variable '", colNameOrIndex,
+				                      "' in dataset '", sub("^\\.GlobalEnv\\$", "", datasetname),
+				                      "'. The following entries (up to 10) cannot be converted to numeric: ",
+				                      paste(unique(head(non_na_vals, 10)), collapse = ", "))
+				warning(BSkyErrMsg)
+			} else {
+				eval(parse(text = paste(datasetname, "$", colNameOrIndex, " <- numeric_data", sep = "")))
+				BSkyAttributesRestore(colIndex, bskyattrs, datasetname)
+			}
+
+		} else {
+			BSkyErrMsg <- paste("BSkyMakeColumnNumericNew: Cannot set col property. Col not found.", " Col Name:", colNameOrIndex)
+			warning("BSkyMakeColumnNumericNew: Cannot set col property. Col not found.")
+		}
+	} else {
+		BSkyErrMsg <- paste("BSkyMakeColumnNumericNew: Can't make it numeric. Dataset name or index not found.", " Dataset Name:", datasetname)
+		warning("BSkyMakeColumnNumericNew: Can't make it numeric. Dataset name or index not found.")
+	}
+
+	BSkyFunctionWrapUp()
+	return(invisible())
 }
 
 
