@@ -25,7 +25,7 @@ BSkyMakeFirstRowAsHeader <- function(rowNum = 1, datasetName = BSkyGetCurrentDat
 	bsky_num_of_cols_convert = dim(datasetObj)[2]
 
 	for(i in 1:bsky_num_of_cols_convert){
-		datasetObj[,i] = type.convert(datasetObj[,i], as.is = TRUE)
+		datasetObj[,i] = type.convert(datasetObj[,i], as.is = TRUE, dec =Sys.localeconv()[["mon_decimal_point"]] )
 	}
 
 	if(dim(datasetObj)[1] > 0 && dim(datasetObj)[2] > 0)
