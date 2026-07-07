@@ -598,383 +598,383 @@ BSkyEditDatagridColClassChange <- function(colname, colceldata = NA, rowdata = N
 	return(invisible(class_changed))
 }
 
-
-BSkyMultipleEditDataGrid <- function (startRow = 2, startCol = 1, noOfRows = 4, noOfCols = 3,
-    data = NA, dataSetNameOrIndex = "mtcars")
+BSkyMultipleEditDataGrid <-function (startRow = 2, startCol = 1, noOfRows = 4, noOfCols = 3,
+    data = NA, dataSetNameOrIndex = "mtcars", clipboardText = NULL)
 {
-  
-  	deciCh = '.'
-	groupingChar = ''
-
-	##reading global value for decimal and display markers
-	decimarker = BSkyGetDecimalMarker()
-	dispmarker = BSkyGetDisplayMarker()
-	globalmarkersset = FALSE
-	if(decimarker!="" || dispmarker!="")
-	{
-		globalmarkersset = TRUE
-	}
-
-	if(decimarker!="")
-	{
-		deciCh = decimarker
-	}
-
-	if(dispmarker!="")
-	{
-		groupingChar = dispmarker
-	}
-
-	if(!globalmarkersset)
-	{
-		# localeRes = Sys.getlocale("LC_COLLATE")
-		# if(localeRes == "German_Italy.1252" ||
-		# localeRes == "German_Liechtenstein.1252" ||
-		# localeRes == "German_Luxembourg.1252" ||
-		# localeRes == "German_Austria.1252" ||
-		# localeRes == "German_Switzerland.1252" ||
-		# localeRes == "German_Germany.1252" || 
-		# localeRes == "German_Belgium.1252")
-		# {
-			
-		# 	deciCh = ','
-		# 	groupingChar = '.'
-		# } 
-		#deciCh=Sys.localeconv()["decimal_point"]
-		deciCh=Sys.localeconv()[["mon_decimal_point"]]
-		groupingChar = Sys.localeconv()["thousands_sep"]		
-	}
-
-
-  # Get system information
-	sys_info <- Sys.info()
-	
-	# Check the operating system
-	os_type <- sys_info['sysname']
-	
-		 # if (!is.na(data))
-		# {
-			 # validData =TRUE
-		 # }
-	 
-	#  if (length(data) ==1 && is.na(data))
-	if (is.null(data) || (is.null(dim(data)) && length(data) == 1 && is.na(data)))
-	{
-	validData =FALSE
-	} else {
-	validData =TRUE
-	}
-	
-	
-	# if (length(data) ==1 && is.na(data))
-	if (is.null(data) || (is.null(dim(data)) && length(data) == 1 && is.na(data)))
-	{
-
-	if (os_type == "Windows") 
-	{
-	#print("The operating system is Windows.")
-	# library(clipr, quietly = TRUE)
-	if(!BSkyGetLibLoadMsgPrintSetting())
-	{
-		suppressPackageStartupMessages(
-			suppressMessages(
-				suppressWarnings(
-					library(clipr, quietly = TRUE)
-				)
-			)
-		)
-	}
-	# Read clipboard content
-	clipboard_content <- read_clip()
-	# Check if the clipboard is empty
-	if (is.null(clipboard_content) || length(clipboard_content)==0 || all(clipboard_content == "") ){
-	print("The clipboard is still being prepared or is empty. Please wait a few seconds and retry the paste or try copying again before pasting.")
-	return(invisible("The clipboard is empty."))
-	} else 
-	{
-	#print("The clipboard is not empty.")
-	# tabular_data <- read.delim("clipboard", header = FALSE, stringsAsFactors = FALSE) ## num becomes string "50.000,50"
-	delimiter =BSkyGetDelimMarker()
-	templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
-	## clipboard data is tab separated
-	#tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale) #delim = '\t', 
-	
-	tabular_data =NULL
-tabular_data <- tryCatch({
+    deciCh = "."
+    groupingChar = ""
+    tabular_col_classes <- character(0)
+    decimarker = BSkyGetDecimalMarker()
+    dispmarker = BSkyGetDisplayMarker()
+    globalmarkersset = FALSE
+    if (decimarker != "" || dispmarker != "") {
+        globalmarkersset = TRUE
+    }
+    if (decimarker != "") {
+        deciCh = decimarker
+    }
+    if (dispmarker != "") {
+        groupingChar = dispmarker
+    }
+    if (!globalmarkersset) {
+        deciCh = Sys.localeconv()[["mon_decimal_point"]]
+        groupingChar = Sys.localeconv()["thousands_sep"]
+    }
+    sys_info <- Sys.info()
+    os_type <- sys_info["sysname"]
+    # FIX: Delete key sends data=c(NA), which previously matched the
+    # single-NA condition and routed into the clipboard-paste branch.
+    # With clipboardText=NULL that branch just prints "clipboard is empty"
+    # and returns, so the cell was never cleared.
+    # A request is a PASTE only when the caller passed no data at all
+    # (missing/NULL), or passed the NA placeholder together with actual
+    # clipboardText. A bare data=c(NA) with no clipboardText is a DELETE
+    # and must be treated as valid data.
+    isPasteRequest <- missing(data) || is.null(data) ||
+        (is.null(dim(data)) && length(data) == 1 && is.na(data) &&
+            !is.null(clipboardText))
+    if (isPasteRequest) {
+        validData = FALSE
+    }
+    else {
+        validData = TRUE
+    }
+    if (isPasteRequest) {
+        if (os_type == "Windows") {
+            if (is.null(clipboardText) || !nzchar(clipboardText)) {
+                print("The clipboard is still being prepared or is empty. Please wait a few seconds and retry the paste or try copying again before pasting.")
+                return(invisible("The clipboard is empty."))
+            }
+            else {
+                delimiter = BSkyGetDelimMarker()
+                templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
+                tabular_data = NULL
+                tabular_data <- tryCatch({
                   if (delimiter == "") {
-				   readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      delim = "\t", locale = templocale, skip_empty_rows = FALSE, show_col_types = FALSE)
-                   
+                    readr::read_delim(I(clipboardText), col_names = FALSE,
+                      delim = "\t", locale = templocale, skip_empty_rows = FALSE,
+                      show_col_types = FALSE)
                   }
                   else {
-                    readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      locale = templocale, delim = delimiter, show_col_types = FALSE)
+                    readr::read_delim(I(clipboardText), col_names = FALSE,
+                      locale = templocale, delim = delimiter,
+                      show_col_types = FALSE)
                   }
                 }, error = function(e) {
                   tryCatch({
-                     readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      locale = templocale, skip_empty_rows = FALSE, show_col_types = FALSE)
+                    readr::read_delim(I(clipboardText), col_names = FALSE,
+                      locale = templocale, skip_empty_rows = FALSE,
+                      show_col_types = FALSE)
                   }, error = function(e2) {
-                   
                     tryCatch({
-                    readr::read_delim(readr::clipboard(), col_names = FALSE,
-                      delim = "\n", locale = templocale, skip_empty_rows = FALSE, show_col_types = FALSE)
-                  }, error = function(e2) {
-                   
-                    "error"
-                   
-                   
-                   
-                  })  
+                      readr::read_delim(I(clipboardText), col_names = FALSE,
+                        delim = "\n", locale = templocale, skip_empty_rows = FALSE,
+                        show_col_types = FALSE)
+                    }, error = function(e2) {
+                      "error"
+                    })
                   })
                 })
-
-if ("character" %in% class(tabular_data))
-{
-    if (tabular_data =="error")
-	{
-	return (invisible("The paste failed as we could not guess the character that separates variables/rows from your data, please examine the data you want to paste and manually specify the delimited in the Triple dot>Settings>Misc. We have already tried the newline character i.e. \\n without success."))
-	}
-}
-if (base::is.null(tabular_data))
-{
-    return (invisible("Something went wrong with reading from the clipboard and a NULL was returned"))
-}	
-	
-	## run for each column to get desired encoded data
-	tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
-
-	noOfRows =nrow(tabular_data)
-	noOfCols =ncol(tabular_data)
-	data = as.character(t(as.matrix(tabular_data)))
-	validData =TRUE
-	}
-  
-	} else if (os_type == "Darwin") {
-
-	clipboard_content <- tryCatch({
-	readLines(pipe("pbpaste"), warn = FALSE)
-	}, error = function(e) {
-  NULL
-	})
-
-# Check if the clipboard is empty
-if (is.null(clipboard_content) || length(clipboard_content) == 0 || all(clipboard_content == "")) {
-  print("The clipboard is empty.")
-  return(invisible("The clipboard is empty."))
-} else {
-#   tabular_data <- read.delim(pipe("pbpaste"), header = FALSE, stringsAsFactors = FALSE)
-
-	clipboardEncoding = ""  ## get it from clipboard somehow.
-	templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
-	## clipboard data is tab separated
-	tabular_data = readr::read_delim(readr::clipboard(), col_names = FALSE, locale =  templocale, show_col_types = FALSE) #delim = '\t',
-	## run for each column to get desired encoded data
-	tabular_data <- data.frame(lapply(tabular_data, function(x) iconv(x)))
-	
-	noOfRows =nrow(tabular_data)
-	noOfCols =ncol(tabular_data)
-	data = as.character(t(as.matrix(tabular_data)))
-  	validData =TRUE
-}
-
-  #print("The operating system is macOS.")
-   
-} 
-
-}
-  
-  
-  # #Handle single cell, we call BSkyEditDatagrid
-  # tabular_data <- read.delim("clipboard", header = FALSE, stringsAsFactors = FALSE)
-  
-  # tabular_data <- read.delim(pipe("pbpaste"), header = FALSE, stringsAsFactors = FALSE)
-  if (validData)
-  {
-  #data = as.character(as.matrix(tabular_data))
-  
-  if (length(data) == 1) {
-	results =NULL
-        colname = eval(parse(text = paste("names(", dataSetNameOrIndex,
-            ")", "[", startCol, "]", sep = "")))
-        if (data == "" || data == "<NA>") {
-            results =BSkyEditDatagridFlagInvalidClass(colname = colname, rowindex = startRow -
-                1, dataSetNameOrIndex = dataSetNameOrIndex)
-        }
-        else {
-            results =BSkyEditDatagridFlagInvalidClass(colname = colname, colceldata = data,
-                rowindex = startRow - 1, dataSetNameOrIndex = dataSetNameOrIndex)
-        }
-     #return(invisible())
-		return(invisible(if (isTRUE(results)) 4L else 3L))
-    }
-  
-  isDesign = "design" %in% ( eval(parse(text = paste("class(.GlobalEnv$", dataSetNameOrIndex, ")"))) )
-  totalDatasetCols = eval(parse(text = paste("ncol(", dataSetNameOrIndex, ")")))
-  newColumnBaseName ="var"
-  newColumnSuffix = 1
-  class_changed = FALSE
-  for (i in 1:noOfCols) {
-	# Adding new columns
-      if (startCol > totalDatasetCols)
-      {
-        newColName =paste(newColumnBaseName, startCol, sep="")
-		if(isDesign){
-			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[[c(", deparse(newColName), ")]]", "<- NA", sep = "")))
-			
-			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[[c(", startCol, ")]]", "<- as.numeric(.GlobalEnv$",
-					dataSetNameOrIndex, "[[ c(", deparse(newColName), ")]])", sep = "")))
-		}
-		else {
-			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[,c(", deparse(newColName), ")]", "<- NA", sep = "")))
-			
-			eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex, "[,c(", startCol, ")]", "<- as.numeric(.GlobalEnv$",
-					dataSetNameOrIndex, "[, c(", deparse(newColName), ")])", sep = "")))
-		}
-
-		newColumnSuffix = newColumnSuffix +1
-		class_changed = TRUE
-
-      }
-      
-      
-        every_column <- data[seq(i, length(data), by = noOfCols)]
-		classOfVariable =""
-		if(isDesign){
-			classOfVariable <- eval(parse(text = paste("class(", dataSetNameOrIndex, "[[", startCol, "]])")))
-		}
-		else {
-			classOfVariable <- eval(parse(text = paste("class(", dataSetNameOrIndex, "[,", startCol, "])")))
-		}
-        
-        if ("numeric" %in% classOfVariable || "integer" %in%
-            classOfVariable) {
-
-			 every_column_temp <- every_column
-			 every_column_na_removed = every_column[!is.na(every_column)]
-            empty_string_count <- sum(nchar(every_column_na_removed) ==
-                0 )
-            every_column = suppressWarnings(as.numeric(every_column))
-              empty_numeric_count <- sum(is.na(every_column) ==
-                TRUE)
-
-			##########################################################################################
-			# If the destination column is integer but the incoming values have decimal places,
-			# R would silently truncate the decimals on assignment (e.g. 56527.22 becomes 56527).
-			# Instead: convert the entire column to numeric first and inform the user.
-			##########################################################################################
-			if ("integer" %in% classOfVariable &&
-				any(!is.na(every_column) & every_column != floor(every_column)))
-			{
-				col_name_for_msg <- eval(parse(text = paste("names(", dataSetNameOrIndex, ")[", startCol, "]")))
-				cat("\nNote: Column '", col_name_for_msg, "' is of type integer but the value(s) entered contain decimal places.",
-					"\nThe column has been automatically converted from integer to numeric to preserve the decimal digits.\n", sep = "")
-
-				if (isDesign) {
-					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-						"[[", startCol, "]]", " <- as.numeric(.GlobalEnv$",
-						dataSetNameOrIndex, "[[", startCol, "]])", sep = "")))
-				} else {
-					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-						"[,", startCol, "]", " <- as.numeric(.GlobalEnv$",
-						dataSetNameOrIndex, "[,", startCol, "])", sep = "")))
-				}
-				classOfVariable <- "numeric"
-				class_changed = TRUE
-			}
-
-            if (empty_string_count != empty_numeric_count) {
-                every_column <- every_column_temp
-				if(isDesign){
-					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                  "[[", startCol, "]]", "<- as.character(.GlobalEnv$",
-                  dataSetNameOrIndex, "[[ ", startCol, "]])",
-                  sep = "")))
-				}
-				else {
-					eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                  "[,", startCol, "]", "<- as.character(.GlobalEnv$",
-                  dataSetNameOrIndex, "[, ", startCol, "])",
-                  sep = "")))
-				}
-				class_changed = TRUE
-            }
-            end_position <- startRow + noOfRows - 1
-            eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                "[startRow:end_position, ", startCol, "] <- every_column",
-                sep = "")))
-            startCol = startCol + 1
-        }
-        else if ("factor" %in% classOfVariable || "ordered" %in%
-            classOfVariable) {
-			every_column[every_column ==""] =NA
-            every_column = as.factor(every_column)
-            levelsInPastedData = levels(every_column)
-			if(isDesign){
-				levelsInDestinationColumn = eval(parse(text = paste("levels(", dataSetNameOrIndex, "[[", startCol, "]])", sep = "")))
-			}
-			else {
-				levelsInDestinationColumn = eval(parse(text = paste("levels(", dataSetNameOrIndex, "[,", startCol, "])", sep = "")))
-			}
-            
-            for (element in levelsInPastedData) {
-                if (!(element %in% levelsInDestinationColumn)) {
-					if(isDesign){
-						eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-						"[[", startCol, "]]", " <- factor(.GlobalEnv$",
-						dataSetNameOrIndex, "[[", startCol, "]],",
-						"levels = c(levels(.GlobalEnv$", dataSetNameOrIndex,
-						"[[", startCol, "]]),", deparse(element),
-						"))", sep = "")))
-					}
-					else {
-						eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-						"[,", startCol, "]", " <- factor(.GlobalEnv$",
-						dataSetNameOrIndex, "[,", startCol, "],",
-						"levels = c(levels(.GlobalEnv$", dataSetNameOrIndex,
-						"[,", startCol, "]),", deparse(element),
-						"))", sep = "")))
-					}
-                  
+                if ("character" %in% class(tabular_data)) {
+                  if (tabular_data == "error") {
+                    return(invisible("The paste failed as we could not guess the character that separates variables/rows from your data, please examine the data you want to paste and manually specify the delimited in the Triple dot>Settings>Misc. We have already tried the newline character i.e. \\n without success."))
+                  }
                 }
+                if (base::is.null(tabular_data)) {
+                  return(invisible("Something went wrong with reading from the clipboard and a NULL was returned"))
+                }
+                tabular_col_classes <- sapply(tabular_data, function(x) class(x)[1])
+                tabular_data <- data.frame(lapply(tabular_data,
+                  function(x) iconv(x)))
+                noOfRows = nrow(tabular_data)
+                noOfCols = ncol(tabular_data)
+                data = as.character(t(as.matrix(tabular_data)))
+                validData = TRUE
             }
-            end_position <- startRow + noOfRows - 1
-            eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                "[startRow:end_position, ", startCol, "] <- every_column",
-                sep = "")))
-            startCol = startCol + 1
         }
-        else if ("character" %in% classOfVariable) {
-            end_position <- startRow + noOfRows - 1
-            eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                "[startRow:end_position, ", startCol, "] <- every_column",
-                sep = "")))
-            startCol = startCol + 1
+        else if (os_type == "Darwin") {
+            clipboard_content <- tryCatch({
+                readLines(pipe("pbpaste"), warn = FALSE)
+            }, error = function(e) {
+                NULL
+            })
+            if (is.null(clipboard_content) || length(clipboard_content) ==
+                0 || all(clipboard_content == "")) {
+                print("The clipboard is empty.")
+                return(invisible("The clipboard is empty."))
+            }
+            else {
+                clipboardEncoding = ""
+                templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
+                tabular_data = readr::read_delim(readr::clipboard(),
+                  col_names = FALSE, locale = templocale, show_col_types = FALSE)
+                tabular_col_classes <- sapply(tabular_data, function(x) class(x)[1])
+                tabular_data <- data.frame(lapply(tabular_data,
+                  function(x) iconv(x)))
+                noOfRows = nrow(tabular_data)
+                noOfCols = ncol(tabular_data)
+                data = as.character(t(as.matrix(tabular_data)))
+                validData = TRUE
+            }
         }
-        else if ("Date" %in% classOfVariable || "POSIXct" %in%
-            classOfVariable || "logical" %in% classOfVariable) {
-			if(isDesign){
-				eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                "[[", startCol, "]]", "<- as.character(.GlobalEnv$",
-                dataSetNameOrIndex, "[[ ", startCol, "]])", sep = "")))
-			}
-			else {
-				eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                "[,", startCol, "]", "<- as.character(.GlobalEnv$",
-                dataSetNameOrIndex, "[, ", startCol, "])", sep = "")))
-			}
-			class_changed = TRUE
-
-            end_position <- startRow + noOfRows - 1
-            eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
-                "[startRow:end_position, ", startCol, "] <- every_column",
-                sep = "")))
-            startCol = startCol + 1
+    }
+    if (validData) {
+        if (length(data) == 1) {
+            results = NULL
+            colname = eval(parse(text = paste("names(", dataSetNameOrIndex,
+                ")", "[", startCol, "]", sep = "")))
+            # FIX: data=c(NA) now reaches this branch on Delete. Without the
+            # isTRUE(is.na(data)) guard, `data == ""` evaluates to NA and
+            # if(NA) throws an error. A single NA routes into the same
+            # clear-cell path as an empty string.
+            if (isTRUE(is.na(data)) || data == "" || data == "<NA>") {
+                results = BSkyEditDatagridFlagInvalidClass(colname = colname,
+                  rowindex = startRow - 1, dataSetNameOrIndex = dataSetNameOrIndex)
+            }
+            else {
+                results = BSkyEditDatagridFlagInvalidClass(colname = colname,
+                  colceldata = data, rowindex = startRow - 1,
+                  dataSetNameOrIndex = dataSetNameOrIndex)
+            }
+            return(invisible(if (isTRUE(results)) 4L else 3L))
         }
-		}
-		return(invisible(if (isTRUE(class_changed)) 1L else 0L))
-	}
+        isDesign = "design" %in% (eval(parse(text = paste("class(.GlobalEnv$",
+            dataSetNameOrIndex, ")"))))
+        totalDatasetCols = eval(parse(text = paste("ncol(", dataSetNameOrIndex,
+            ")")))
+        newColumnBaseName = "var"
+        newColumnSuffix = 1
+        class_changed = FALSE
+        for (i in 1:noOfCols) {
+            if (startCol > totalDatasetCols) {
+                newColName = paste(newColumnBaseName, startCol,
+                  sep = "")
+                if (isDesign) {
+                  eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                    "[[c(", deparse(newColName), ")]]", "<- NA",
+                    sep = "")))
+                  eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                    "[[c(", startCol, ")]]", "<- as.numeric(.GlobalEnv$",
+                    dataSetNameOrIndex, "[[ c(", deparse(newColName),
+                    ")]])", sep = "")))
+                }
+                else {
+                  eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                    "[,c(", deparse(newColName), ")]", "<- NA",
+                    sep = "")))
+                  eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                    "[,c(", startCol, ")]", "<- as.numeric(.GlobalEnv$",
+                    dataSetNameOrIndex, "[, c(", deparse(newColName),
+                    ")])", sep = "")))
+                }
+                newColumnSuffix = newColumnSuffix + 1
+                class_changed = TRUE
+            }
+            every_column <- data[seq(i, length(data), by = noOfCols)]
+            classOfVariable = ""
+            if (isDesign) {
+                classOfVariable <- eval(parse(text = paste("class(",
+                  dataSetNameOrIndex, "[[", startCol, "]])")))
+            }
+            else {
+                classOfVariable <- eval(parse(text = paste("class(",
+                  dataSetNameOrIndex, "[,", startCol, "])")))
+            }
+            dest_all <- if ("character" %in% classOfVariable) {
+                if (isDesign)
+                  eval(parse(text = paste(dataSetNameOrIndex,
+                    "[[", startCol, "]]", sep = "")))
+                else eval(parse(text = paste(dataSetNameOrIndex,
+                  "[,", startCol, "]", sep = "")))
+            }
+            else NULL
+            if ("character" %in% classOfVariable && !is.null(dest_all) &&
+                all(is.na(dest_all) | dest_all == "")) {
+                dest_all[!is.na(dest_all) & dest_all == ""] <- NA
+                if (isDesign) {
+                  eval(parse(text = paste0(".GlobalEnv$", dataSetNameOrIndex,
+                    "[[", startCol, "]] <- dest_all")))
+                }
+                else {
+                  eval(parse(text = paste0(".GlobalEnv$", dataSetNameOrIndex,
+                    "[,", startCol, "] <- dest_all")))
+                }
+                end_position <- startRow + noOfRows - 1
+                tabular_class <- if (i <= length(tabular_col_classes))
+                  tabular_col_classes[[i]]
+                else "character"
+                if (tabular_class %in% c("numeric", "double")) {
+                  deciCh_paste <- Sys.localeconv()[["mon_decimal_point"]]
+                  groupingChar_paste <- Sys.localeconv()[["thousands_sep"]]
+                  temp <- every_column
+                  temp[temp == ""] <- NA
+                  temp <- gsub("\\s+", "", temp, perl = TRUE)
+                  temp[temp == ""] <- NA
+                  if (nzchar(groupingChar_paste) && groupingChar_paste !=
+                    deciCh_paste)
+                    temp <- gsub(groupingChar_paste, "", temp,
+                      fixed = TRUE)
+                  if (nzchar(deciCh_paste) && deciCh_paste !=
+                    ".")
+                    temp <- gsub(deciCh_paste, ".", temp, fixed = TRUE)
+                  every_column <- suppressWarnings(as.numeric(temp))
+                  if (isDesign) {
+                    eval(parse(text = paste0(".GlobalEnv$", dataSetNameOrIndex,
+                      "[[", startCol, "]] <- as.numeric(.GlobalEnv$",
+                      dataSetNameOrIndex, "[[", startCol, "]])")))
+                  }
+                  else {
+                    eval(parse(text = paste0(".GlobalEnv$", dataSetNameOrIndex,
+                      "[,", startCol, "] <- as.numeric(.GlobalEnv$",
+                      dataSetNameOrIndex, "[,", startCol, "])")))
+                  }
+                  class_changed <- TRUE
+                }
+                else if (tabular_class == "integer") {
+                  every_column <- suppressWarnings(as.integer(every_column))
+                  if (isDesign) {
+                    eval(parse(text = paste0(".GlobalEnv$", dataSetNameOrIndex,
+                      "[[", startCol, "]] <- as.integer(.GlobalEnv$",
+                      dataSetNameOrIndex, "[[", startCol, "]])")))
+                  }
+                  else {
+                    eval(parse(text = paste0(".GlobalEnv$", dataSetNameOrIndex,
+                      "[,", startCol, "] <- as.integer(.GlobalEnv$",
+                      dataSetNameOrIndex, "[,", startCol, "])")))
+                  }
+                  class_changed <- TRUE
+                }
+                eval(parse(text = paste0(".GlobalEnv$", dataSetNameOrIndex,
+                  "[startRow:end_position, ", startCol, "] <- every_column")))
+                startCol = startCol + 1
+            }
+            else if ("numeric" %in% classOfVariable || "integer" %in%
+                classOfVariable) {
+                every_column_temp <- every_column
+                every_column_na_removed = every_column[!is.na(every_column)]
+                empty_string_count <- sum(nchar(every_column_na_removed) ==
+                  0)
+                every_column = suppressWarnings(as.numeric(every_column))
+                empty_numeric_count <- sum(is.na(every_column) ==
+                  TRUE)
+                if ("integer" %in% classOfVariable && any(!is.na(every_column) &
+                  every_column != floor(every_column))) {
+                  col_name_for_msg <- eval(parse(text = paste("names(",
+                    dataSetNameOrIndex, ")[", startCol, "]")))
+                  cat("\nNote: Column '", col_name_for_msg, "' is of type integer but the value(s) entered contain decimal places.",
+                    "\nThe column has been automatically converted from integer to numeric to preserve the decimal digits.\n",
+                    sep = "")
+                  if (isDesign) {
+                    eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                      "[[", startCol, "]]", " <- as.numeric(.GlobalEnv$",
+                      dataSetNameOrIndex, "[[", startCol, "]])",
+                      sep = "")))
+                  }
+                  else {
+                    eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                      "[,", startCol, "]", " <- as.numeric(.GlobalEnv$",
+                      dataSetNameOrIndex, "[,", startCol, "])",
+                      sep = "")))
+                  }
+                  classOfVariable <- "numeric"
+                  class_changed = TRUE
+                }
+                if (empty_string_count != empty_numeric_count) {
+                  every_column <- every_column_temp
+                  if (isDesign) {
+                    eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                      "[[", startCol, "]]", "<- as.character(.GlobalEnv$",
+                      dataSetNameOrIndex, "[[ ", startCol, "]])",
+                      sep = "")))
+                  }
+                  else {
+                    eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                      "[,", startCol, "]", "<- as.character(.GlobalEnv$",
+                      dataSetNameOrIndex, "[, ", startCol, "])",
+                      sep = "")))
+                  }
+                  class_changed = TRUE
+                }
+                end_position <- startRow + noOfRows - 1
+                eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[startRow:end_position, ", startCol, "] <- every_column",
+                  sep = "")))
+                startCol = startCol + 1
+            }
+            else if ("factor" %in% classOfVariable || "ordered" %in%
+                classOfVariable) {
+                every_column[every_column == ""] = NA
+                every_column = as.factor(every_column)
+                levelsInPastedData = levels(every_column)
+                if (isDesign) {
+                  levelsInDestinationColumn = eval(parse(text = paste("levels(",
+                    dataSetNameOrIndex, "[[", startCol, "]])",
+                    sep = "")))
+                }
+                else {
+                  levelsInDestinationColumn = eval(parse(text = paste("levels(",
+                    dataSetNameOrIndex, "[,", startCol, "])",
+                    sep = "")))
+                }
+                for (element in levelsInPastedData) {
+                  if (!(element %in% levelsInDestinationColumn)) {
+                    if (isDesign) {
+                      eval(parse(text = paste(".GlobalEnv$",
+                        dataSetNameOrIndex, "[[", startCol, "]]",
+                        " <- factor(.GlobalEnv$", dataSetNameOrIndex,
+                        "[[", startCol, "]],", "levels = c(levels(.GlobalEnv$",
+                        dataSetNameOrIndex, "[[", startCol, "]]),",
+                        deparse(element), "))", sep = "")))
+                    }
+                    else {
+                      eval(parse(text = paste(".GlobalEnv$",
+                        dataSetNameOrIndex, "[,", startCol, "]",
+                        " <- factor(.GlobalEnv$", dataSetNameOrIndex,
+                        "[,", startCol, "],", "levels = c(levels(.GlobalEnv$",
+                        dataSetNameOrIndex, "[,", startCol, "]),",
+                        deparse(element), "))", sep = "")))
+                    }
+                  }
+                }
+                end_position <- startRow + noOfRows - 1
+                eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[startRow:end_position, ", startCol, "] <- every_column",
+                  sep = "")))
+                startCol = startCol + 1
+            }
+            else if ("character" %in% classOfVariable) {
+                end_position <- startRow + noOfRows - 1
+                eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[startRow:end_position, ", startCol, "] <- every_column",
+                  sep = "")))
+                startCol = startCol + 1
+            }
+            else if ("Date" %in% classOfVariable || "POSIXct" %in%
+                classOfVariable || "logical" %in% classOfVariable) {
+                if (isDesign) {
+                  eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                    "[[", startCol, "]]", "<- as.character(.GlobalEnv$",
+                    dataSetNameOrIndex, "[[ ", startCol, "]])",
+                    sep = "")))
+                }
+                else {
+                  eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                    "[,", startCol, "]", "<- as.character(.GlobalEnv$",
+                    dataSetNameOrIndex, "[, ", startCol, "])",
+                    sep = "")))
+                }
+                class_changed = TRUE
+                end_position <- startRow + noOfRows - 1
+                eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
+                  "[startRow:end_position, ", startCol, "] <- every_column",
+                  sep = "")))
+                startCol = startCol + 1
+            }
+        }
+        return(invisible(if (isTRUE(class_changed)) 1L else 0L))
+    }
 }
+
 
 
 #Adding a row in data grid
@@ -2462,4 +2462,20 @@ BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone
 		print(msg)
 	}
 	return(validStrDate)
+}
+
+
+BSkySearchDataset <- function(dfName, term, max) {
+  df <- eval(parse(text = dfName), envir = .GlobalEnv)
+  term <- tolower(term)
+  hits <- list()
+  for (j in seq_along(df)) {
+    m <- which(grepl(term, tolower(as.character(df[[j]])), fixed = TRUE))
+    if (length(m)) hits[[length(hits) + 1L]] <- cbind(m, j)
+  }
+  res <- if (length(hits)) do.call(rbind, hits) else matrix(integer(0), ncol = 2L)
+  res <- res[order(res[, 1L], res[, 2L]), , drop = FALSE]
+  n <- nrow(res)
+  capped <- if (n > max) res[seq_len(max), , drop = FALSE] else res
+  jsonlite::toJSON(list(total = n, matches = capped))
 }
