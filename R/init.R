@@ -56,7 +56,7 @@ uadatasets$split <<-FALSE
 uadatasets$logindex<<-1
 uadatasets.sk <<- new.env(parent=environment(.onLoad))
 BSKY.replaceSplChars <<- FALSE
-uadatasets.sk$BSkySigfColPatterns =c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)", "adj.p-value", "adj.p.value")
+uadatasets.sk$BSkySigfColPatterns =c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)", "adj.p-value", "adj.p.value", "p-value(2-tail)", "p-value(1-tail, <)",  "p-value(1-tail, >)")
 }
 
 
