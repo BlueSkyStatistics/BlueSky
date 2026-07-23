@@ -934,6 +934,10 @@ BSkyMultipleEditDataGrid <-function (startRow = 2, startCol = 1, noOfRows = 4, n
                         dataSetNameOrIndex, "[,", startCol, "]),",
                         deparse(element), "))", sep = "")))
                     }
+                    # New level added to the factor: force the same
+                    # grid refresh path used for a column class change,
+                    # so the UI picks up the updated level set.
+                    class_changed <- TRUE
                   }
                 }
                 end_position <- startRow + noOfRows - 1
