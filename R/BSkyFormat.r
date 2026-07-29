@@ -77,7 +77,7 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 	}
 	else
 	{
-		sigfColPatterns = c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)", "adj.p-value", "adj.p.value")
+		sigfColPatterns = c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)", "adj.p-value", "adj.p.value", "p-value(2-tail)", "p-value(1-tail, <)",  "p-value(1-tail, >)")
 	}
 	
 	if(exists("uadatasets.sk") && exists("BSkySigFootnote", env=uadatasets.sk) && length(uadatasets.sk$BSkySigFootnote) > 0)
@@ -1954,8 +1954,8 @@ BSkyFormat <- function(obj, colLabelOutput = BSkyGetColumnLabelOutput(), dataset
 							
 							# 03/22/2022 added to protect the column header like Pr(>|t|) to get mangled up by kable latex output 
 							# these needed a $ symbol enclosure
-							         stringPatterns = c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)", "adj.p-value", "adj.p.value")
-							modified_stringPatterns = c("Pr$(>F)$", "Pr$(>|t|)$","p.value", "Sig.(2-tailed)", "p-value", "Pr$(>|z|)$", "Pr$(>Chi)$", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.$(1-tail, >)$", "Sig.$(1-tail, <)$", "Pr$(>Chisq)$", "P$(>|Chi|)$", "Pr(Chi)",, "adj.p-value", "adj.p.value")
+							stringPatterns = c("Pr(>F)", "Pr(>|t|)","p.value", "Sig.(2-tailed)", "p-value", "Pr(>|z|)", "Pr(>Chi)", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.(1-tail, >)", "Sig.(1-tail, <)", "Pr(>Chisq)", "P(>|Chi|)", "Pr(Chi)", "adj.p-value", "adj.p.value", "p-value(2-tail)", "p-value(1-tail, <)",  "p-value(1-tail, >)")
+							modified_stringPatterns = c("Pr$(>F)$", "Pr$(>|t|)$","p.value", "Sig.(2-tailed)", "p-value", "Pr$(>|z|)$", "Pr$(>Chi)$", "p.value(z)", "p.value(t)", "Sig.(2-tail)", "Sig.$(1-tail, >)$", "Sig.$(1-tail, <)$", "Pr$(>Chisq)$", "P$(>|Chi|)$", "Pr(Chi)",, "adj.p-value", "adj.p.value", "p-value(2-tail)", "p-value(1-tail, <)$",  "p-value(1-tail, >)$")
 							 
 							for(sigp in 1:length(stringPatterns))
 							{
