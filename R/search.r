@@ -29,32 +29,63 @@
   invisible(TRUE)
 }
 
-.bskyReplaceApplyAll <- function(datasetName, rows, cols, replacement, token, maxStack = 20L) {
+.bskyReplaceApplyAll <- function(datasetName, rows, cols, replacement, token,
+                                  maxStack = 20L, term = NULL, mode = "whole") {
   e  <- .bskyReplaceInit()
   df <- get(datasetName, envir = globalenv())
   ucols <- unique(cols)
+  # Partial mode substitutes only the matched text within each cell's existing value
+  # (case-insensitive, literal -- mirrors BSkySearchDataset's own matching), leaving the
+  # rest of the cell's content intact. Whole mode (default) keeps the prior overwrite.
+  partial <- identical(mode, "partial") && !is.null(term) && nzchar(term)
   pre <- list(); post <- list(); colsChanged <- FALSE; total <- 0L
   for (j in ucols) {
     jkey <- as.character(j)
     rws  <- rows[cols == j]
     col  <- df[[j]]
+    substVals <- function() {
+      vapply(as.character(col)[rws], function(v) gsub(term, replacement, v,
+             ignore.case = TRUE, fixed = TRUE), character(1), USE.NAMES = FALSE)
+    }
     if (is.factor(col)) {
       newCol <- col
-      if (!(replacement %in% levels(newCol)))
-        levels(newCol) <- c(levels(newCol), replacement)
-      newCol[rws] <- replacement
+      newVals <- if (partial) substVals() else rep(replacement, length(rws))
+      addLevels <- setdiff(unique(newVals), levels(newCol))
+      if (length(addLevels)) levels(newCol) <- c(levels(newCol), addLevels)
+      newCol[rws] <- newVals
       pre[[jkey]]  <- list(whole = col)
       post[[jkey]] <- list(whole = newCol)
       colsChanged  <- TRUE
     } else {
-      repl <- replacement
-      if (is.numeric(col)) {
-        num <- suppressWarnings(as.numeric(replacement))
-        if (!is.na(num)) {
-          if (is.integer(col) && num == round(num) && abs(num) <= .Machine$integer.max) {
-            repl <- as.integer(num)
-          } else {
-            repl <- num
+      if (partial) {
+        repl <- substVals()
+        # gsub() always returns character. If every substituted value still parses as a
+        # number (matching whole-mode's own numeric coercion below), convert back and keep
+        # the column numeric -- otherwise a plain "replace part of the text" on a numeric
+        # column would needlessly flip its type, forcing a full column/grid rebuild on the
+        # frontend (which resets scroll position and has caused undo-history mismatches).
+        # is.na(num) vs is.na(repl) tells them apart: identical NA positions means every
+        # non-NA substitution parsed cleanly, so any NAs present were already NA in `col`.
+        if (is.numeric(col)) {
+          num <- suppressWarnings(as.numeric(repl))
+          if (identical(is.na(num), is.na(repl))) {
+            if (is.integer(col) && all(is.na(num) | (num == round(num) & abs(num) <= .Machine$integer.max))) {
+              repl <- as.integer(num)
+            } else {
+              repl <- num
+            }
+          }
+        }
+      } else {
+        repl <- replacement
+        if (is.numeric(col)) {
+          num <- suppressWarnings(as.numeric(replacement))
+          if (!is.na(num)) {
+            if (is.integer(col) && num == round(num) && abs(num) <= .Machine$integer.max) {
+              repl <- as.integer(num)
+            } else {
+              repl <- num
+            }
           }
         }
       }
