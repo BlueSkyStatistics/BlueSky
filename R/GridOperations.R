@@ -857,12 +857,18 @@ BSkyMultipleEditDataGrid <-function (startRow = 2, startCol = 1, noOfRows = 4, n
                 every_column = suppressWarnings(as.numeric(every_column))
                 empty_numeric_count <- sum(is.na(every_column) ==
                   TRUE)
-                if ("integer" %in% classOfVariable && any(!is.na(every_column) &
-                  every_column != floor(every_column))) {
+                # A pasted value forces the destination to widen past integer
+                # if it has a decimal place, or if it falls outside R's
+                # 32-bit integer range (as.integer() would silently return
+                # NA and lose the value otherwise, rather than widen).
+                needs_numeric <- any(!is.na(every_column) &
+                  (every_column != floor(every_column) |
+                    abs(every_column) > .Machine$integer.max))
+                if ("integer" %in% classOfVariable && needs_numeric) {
                   col_name_for_msg <- eval(parse(text = paste("names(",
                     dataSetNameOrIndex, ")[", startCol, "]")))
-                  cat("\nNote: Column '", col_name_for_msg, "' is of type integer but the value(s) entered contain decimal places.",
-                    "\nThe column has been automatically converted from integer to numeric to preserve the decimal digits.\n",
+                  cat("\nNote: Column '", col_name_for_msg, "' is of type integer but the value(s) entered contain decimal places or exceed the integer range.",
+                    "\nThe column has been automatically converted from integer to numeric to preserve the value(s).\n",
                     sep = "")
                   if (isDesign) {
                     eval(parse(text = paste(".GlobalEnv$", dataSetNameOrIndex,
@@ -878,6 +884,14 @@ BSkyMultipleEditDataGrid <-function (startRow = 2, startCol = 1, noOfRows = 4, n
                   }
                   classOfVariable <- "numeric"
                   class_changed = TRUE
+                }
+                else if ("integer" %in% classOfVariable) {
+                  # Whole numbers within integer range: keep the column as
+                  # integer instead of always widening it to numeric via the
+                  # as.numeric() coercion above -- that coercion is only
+                  # needed to detect decimals/overflow, not to decide the
+                  # final stored type.
+                  every_column <- suppressWarnings(as.integer(every_column))
                 }
                 if (empty_string_count != empty_numeric_count) {
                   every_column <- every_column_temp
@@ -934,6 +948,10 @@ BSkyMultipleEditDataGrid <-function (startRow = 2, startCol = 1, noOfRows = 4, n
                         dataSetNameOrIndex, "[,", startCol, "]),",
                         deparse(element), "))", sep = "")))
                     }
+                    # New level added to the factor: force the same
+                    # grid refresh path used for a column class change,
+                    # so the UI picks up the updated level set.
+                    class_changed <- TRUE
                   }
                 }
                 end_position <- startRow + noOfRows - 1
@@ -2465,12 +2483,15 @@ BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone
 }
 
 
-BSkySearchDataset <- function(dfName, term, max) {
+BSkySearchDataset <- function(dfName, term, max, mode = "partial", ignoreCase = TRUE) {
   df <- eval(parse(text = dfName), envir = .GlobalEnv)
-  term <- tolower(term)
+  needle <- if (ignoreCase) tolower(term) else term
+  whole  <- identical(mode, "whole")
   hits <- list()
   for (j in seq_along(df)) {
-    m <- which(grepl(term, tolower(as.character(df[[j]])), fixed = TRUE))
+    vals <- as.character(df[[j]])
+    hay  <- if (ignoreCase) tolower(vals) else vals
+    m <- which(if (whole) hay == needle else grepl(needle, hay, fixed = TRUE))
     if (length(m)) hits[[length(hits) + 1L]] <- cbind(m, j)
   }
   res <- if (length(hits)) do.call(rbind, hits) else matrix(integer(0), ncol = 2L)
