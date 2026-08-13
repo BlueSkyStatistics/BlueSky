@@ -65,7 +65,7 @@ BSkyCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pearson",
 		vars = dimnames(data)[[2]]
 	}
 	
-	BSky_Correlation_Matrix_Type = rcorr.adjust(data[,vars], use=missingValues, type = tolower(correlationType))
+	BSky_Correlation_Matrix_Type = RcmdrMisc::rcorr.adjust(data[,vars], use=missingValues, type = tolower(correlationType))
 	showPvalue = pValue
 	results <- BSkyFormatRcorr_adjust(BSky_Correlation_Matrix_Type, showPvalue)
 	row.names(results) <- NULL
@@ -129,7 +129,7 @@ BSkyPlotCorrelationMatrix <-function  (data, vars=NULL, correlationType = "Pears
 		vars = dimnames(data)[[2]]
 	}
 	
-		BSky_Correlation_Matrix_Type = rcorr.adjust(data[,vars], use=missingValues, type = tolower(correlationType))
+		BSky_Correlation_Matrix_Type = RcmdrMisc::rcorr.adjust(data[,vars], use=missingValues, type = tolower(correlationType))
 		#m = base::round(BSky_Correlation_Matrix_Type[[1]]$r, digits =BSkyGetDecimalDigitSetting())
 		m = BSky_Correlation_Matrix_Type[[1]]$r
 		
