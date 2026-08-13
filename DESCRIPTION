@@ -8,6 +8,7 @@ Author: BlueSky Statistics.
 Maintainer: contact us <support@blueskystatistics.com>
 Description: This package provides a variety of useful functions for accessing data, analyzing data and creating publication-quality output in text, HTML, and LaTeX. The functions are used extensively in the BlueSky Statistics user interface to R, but are useful to any R users.
 Imports: gdata, stringr, openxlsx, haven, readr, readxl, data.table, foreign, kableExtra, tidyverse, formatR, dplyr, effectsize, RcmdrMisc, DescTools
+Suggests: testthat (>= 3.0.0)
 License: GPL (version 2 or later)
 LazyLoad: yes
 RoxygenNote: 7.1.2
