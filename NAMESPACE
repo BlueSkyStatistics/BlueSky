@@ -278,5 +278,5 @@ export(xor_deobfuscatestring, importMSSQLDBList, importMSSQLtable)
 export(BSkyGraphBuilderSubprocLaunchMain)
 export(BSkySetLibLoadMsgPrintSetting, BSkyGetLibLoadMsgPrintSetting, BSkySetGraphicsHeightWidth)
 export(BSkySearchDataset)
-
+export(.bskyReplaceInit, .bskyReplaceLoadId,.bskyReplaceClear,.bskyReplaceApplyAll,.bskyReplaceRestore)
 
