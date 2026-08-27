@@ -279,4 +279,5 @@ export(BSkyGraphBuilderSubprocLaunchMain)
 export(BSkySetLibLoadMsgPrintSetting, BSkyGetLibLoadMsgPrintSetting, BSkySetGraphicsHeightWidth)
 export(BSkySearchDataset)
 export(.bskyReplaceInit, .bskyReplaceLoadId,.bskyReplaceClear,.bskyReplaceApplyAll,.bskyReplaceRestore)
+export(BSkyMakeFirstRowAsHeaderKeepingEmptyRC)
 
