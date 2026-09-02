@@ -77,7 +77,13 @@ BSkyMakeFirstRowAsHeaderKeepingEmptyRC <- function(rowNum = 1, datasetName = BSk
 	bsky_num_of_cols_convert = dim(datasetObj)[2]
 
 	for(i in 1:bsky_num_of_cols_convert){
-		datasetObj[,i] = type.convert(datasetObj[,i], as.is = TRUE, dec =Sys.localeconv()[["mon_decimal_point"]] )
+		bsky_col_vals = as.character(datasetObj[,i])
+		if(any(!is.na(bsky_col_vals) & trimws(bsky_col_vals) != "")){
+			datasetObj[,i] = type.convert(datasetObj[,i], as.is = TRUE, dec =Sys.localeconv()[["mon_decimal_point"]] )
+		} else {
+			# preserve original character class for columns that are entirely blank/NA
+			datasetObj[,i] = bsky_col_vals
+		}
 	}
 
 	if(dim(datasetObj)[1] > 0 && dim(datasetObj)[2] > 0)
