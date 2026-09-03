@@ -94,30 +94,19 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 				# print(BSkyBlankDSColNameClassList)
 				# print(blankDScolumnnames)
 				# print(blankDSrowcount)
-				
-				#19Jul23 Ross want us to keep the empty cols on the right of the boundary cell if it is renamed (X5 -> gender, but is empty col)
-				# And say in this scenario the 3rd col is renamed to X3 -> weight and has values.
-				# hint: create lastcellcolidx based on the name changed from original (X5 in above example). lastcellrowidx will remain as it is now.
-				keepEmptyRtCols = TRUE #this flag enables disables this capability.
-				if(keepEmptyRtCols)
-				{
-					defaultColNames = c('X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'X8', 'X9', 'X10', 'X11', 'X12', 'X13', 'X14', 'X15')
-					for(i in 15:1)
-					{
-						if(!(blankDScolumnnames[i] %in% defaultColNames) )
-						{
-							lastcellcolidx = i
-							break
-						}
-						
-					}
-				}
-				
+
+				#02Sep2026 Backup dataset-level attributes (any attribute set on the dataset itself, e.g. by the
+				# Electron/UI side, as opposed to the per-column attributes already backed up above in
+				# BSkyblankDSallColAttr). We need this because re-assigning the data.frame below
+				# (datasetname <- as.data.frame(datasetname[rows, cols])) drops every attribute except
+				# "names", "row.names" and "class" -- so without this backup any custom dataset attribute set
+				# before calling BSkyProcessNewDataset() would silently disappear.
+				BSkyblankDSlevelAttr <<- eval(parse(text=paste('attributes(',datasetname,')[!(names(attributes(',datasetname,')) %in% c("names","row.names","class"))]',sep='')))
 
 				# max non-empty row index and max non-empty col index, will be taken as the last cell of our data.frame.
 				# So, now we need to remove all rows and columns beyond this cell index
 				# We allow user to have empty row or empty col before the last cell of the data.frame
-				
+
 				# 'which' starts counting col by col. So first col has 30 values, second col first cell is index 31 and 3rd
 				# col will start at index 61, 4th col starts with 91. 5th col starts with 121.
 				#
@@ -131,6 +120,42 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 
 
 				rm(BSkyTeMpDs235) #clean temp copy of the dataset
+
+				#19Jul23 Ross want us to keep the empty cols on the right of the boundary cell if it is renamed (X5 -> gender, but is empty col)
+				# And say in this scenario the 3rd col is renamed to X3 -> weight and has values.
+				# hint: create lastcellcolidx based on the name changed from original (X5 in above example). lastcellrowidx will remain as it is now.
+				#02Sep2026 made this generic: instead of a hardcoded list of 15 default names ('X1'..'X15'), we now
+				# derive the default name for EACH column from its own position (BSkyDefaultColNamePrefix + position),
+				# and compare only that many columns as actually exist (length(blankDScolumnnames)). This works
+				# regardless of how many default columns the UI grid has, and also fixes the edge case where a
+				# non-boundary column happens to carry a name that matches some OTHER position's default name.
+				#02Sep2026 UPDATED REQUIREMENT (supersedes the "keep renamed empty cols" behavior above): a column
+				# that has no data of its own must NEVER be kept just because its header was renamed -- not even
+				# when there IS real data elsewhere in the dataset (e.g. col3 has values and col5 was renamed to
+				# 'gender' but left empty: col5 must still be dropped). Only actual data determines lastcellcolidx
+				# now; an empty column survives solely by being at/before the column that holds the last real value
+				# (see the allidxnotNA-driven block right below), never on account of its name. The old
+				# rename-based extension is kept here, disabled, for history/reference only.
+				keepEmptyRtCols = FALSE #disabled: renaming a column must never by itself keep an otherwise-empty column
+				BSkyDefaultColNamePrefix = "X" #prefix used elsewhere (e.g. rwExcel.R, UAreadExcel) to auto-generate col names X1, X2, ... Xn
+				if(keepEmptyRtCols && length(allidxnotNA) > 0) #not in use -- kept for reference only, see note above
+				{
+					totalCols = length(blankDScolumnnames) #actual no. of cols currently in the grid/dataset (not assumed to be any fixed no.)
+					if(totalCols > 0)
+					{
+						for(i in totalCols:1)
+						{
+							defaultNameForThisCol = paste(BSkyDefaultColNamePrefix, i, sep='')
+							if(!identical(blankDScolumnnames[i], defaultNameForThisCol))
+							{
+								lastcellcolidx = i
+								break
+							}
+
+						}
+					}
+				}
+
 
 				if(length(allidxnotNA) > 0 || lastcellcolidx > 0)#this 'if' executes either there is data in the grid or column name is changed.
 				{
@@ -170,6 +195,16 @@ BSkyProcessNewDataset <-function(datasetName, NAstrings = c("NA"), stringAsFacto
 					#cat(Colnames)
 					#remove empty rows and empty col beyond the 'last cell'.
 					eval(parse(text=paste(datasetname, '<- as.data.frame(', datasetname,'[1:',lastcellrowidx,', 1:',lastcellcolidx,'])',sep='')))
+
+					#02Sep2026 Restore dataset-level attributes backed up above (into BSkyblankDSlevelAttr) before the
+					# subsetting/reassignment above dropped them. Any attribute recreated further below (e.g. "misvals",
+					# "maxfactor", "processDS", or the ones set via UAcreateExtraAttributes()) simply overwrites the
+					# restored value when it is (re)set, so this only brings back attributes that would otherwise be
+					# silently lost -- e.g. custom attributes set on the dataset by the UI/Electron side.
+					if(length(BSkyblankDSlevelAttr) > 0)
+					{
+						eval(parse(text=paste('attributes(',datasetname,') <- BSkyUpdateColAttributes(BSkyblankDSlevelAttr, attributes(',datasetname,'))',sep='')))
+					}
 
 					#if there is just one colum then the name of the col will be var1. We always create dataset from top left cell.
 					if(lastcellcolidx == 1)
