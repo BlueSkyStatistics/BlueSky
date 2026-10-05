@@ -110,7 +110,13 @@ if(TRUE)##filetype=="SPSS")
 #eval( parse(text=paste('class(',datasetname,'$a) <<- \'character\'',sep='')))
 #eval( parse(text=paste('class(',datasetname,'$b) <<-  \'character\'',sep='')))
 eval(parse(text =paste (datasetName, "<<-data.frame(matrix(data = ", "rep (''," , "noOfRows*noOfCols), ncol =", noOfCols , ",nrow =", noOfRows, "),stringsAsFactors = FALSE)", sep="",collapse="")))
-uadatasets$name <- c(uadatasets$name, datasetname)
+## Register the dataset name only once. If this function is called twice for the same name (e.g. two quick
+## open-blank-dataset requests for 'Dataset1'), a duplicate entry makes which(datasetname == uadatasets$name)
+## return 2 indexes and uaprocdesc() fails with: 'length = 2' in coercion to 'logical(1)'.
+if(!(datasetname %in% uadatasets$name))
+{
+	uadatasets$name <- c(uadatasets$name, datasetname)
+}
 }
 varlbls <- c(var1="var1", var2="var2", var3="var3", var4="var4", var5="var5", var6="var6")
 #cat("\nLoaded dataset :", datasetname)
