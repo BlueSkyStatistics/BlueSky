@@ -14,7 +14,7 @@ BSkyGetDatasetNameTitle <- function(package = "") {
   }
 
   uadatasets.sk$BSkyDataFramePackageDetails <- uadatasets.sk$BSkyDataFramePackageDetails %>%
-    mutate(Keys = paste(Item, "-[", Title, "]-", Package, sep = ""))
+    dplyr::mutate(Keys = paste(Item, "-[", Title, "]-", Package, sep = ""))
 
   # return a character vector (not a data.frame)
   uadatasets.sk$BSkyDataFramePackageDetails$Keys

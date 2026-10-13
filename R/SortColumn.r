@@ -25,12 +25,12 @@ BSkySortDatagridCol <- function(colNameOrIndex, sortorder="asc", dataSetNameOrIn
 			if(sortorder=="asc")
 			{
 			#Dataset10  <-Dataset10 %>% arrange(air_time)
-			eval(parse(text=paste(datasetname,'<-', datasetname,' %>% arrange(',colNameOrIndex,')'))) #Sort ascending
+			eval(parse(text=paste(datasetname,'<-', datasetname,' %>% dplyr::arrange(',colNameOrIndex,')'))) #Sort ascending
 			}
 			else
 			{
 			#Dataset10  <-Dataset10 %>% arrange(desc(air_time))
-			eval(parse(text=paste(datasetname,'<-', datasetname,' %>% arrange(desc(',colNameOrIndex,'))'))) #Sort ascending
+			eval(parse(text=paste(datasetname,'<-', datasetname,' %>% dplyr::arrange(desc(',colNameOrIndex,'))'))) #Sort ascending
 			}						
 
 			BSkyAttributesRestore(colIndex, bskyattrs, datasetname)## restore all attributes

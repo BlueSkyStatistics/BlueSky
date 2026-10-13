@@ -12,7 +12,7 @@ BSkyGetDatasetNameTitle <-function(package ="")
 		uadatasets.sk$BSkyDataFramePackageDetails <-uadatasets.sk$BSkyDataFramePackageDetails %>% dplyr::filter(BSkyisValidName(Item)) %>% dplyr::arrange(tolower(Item))
     }
     uadatasets.sk$BSkyDataFramePackageDetails <- uadatasets.sk$BSkyDataFramePackageDetails %>%
-        mutate(Keys = paste(Item, "-[", Title, "]", "-", Package,
+        dplyr::mutate(Keys = paste(Item, "-[", Title, "]", "-", Package,
             sep = ""))
     return(uadatasets.sk$BSkyDataFramePackageDetails[, c("Keys")])
 

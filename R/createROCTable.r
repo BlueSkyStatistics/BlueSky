@@ -152,7 +152,7 @@ results$YoudenIndex =as.character(results$YoudenIndex)
 results$YoudenIndex[maxIndex] = paste(base::round(as.numeric(results$YoudenIndex[maxIndex]),digits=BSkyGetDecimalDigitSetting()) , "**",sep="",collapse="")
 
 results = results %>%
-	 arrange(desc(probability))
+	 dplyr::arrange(desc(probability))
 	 
 return(results)
 }

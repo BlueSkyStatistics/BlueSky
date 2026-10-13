@@ -1084,8 +1084,8 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 			
 			#Accuracy for each appraiser
 			bsky_accuracy_by_appraiser <- as.data.frame(({{dataset.name}} %>%
-				group_by({{selected.variableOpSelcted | safe}}) %>%
-					summarise(
+				dplyr::group_by({{selected.variableOpSelcted | safe}}) %>%
+					dplyr::summarise(
 						Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
 						Obs_count = n(),
 						Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n()
@@ -1095,8 +1095,8 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 			
 			#Accuracy by standard
 			bsky_accuracy_by_standard <- as.data.frame(({{dataset.name}} %>%
-				group_by({{selected.variableRefSelcted | safe}}) %>%
-					summarise(
+				dplyr::group_by({{selected.variableRefSelcted | safe}}) %>%
+					dplyr::summarise(
 						Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
 						Obs_count = n(),
 						Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n()
@@ -1107,8 +1107,8 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 			{
 				#Accuracy by trial
 				bsky_accuracy_by_trial <- as.data.frame(({{dataset.name}} %>%
-					group_by({{selected.variableTrialSelcted | safe}}) %>%
-						summarise(
+					dplyr::group_by({{selected.variableTrialSelcted | safe}}) %>%
+						dplyr::summarise(
 							Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
 							Obs_count = n(),
 							Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n()
@@ -1118,8 +1118,8 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 			
 			#Accuracy by appraiser and standard
 			bsky_accuracy_by_appraiser_standard <- as.data.frame(({{dataset.name}} %>%
-				group_by({{selected.variableOpSelcted | safe}}, {{selected.variableRefSelcted | safe}}) %>%
-					summarise(
+				dplyr::group_by({{selected.variableOpSelcted | safe}}, {{selected.variableRefSelcted | safe}}) %>%
+					dplyr::summarise(
 						Accuracy_count = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}}),
 						Obs_count = n(),
 						Accuracy = sum({{selected.variableRespSelcted | safe}} == {{selected.variableRefSelcted | safe}})/n(),
@@ -1133,8 +1133,8 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 			cat(paste0("\nOverall misclassification error rate: ", round(bsky_overall_error_rate, BSkyGetDecimalDigitSetting()),"\n"))
 			
 			bsky_misclassification_by_standard <- as.data.frame(({{dataset.name}} %>%
-				group_by({{selected.variableRefSelcted | safe}}) %>%
-					summarise(
+				dplyr::group_by({{selected.variableRefSelcted | safe}}) %>%
+					dplyr::summarise(
 						Misclassification_count = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}}),
 						Obs_count = n(),
 						Misclassification = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}})/n(),
@@ -1150,8 +1150,8 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 			
 			#Appraiser misclassification rates
 			bsky_misclassification_by_standard_appraiser <- as.data.frame(({{dataset.name}} %>%
-				group_by({{selected.variableRefSelcted | safe}}, {{selected.variableOpSelcted | safe}}) %>%
-					summarise(
+				dplyr::group_by({{selected.variableRefSelcted | safe}}, {{selected.variableOpSelcted | safe}}) %>%
+					dplyr::summarise(
 						Misclassification_count = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}}),
 						Obs_count = n(),
 						Misclassification = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}})/n(),
@@ -1173,8 +1173,8 @@ BSkyAttributeAgreementAnalysis.NOT.IN.USE <- function(part, operator, response, 
 			
 			#Misclassification by part
 			bsky_misclassification_by_part <- as.data.frame(({{dataset.name}} %>%
-				group_by({{selected.variablePartSelcted | safe}}, {{selected.variableRefSelcted | safe}}) %>%
-					summarise(
+				dplyr::group_by({{selected.variablePartSelcted | safe}}, {{selected.variableRefSelcted | safe}}) %>%
+					dplyr::summarise(
 						Misclassification_count = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}}),
 						Obs_count = n(),
 						Misclassification = sum({{selected.variableRespSelcted | safe}} != {{selected.variableRefSelcted | safe}})/n(),
