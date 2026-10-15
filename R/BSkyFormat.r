@@ -8240,54 +8240,55 @@ BSkyDatasetNameSubstitute <- function(datasetName, toDatasetName, replaceOldColu
 
 
 #14Jun2021
-BSkyExpandBSkyFormatWithFooter <- function(RcommandString, BSkySplitFooterStr)
-{
-	paramName = "BSkyFormat"
-	paramName = paste("(\\b", paramName, "\\b)", sep="")
+# BSkyExpandBSkyFormatWithFooter <- function(RcommandString, BSkySplitFooterStr)
+# {
+   # cat("I am here 00000000000000000000000\n")
+	# paramName = "BSkyFormat"
+	# paramName = paste("(\\b", paramName, "\\b)", sep="")
 	
-	for(n in 1:length(RcommandString))
-	{
-		# Look for all BSkyFormat commands in the R command string passed 
-		paramNamePosition = gregexpr(paramName, RcommandString[n])
+	# for(n in 1:length(RcommandString))
+	# {
+		# # Look for all BSkyFormat commands in the R command string passed 
+		# paramNamePosition = gregexpr(paramName, RcommandString[n])
 		
-		if(paramNamePosition[[1]][1] > 0)
-		{
-			all_BSkyformat_str = c()
+		# if(paramNamePosition[[1]][1] > 0)
+		# {
+			# all_BSkyformat_str = c()
 			
-			for(i in 1:length(paramNamePosition[[1]]))
-			{
-				#endParamValuePosition = regexpr(")", substr(RcommandString[n],(paramNamePosition[[1]][i] +attr(paramNamePosition[[1]],"match.length")[i]), nchar(RcommandString[n])))
+			# for(i in 1:length(paramNamePosition[[1]]))
+			# {
+				# #endParamValuePosition = regexpr(")", substr(RcommandString[n],(paramNamePosition[[1]][i] +attr(paramNamePosition[[1]],"match.length")[i]), nchar(RcommandString[n])))
 				
-				final_closing_parentheses_matched = gregexpr("\\((?>[^()]|(?R))*\\)", substr(RcommandString[n], paramNamePosition[[1]][i], nchar(RcommandString[n])), perl = T)
+				# final_closing_parentheses_matched = gregexpr("\\((?>[^()]|(?R))*\\)", substr(RcommandString[n], paramNamePosition[[1]][i], nchar(RcommandString[n])), perl = T)
 				
-				#BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+attr(paramNamePosition[[1]],"match.length")[i]+endParamValuePosition-1)
+				# #BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+attr(paramNamePosition[[1]],"match.length")[i]+endParamValuePosition-1)
 				
-				BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+final_closing_parentheses_matched[[1]][1]+attr(final_closing_parentheses_matched[[1]],"match.length")[1] - 1 -1)
+				# BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+final_closing_parentheses_matched[[1]][1]+attr(final_closing_parentheses_matched[[1]],"match.length")[1] - 1 -1)
 				
-				all_BSkyformat_str = c(all_BSkyformat_str, BSkyformat_str1)
+				# all_BSkyformat_str = c(all_BSkyformat_str, BSkyformat_str1)
 				
-				#print(BSkyformat_str1)
-				#cat("===================\n")
-			}
+				# #print(BSkyformat_str1)
+				# #cat("===================\n")
+			# }
 			
-			for(i in 1:length(all_BSkyformat_str))
-			{
-				BSkyformat_str_modified = paste(substr(all_BSkyformat_str[i], 1, nchar(all_BSkyformat_str[i]) -1), " ,repeatAllTableFooter = ", "\"", BSkySplitFooterStr, "\"", ")", sep = "")
+			# for(i in 1:length(all_BSkyformat_str))
+			# {
+				# BSkyformat_str_modified = paste(substr(all_BSkyformat_str[i], 1, nchar(all_BSkyformat_str[i]) -1), " ,repeatAllTableFooter = ", "\"", BSkySplitFooterStr, "\"", ")", sep = "")
 				
-				#print(BSkyformat_str_modified)
-				#cat("===================\n")
+				# #print(BSkyformat_str_modified)
+				# #cat("===================\n")
 				
-				all_BSkyformat_str[i] = gsub("\\(", "\\\\(", all_BSkyformat_str[i])
-				#all_BSkyformat_str[i] = paste("(\\b", all_BSkyformat_str[i], "\\b)", sep="")
-				RcommandString[n] = gsub(all_BSkyformat_str[i], BSkyformat_str_modified, RcommandString[n])
+				# all_BSkyformat_str[i] = gsub("\\(", "\\\\(", all_BSkyformat_str[i])
+				# #all_BSkyformat_str[i] = paste("(\\b", all_BSkyformat_str[i], "\\b)", sep="")
+				# RcommandString[n] = gsub(all_BSkyformat_str[i], BSkyformat_str_modified, RcommandString[n])
 				
-				#print(RcommandString[n])
-			}
-		}
-	}
+				# #print(RcommandString[n])
+			# }
+		# }
+	# }
 	
-	return(invisible(RcommandString))
-}
+	# return(invisible(RcommandString))
+# }
 
 
 #23May2021
@@ -8370,78 +8371,232 @@ BSkySplitIterationHandling <- function(datasetName, varNames, RcommandString)
 	return(invisible(RcommandString_modified))
 }
 
+
 #23May2021
+
+# BSkySplitVarsDatasetStringSub <- function(datasetName, varNames, RcommandString, BSkySplitFooterStr)
+# {
+	# #grep("(\\bdata=mtcarsmodified)\\b)|(\\bdata=\\s+mtcarsmodified)\\b)|(\\bdata\\s+=mtcarsmodified)\\b)|(\\bdata\\s+=\\s+mtcarsmodified)\\b)", abc)
+	# #grep("((\\bdata=mtcarsmodified\\b)|(\\bdata=\\s+mtcarsmodified\\b)|(\\bdata\\s+=mtcarsmodified\\b)|(\\bdata\\s+=\\s+mtcarsmodified\\b))", abc)
+	
+	# #grep_str = paste("(\\bdata=",datasetName,")\\b)|(\\bdata=\\s+",datasetName,")\\b)|\\bdata\\s+=\\s+",datasetName, "|(\\bdata\\s+=",datasetName,")\\b)", sep="")
+
+	# grep_dataset_str1 = paste("((\\bdata=",datasetName,"\\b)|(\\bdata=\\s+",datasetName,"\\b)|(\\bdata\\s+=",datasetName,"\\b)|(\\bdata\\s+=\\s+",datasetName,"\\b))", sep="")
+	# grep_dataset_str2 = paste("((\\b",datasetName,"\\b)|(",datasetName,"\\[))", sep = "")
+
+	
+	# paramName = "BSkyFormat"
+	# paramName = paste("(\\b", paramName, "\\b)", sep="")
+	
+	# for(n in 1:length(RcommandString))
+	# {
+		# #replace the dataset name with the split dataset name 
+		# RcommandString[n] = gsub(grep_dataset_str1, "data=uadatasets$lst[[bSkyGlobalDataSliceIndexToWorkOn]]", RcommandString[n])
+		
+		# #substitute dataset parameter with dataset$var convention to refer to its var columns 
+		# for(i in 1:length(varNames))
+		# {
+			# grep_str = paste("\\b",datasetName,"\\$", varNames[i], sep="")
+			# sub_str = paste("uadatasets$lst[[bSkyGlobalDataSliceIndexToWorkOn]]","$", varNames[i], sep="")
+			# RcommandString[n] = gsub(grep_str, sub_str, RcommandString[n])
+		# }
+	
+		# #substitute dataset parameter with dataset[index] convention to refer to its var columns 
+		# RcommandString[n] = gsub(grep_dataset_str2, "data=uadatasets$lst[[bSkyGlobalDataSliceIndexToWorkOn]][", RcommandString[n])
+		
+		# # Look for all BSkyFormat commands in the R command string passed 
+		# paramNamePosition = gregexpr(paramName, RcommandString[n])
+		
+		# if(paramNamePosition[[1]][1] > 0)
+		# {
+			# all_BSkyformat_str = c()
+			
+			# for(i in 1:length(paramNamePosition[[1]]))
+			# {
+				# #endParamValuePosition = regexpr(")", substr(RcommandString[n],(paramNamePosition[[1]][i] +attr(paramNamePosition[[1]],"match.length")[i]), nchar(RcommandString[n])))
+				
+				# final_closing_parentheses_matched = gregexpr("\\((?>[^()]|(?R))*\\)", substr(RcommandString[n], paramNamePosition[[1]][i], nchar(RcommandString[n])), perl = T)
+				
+				# #BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+attr(paramNamePosition[[1]],"match.length")[i]+endParamValuePosition-1)
+				
+				# BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+final_closing_parentheses_matched[[1]][1]+attr(final_closing_parentheses_matched[[1]],"match.length")[1] - 1 -1)
+				
+				# all_BSkyformat_str = c(all_BSkyformat_str, BSkyformat_str1)
+				
+				# #print(BSkyformat_str1)
+				# #cat("===================\n")
+			# }
+			
+			# for(i in 1:length(all_BSkyformat_str))
+			# {
+				# BSkyformat_str_modified = paste(substr(all_BSkyformat_str[i], 1, nchar(all_BSkyformat_str[i]) -1), ",repeatAllTableFooter =", "\"", BSkySplitFooterStr, "\"", ")")
+				
+				# #print(BSkyformat_str_modified)
+				# #cat("===================\n")
+				
+				# all_BSkyformat_str[i] = gsub("\\(", "\\\\(", all_BSkyformat_str[i])
+				# #all_BSkyformat_str[i] = paste("(\\b", all_BSkyformat_str[i], "\\b)", sep="")
+				# RcommandString[n] = gsub(all_BSkyformat_str[i], BSkyformat_str_modified, RcommandString[n])
+				
+				# #print(RcommandString[n])
+			# }
+		# }
+	# }
+	
+	# return(invisible(RcommandString))
+# }
+
+
+#14Oct2026
+# ---------------------------------------------------------------------------
+# Helpers: edit BSkyFormat(...) calls by POSITION. Call text is never used as a regex.
+# ---------------------------------------------------------------------------
+
+#14Oct2026
+# Scans a call starting at the "(" at openPos. Respects quotes (" ' `) and # comments.
+# Returns the position of the matching ")" and the positions of top-level commas.
+BSkyScanCall <- function(s, openPos)
+{
+	ch <- strsplit(s, "")[[1]]
+	n <- length(ch)
+	depth <- 0L
+	commas <- integer(0)
+	quote <- NULL
+	i <- openPos
+	while(i <= n)
+	{
+		c1 <- ch[i]
+		if(!is.null(quote))
+		{
+			if(c1 == "\\") i <- i + 1L
+			else if(c1 == quote) quote <- NULL
+		}
+		else if(c1 == "\"" || c1 == "'" || c1 == "`") quote <- c1
+		else if(c1 == "#") { while(i < n && ch[i] != "\n") i <- i + 1L }
+		else if(c1 %in% c("(", "[", "{")) depth <- depth + 1L
+		else if(c1 %in% c(")", "]", "}"))
+		{
+			depth <- depth - 1L
+			if(depth == 0L) return(list(close = i, commas = commas))
+		}
+		else if(c1 == "," && depth == 1L) commas <- c(commas, i)
+		i <- i + 1L
+	}
+	NULL
+}
+
+#14Oct2026
+# Takes ONE complete BSkyFormat(...) call as text. If it already has a repeatAllTableFooter
+# argument, the new footer is appended to it with "\n" (the original value is kept as an R
+# expression, so it can be a string, a variable or an if/else). If not, the argument is added.
+BSkyAppendFooterToCall <- function(callStr, footerLit)
+{
+	open <- regexpr("(", callStr, fixed = TRUE)[1]
+	if(open < 1) return(callStr)
+	scan <- BSkyScanCall(callStr, open)
+	if(is.null(scan)) return(callStr)
+	close <- scan$close
+	bounds <- c(open, scan$commas, close)
+
+	for(k in seq_len(length(bounds) - 1))
+	{
+		a <- bounds[k] + 1L
+		b <- bounds[k + 1] - 1L
+		if(b < a) next
+		arg <- substr(callStr, a, b)
+		m <- regexec("(?s)^(\\s*repeatAllTableFooter\\s*=(?!=)\\s*)(.*?)(\\s*)$", arg, perl = TRUE)
+		if(m[[1]][1] != -1)
+		{
+			parts <- regmatches(arg, m)[[1]]   # full, prefix, existing value, trailing whitespace
+			newArg <- paste0(parts[2], "paste0(", parts[3], ", \"\\n\", ", footerLit, ")", parts[4])
+			return(paste0(substr(callStr, 1, a - 1), newArg, substr(callStr, b + 1, nchar(callStr))))
+		}
+	}
+
+	# No existing repeatAllTableFooter: add it before the closing parenthesis
+	isEmpty <- !nzchar(trimws(substr(callStr, open + 1, close - 1)))
+	paste0(substr(callStr, 1, close - 1), if(isEmpty) "" else ", ",
+	       "repeatAllTableFooter = ", footerLit, substr(callStr, close, nchar(callStr)))
+}
+
+#14Oct2026
+# Finds every BSkyFormat( ... ) call in the string s and applies BSkyAppendFooterToCall to each.
+BSkyAppendFooterToAllCalls <- function(s, footerLit)
+{
+	hits <- gregexpr("\\bBSkyFormat\\s*\\(", s, perl = TRUE)[[1]]
+	if(hits[1] < 1) return(s)
+
+	starts <- integer(0); ends <- integer(0)
+	lastEnd <- 0L
+	for(i in seq_along(hits))
+	{
+		if(hits[i] <= lastEnd) next    # nested inside a call already handled
+		openPos <- hits[i] + attr(hits, "match.length")[i] - 1L
+		scan <- BSkyScanCall(s, openPos)
+		if(is.null(scan)) next          # unbalanced, leave untouched
+		starts <- c(starts, hits[i]); ends <- c(ends, scan$close)
+		lastEnd <- scan$close
+	}
+
+	# Edit from last to first so earlier positions stay valid
+	for(i in rev(seq_along(starts)))
+	{
+		callStr <- substr(s, starts[i], ends[i])
+		s <- paste0(substr(s, 1, starts[i] - 1),
+		            BSkyAppendFooterToCall(callStr, footerLit),
+		            substr(s, ends[i] + 1, nchar(s)))
+	}
+	s
+}
+
+# ---------------------------------------------------------------------------
+# Engine functions
+# ---------------------------------------------------------------------------
+#14Oct2026 
+BSkyExpandBSkyFormatWithFooter <- function(RcommandString, BSkySplitFooterStr)
+{
+	# Nothing to add: leave the commands untouched
+	if(length(BSkySplitFooterStr) == 0 || !any(nzchar(BSkySplitFooterStr)))
+		return(invisible(RcommandString))
+
+	# Footer as a safely quoted R string literal (handles quotes, backslashes, newlines)
+	footerLit <- paste(deparse(paste(BSkySplitFooterStr, collapse = "\n")), collapse = "")
+
+	for(n in seq_along(RcommandString))
+		RcommandString[n] <- BSkyAppendFooterToAllCalls(RcommandString[n], footerLit)
+
+	return(invisible(RcommandString))
+}
+
+#14Oct2026
 BSkySplitVarsDatasetStringSub <- function(datasetName, varNames, RcommandString, BSkySplitFooterStr)
 {
-	#grep("(\\bdata=mtcarsmodified)\\b)|(\\bdata=\\s+mtcarsmodified)\\b)|(\\bdata\\s+=mtcarsmodified)\\b)|(\\bdata\\s+=\\s+mtcarsmodified)\\b)", abc)
-	#grep("((\\bdata=mtcarsmodified\\b)|(\\bdata=\\s+mtcarsmodified\\b)|(\\bdata\\s+=mtcarsmodified\\b)|(\\bdata\\s+=\\s+mtcarsmodified\\b))", abc)
-	
-	#grep_str = paste("(\\bdata=",datasetName,")\\b)|(\\bdata=\\s+",datasetName,")\\b)|\\bdata\\s+=\\s+",datasetName, "|(\\bdata\\s+=",datasetName,")\\b)", sep="")
-
 	grep_dataset_str1 = paste("((\\bdata=",datasetName,"\\b)|(\\bdata=\\s+",datasetName,"\\b)|(\\bdata\\s+=",datasetName,"\\b)|(\\bdata\\s+=\\s+",datasetName,"\\b))", sep="")
 	grep_dataset_str2 = paste("((\\b",datasetName,"\\b)|(",datasetName,"\\[))", sep = "")
 
-	
-	paramName = "BSkyFormat"
-	paramName = paste("(\\b", paramName, "\\b)", sep="")
-	
 	for(n in 1:length(RcommandString))
 	{
-		#replace the dataset name with the split dataset name 
+		#replace the dataset name with the split dataset name
 		RcommandString[n] = gsub(grep_dataset_str1, "data=uadatasets$lst[[bSkyGlobalDataSliceIndexToWorkOn]]", RcommandString[n])
-		
-		#substitute dataset parameter with dataset$var convention to refer to its var columns 
+
+		#substitute dataset parameter with dataset$var convention to refer to its var columns
 		for(i in 1:length(varNames))
 		{
 			grep_str = paste("\\b",datasetName,"\\$", varNames[i], sep="")
 			sub_str = paste("uadatasets$lst[[bSkyGlobalDataSliceIndexToWorkOn]]","$", varNames[i], sep="")
 			RcommandString[n] = gsub(grep_str, sub_str, RcommandString[n])
 		}
-	
-		#substitute dataset parameter with dataset[index] convention to refer to its var columns 
+
+		#substitute dataset parameter with dataset[index] convention to refer to its var columns
 		RcommandString[n] = gsub(grep_dataset_str2, "data=uadatasets$lst[[bSkyGlobalDataSliceIndexToWorkOn]][", RcommandString[n])
-		
-		# Look for all BSkyFormat commands in the R command string passed 
-		paramNamePosition = gregexpr(paramName, RcommandString[n])
-		
-		if(paramNamePosition[[1]][1] > 0)
-		{
-			all_BSkyformat_str = c()
-			
-			for(i in 1:length(paramNamePosition[[1]]))
-			{
-				#endParamValuePosition = regexpr(")", substr(RcommandString[n],(paramNamePosition[[1]][i] +attr(paramNamePosition[[1]],"match.length")[i]), nchar(RcommandString[n])))
-				
-				final_closing_parentheses_matched = gregexpr("\\((?>[^()]|(?R))*\\)", substr(RcommandString[n], paramNamePosition[[1]][i], nchar(RcommandString[n])), perl = T)
-				
-				#BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+attr(paramNamePosition[[1]],"match.length")[i]+endParamValuePosition-1)
-				
-				BSkyformat_str1 = substr(RcommandString[n], paramNamePosition[[1]][i], paramNamePosition[[1]][i]+final_closing_parentheses_matched[[1]][1]+attr(final_closing_parentheses_matched[[1]],"match.length")[1] - 1 -1)
-				
-				all_BSkyformat_str = c(all_BSkyformat_str, BSkyformat_str1)
-				
-				#print(BSkyformat_str1)
-				#cat("===================\n")
-			}
-			
-			for(i in 1:length(all_BSkyformat_str))
-			{
-				BSkyformat_str_modified = paste(substr(all_BSkyformat_str[i], 1, nchar(all_BSkyformat_str[i]) -1), ",repeatAllTableFooter =", "\"", BSkySplitFooterStr, "\"", ")")
-				
-				#print(BSkyformat_str_modified)
-				#cat("===================\n")
-				
-				all_BSkyformat_str[i] = gsub("\\(", "\\\\(", all_BSkyformat_str[i])
-				#all_BSkyformat_str[i] = paste("(\\b", all_BSkyformat_str[i], "\\b)", sep="")
-				RcommandString[n] = gsub(all_BSkyformat_str[i], BSkyformat_str_modified, RcommandString[n])
-				
-				#print(RcommandString[n])
-			}
-		}
 	}
-	
+
+	# Add / merge the split footer into every BSkyFormat call
+	RcommandString <- BSkyExpandBSkyFormatWithFooter(RcommandString, BSkySplitFooterStr)
+
 	return(invisible(RcommandString))
 }
+
 
 #23May2021
 BSkyDummyErrorWarningMuncher <- function(...)
