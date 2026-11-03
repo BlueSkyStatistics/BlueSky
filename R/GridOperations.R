@@ -2483,12 +2483,15 @@ BSkyIsDateValid <- function(stringDate, dateFormat="%Y-%m-%d %H:%M:%S", coltzone
 }
 
 
-BSkySearchDataset <- function(dfName, term, max) {
+BSkySearchDataset <- function(dfName, term, max, mode = "partial", ignoreCase = TRUE) {
   df <- eval(parse(text = dfName), envir = .GlobalEnv)
-  term <- tolower(term)
+  needle <- if (ignoreCase) tolower(term) else term
+  whole  <- identical(mode, "whole")
   hits <- list()
   for (j in seq_along(df)) {
-    m <- which(grepl(term, tolower(as.character(df[[j]])), fixed = TRUE))
+    vals <- as.character(df[[j]])
+    hay  <- if (ignoreCase) tolower(vals) else vals
+    m <- which(if (whole) hay == needle else grepl(needle, hay, fixed = TRUE))
     if (length(m)) hits[[length(hits) + 1L]] <- cbind(m, j)
   }
   res <- if (length(hits)) do.call(rbind, hits) else matrix(integer(0), ncol = 2L)

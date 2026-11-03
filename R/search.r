@@ -30,13 +30,14 @@
 }
 
 .bskyReplaceApplyAll <- function(datasetName, rows, cols, replacement, token,
-                                  maxStack = 20L, term = NULL, mode = "whole") {
+                                  maxStack = 20L, term = NULL, mode = "whole", ignoreCase = TRUE) {
   e  <- .bskyReplaceInit()
   df <- get(datasetName, envir = globalenv())
   ucols <- unique(cols)
   # Partial mode substitutes only the matched text within each cell's existing value
-  # (case-insensitive, literal -- mirrors BSkySearchDataset's own matching), leaving the
-  # rest of the cell's content intact. Whole mode (default) keeps the prior overwrite.
+  # (literal, case sensitivity per ignoreCase -- mirrors BSkySearchDataset's own matching),
+  # leaving the rest of the cell's content intact. Whole mode (default) keeps the prior
+  # overwrite, which is unconditional and does not depend on term/ignoreCase.
   partial <- identical(mode, "partial") && !is.null(term) && nzchar(term)
   pre <- list(); post <- list(); colsChanged <- FALSE; total <- 0L
   for (j in ucols) {
@@ -45,7 +46,7 @@
     col  <- df[[j]]
     substVals <- function() {
       vapply(as.character(col)[rws], function(v) gsub(term, replacement, v,
-             ignore.case = TRUE, fixed = TRUE), character(1), USE.NAMES = FALSE)
+             ignore.case = ignoreCase, fixed = TRUE), character(1), USE.NAMES = FALSE)
     }
     if (is.factor(col)) {
       newCol <- col
