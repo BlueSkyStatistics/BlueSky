@@ -42,7 +42,7 @@ BSky_variance_analysis <- function(
         #This code removes nas which is not necessary
       	#data <- data %>% drop_na(all_of(cols_to_compare))
         long_data <- data %>%
-            select(all_of(cols_to_compare)) %>%
+            dplyr::select(all_of(cols_to_compare)) %>%
             pivot_longer(
                 cols = everything(),
                 names_to = "group",
@@ -74,12 +74,12 @@ BSky_variance_analysis <- function(
 		data <- data %>% tidyr::drop_na(any_of(cols_needed))
         # Keep grouping + response cols
         long_data <- data %>%
-            select(all_of(cols_needed)) %>%
-            rename(value = !!sym(response_col))
+            dplyr::select(all_of(cols_needed)) %>%
+            dplyr::rename(value = !!sym(response_col))
 
         # Combined group factor for tests
         long_data <- long_data %>%
-            mutate(group = interaction(!!!syms(group_col), sep = "_", drop = TRUE))
+            dplyr::mutate(group = interaction(!!!syms(group_col), sep = "_", drop = TRUE))
 
         long_data$group <- factor(long_data$group)
         grouping_vars <- group_col
@@ -134,8 +134,8 @@ BSky_variance_analysis <- function(
     # If multiple grouping vars, split Group1/Group2 back into columns
     if (length(grouping_vars) > 1) {
         pairwise_df <- pairwise_df %>%
-            separate(Group1, into = paste0("G1_", grouping_vars), sep = "_", remove = FALSE) %>%
-            separate(Group2, into = paste0("G2_", grouping_vars), sep = "_", remove = FALSE)
+            tidyr::separate(Group1, into = paste0("G1_", grouping_vars), sep = "_", remove = FALSE) %>%
+            tidyr::separate(Group2, into = paste0("G2_", grouping_vars), sep = "_", remove = FALSE)
     }
 
     BSkyFormat(pairwise_df,
@@ -175,8 +175,8 @@ BSky_variance_analysis <- function(
   individualCI =1-alpha / ( K)
 
     bonf_df <- long_data %>%
-      group_by(across(all_of(grouping_vars)), group) %>%
-      summarise(
+      dplyr::group_by(across(all_of(grouping_vars)), group) %>%
+      dplyr::summarise(
         result = list(
           minitab(
             value,
@@ -206,11 +206,11 @@ BSky_variance_analysis <- function(
 
 		# 2. Extract the values for each group using filter()
 			group1_values <- long_data %>%
-  				filter(group == group_name1) %>%
+  				dplyr::filter(group == group_name1) %>%
   				pull(value)
 
 			group2_values <- long_data %>%
-  				filter(group == group_name2) %>%
+  				dplyr::filter(group == group_name2) %>%
   					pull(value)
     
     	testResults<-bonett_two_variances (x=group1_values, y=group2_values, rho0 = 1, alpha = 0.05)

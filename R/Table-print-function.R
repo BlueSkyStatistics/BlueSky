@@ -3058,10 +3058,36 @@ BSkyGetRound <- function()
 	}
 }
 
+## the following substitution function was necessary to replace the BlueSky output table with Sig.. inplace of p-value
+## next item is the t-test and independent t-test the customer wanted in the column title the 'p-values' instead of 'Sig'
+bsky_replace_sig_with_pval <- function(x) {
+  if (is.list(x)) {
+    lapply(x, bsky_replace_sig_with_pval)
+  } else if (is.character(x)) {
+    gsub("Sig\\.", "p-value", x)
+  } else {
+    x
+  }
+}
+
+# BSkySetEngNotationSetting <- function(engNotationSetting = TRUE)
+# {
+# 	uadatasets.sk$BSkyEngNotationSetting = engNotationSetting
+# 	return(invisible(uadatasets.sk$BSkyEngNotationSetting))
+# }
+##
+## BSkySetEngNotationSetting function was only controlling the output tables cells via BSkyFormat() but model equations were not
+## controlled by this settings. Now  this new function will control the output tables and model equations
+## The user setting under triple dot : scientific notations.
 BSkySetEngNotationSetting <- function(engNotationSetting = TRUE)
 {
-	uadatasets.sk$BSkyEngNotationSetting = engNotationSetting
-	return(invisible(uadatasets.sk$BSkyEngNotationSetting))
+            uadatasets.sk$BSkyEngNotationSetting = engNotationSetting
+             if(engNotationSetting){
+                  options(scipen = 0)
+             } else {
+                   options(scipen = 999)
+			 }
+             return(invisible(uadatasets.sk$BSkyEngNotationSetting))
 }
 
 BSkyGetEngNotationSetting <- function()
@@ -4006,8 +4032,11 @@ BSkyReturnStructure2 <-function(bskyAdditionalTableList = list()) ### passs as l
 
 #BSkyFormat2 <- function(obj, bSkyFormatAppRequest = FALSE, ftable_change_variable_order = TRUE, sublist_length = 3, remove_rows_with_zero_count = FALSE, no_row_column_headers = FALSE)
 
-
-
+### R does not support range calcuation natively which is max - min
+range_spread <- function(x, na.rm = TRUE)  {
+			spread = max(x, na.rm = na.rm) - min(x, na.rm = na.rm)
+			invisible(return(spread))
+}
 
 ################################################################################################################################
 ## SK 02/18/21 Made quite a bit of changes to allow random quantile/probability values between 0 and 1 

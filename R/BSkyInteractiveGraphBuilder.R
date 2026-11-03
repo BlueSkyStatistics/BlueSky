@@ -165,7 +165,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							
                             selectInput("plot_type", "Select Plot Type:",
 							  choices = c("Scatter" = "scatter", "Line" = "line", "Boxplot" = "box",
-										  "Histogram" = "histogram", "Bar" = "bar", "Dot" = "dot", "Pie" = "pie"),
+										  "Histogram" = "histogram", "Bar" = "bar", "Dot" = "dot", "Pie" = "pie",
+										  "I-MR Chart (Individuals & Moving Range)" = "imr",
+										  "Interval Plot (Mean & CI)" = "interval"),
 							  selected = "scatter"
 							),
 
@@ -186,6 +188,11 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							uiOutput("smooth_se_ui"),
 							div(style = "margin-left: 30px;", uiOutput("smooth_confInt_ui")),
 
+							uiOutput("imr_sigma_ui"),
+							div(style = "margin-left: 30px;", uiOutput("imr_num_sigma_ui")),
+
+							uiOutput("interval_ci_ui"),
+
 							hr(),
 							uiOutput("dot_plot_point_size"),
 							uiOutput("dot_plot_stack_up_ratio"),
@@ -196,7 +203,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							uiOutput("facet_scales_ui"),
 
 							conditionalPanel(
-							  condition = "['scatter', 'line', 'box', 'histogram', 'bar', 'dot'].includes(input.plot_type)",
+							  condition = "['scatter', 'line', 'box', 'histogram', 'bar', 'dot', 'imr', 'interval'].includes(input.plot_type)",
 							  actionButton("reset_facet_values", "Clear All Facet Values")
 							),
 
@@ -580,6 +587,9 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		# To capture the point details when clicked on the points on Scatter and Line plots
 		clicked_points <- reactiveVal(data.frame())
 		
+		# Cache for interval plot summary — used by renderPlotly to add correct annotations
+		iv_summary_cache <- reactiveVal(NULL)
+		
 		###########################################################################
 		
 		# Setup for shinyFiles directory selection
@@ -656,7 +666,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		# one or more ref line UI elements whcih cannot be reset thouse
 		# standard reset machanism if UI element(s) is not visible for a plot type
 		observeEvent(input$plot_type, {
-		  if (input$plot_type %in% c("box", "bar", "histogram", "dot", "pie")) {
+		  if (input$plot_type %in% c("box", "bar", "histogram", "dot", "pie", "imr", "interval")) {
 			current_hlines("")
 			current_vlines("")
 			current_hline_labels("")
@@ -837,26 +847,66 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		  )
 		})
 		
-		# For Scatter and Box plot jitter points
+		# IMR chart: render sigma method selector
+		output$imr_sigma_ui <- renderUI({
+		  req(input$plot_type == 'imr')
+		  selectInput(
+			"imr_sigma_method",
+			"Control Limit Method",
+			choices = c(
+			  "3-Sigma (standard)" = "3sigma",
+			  "Custom number of sigmas" = "custom"
+			),
+			selected = "3sigma"
+		  )
+		})
+		
+		# IMR chart: render number-of-sigmas input only when custom is chosen
+		output$imr_num_sigma_ui <- renderUI({
+		  req(input$plot_type == 'imr', input$imr_sigma_method == 'custom')
+		  numericInput(
+			"imr_num_sigmas",
+			"Number of Sigmas for Control Limits",
+			value = 3,
+			min = 1,
+			max = 6,
+			step = 0.5
+		  )
+		})
+		
+		# Interval plot: confidence level slider
+		output$interval_ci_ui <- renderUI({
+		  req(input$plot_type == 'interval')
+		  sliderInput(
+			"interval_ci",
+			"Confidence Interval Level",
+			min   = 0.50,
+			max   = 0.9999,
+			value = 0.95,
+			step  = 0.0001
+		  )
+		})
+		
+		# For Scatter, Box and Interval plot jitter points
 		# Render checkbox to show or not the jitter points for box plot
 		output$jitter_ui <- renderUI({
-		req(input$plot_type %in% c('scatter','box'))
+		req(input$plot_type %in% c('scatter','box','interval'))
 		  checkboxInput(
 			"jitter", 
 			"Show Jitter Points", 
-			value = FALSE
+			value = if (input$plot_type == 'interval') TRUE else FALSE
 		  ) 
 		})
 	  
 		# Render the ConfInt selection slider around the fitted line if only the above checkbox is selected
 		output$jitter_spread_width_ui <- renderUI({
-		req(input$plot_type %in% c('scatter','box'), input$jitter == TRUE)
+		req(input$plot_type %in% c('scatter','box','interval'), input$jitter == TRUE)
 		   sliderInput(
 			"jitter_spread_width", 
 			"Jitter Point Spread Width", 
 			min = 0, 
 			max = 1, #0.4, 
-			value = 0.2, 
+			value = 0.1, 
 			step = 0.05
 		  )
 		})
@@ -891,7 +941,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 		output$x_scale_ui <- renderUI({
 		  req(input$plot_type)
-		  if (input$plot_type %in% c("dot", "pie")) return(NULL)
+		  if (input$plot_type %in% c("dot", "pie", "imr", "interval")) return(NULL)
 		  selectInput(
 				"x_scale", 
 				"X Axis Scale", 
@@ -907,7 +957,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 		output$y_scale_ui <- renderUI({
 		  req(input$plot_type)
-		  if (input$plot_type %in% c("dot", "pie")) return(NULL)
+		  if (input$plot_type %in% c("dot", "pie", "imr", "interval")) return(NULL)
 		  selectInput("y_scale", 
 					  "Y Axis Scale", 
 					  choices = c(
@@ -1075,6 +1125,20 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				  return(NULL)
 				}
 				
+				# IMR chart: hide grouping, size, shape, vlines — not applicable to SPC.
+				# Facets ARE supported: limits are recomputed per facet panel automatically.
+				if (input$plot_type == "imr" &&
+					var_id %in% c("group_var", "size_var", "shape_var", "vlines", "vline_labels")) {
+				  return(NULL)
+				}
+				
+				# Interval plot: x = categorical grouping, y = numeric response.
+				# Hide size, shape, vlines (not applicable).
+				# x_var and y_var are both required; group_var, facets, hlines all supported.
+				if (input$plot_type == "interval" &&
+					var_id %in% c("size_var", "shape_var", "vlines", "vline_labels")) {
+				  return(NULL)
+				}
 				
 				#if (var_id %in% c("y_var") && (input$plot_type %in% c("histogram", "bar", "dot"))) {
 				if (var_id %in% c("y_var") && (input$plot_type %in% c("histogram", "dot"))) {
@@ -1087,7 +1151,7 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				
 				if (var_id %in% c("hlines", "hline_labels")) {
 					#if (!(input$plot_type %in% c("scatter", "line", "box"))) {
-					if (!(input$plot_type %in% c("scatter", "line", "box", "bar", "histogram"))) {
+					if (!(input$plot_type %in% c("scatter", "line", "box", "bar", "histogram", "imr", "interval"))) {
 					  return(NULL)
 					} else {
 					  return(textInput(var_id, label))
@@ -1104,7 +1168,21 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 
 				# Default for other variables
 				choices <- c("", names(current_data()))
-				selectInput(var_id, label, choices = choices, selected = "")
+				
+				# Context-aware label for IMR chart
+				effective_label <- label
+				if (input$plot_type == "imr") {
+				  if (var_id == "y_var") effective_label <- "Y Variable - Measurement (required for I-MR)"
+				  if (var_id == "x_var") effective_label <- "X Variable - Index or Label (optional for I-MR)"
+				}
+				# Context-aware label for Interval plot
+				if (input$plot_type == "interval") {
+				  if (var_id == "y_var")     effective_label <- "Y Variable - Numeric Response (required)"
+				  if (var_id == "x_var")     effective_label <- "X Variable - Categorical Grouping (required)"
+				  if (var_id == "group_var") effective_label <- "Grouping Variable - Color by Category (optional)"
+				}
+				
+				selectInput(var_id, effective_label, choices = choices, selected = "")
 			})
 		}
 
@@ -1594,6 +1672,12 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		if (input$plot_type %in% c("scatter", "line", "histogram", "bar","dot")) {
 		  req(input$x_var)
 		}
+		if (input$plot_type %in% c("imr")) {
+		  req(input$y_var)  # For IMR, y_var holds the measurement variable
+		}
+		if (input$plot_type %in% c("interval")) {
+		  req(input$x_var, input$y_var)  # Interval needs both x (categorical) and y (numeric)
+		}
 		if (input$plot_type %in% c("scatter", "line", "box")) {
 		  req(input$y_var)
 		}
@@ -2040,8 +2124,750 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 							theme(plot.title = element_text(hjust = 0.5)) #hjust = 0 → left, 0.5 → center, 1 → right
 		}
 
-		####################################################################################
-		#Legends position management - works only for ggplot canvas and not for plotly canvas
+		########################################################################
+		# IM-R Chart (Individuals & Moving Range) - dual panel SPC chart
+		# Requires: y_var = measurement variable; x_var (optional) = index/label
+		# Supports: group_var (phase/group coloring), hlines (extra ref lines),
+		#           facet_row/col/wrap, themes, axis angles, title/labels,
+		#           plotly (interactive) and ggplot (static) canvas modes
+		########################################################################
+		else if (plot_type == "imr") {
+		  req(input$y_var)
+		  
+		  imr_df   <- bsky_temp_df
+		  meas_var <- input$y_var
+		  
+		  # Determine x-axis (index/label): use x_var if provided, else row order
+		  if (!is.null(input$x_var) && input$x_var != "") {
+			imr_df$.imr_x <- imr_df[[input$x_var]]
+		  } else {
+			imr_df$.imr_x <- seq_len(nrow(imr_df))
+		  }
+		  
+		  # Detect x-axis type using current_data() — the original unmodified dataset,
+		  # same pattern as scatter plot. This avoids dplyr-corrupted class detection.
+		  imr_x_is_datetime <- !is.null(input$x_var) && input$x_var != "" &&
+								inherits(current_data()[[input$x_var]], c("POSIXct", "POSIXt"))
+		  imr_x_is_date     <- !is.null(input$x_var) && input$x_var != "" &&
+								inherits(current_data()[[input$x_var]], "Date")
+		  imr_x_is_numeric  <- if (!is.null(input$x_var) && input$x_var != "") {
+								  is.numeric(current_data()[[input$x_var]])
+								} else TRUE  # seq_len is numeric
+		  
+		  # Control limit sigma multiplier
+		  n_sigma <- if (!is.null(input$imr_sigma_method) && input$imr_sigma_method == "custom") {
+			input$imr_num_sigmas %||% 3
+		  } else {
+			3
+		  }
+		  d2 <- 1.128   # unbiasing constant for MR of n=2
+		  D4 <- 3.267   # upper control chart constant for MR of n=2
+		  
+		  # Determine the active facet variable (wrap takes precedence over row/col)
+		  facet_var <- if (!is.null(input$facet_wrap) && input$facet_wrap != "") {
+			input$facet_wrap
+		  } else if (!is.null(input$facet_row) && input$facet_row != "") {
+			input$facet_row
+		  } else if (!is.null(input$facet_col) && input$facet_col != "") {
+			input$facet_col
+		  } else {
+			NULL
+		  }
+		  
+		  # When both row and col are set, use a combined interaction variable
+		  # so limits are computed per unique row×col combination
+		  if (!is.null(input$facet_row) && input$facet_row != "" &&
+			  !is.null(input$facet_col) && input$facet_col != "") {
+			imr_df$.facet_combined <- interaction(imr_df[[input$facet_row]],
+												  imr_df[[input$facet_col]], sep = " | ")
+			facet_var <- ".facet_combined"
+		  }
+		  
+		  has_facet <- !is.null(facet_var)
+		  
+		  # -----------------------------------------------------------------------
+		  # Compute I and MR, then CL/UCL/LCL per facet group (or globally).
+		  # MR resets at facet boundaries so the first obs of each facet gets NA MR.
+		  # -----------------------------------------------------------------------
+		  if (has_facet) {
+			imr_df$.facet_grp <- as.factor(imr_df[[facet_var]])
+			
+			imr_df <- imr_df %>%
+			  dplyr::group_by(.facet_grp) %>%
+			  dplyr::mutate(
+				.I  = .data[[meas_var]],
+				.MR = c(NA, abs(diff(.data[[meas_var]])))
+			  ) %>%
+			  dplyr::ungroup() %>%
+			  as.data.frame()
+			
+			# Per-facet limit table — one row per facet level
+			facet_limits <- imr_df %>%
+			  dplyr::group_by(.facet_grp) %>%
+			  dplyr::summarise(
+				.I_bar  = mean(.I,  na.rm = TRUE),
+				.MR_bar = mean(.MR, na.rm = TRUE),
+				.n      = sum(!is.na(.I)),
+				.I_UCL  = mean(.I, na.rm = TRUE) + n_sigma * (mean(.MR, na.rm = TRUE) / d2),
+				.I_LCL  = mean(.I, na.rm = TRUE) - n_sigma * (mean(.MR, na.rm = TRUE) / d2),
+				.MR_UCL = D4 * mean(.MR, na.rm = TRUE),
+				.MR_LCL = 0,
+				.groups = "drop"
+			  )
+			
+			# Merge per-facet limits back so each row knows its own limits
+			imr_df <- dplyr::left_join(imr_df, facet_limits, by = ".facet_grp")
+			
+			# Convert back to plain data.frame
+			imr_df <- as.data.frame(imr_df)
+			
+			# Restore .imr_x from bsky_temp_df (filtered_data() result) which
+			# preserves the original POSIXct/Date class unlike dplyr-processed copies.
+			# left_join preserves left-side row order so indices align correctly.
+			if (!is.null(input$x_var) && input$x_var != "") {
+			  imr_df$.imr_x <- bsky_temp_df[[input$x_var]][
+				match(imr_df$row_id, bsky_temp_df$row_id)]
+			}
+			
+			imr_df$.I_ooc  <- !is.na(imr_df$.I)  & (imr_df$.I  > imr_df$.I_UCL | imr_df$.I  < imr_df$.I_LCL)
+			imr_df$.MR_ooc <- !is.na(imr_df$.MR) & (imr_df$.MR > imr_df$.MR_UCL)
+			
+			# Also store in the row-level columns expected by the panel builder
+			imr_df$.I_bar  <- imr_df$.I_bar
+			imr_df$.MR_bar <- imr_df$.MR_bar
+			
+			# Summary for titles
+			total_n      <- sum(facet_limits$.n)
+			total_ooc_I  <- sum(imr_df$.I_ooc,  na.rm = TRUE)
+			total_ooc_MR <- sum(imr_df$.MR_ooc, na.rm = TRUE)
+			# Representative global values for the overall title
+			I_bar  <- weighted.mean(facet_limits$.I_bar,  facet_limits$.n)
+			MR_bar <- weighted.mean(facet_limits$.MR_bar, facet_limits$.n)
+			I_UCL  <- mean(facet_limits$.I_UCL)
+			I_LCL  <- mean(facet_limits$.I_LCL)
+			MR_UCL <- mean(facet_limits$.MR_UCL)
+			MR_LCL <- 0
+			
+		  } else {
+			# Global — no faceting
+			imr_df$.I   <- imr_df[[meas_var]]
+			imr_df$.MR  <- c(NA, abs(diff(imr_df[[meas_var]])))
+			
+			I_bar  <- mean(imr_df$.I,  na.rm = TRUE)
+			MR_bar <- mean(imr_df$.MR, na.rm = TRUE)
+			I_UCL  <- I_bar  + n_sigma * (MR_bar / d2)
+			I_LCL  <- I_bar  - n_sigma * (MR_bar / d2)
+			MR_UCL <- D4 * MR_bar
+			MR_LCL <- 0
+			
+			imr_df$.I_UCL  <- I_UCL;  imr_df$.I_LCL  <- I_LCL;  imr_df$.I_bar  <- I_bar
+			imr_df$.MR_UCL <- MR_UCL; imr_df$.MR_LCL <- MR_LCL; imr_df$.MR_bar <- MR_bar
+			
+			imr_df$.I_ooc  <- !is.na(imr_df$.I)  & (imr_df$.I  > I_UCL | imr_df$.I  < I_LCL)
+			imr_df$.MR_ooc <- !is.na(imr_df$.MR) & (imr_df$.MR > MR_UCL)
+			
+			# Ensure plain data.frame (bsky_temp_df may be a tibble)
+			imr_df <- as.data.frame(imr_df)
+			
+			# Restore .imr_x from bsky_temp_df to preserve POSIXct/Date class
+			if (!is.null(input$x_var) && input$x_var != "") {
+			  imr_df$.imr_x <- bsky_temp_df[[input$x_var]]
+			}
+			
+			total_n      <- sum(!is.na(imr_df$.I))
+			total_ooc_I  <- sum(imr_df$.I_ooc,  na.rm = TRUE)
+			total_ooc_MR <- sum(imr_df$.MR_ooc, na.rm = TRUE)
+		  }
+		  
+		  # Hover text (uses per-row limit columns — correct for both faceted and global)
+		  imr_df$.hover_I <- paste0(
+			if (!is.null(input$x_var) && input$x_var != "") paste0(input$x_var, ": ", imr_df$.imr_x, "<br>") else paste0("Obs: ", imr_df$.imr_x, "<br>"),
+			meas_var, ": ", round(imr_df$.I, 4), "<br>",
+			"CL: ", round(imr_df$.I_bar, 4), " | UCL: ", round(imr_df$.I_UCL, 4), " | LCL: ", round(imr_df$.I_LCL, 4),
+			ifelse(imr_df$.I_ooc, "<br><b>OUT OF CONTROL</b>", "")
+		  )
+		  imr_df$.hover_MR <- paste0(
+			if (!is.null(input$x_var) && input$x_var != "") paste0(input$x_var, ": ", imr_df$.imr_x, "<br>") else paste0("Obs: ", imr_df$.imr_x, "<br>"),
+			"MR: ", round(imr_df$.MR, 4), "<br>",
+			"CL: ", round(imr_df$.MR_bar, 4), " | UCL: ", round(imr_df$.MR_UCL, 4), " | LCL: 0",
+			ifelse(imr_df$.MR_ooc, "<br><b>OUT OF CONTROL</b>", "")
+		  )
+		  
+		  # When faceted + datetime/date x-axis: convert .imr_x to numeric
+		  # (seconds since epoch for POSIXct, days since epoch for Date).
+		  # This avoids ggplot's automatic ScaleContinuousDatetime which calls
+		  # transform_time() on facet-sliced data and errors when the class
+		  # has been stripped by dplyr. We use scale_x_continuous with a
+		  # custom label formatter to restore human-readable axis labels.
+		  imr_x_fmt <- NULL  # label formatter for numeric-converted datetime axis
+		  if (has_facet && (imr_x_is_datetime || imr_x_is_date)) {
+			if (imr_x_is_datetime) {
+			  orig_tzone <- attr(bsky_temp_df[[input$x_var]], "tzone") %||% "UTC"
+			  imr_df$.imr_x  <- as.numeric(imr_df$.imr_x)
+			  imr_x_fmt <- function(x) format(as.POSIXct(x, origin = "1970-01-01",
+														   tz = orig_tzone),
+											   "%b %d\n%H:%M")
+			} else {
+			  imr_df$.imr_x  <- as.numeric(imr_df$.imr_x)
+			  imr_x_fmt <- function(x) format(as.Date(x, origin = "1970-01-01"), "%b %d")
+			}
+			# Also convert in imr_df_mr (built below from imr_df)
+		  }
+		  imr_x_max <- if (imr_x_is_datetime || imr_x_is_date) {
+			max(imr_df$.imr_x, na.rm = TRUE)
+		  } else if (imr_x_is_numeric) {
+			max(imr_df$.imr_x, na.rm = TRUE)
+		  } else {
+			nrow(imr_df)
+		  }
+
+		  # -----------------------------------------------------------------------
+		  # Helper: build one SPC sub-chart panel.
+		  # When faceted, uses geom_hline(data=limits_df, aes(yintercept=...)) mapped
+		  # to the facet variable so ggplot routes each limit to the correct panel.
+		  # When not faceted, falls back to global geom_hline + annotate().
+		  # -----------------------------------------------------------------------
+		  build_imr_panel <- function(df, y_col, hover_col, ooc_col,
+									  ucl_col, cl_col, lcl_col,
+									  y_label, chart_title,
+									  limits_df = NULL) {
+			
+			p_sub <- ggplot(df, aes(x = .imr_x, y = .data[[y_col]], text = .data[[hover_col]])) +
+			  # Connecting line — black; group by facet var to avoid cross-panel lines
+			  geom_line(aes(group = if (has_facet && !is.null(facet_var)) .data[[facet_var]] else 1),
+						color = "black", linewidth = 0.6, na.rm = TRUE) +
+			  # All regular points — black filled circles
+			  geom_point(color = "black", size = 2, na.rm = TRUE) +
+			  # Out-of-control points — red filled circles drawn on top
+			  geom_point(
+				data = df[df[[ooc_col]] & !is.na(df[[ooc_col]]), ],
+				aes(x = .imr_x, y = .data[[y_col]]),
+				color = "red", fill = "red", size = 3.5, shape = 21,
+				inherit.aes = FALSE, na.rm = TRUE
+			  )
+			
+			if (has_facet && !is.null(limits_df)) {
+			  # Per-facet reference lines via data — ggplot maps each row to its panel
+			  p_sub <- p_sub +
+				geom_hline(data = limits_df,
+						   aes(yintercept = .data[[cl_col]]),
+						   linetype = "solid", color = "green4", linewidth = 0.8) +
+				geom_hline(data = limits_df,
+						   aes(yintercept = .data[[ucl_col]]),
+						   linetype = "solid", color = "red", linewidth = 0.8) +
+				geom_hline(data = limits_df,
+						   aes(yintercept = .data[[lcl_col]]),
+						   linetype = "solid", color = "red", linewidth = 0.8) +
+				# Per-facet limit labels via geom_text mapped to facet variable
+				geom_text(data = limits_df,
+						  aes(x = Inf, y = .data[[ucl_col]],
+							  label = paste0("UCL\n", round(.data[[ucl_col]], 3))),
+						  hjust = 1.1, vjust = 0.5, size = 2.8,
+						  color = "red",   inherit.aes = FALSE) +
+				geom_text(data = limits_df,
+						  aes(x = Inf, y = .data[[cl_col]],
+							  label = paste0("CL\n",  round(.data[[cl_col]],  3))),
+						  hjust = 1.1, vjust = 0.5, size = 2.8,
+						  color = "green4", inherit.aes = FALSE) +
+				geom_text(data = limits_df,
+						  aes(x = Inf, y = .data[[lcl_col]],
+							  label = paste0("LCL\n", round(.data[[lcl_col]], 3))),
+						  hjust = 1.1, vjust = 0.5, size = 2.8,
+						  color = "red",   inherit.aes = FALSE)
+			} else {
+			  # Global reference lines + right-edge annotations
+			  cl_val  <- df[[cl_col]][1]
+			  ucl_val <- df[[ucl_col]][1]
+			  lcl_val <- df[[lcl_col]][1]
+			  p_sub <- p_sub +
+				geom_hline(yintercept = cl_val,  linetype = "solid", color = "green4", linewidth = 0.8) +
+				geom_hline(yintercept = ucl_val, linetype = "solid", color = "red",    linewidth = 0.8) +
+				geom_hline(yintercept = lcl_val, linetype = "solid", color = "red",    linewidth = 0.8) +
+				annotate("text", x = imr_x_max, y = ucl_val,
+						 label = paste0("UCL\n", round(ucl_val, 2)),
+						 hjust = -0.05, vjust = 0.5, size = 3.0, color = "red") +
+				annotate("text", x = imr_x_max, y = cl_val,
+						 label = paste0("CL\n",  round(cl_val,  2)),
+						 hjust = -0.05, vjust = 0.5, size = 3.0, color = "green4") +
+				annotate("text", x = imr_x_max, y = lcl_val,
+						 label = paste0("LCL\n", round(lcl_val, 2)),
+						 hjust = -0.05, vjust = 0.5, size = 3.0, color = "red")
+			}
+			
+			# X-axis scale: only add explicit scale when NOT faceted.
+			# When faceted + POSIXct, letting ggplot auto-detect avoids
+			# transform_time() errors caused by dplyr stripping POSIXct class
+			# during facet panel data slicing.
+			if (!has_facet) {
+			  if (imr_x_is_datetime) {
+				p_sub <- p_sub + scale_x_datetime(
+				  breaks = scales::pretty_breaks(n = 8),
+				  expand = expansion(mult = c(0.02, 0.18)))
+			  } else if (imr_x_is_date) {
+				p_sub <- p_sub + scale_x_date(
+				  breaks = scales::pretty_breaks(n = 8),
+				  expand = expansion(mult = c(0.02, 0.18)))
+			  } else if (imr_x_is_numeric) {
+				p_sub <- p_sub + scale_x_continuous(
+				  breaks = scales::pretty_breaks(n = 8),
+				  expand = expansion(mult = c(0.02, 0.18)))
+			  } else {
+				p_sub <- p_sub + scale_x_discrete(
+				  expand = expansion(add = c(0.5, 3)))
+			  }
+			} else {
+			  # Faceted datetime/date: .imr_x was converted to numeric above;
+			  # use scale_x_continuous with a label formatter for readability.
+			  # Numeric/discrete types get their normal scales.
+			  if ((imr_x_is_datetime || imr_x_is_date) && !is.null(imr_x_fmt)) {
+				p_sub <- p_sub + scale_x_continuous(
+				  breaks = scales::pretty_breaks(n = 6),
+				  labels = imr_x_fmt,
+				  expand = expansion(mult = c(0.02, 0.05)))
+			  } else if (imr_x_is_numeric) {
+				p_sub <- p_sub + scale_x_continuous(
+				  breaks = scales::pretty_breaks(n = 8),
+				  expand = expansion(mult = c(0.02, 0.05)))
+			  } else {
+				p_sub <- p_sub + scale_x_discrete(
+				  expand = expansion(add = c(0.5, 1)))
+			  }
+			}
+			
+			p_sub <- p_sub +
+			  labs(
+				x     = if (!is.null(input$x_var) && input$x_var != "") input$x_var else "Observation",
+				y     = y_label,
+				title = chart_title
+			  ) +
+			  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+			
+			# Apply facets if active
+			if (has_facet) {
+			  if (!is.null(input$facet_wrap) && input$facet_wrap != "") {
+				p_sub <- p_sub + facet_wrap(input$facet_wrap, scales = input$facet_scales %||% "fixed")
+			  } else {
+				row_f <- ifelse(is.null(input$facet_row) || input$facet_row == "", ".", input$facet_row)
+				col_f <- ifelse(is.null(input$facet_col) || input$facet_col == "", ".", input$facet_col)
+				p_sub <- p_sub + facet_grid(as.formula(paste(row_f, "~", col_f)),
+											scales = input$facet_scales %||% "fixed")
+			  }
+			}
+			
+			p_sub
+		  }
+		  
+		  # Build limits_df for faceted mode (rename columns for the panel builder)
+		  imr_limits_I  <- NULL
+		  imr_limits_MR <- NULL
+		  if (has_facet) {
+			imr_limits_I <- facet_limits %>%
+			  dplyr::rename(
+				!!facet_var := .facet_grp   # rename back to original facet var name for ggplot mapping
+			  ) %>%
+			  dplyr::select(all_of(facet_var), .I_bar, .I_UCL, .I_LCL)
+			
+			imr_limits_MR <- facet_limits %>%
+			  dplyr::rename(!!facet_var := .facet_grp) %>%
+			  dplyr::select(all_of(facet_var), .MR_bar, .MR_UCL, .MR_LCL)
+			
+			# Rename .facet_grp in df too so facet_wrap/facet_grid can find the column
+			imr_df$.facet_grp <- NULL  # remove helper column; original column still present
+		  }
+		  
+		  # Build I and MR sub-charts
+		  imr_df_mr <- imr_df[!is.na(imr_df$.MR), ]  # drop first obs of each group (NA MR)
+		  
+		  i_title_suffix  <- if (has_facet) "" else
+			paste0("  |  n=", total_n,
+				   "  CL=", round(I_bar, 3), "  UCL=", round(I_UCL, 3), "  LCL=", round(I_LCL, 3))
+		  mr_title_suffix <- if (has_facet) "" else
+			paste0("  |  CL=", round(MR_bar, 3), "  UCL=", round(MR_UCL, 3), "  LCL=0")
+		  
+		  i_title <- paste0("Individuals (I) Chart", i_title_suffix,
+							if (total_ooc_I  > 0) paste0("  [OOC pts: ", total_ooc_I,  "]") else "")
+		  mr_title <- paste0("Moving Range (MR) Chart", mr_title_suffix,
+							 if (total_ooc_MR > 0) paste0("  [OOC pts: ", total_ooc_MR, "]") else "")
+		  
+		  p_I  <- build_imr_panel(imr_df,    ".I",  ".hover_I",  ".I_ooc",
+								  ".I_UCL",  ".I_bar",  ".I_LCL",  meas_var,  i_title,
+								  limits_df = imr_limits_I)
+		  p_MR <- build_imr_panel(imr_df_mr, ".MR", ".hover_MR", ".MR_ooc",
+								  ".MR_UCL", ".MR_bar", ".MR_LCL", "Moving Range", mr_title,
+								  limits_df = imr_limits_MR)
+		  
+		  # Extra horizontal reference lines + labels from the hlines UI (I chart only)
+		  if (current_hlines() != "") {
+			parse_coords_local <- function(s) suppressWarnings(as.numeric(unlist(strsplit(s, ","))))
+			parse_labels_local <- function(s) {
+			  if (is.null(s) || !nzchar(trimws(s))) return(character(0))
+			  trimws(unlist(strsplit(s, ",")))
+			}
+			extra_y      <- parse_coords_local(current_hlines())
+			extra_labels <- parse_labels_local(current_hline_labels())
+			extra_y      <- extra_y[!is.na(extra_y)]
+			
+			if (length(extra_y) > 0) {
+			  # Pad labels vector to match lines; missing entries become ""
+			  if (length(extra_labels) == 0) {
+				extra_labels <- rep("", length(extra_y))
+			  } else if (length(extra_labels) < length(extra_y)) {
+				extra_labels <- c(extra_labels, rep("", length(extra_y) - length(extra_labels)))
+			  } else {
+				extra_labels <- extra_labels[seq_along(extra_y)]
+			  }
+			  
+			  for (k in seq_along(extra_y)) {
+				# Always draw the reference line
+				p_I <- p_I +
+				  geom_hline(yintercept = extra_y[k], linetype = "dotted",
+							 color = "blue", linewidth = 0.7)
+				# Always annotate the value; prepend the user label if one was provided
+				lbl <- trimws(extra_labels[k])
+				annotation_text <- if (!is.na(lbl) && nzchar(lbl)) {
+				  paste0(lbl, "\n", extra_y[k])
+				} else {
+				  paste0(" \n", extra_y[k])
+				}
+				p_I <- p_I +
+				  annotate("text",
+						   x     = imr_x_max,
+						   y     = extra_y[k],
+						   label = annotation_text,
+						   hjust = -0.05, vjust = 0.5,
+						   size  = 3.0, color = "blue")
+			  }
+			}
+		  }
+		  
+		  # Apply themes, axis angles, legend position
+		  apply_imr_theme <- function(pp) {
+			if (!is.null(input$plot_theme) && input$plot_theme != "default") {
+			  theme_str <- input$plot_theme
+			  if (theme_str == "solarized_light") {
+				pp <- pp + ggthemes::theme_solarized(light = TRUE)
+			  } else if (theme_str == "solarized_dark") {
+				pp <- pp + ggthemes::theme_solarized(light = FALSE)
+			  } else {
+				parts <- strsplit(theme_str, "::")[[1]]
+				theme_func <- getFromNamespace(parts[2], ns = parts[1])
+				pp <- pp + theme_func()
+			  }
+			}
+			# For datetime/date x-axis default to 45° so labels don't overlap;
+			# user can override via the x-angle slider in Themes & Options
+			user_x_angle <- input$x_angle %||% 0
+			effective_x_angle <- if ((imr_x_is_datetime || imr_x_is_date) && user_x_angle == 0) 45 else user_x_angle
+			y_angle <- input$y_angle %||% 0
+			pp <- pp + theme(
+			  axis.text.x = element_text(angle = effective_x_angle, vjust = 1, hjust = 1),
+			  axis.text.y = element_text(angle = y_angle, vjust = 1, hjust = 1),
+			  legend.position = input$legends_pos,
+			  legend.text  = element_text(size = 12),
+			  legend.title = element_text(size = 13, face = "bold")
+			)
+			pp
+		  }
+		  p_I  <- apply_imr_theme(p_I)
+		  p_MR <- apply_imr_theme(p_MR)
+		  
+		  # Optional overall plot title (overrides sub-titles if supplied)
+		  if (!is.null(input$plot_title) && input$plot_title != "") {
+			p_I <- p_I + ggtitle(paste0(input$plot_title, " — Individuals (I)")) +
+			  theme(plot.title = element_text(hjust = 0.5))
+			p_MR <- p_MR + ggtitle(paste0(input$plot_title, " — Moving Range (MR)")) +
+			  theme(plot.title = element_text(hjust = 0.5))
+		  }
+		  if (!is.null(input$x_axis_label) && input$x_axis_label != "") {
+			p_I  <- p_I  + xlab(input$x_axis_label)
+			p_MR <- p_MR + xlab(input$x_axis_label)
+		  }
+		  if (!is.null(input$y_axis_label) && input$y_axis_label != "") {
+			p_I  <- p_I  + ylab(input$y_axis_label)
+		  }
+		  
+		  # Store both sub-charts as a list (handled in renderPlot / renderPlotly below)
+		  p <- list(I = p_I, MR = p_MR, type = "imr",
+					has_facet    = has_facet,
+					facet_limits = if (has_facet) facet_limits else NULL,
+					facet_var    = if (has_facet) facet_var    else NULL,
+					stats = list(
+					  n       = total_n,
+					  I_bar   = I_bar,   I_UCL  = I_UCL,   I_LCL  = I_LCL,
+					  MR_bar  = MR_bar,  MR_UCL = MR_UCL,  n_sigma = n_sigma,
+					  ooc_I   = total_ooc_I,
+					  ooc_MR  = total_ooc_MR
+					))
+		  
+		  # current_plot_obj stores only the I-chart ggplot for ggsave compatibility
+		  observe({ current_plot_obj(p_I) })
+		  return(p)
+		}
+		
+		########################################################################
+		# Interval Plot (Mean & Confidence Intervals)
+		# Requires: x_var = categorical grouping, y_var = numeric response
+		# Supports: group_var (color), facet_row/col/wrap, hlines,
+		#           themes, axis angles, title/labels, CI level slider,
+		#           plotly (interactive) and ggplot (static) canvas modes
+		########################################################################
+		else if (plot_type == "interval") {
+		  req(input$x_var, input$y_var)
+		  
+		  iv_df    <- bsky_temp_df
+		  x_var    <- input$x_var
+		  y_var    <- input$y_var
+		  grp_var  <- if (!is.null(input$group_var) && input$group_var != "") input$group_var else NULL
+		  ci_level <- input$interval_ci %||% 0.95
+		  
+		  # Ensure x is treated as a factor for categorical grouping
+		  iv_df[[x_var]] <- as.factor(iv_df[[x_var]])
+		  
+		  # -----------------------------------------------------------------------
+		  # Detect active facet variable(s) — must be included in group_by so that
+		  # means and CIs are computed separately for each facet panel.
+		  # When both facet_row and facet_col are set, both are included.
+		  # -----------------------------------------------------------------------
+		  facet_vars <- c()
+		  if (!is.null(input$facet_wrap) && input$facet_wrap != "") {
+			facet_vars <- input$facet_wrap
+		  } else {
+			if (!is.null(input$facet_row) && input$facet_row != "") facet_vars <- c(facet_vars, input$facet_row)
+			if (!is.null(input$facet_col) && input$facet_col != "") facet_vars <- c(facet_vars, input$facet_col)
+		  }
+		  has_facet <- length(facet_vars) > 0
+		  
+		  # -----------------------------------------------------------------------
+		  # Per-group summary: mean, CI lower, CI upper
+		  # Grouping includes: x_var + optional group_var + all active facet vars
+		  # This ensures each facet panel gets its own statistically correct limits
+		  # -----------------------------------------------------------------------
+		  grp_cols <- unique(c(x_var, grp_var, facet_vars))
+		  
+		  iv_summary <- iv_df %>%
+			dplyr::group_by(dplyr::across(dplyr::all_of(grp_cols))) %>%
+			dplyr::summarise(
+			  .mean  = mean(.data[[y_var]], na.rm = TRUE),
+			  .n     = sum(!is.na(.data[[y_var]])),
+			  .sd    = sd(.data[[y_var]], na.rm = TRUE),
+			  .ci    = ifelse(
+				sum(!is.na(.data[[y_var]])) > 1,
+				qt(1 - (1 - ci_level) / 2, df = sum(!is.na(.data[[y_var]])) - 1) *
+				  sd(.data[[y_var]], na.rm = TRUE) / sqrt(sum(!is.na(.data[[y_var]]))),
+				0
+			  ),
+			  .groups = "drop"
+			) %>%
+			dplyr::mutate(
+			  .lower = .mean - .ci,
+			  .upper = .mean + .ci
+			) %>%
+			as.data.frame()
+		  
+		  # Join summary back to main df so facets and hover text work correctly
+		  iv_df <- dplyr::left_join(iv_df, iv_summary, by = grp_cols) %>% as.data.frame()
+		  
+		  # Hover text for plotly
+		  iv_df$.hover <- paste0(
+			x_var, ": ", iv_df[[x_var]], "<br>",
+			if (!is.null(grp_var)) paste0(grp_var, ": ", iv_df[[grp_var]], "<br>") else "",
+			if (has_facet) paste0(paste(facet_vars, collapse = "/"), ": ",
+								  apply(iv_df[, facet_vars, drop = FALSE], 1,
+										paste, collapse = "/"), "<br>") else "",
+			"Mean: ", round(iv_df$.mean, 4), "<br>",
+			"CI ", round(ci_level * 100, 1), "%: [",
+			round(iv_df$.lower, 4), ", ", round(iv_df$.upper, 4), "]", "<br>",
+			"n: ", iv_df$.n
+		  )
+		  
+		  # -----------------------------------------------------------------------
+		  # Build the ggplot
+		  # -----------------------------------------------------------------------
+		  if (!is.null(grp_var)) {
+			p <- ggplot(iv_df, aes(x = .data[[x_var]], y = .data[[y_var]],
+								   color = .data[[grp_var]], text = .hover))
+		  } else {
+			p <- ggplot(iv_df, aes(x = .data[[x_var]], y = .data[[y_var]],
+								   text = .hover))
+		  }
+		  
+		  # Raw data points — shown only when jitter checkbox is ticked
+		  show_jitter_iv <- input$jitter %||% TRUE
+		  jitter_w_iv    <- input$jitter_spread_width %||% 0.1
+		  
+		  if (show_jitter_iv) {
+			if (!is.null(grp_var)) {
+			  # When grouped, inherit color from global aes so points match group color
+			  p <- p + geom_point(alpha = 0.4,
+								  position = position_jitter(width = jitter_w_iv, seed = 42),
+								  size = 1.5, na.rm = TRUE)
+			} else {
+			  # No grouping — fixed grey
+			  p <- p + geom_point(alpha = 0.4,
+								  color = "#838386",
+								  position = position_jitter(width = jitter_w_iv, seed = 42),
+								  size = 1.5, na.rm = TRUE)
+			}
+		  }
+		  
+		  # Error bars (CI) — one per x level (+ group if present)
+		  if (!is.null(grp_var)) {
+			p <- p +
+			  geom_errorbar(data = iv_summary,
+							aes(x = .data[[x_var]],
+								ymin = .lower, ymax = .upper,
+								color = .data[[grp_var]]),
+							width = 0.2, linewidth = 0.8,
+							inherit.aes = FALSE) +
+			  geom_point(data = iv_summary,
+						 aes(x = .data[[x_var]], y = .mean,
+							 color = .data[[grp_var]]),
+						 size = 3, inherit.aes = FALSE)
+		  } else {
+			p <- p +
+			  geom_errorbar(data = iv_summary,
+							aes(x = .data[[x_var]], ymin = .lower, ymax = .upper),
+							color = "#050505", width = 0.2, linewidth = 0.8,
+							inherit.aes = FALSE) +
+			  geom_point(data = iv_summary,
+						 aes(x = .data[[x_var]], y = .mean),
+						 color = "#050505", size = 3,
+						 inherit.aes = FALSE)
+		  }
+		  
+		  # Labels use position_nudge for y-offset — ggplotly honours nudge correctly
+		  # unlike hjust/vjust. Font size 4 and hjust=-0.1 matches the reference image style.
+		  y_range   <- diff(range(iv_df[[y_var]], na.rm = TRUE))
+		  y_nudge_u <- y_range * 0.04   # above upper whisker
+		  y_nudge_l <- -y_range * 0.04  # below lower whisker
+		  
+		  p <- p +
+			# Upper CI label — nudged above the upper whisker
+			geom_text(data = iv_summary,
+					  aes(x = .data[[x_var]], y = .upper,
+						  label = round(.upper, 2)),
+					  color = "blue", size = 4,
+					  fontface = "bold",
+					  position = position_nudge(y = y_nudge_u),
+					  hjust = -0.1, inherit.aes = FALSE) +
+			# Mean label — nudged below the mean point
+			geom_text(data = iv_summary,
+					  aes(x = .data[[x_var]], y = .mean,
+						  label = round(.mean, 2)),
+					  color = "black", size = 4,
+					  fontface = "bold",
+					  position = position_nudge(y = -y_nudge_u),
+					  hjust = -0.1, inherit.aes = FALSE) +
+			# Lower CI label — nudged below the lower whisker
+			geom_text(data = iv_summary,
+					  aes(x = .data[[x_var]], y = .lower,
+						  label = round(.lower, 2)),
+					  color = "blue", size = 4,
+					  fontface = "bold",
+					  position = position_nudge(y = y_nudge_l),
+					  hjust = -0.1, inherit.aes = FALSE)
+		  
+		  # Horizontal reference lines (from hlines UI)
+		  # Use same annotation pattern as IMR chart: x = last category position
+		  # with hjust=-0.05 — this works correctly in both ggplot and plotly canvas.
+		  if (current_hlines() != "") {
+			parse_hlines <- function(s) suppressWarnings(as.numeric(unlist(strsplit(s, ","))))
+			parse_hlabels <- function(s) {
+			  if (is.null(s) || !nzchar(trimws(s))) return(character(0))
+			  trimws(unlist(strsplit(s, ",")))
+			}
+			hy      <- parse_hlines(current_hlines())
+			hlabels <- parse_hlabels(current_hline_labels())
+			hy      <- hy[!is.na(hy)]
+			if (length(hlabels) == 0)          hlabels <- rep("", length(hy))
+			if (length(hlabels) < length(hy))  hlabels <- c(hlabels, rep("", length(hy) - length(hlabels)))
+			hlabels <- hlabels[seq_along(hy)]
+			
+			# Last x category level — equivalent to imr_x_max for continuous axes
+			x_levels_iv <- levels(as.factor(iv_df[[x_var]]))
+			x_last_iv   <- x_levels_iv[length(x_levels_iv)]
+			
+			for (k in seq_along(hy)) {
+			  p <- p + geom_hline(yintercept = hy[k], linetype = "dashed",
+								  color = "darkred", linewidth = 0.6)
+			  lbl <- trimws(hlabels[k])
+			  annotation_text <- if (!is.na(lbl) && nzchar(lbl)) {
+				paste0(lbl, "\n", hy[k])
+			  } else {
+				paste0(" \n", hy[k])
+			  }
+			  p <- p + annotate("text",
+								x     = x_last_iv,
+								y     = hy[k],
+								label = annotation_text,
+								hjust = -0.05, vjust = 0.5,
+								size  = 3.2, color = "darkred")
+			}
+		  }
+		  
+		  # Facets
+		  if (!is.null(input$facet_wrap) && input$facet_wrap != "") {
+			p <- p + facet_wrap(input$facet_wrap, scales = input$facet_scales %||% "fixed")
+		  } else if ((!is.null(input$facet_row) && input$facet_row != "") ||
+					 (!is.null(input$facet_col) && input$facet_col != "")) {
+			row_f <- ifelse(is.null(input$facet_row) || input$facet_row == "", ".", input$facet_row)
+			col_f <- ifelse(is.null(input$facet_col) || input$facet_col == "", ".", input$facet_col)
+			p <- p + facet_grid(as.formula(paste(row_f, "~", col_f)),
+								scales = input$facet_scales %||% "fixed")
+		  }
+		  
+		  # Axis angle, legend, labels
+		  x_angle <- input$x_angle %||% 0
+		  y_angle <- input$y_angle %||% 0
+		  p <- p + theme(
+			axis.text.x  = element_text(angle = x_angle, vjust = 1, hjust = 1),
+			axis.text.y  = element_text(angle = y_angle, vjust = 1, hjust = 1),
+			legend.position = input$legends_pos,
+			legend.text  = element_text(size = 12),
+			legend.title = element_text(size = 13, face = "bold")
+		  )
+		  
+		  # Y-axis breaks
+		  p <- p + scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
+		  
+		  # Labs
+		  plot_title_str <- if (!is.null(input$plot_title) && input$plot_title != "") {
+			input$plot_title
+		  } else {
+			paste0(y_var, " by ", x_var,
+				   " - Interval Plot (Mean & ", round(ci_level * 100, 1), "% CI)")
+		  }
+		  p <- p + labs(
+			title = plot_title_str,
+			x     = if (!is.null(input$x_axis_label) && input$x_axis_label != "") input$x_axis_label else x_var,
+			y     = if (!is.null(input$y_axis_label) && input$y_axis_label != "") input$y_axis_label else y_var,
+			color = if (!is.null(grp_var)) grp_var else NULL
+		  ) + theme(plot.title = element_text(hjust = 0.5))
+		  
+		  # Apply theme from Themes & Options tab (same pattern as scatter)
+		  if (!is.null(input$plot_theme) && input$plot_theme != "default") {
+			theme_str <- input$plot_theme
+			if (theme_str == "solarized_light") {
+			  p <- p + ggthemes::theme_solarized(light = TRUE)
+			} else if (theme_str == "solarized_dark") {
+			  p <- p + ggthemes::theme_solarized(light = FALSE)
+			} else {
+			  parts <- strsplit(theme_str, "::")[[1]]
+			  theme_func <- getFromNamespace(parts[2], ns = parts[1])
+			  p <- p + theme_func()
+			}
+		  }
+		  
+		  current_plot_obj(p)
+		  # Cache summary + metadata for plotly label rendering
+		  iv_summary_cache(list(
+			summary  = iv_summary,
+			x_var    = x_var,
+			grp_var  = grp_var,
+			grp_cols = grp_cols
+		  ))
+		  return(p)
+		}
 		#Plotly ingores legend.position completely
 		#####################################################################################
 		
@@ -2487,24 +3313,18 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 		output$ggplot_canvas <- renderPlot({
 			req(base_plot())
 			
-			# # Save current global settings
-			# old_theme <- theme_get()
-			# old_point_defaults <- GeomPoint$default_aes
-			# old_text_defaults  <- GeomText$default_aes
-
-			# # Apply your overrides
-			# theme_update(text = element_text(size = 16))
-			# update_geom_defaults("point", list(size = 4))
-			# update_geom_defaults("text",  list(size = 6))
-
-			# # ... user plots here ...
-
-			# # Reset to original
-			# theme_set(old_theme)
-			# update_geom_defaults("point", old_point_defaults)
-			# update_geom_defaults("text",  old_text_defaults)
-			
-			base_plot()
+			if (input$plot_type == "imr") {
+				imr_obj <- base_plot()
+				# Use gridExtra to stack I and MR charts vertically
+				if (!requireNamespace("gridExtra", quietly = TRUE)) {
+				  # Fallback: print just the I chart with a note
+				  print(imr_obj$I + labs(caption = "Install 'gridExtra' to show MR chart below"))
+				} else {
+				  gridExtra::grid.arrange(imr_obj$I, imr_obj$MR, nrow = 2)
+				}
+			} else {
+				base_plot()
+			}
 		})
 
 		# plotly output (interactive)
@@ -2515,7 +3335,119 @@ BSkyGraphBuilderInternalCore <- function(tempDatasetRDataFilePath = c(), graph_a
 				ggplotly(base_plot(), tooltip = "text") %>%
 							  #style(customdata = bsky_temp_df_global$row_id, traces = 1) %>%
 								plotly::layout(dragmode = "lasso")
-			}else{
+			} else if (input$plot_type == "imr") {
+				imr_obj <- base_plot()
+				
+				# Convert each sub-chart; suppress ggplotly's auto title
+				p_I_ly  <- ggplotly(imr_obj$I,  tooltip = "text") %>%
+				  plotly::layout(title = "")
+				p_MR_ly <- ggplotly(imr_obj$MR, tooltip = "text") %>%
+				  plotly::layout(title = "")
+				
+				# Remove duplicate legends from MR panel
+				for (i in seq_along(p_MR_ly$x$data)) {
+				  p_MR_ly$x$data[[i]]$showlegend <- FALSE
+				}
+				
+				# Stack the two panels vertically.
+				# margin = 0.10 gives clean separation between I-chart x-axis label
+				# and MR chart title for both faceted and non-faceted layouts.
+				combined <- plotly::subplot(
+				  p_I_ly, p_MR_ly,
+				  nrows   = 2,
+				  shareX  = FALSE,
+				  titleY  = TRUE,
+				  titleX  = TRUE,
+				  heights = c(0.5, 0.5),
+				  margin  = 0.10
+				)
+				
+				# ----------------------------------------------------------------
+				# Per-facet stats helper — "FacetName: CL=x UCL=y LCL=z"
+				# Uses plain text facet name (no nested HTML tags — not supported
+				# inside <span> in plotly annotation text)
+				# ----------------------------------------------------------------
+				make_facet_stats_line <- function(limits_df, cl_col, ucl_col, lcl_col, fv) {
+				  parts <- sapply(seq_len(nrow(limits_df)), function(k) {
+					paste0(as.character(limits_df[[fv]][k]), ": ",
+						   "CL=",  round(limits_df[[cl_col]][k],  3),
+						   " UCL=", round(limits_df[[ucl_col]][k], 3),
+						   " LCL=", round(limits_df[[lcl_col]][k], 3))
+				  })
+				  paste(parts, collapse = "  |  ")
+				}
+				
+				# ----------------------------------------------------------------
+				# Build title text — merge chart name + per-facet stats into one
+				# annotation using <br> so both lines anchor together above the plot
+				# ----------------------------------------------------------------
+				if (imr_obj$has_facet && !is.null(imr_obj$facet_limits)) {
+				  fv  <- imr_obj$facet_var
+				  lim <- imr_obj$facet_limits
+				  i_facet_line  <- make_facet_stats_line(lim, ".I_bar",  ".I_UCL",  ".I_LCL",  fv)
+				  mr_facet_line <- make_facet_stats_line(lim, ".MR_bar", ".MR_UCL", ".MR_LCL", fv)
+				  i_title_text  <- paste0("<b>Individuals (I) Chart</b><br>",
+										  i_facet_line)
+				  mr_title_text <- paste0("<b>Moving Range (MR) Chart</b><br>",
+										  mr_facet_line)
+				} else {
+				  i_title_text  <- paste0("<b>Individuals (I) Chart</b>  |  n=", imr_obj$stats$n,
+										  "  CL=",  round(imr_obj$stats$I_bar,  3),
+										  "  UCL=", round(imr_obj$stats$I_UCL,  3),
+										  "  LCL=", round(imr_obj$stats$I_LCL,  3))
+				  mr_title_text <- paste0("<b>Moving Range (MR) Chart</b>  |  ",
+										  "CL=",   round(imr_obj$stats$MR_bar, 3),
+										  "  UCL=", round(imr_obj$stats$MR_UCL, 3),
+										  "  LCL=0")
+				}
+				
+				# With margin=0.10 and heights=c(0.5,0.5):
+				#   I  domain: y = [0.55, 1.00]
+				#   MR domain: y = [0.00, 0.45]
+				#   MR title sits at y=0.45, yanchor="bottom" → just above MR domain
+				mr_title_y <- 0.45
+				
+				# Top margin: two-line title (faceted) needs more room above canvas
+				top_margin <- if (imr_obj$has_facet) 60 else 35
+				
+				annots <- list(
+				  list(text = i_title_text,  x = 0.5, xref = "paper",
+					   y = 1.02, yref = "paper",
+					   xanchor = "center", yanchor = "bottom",
+					   showarrow = FALSE, font = list(size = 13)),
+				  list(text = mr_title_text, x = 0.5, xref = "paper",
+					   y = mr_title_y, yref = "paper",
+					   xanchor = "center", yanchor = "bottom",
+					   showarrow = FALSE, font = list(size = 13))
+				)
+				
+				# OOC counts — right-aligned red beside each chart title
+				if (imr_obj$stats$ooc_I > 0) {
+				  annots <- c(annots, list(list(
+					text = paste0("<b>OOC pts: ", imr_obj$stats$ooc_I, "</b>"),
+					x = 0.99, xref = "paper", y = 1.02, yref = "paper",
+					xanchor = "right", yanchor = "bottom",
+					showarrow = FALSE, font = list(size = 13, color = "red")
+				  )))
+				}
+				if (imr_obj$stats$ooc_MR > 0) {
+				  annots <- c(annots, list(list(
+					text = paste0("<b>OOC pts: ", imr_obj$stats$ooc_MR, "</b>"),
+					x = 0.99, xref = "paper", y = mr_title_y, yref = "paper",
+					xanchor = "right", yanchor = "bottom",
+					showarrow = FALSE, font = list(size = 13, color = "red")
+				  )))
+				}
+				
+				combined %>% plotly::layout(
+				  title  = "",
+				  legend = list(tracegroupgap = 0, itemsizing = "constant"),
+				  margin = list(t = top_margin, b = 40, l = 60, r = 20),
+				  annotations = annots
+				)
+			} else if (input$plot_type == "interval") {
+				ggplotly(base_plot(), tooltip = "text")
+			} else {
 				ggplotly(base_plot())
 			}
 		})
