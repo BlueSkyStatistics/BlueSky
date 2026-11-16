@@ -38,3 +38,20 @@ function (x, bins = 4, method = c("intervals", "proportions",
     }
     as.factor(x)
 }
+
+#All dialogs under Sample size and power use this function. The dialogs were developed by Ross
+
+BSkySampleSizeCheck <- function(unknowns, ranges = list()) {
+missing <- names(unknowns)[vapply(unknowns, function(v) all(is.na(v)), logical(1))]
+if (length(missing) != 1)
+stop(sprintf("Specify all but one of: %s. Currently missing: %s.",
+paste(names(unknowns), collapse = ", "),
+if (length(missing)) paste(missing, collapse = ", ") else "none"),
+call. = FALSE)
+for (nm in names(ranges)) {
+r <- ranges[[nm]]; v <- r$value
+if (any(is.na(v)) || any(v <= r$lo) || any(v >= r$hi))
+stop(sprintf("%s must be between %s and %s (got %s).", nm, r$lo, r$hi, paste(v, collapse = ",")), call. = FALSE)
+}
+invisible(missing) # which mode the dialog is in: "n", "power" or "effect"
+}
