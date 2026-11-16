@@ -280,4 +280,5 @@ export(BSkySetLibLoadMsgPrintSetting, BSkyGetLibLoadMsgPrintSetting, BSkySetGrap
 export(BSkySearchDataset)
 export(.bskyReplaceInit, .bskyReplaceLoadId,.bskyReplaceClear,.bskyReplaceApplyAll,.bskyReplaceRestore)
 export(BSkyMakeFirstRowAsHeaderKeepingEmptyRC)
+export(BSkySampleSizeCheck)
 
