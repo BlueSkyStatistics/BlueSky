@@ -1239,8 +1239,10 @@ BSkyEstimateProcVarWithHistStddev <- function(tableObj, histStdev, gageRRTotalVa
 ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tolerance = usl -
     lsl, data, main = "Six Sigma Gage R&R Study", sub = "", alphaLim = 0.05,
     errorTerm = "interaction", digits = 4, method = "crossed",
-    print_plot = TRUE, signifstars = FALSE)
+    print_plot = TRUE, signifstars = FALSE, bundle_plots = TRUE, sort_part_levels = TRUE, alpha_numeric_sort = FALSE)
 {
+	sub = paste(sub)
+	
     curr_stars <- getOption("show.signif.stars")
     if (signifstars) {
         options(show.signif.stars = TRUE)
@@ -1280,6 +1282,26 @@ ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tole
     if (method == "nested") {
         data[part] = paste(data[[appr]], data[[part]], sep = "-")
         data[[part]] <- factor(data[[part]])
+    }
+    # Sort part factor levels by value (default) or keep dataset order
+    if (sort_part_levels) {
+        raw_levels <- unique(data[[part]])
+        if (alpha_numeric_sort) {
+            # Alphanumeric sort: "as.character" sort, so 1,10,2,3,... (Minitab default)
+            part_levels_sorted <- sort(as.character(raw_levels))
+        } else {
+            # Numeric sort: convert to numeric if possible, otherwise character sort
+            num_levels <- suppressWarnings(as.numeric(as.character(raw_levels)))
+            if (!any(is.na(num_levels))) {
+                part_levels_sorted <- as.character(sort(num_levels))
+            } else {
+                part_levels_sorted <- sort(as.character(raw_levels))
+            }
+        }
+        data[[part]] <- factor(data[[part]], levels = part_levels_sorted)
+    } else {
+        part_levels_order <- unique(data[[part]])
+        data[[part]] <- factor(data[[part]], levels = part_levels_order)
     }
     a <- nlevels(data[[part]])
     b <- nlevels(data[[appr]])
@@ -1495,20 +1517,9 @@ ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tole
         #cat(paste("\nNumber of Distinct Categories =", ncat,"\n"))
         pint <- 0
     }
-    if (print_plot) {	
-        #.ss.prepCanvas(main, sub)
-		SixSigma:::.ss.prepCanvas(paste("Components of Variation (", main,")"), sub)
-        
-		#vp.plots <- grid::viewport(name = "plots", layout = grid::grid.layout(3,2))
-		vp.plots <- grid::viewport(name = "plots", layout = grid::grid.layout(1,1))
-		
-		# vp.plots <- grid::viewport(name = "plots", layout = grid::grid.layout(3,
-            # 2, widths=unit(4, "inches"),
-                          # heights=unit(6, "npc"),))
-        grid::pushViewport(vp.plots)
-        vp.bar <- grid::viewport(name = "barplot", layout.pos.row = 1,
-            layout.pos.col = 1)
-        grid::pushViewport(vp.bar)
+    if (print_plot) {
+
+        # ── shared helper: build each plot object (no printing yet) ──────────
         if (b == 1) {
             rowstoplot <- c(1, 2, 3)
         }
@@ -1536,168 +1547,220 @@ ss.rr.modified <- function (var, part, appr, lsl = NA, usl = NA, sigma = 6, tole
             rownames(databar) <- c("G.R&R", "Repeat", "Part2Part")
         }
         else {
-            rownames(databar) <- c("G.R&R", "Repeat", "Reprod",
-                "Part2Part")
+            rownames(databar) <- c("G.R&R", "Repeat", "Reprod", "Part2Part")
         }
-		
-        plot <- lattice::barchart(databar, freq = FALSE, grid = TRUE,
-            scales = list(x = list(rot = 45)), par.settings = list(axis.text = list(cex = 0.6),
+
+        plot_compvar <- lattice::barchart(databar, freq = FALSE, grid = TRUE,
+            scales = list(x = list(rot = 45)), par.settings = list(axis.text = list(cex = 0.8),
                 par.ylab.text = list(cex = 0.8), par.main.text = list(cex = 0.85)),
             ylab = list("Percent", fontsize = 8), panel = function(...) {
                 lattice::panel.barchart(...)
                 lattice::panel.abline(h = 0)
-                lattice::panel.abline(h = c(10, 30), lty = 2,
-                  col = "gray")
+                lattice::panel.abline(h = c(10, 30), lty = 2, col = "gray")
             }, auto.key = list(text = klabels, cex = 0.8, columns = length(colstoplot),
                 space = "bottom", rectangles = TRUE, points = FALSE,
-                adj = 1, rep = FALSE), stack = FALSE, horizontal = FALSE
-            #main = list("Components of Variation", fontsize = 14)
-			)
-        print(plot, newpage = FALSE)
-        grid::popViewport()
-		
-		SixSigma:::.ss.prepCanvas(paste(var, "by", part,"(", main,")"), sub)
-		vp.plots <- grid::viewport(name = "plots2", layout = grid::grid.layout(1,1))
-		vp.varByPart <- grid::viewport(name = "varByPart", layout.pos.row = 1,
-            layout.pos.col = 1)
-			
-        #vp.varByPart <- grid::viewport(name = "varByPart", layout.pos.row = 1,
-        #    layout.pos.col = 2)
-		
-        grid::pushViewport(vp.varByPart)
-        plot <- lattice::stripplot(as.formula(paste(var, "~",
-            part)), data = data, grid = TRUE, scales = list(x = list(rot = 45)),
-            par.settings = list(axis.text = list(cex = 0.6),
+                adj = 1, rep = FALSE), stack = FALSE, horizontal = FALSE,
+            main = list(paste("Components of Variation (", main, ")"), fontsize = 12))
+
+        plot_varByPart <- lattice::stripplot(as.formula(paste(var, "~", part)),
+            data = data, grid = TRUE, scales = list(x = list(rot = 45)),
+            par.settings = list(axis.text = list(cex = 0.8),
                 par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
                 par.main.text = list(cex = 0.9)),
-				#main = paste(var, "by", part), 
-				type = c("p", "a")
-				)
-        print(plot, newpage = FALSE)
-        grid::popViewport()
-		
-		SixSigma:::.ss.prepCanvas(paste(var, "by", appr, "(", main,")"), sub)
-		vp.plots <- grid::viewport(name = "plots3", layout = grid::grid.layout(1,1))
-        vp.varByAppr <- grid::viewport(name = "varByAppr", layout.pos.row = 1,
-            layout.pos.col = 1)
-			
-		#vp.varByAppr <- grid::viewport(name = "varByAppr", layout.pos.row = 2,
-        #   layout.pos.col = 2)
-		
-        grid::pushViewport(vp.varByAppr)
-        plot <- lattice::stripplot(as.formula(paste(var, "~",
-            appr)), data = data, grid = TRUE, scales = list(x = list(rot = 45)),
-            par.settings = list(axis.text = list(cex = 0.6),
+            main = list(paste(var, "by", part), fontsize = 12),
+            type = c("p", "a"))
+
+        plot_varByAppr <- lattice::stripplot(as.formula(paste(var, "~", appr)),
+            data = data, grid = TRUE, scales = list(x = list(rot = 45)),
+            par.settings = list(axis.text = list(cex = 0.8),
                 par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
-                par.main.text = list(cex = 0.9)),
-				#main = paste(var, "by", appr), 
-				type = c("p", "a")
-				)
-        print(plot, newpage = FALSE)
-        grid::popViewport()
-		
-		
-		#SixSigma:::.ss.prepCanvas(paste(paste0(part, ":", appr, " Interaction"), "(", main,")"), sub)
-		#vp.plots <- grid::viewport(name = "plots4", layout = grid::grid.layout(1,1))
-		
+                par.main.text = list(cex = 0.9),
+                box.rectangle = list(col = "steelblue", fill = "transparent"),
+                box.umbrella = list(col = "steelblue", lty = 0),
+                plot.symbol = list(col = "steelblue", pch = 16, cex = 0.5)),
+            panel = function(x, y, ...) {
+                groups <- levels(factor(x))
+                means <- sapply(groups, function(g) mean(y[x == g], na.rm = TRUE))
+                # Draw filled box (min to max) per group
+                for (i in seq_along(groups)) {
+                    vals <- y[x == groups[i]]
+                    if (length(vals) > 0) {
+                        lattice::panel.rect(xleft = i - 0.3, xright = i + 0.3,
+                            ybottom = min(vals, na.rm = TRUE),
+                            ytop = max(vals, na.rm = TRUE),
+                            col = "lightblue", border = "steelblue", lwd = 1)
+                    }
+                }
+                # Draw points on top of boxes
+                lattice::panel.stripplot(x, y, ..., jitter.data = FALSE)
+                # Connect means across all groups with a single line
+                lattice::panel.lines(x = seq_along(groups), y = means,
+                    col = "steelblue", lwd = 1.5)
+            },
+            main = list(paste(var, "by", appr), fontsize = 12))
+
+        data.xbar <- aggregate(as.formula(paste(var, "~", appr, "+", part)),
+            data = data, mean)
+        data.xrange <- aggregate(as.formula(paste(var, "~", appr, "+", part)),
+            data = data, function(x) { max(x) - min(x) })
+
         if (method == "crossed") {
-			
-			SixSigma:::.ss.prepCanvas(paste(paste0(part, ":", appr, " Interaction"), "(", main,")"), sub)
-			vp.plots <- grid::viewport(name = "plots4", layout = grid::grid.layout(1,1))
-		
-			vp.Interact <- grid::viewport(name = "Interact",
-                layout.pos.row = 1, layout.pos.col = 1)
-				
-            #vp.Interact <- grid::viewport(name = "Interact",
-            #    layout.pos.row = 3, layout.pos.col = 2)
-            
-			grid::pushViewport(vp.Interact)
-            data.xbar <- aggregate(as.formula(paste(var, "~",
-                appr, "+", part)), data = data, mean)
-            plot <- lattice::stripplot(as.formula(paste(var,
-                "~", part)), groups = get(appr), data = data.xbar,
+            plot_interact <- lattice::stripplot(as.formula(paste(var, "~", part)),
+                groups = get(appr), data = data.xbar,
                 pch = 16, grid = TRUE, par.settings = list(par.main.text = list(cex = 0.9)),
-                #main = paste0(part, ":", appr, " Interaction"),
+                main = list(paste0(part, ":", appr, " Interaction"), fontsize = 12),
                 type = c("p", "a"), auto.key = list(text = levels(data[[appr]]),
-                  columns = nlevels(data[[appr]]), space = "bottom",
-                  cex = 0.5, lines = TRUE, points = FALSE, adj = 1))
-            print(plot, newpage = FALSE)
-            grid::popViewport()
+                    columns = nlevels(data[[appr]]), space = "bottom",
+                    cex = 0.5, lines = TRUE, points = FALSE, adj = 1))
         }
-        data.xbar <- aggregate(as.formula(paste(var, "~", appr,
-            "+", part)), data = data, mean)
-        data.xrange <- aggregate(as.formula(paste(var, "~", appr,
-            "+", part)), data = data, function(x) {
-            max(x) - min(x)
-        })
-		
-		
-		SixSigma:::.ss.prepCanvas(paste("Xbar Chart by", appr, "(", main,")"), sub)
-		vp.plots <- grid::viewport(name = "plots5", layout = grid::grid.layout(1,1))
-		vp.ccMean <- grid::viewport(name = "ccMean", layout.pos.row = 1,
-            layout.pos.col = 1)
-		
+
         ar <- mean(data.xrange[[var]])
-		
-        #vp.ccMean <- grid::viewport(name = "ccMean", layout.pos.row = 3,
-        #    layout.pos.col = 1)
-		
-        grid::pushViewport(vp.ccMean)
         xbar <- mean(data[[var]], na.rm = TRUE)
         ucl <- xbar + (3/(ss.cc.getd2(n) * sqrt(n))) * ar
         lcl <- xbar - (3/(ss.cc.getd2(n) * sqrt(n))) * ar
-        glimits <- c(min(range(data.xbar[[var]])[1], lcl), max(range(data.xbar[[var]])[2],
+        glimits_xbar <- c(min(range(data.xbar[[var]])[1], lcl), max(range(data.xbar[[var]])[2],
             ucl)) + c(-1, 1) * 0.1 * diff(range(data.xbar[[var]]))
-        plot <- lattice::xyplot(as.formula(paste(var, "~", part,
-            "|", appr)), data = data.xbar, pch = 16, par.settings = list(axis.text = list(cex = 0.6),
+        plot_xbar <- lattice::xyplot(as.formula(paste(var, "~", part, "|", appr)),
+            data = data.xbar, pch = 16, par.settings = list(axis.text = list(cex = 0.8),
             par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
-            par.main.text = list(cex = 0.9)), par.strip.text = list(cex = 0.6),
-            #main = bquote(bold(bar(x) * " Chart by " * .(appr))),
+            par.main.text = list(cex = 0.9)), par.strip.text = list(cex = 0.8),
+            main = list(paste("Xbar Chart by", appr), fontsize = 12),
             grid = TRUE, layout = c(b, 1), type = "b", axs = "r",
-            ylim = glimits, scales = list(alternating = FALSE,
+            ylim = glimits_xbar, scales = list(alternating = FALSE,
                 x = list(relation = "free", rot = 45)), panel = function(...) {
                 lattice::panel.xyplot(...)
                 lattice::panel.abline(h = xbar, lty = 2)
                 lattice::panel.abline(h = ucl, col = "red3")
                 lattice::panel.abline(h = lcl, col = "red3")
             })
-        print(plot, newpage = FALSE)
-        grid::popViewport()
-		
-		SixSigma:::.ss.prepCanvas(paste("R Chart by", appr, "(", main,")"), sub)
-		vp.plots <- grid::viewport(name = "plots6", layout = grid::grid.layout(1,1))
-		vp.ccRange <- grid::viewport(name = "ccRange", layout.pos.row = 2,
-            layout.pos.col = 1)
-		
-        #vp.ccRange <- grid::viewport(name = "ccRange", layout.pos.row = 2,
-        #    layout.pos.col = 1)
-        grid::pushViewport(vp.ccRange)
+
         this.d3 <- ss.cc.getd3(n)
         this.d2 <- ss.cc.getd2(n)
-        rlimits <- c(max(ar * (1 - 3 * (this.d3/(this.d2))),
-            0), ar * (1 + 3 * (this.d3/(this.d2))))
-        glimits <- c(min(range(data.xrange[[var]])[1], rlimits[1]),
+        rlimits <- c(max(ar * (1 - 3 * (this.d3/(this.d2))), 0),
+            ar * (1 + 3 * (this.d3/(this.d2))))
+        glimits_r <- c(min(range(data.xrange[[var]])[1], rlimits[1]),
             max(range(data.xrange[[var]])[2], rlimits[2])) +
             c(-1, 1) * 0.1 * diff(range(data.xrange[[var]]))
-        if (all(glimits == 0)) {
-            glimits <- c(0, max(data[[var]]))
+        if (all(glimits_r == 0)) {
+            glimits_r <- c(0, max(data[[var]]))
         }
-        plot <- lattice::xyplot(as.formula(paste(var, "~", part,
-            "|", appr)), data = data.xrange, pch = 16, par.settings = list(axis.text = list(cex = 0.6),
+        plot_rchart <- lattice::xyplot(as.formula(paste(var, "~", part, "|", appr)),
+            data = data.xrange, pch = 16, par.settings = list(axis.text = list(cex = 0.8),
             par.xlab.text = list(cex = 0.8), par.ylab.text = list(cex = 0.8),
-            par.main.text = list(cex = 0.9), layout.widths = list(axis.panel = c(1,
-                0, 0))), par.strip.text = list(cex = 0.6), 
-				#main = paste("R Chart by", appr), 
-			grid = TRUE, layout = c(b, 1), type = "b",
-            axs = "r", ylim = glimits, scales = list(alternating = FALSE,
+            par.main.text = list(cex = 0.9), layout.widths = list(axis.panel = c(1, 0, 0))),
+            par.strip.text = list(cex = 0.8), #par.strip.text = list(cex = 0.6),
+            main = list(paste("R Chart by", appr), fontsize = 12),
+            grid = TRUE, layout = c(b, 1), type = "b", axs = "r",
+            ylim = glimits_r, scales = list(alternating = FALSE,
                 x = list(relation = "free", rot = 45)), panel = function(...) {
                 lattice::panel.xyplot(...)
                 lattice::panel.abline(h = ar, lty = 2)
                 lattice::panel.abline(h = rlimits[1], col = "red3")
                 lattice::panel.abline(h = rlimits[2], col = "red3")
             })
-        print(plot, newpage = FALSE)
-        grid::popViewport()
+
+        # ── render: bundled 2-column grid or individual pages ────────────────
+        if (bundle_plots) {
+            # Convert lattice plots to grobs, then arrange with gridExtra
+            # if (!requireNamespace("gridExtra", quietly = TRUE)) {
+                # install.packages("gridExtra", quiet = TRUE)
+            # }
+            require(gridExtra)
+
+            # Build grob list — interaction slot filled with empty grob when b==1 or nested
+            grob_compvar   <- grid::grid.grabExpr(print(plot_compvar),   wrap.grobs = TRUE)
+            grob_varByPart <- grid::grid.grabExpr(print(plot_varByPart), wrap.grobs = TRUE)
+            grob_varByAppr <- grid::grid.grabExpr(print(plot_varByAppr), wrap.grobs = TRUE)
+            grob_xbar      <- grid::grid.grabExpr(print(plot_xbar),      wrap.grobs = TRUE)
+            grob_rchart    <- grid::grid.grabExpr(print(plot_rchart),    wrap.grobs = TRUE)
+
+            if (method == "crossed") {
+                grob_interact <- grid::grid.grabExpr(print(plot_interact), wrap.grobs = TRUE)
+            } else {
+                grob_interact <- grid::rectGrob(gp = grid::gpar(col = NA, fill = NA))
+            }
+
+            # Page title grob
+            title_grob <- grid::textGrob(
+                paste("Gage R&R Plots (", main, ")"),
+                gp = grid::gpar(fontsize = 14, fontface = "bold"),
+                just = "centre"
+            )
+            subtitle_grob <- grid::textGrob(
+                sub,
+                gp = grid::gpar(fontsize = 12),
+                just = "centre"
+            )
+
+            # Arrange in Minitab order:
+            #   Row 1: Components of Variation | Measurement by Part
+            #   Row 2: R Chart                  | Measurement by Operator
+            #   Row 3: Xbar Chart               | Part:Operator Interaction
+            arranged <- gridExtra::arrangeGrob(
+                grob_compvar,  grob_varByPart,
+                grob_rchart,   grob_varByAppr,
+                grob_xbar,     grob_interact,
+                ncol = 2, nrow = 3,
+                top = gridExtra::arrangeGrob(title_grob, subtitle_grob,
+                          ncol = 1,
+                          heights = grid::unit(c(1.5, 0.8), "lines"))
+            )
+
+            grid::grid.newpage()
+            grid::grid.draw(arranged)
+
+        } else {
+            # ── individual pages (original behaviour) ────────────────────────
+            SixSigma:::.ss.prepCanvas(paste("Components of Variation (", main, ")"), sub)
+            vp.plots <- grid::viewport(name = "plots", layout = grid::grid.layout(1,1))
+            grid::pushViewport(vp.plots)
+            vp.bar <- grid::viewport(name = "barplot", layout.pos.row = 1, layout.pos.col = 1)
+            grid::pushViewport(vp.bar)
+            print(plot_compvar, newpage = FALSE)
+            grid::popViewport()
+
+            SixSigma:::.ss.prepCanvas(paste(var, "by", part, "(", main, ")"), sub)
+            vp.plots <- grid::viewport(name = "plots2", layout = grid::grid.layout(1,1))
+            grid::pushViewport(vp.plots)
+            vp.varByPart <- grid::viewport(name = "varByPart", layout.pos.row = 1, layout.pos.col = 1)
+            grid::pushViewport(vp.varByPart)
+            print(plot_varByPart, newpage = FALSE)
+            grid::popViewport()
+
+            SixSigma:::.ss.prepCanvas(paste(var, "by", appr, "(", main, ")"), sub)
+            vp.plots <- grid::viewport(name = "plots3", layout = grid::grid.layout(1,1))
+            grid::pushViewport(vp.plots)
+            vp.varByAppr <- grid::viewport(name = "varByAppr", layout.pos.row = 1, layout.pos.col = 1)
+            grid::pushViewport(vp.varByAppr)
+            print(plot_varByAppr, newpage = FALSE)
+            grid::popViewport()
+
+            if (method == "crossed") {
+                SixSigma:::.ss.prepCanvas(paste(paste0(part, ":", appr, " Interaction"), "(", main, ")"), sub)
+                vp.plots <- grid::viewport(name = "plots4", layout = grid::grid.layout(1,1))
+                grid::pushViewport(vp.plots)
+                vp.Interact <- grid::viewport(name = "Interact", layout.pos.row = 1, layout.pos.col = 1)
+                grid::pushViewport(vp.Interact)
+                print(plot_interact, newpage = FALSE)
+                grid::popViewport()
+            }
+
+            SixSigma:::.ss.prepCanvas(paste("Xbar Chart by", appr, "(", main, ")"), sub)
+            vp.plots <- grid::viewport(name = "plots5", layout = grid::grid.layout(1,1))
+            grid::pushViewport(vp.plots)
+            vp.ccMean <- grid::viewport(name = "ccMean", layout.pos.row = 1, layout.pos.col = 1)
+            grid::pushViewport(vp.ccMean)
+            print(plot_xbar, newpage = FALSE)
+            grid::popViewport()
+
+            SixSigma:::.ss.prepCanvas(paste("R Chart by", appr, "(", main, ")"), sub)
+            vp.plots <- grid::viewport(name = "plots6", layout = grid::grid.layout(1,1))
+            grid::pushViewport(vp.plots)
+            vp.ccRange <- grid::viewport(name = "ccRange", layout.pos.row = 1, layout.pos.col = 1)
+            grid::pushViewport(vp.ccRange)
+            print(plot_rchart, newpage = FALSE)
+            grid::popViewport()
+        }
     }
 	
     options(show.signif.stars = curr_stars)
