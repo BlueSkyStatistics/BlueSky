@@ -2439,7 +2439,9 @@ if (class(predictions) =="factor" ||  class(predictions) =="ordered" || class(pr
 						#The code below has the advantage that the confusion matrix displays the variable of interest first
 						
 						
-						if (which(levels(reference) ==levelOfInterest) ==1)
+						#An empty or unknown level of interest (e.g. none chosen in the dialog) defaults to the 1st level
+						levelIdx = which(levels(reference) ==levelOfInterest)
+						if (length(levelIdx) ==0 || levelIdx[1] ==1)
 						{
 							levelOfInterest ="1st"
 						} else{
