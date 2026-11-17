@@ -618,7 +618,16 @@ BSkyMultipleEditDataGrid <-function (startRow = 2, startCol = 1, noOfRows = 4, n
     }
     if (!globalmarkersset) {
         deciCh = Sys.localeconv()[["mon_decimal_point"]]
-        groupingChar = Sys.localeconv()["thousands_sep"]
+        groupingChar = Sys.localeconv()[["thousands_sep"]]
+        # The C/POSIX locale (e.g. embedded R started without LANG) reports ""
+        # for mon_decimal_point, which readr::locale() rejects. Fall back to ".".
+        if (!(deciCh %in% c(".", ","))) {
+            deciCh = "."
+        }
+        # readr::locale() also refuses identical decimal and grouping marks.
+        if (identical(groupingChar, deciCh)) {
+            groupingChar = ""
+        }
     }
     sys_info <- Sys.info()
     os_type <- sys_info["sysname"]
@@ -640,83 +649,79 @@ BSkyMultipleEditDataGrid <-function (startRow = 2, startCol = 1, noOfRows = 4, n
         validData = TRUE
     }
     if (isPasteRequest) {
-        if (os_type == "Windows") {
-            if (is.null(clipboardText) || !nzchar(clipboardText)) {
-                print("The clipboard is still being prepared or is empty. Please wait a few seconds and retry the paste or try copying again before pasting.")
-                return(invisible("The clipboard is empty."))
-            }
-            else {
-                delimiter = BSkyGetDelimMarker()
-                templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
-                tabular_data = NULL
-                tabular_data <- tryCatch({
-                  if (delimiter == "") {
-                    readr::read_delim(I(clipboardText), col_names = FALSE,
-                      delim = "\t", locale = templocale, skip_empty_rows = FALSE,
-                      show_col_types = FALSE)
-                  }
-                  else {
-                    readr::read_delim(I(clipboardText), col_names = FALSE,
-                      locale = templocale, delim = delimiter,
-                      show_col_types = FALSE)
-                  }
-                }, error = function(e) {
-                  tryCatch({
-                    readr::read_delim(I(clipboardText), col_names = FALSE,
-                      locale = templocale, skip_empty_rows = FALSE,
-                      show_col_types = FALSE)
-                  }, error = function(e2) {
-                    tryCatch({
-                      readr::read_delim(I(clipboardText), col_names = FALSE,
-                        delim = "\n", locale = templocale, skip_empty_rows = FALSE,
-                        show_col_types = FALSE)
-                    }, error = function(e2) {
-                      "error"
-                    })
-                  })
-                })
-                if ("character" %in% class(tabular_data)) {
-                  if (tabular_data == "error") {
-                    return(invisible("The paste failed as we could not guess the character that separates variables/rows from your data, please examine the data you want to paste and manually specify the delimited in the Triple dot>Settings>Misc. We have already tried the newline character i.e. \\n without success."))
-                  }
+        # Python normally reads the clipboard and passes it as clipboardText
+        # (Windows: Win32 API in win_clipboard.py, macOS: pbpaste in
+        # mac_clipboard.py). Only read the clipboard here as a fallback.
+        if (is.null(clipboardText) || !nzchar(clipboardText)) {
+            clipboardText <- tryCatch({
+                if (os_type == "Darwin") {
+                    paste(readLines(pipe("pbpaste"), warn = FALSE,
+                        encoding = "UTF-8"), collapse = "\n")
                 }
-                if (base::is.null(tabular_data)) {
-                  return(invisible("Something went wrong with reading from the clipboard and a NULL was returned"))
+                else if (os_type == "Windows") {
+                    # R's own clipboard read crashes on large Excel copies
+                    # in embedded R; Python always supplies the text here.
+                    NULL
                 }
-                tabular_col_classes <- sapply(tabular_data, function(x) class(x)[1])
-                tabular_data <- data.frame(lapply(tabular_data,
-                  function(x) iconv(x)))
-                noOfRows = nrow(tabular_data)
-                noOfCols = ncol(tabular_data)
-                data = as.character(t(as.matrix(tabular_data)))
-                validData = TRUE
-            }
-        }
-        else if (os_type == "Darwin") {
-            clipboard_content <- tryCatch({
-                readLines(pipe("pbpaste"), warn = FALSE)
+                else {
+                    paste(clipr::read_clip(allow_non_interactive = TRUE),
+                        collapse = "\n")
+                }
             }, error = function(e) {
                 NULL
             })
-            if (is.null(clipboard_content) || length(clipboard_content) ==
-                0 || all(clipboard_content == "")) {
-                print("The clipboard is empty.")
-                return(invisible("The clipboard is empty."))
+        }
+        if (is.null(clipboardText) || length(clipboardText) == 0 ||
+            !nzchar(clipboardText[1])) {
+            print("The clipboard is still being prepared or is empty. Please wait a few seconds and retry the paste or try copying again before pasting.")
+            return(invisible("The clipboard is empty."))
+        }
+        # Normalise Windows CRLF and old-Mac CR row separators to LF.
+        clipboardText <- gsub("\r\n?", "\n", clipboardText)
+        delimiter = BSkyGetDelimMarker()
+        templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
+        tabular_data = NULL
+        tabular_data <- tryCatch({
+            if (delimiter == "") {
+                readr::read_delim(I(clipboardText), col_names = FALSE,
+                  delim = "\t", locale = templocale, skip_empty_rows = FALSE,
+                  show_col_types = FALSE)
             }
             else {
-                clipboardEncoding = ""
-                templocale = locale(decimal_mark = deciCh, grouping_mark = groupingChar)
-                tabular_data = readr::read_delim(readr::clipboard(),
-                  col_names = FALSE, locale = templocale, show_col_types = FALSE)
-                tabular_col_classes <- sapply(tabular_data, function(x) class(x)[1])
-                tabular_data <- data.frame(lapply(tabular_data,
-                  function(x) iconv(x)))
-                noOfRows = nrow(tabular_data)
-                noOfCols = ncol(tabular_data)
-                data = as.character(t(as.matrix(tabular_data)))
-                validData = TRUE
+                readr::read_delim(I(clipboardText), col_names = FALSE,
+                  locale = templocale, delim = delimiter,
+                  show_col_types = FALSE)
+            }
+        }, error = function(e) {
+            tryCatch({
+                readr::read_delim(I(clipboardText), col_names = FALSE,
+                  locale = templocale, skip_empty_rows = FALSE,
+                  show_col_types = FALSE)
+            }, error = function(e2) {
+                tryCatch({
+                  readr::read_delim(I(clipboardText), col_names = FALSE,
+                    delim = "\n", locale = templocale, skip_empty_rows = FALSE,
+                    show_col_types = FALSE)
+                }, error = function(e2) {
+                  "error"
+                })
+            })
+        })
+        if ("character" %in% class(tabular_data)) {
+            if (tabular_data == "error") {
+                return(invisible("The paste failed as we could not guess the character that separates variables/rows from your data, please examine the data you want to paste and manually specify the delimited in the Triple dot>Settings>Misc. We have already tried the newline character i.e. \\n without success."))
             }
         }
+        if (base::is.null(tabular_data)) {
+            return(invisible("Something went wrong with reading from the clipboard and a NULL was returned"))
+        }
+        tabular_col_classes <- sapply(tabular_data, function(x) class(x)[1])
+        tabular_data <- data.frame(lapply(tabular_data,
+            function(x) iconv(x)))
+        noOfRows = nrow(tabular_data)
+        noOfCols = ncol(tabular_data)
+        data = as.character(t(as.matrix(tabular_data)))
+        validData = TRUE
     }
     if (validData) {
         if (length(data) == 1) {
